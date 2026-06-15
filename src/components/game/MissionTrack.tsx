@@ -4,11 +4,6 @@ import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { ClientGameState } from '@/lib/engine';
 
-/**
- * The five-quest track. Each segment shows the team size, whether it needs two
- * fails, and its result once played (success/fail). The current mission pulses.
- * Tapping a segment opens that round's history (via onSelect).
- */
 export function MissionTrack({
   game,
   onSelect,
@@ -21,7 +16,6 @@ export function MissionTrack({
   const resultByRound = new Map(game.missionResults.map((m) => [m.roundIndex, m]));
   const hasHistory = (idx: number) =>
     game.voteHistory.some((v) => v.roundIndex === idx) || resultByRound.has(idx);
-  const hasProtectionRound = requiredFails.some((rf) => rf === 2);
 
   return (
     <div className="space-y-1.5">
@@ -35,7 +29,7 @@ export function MissionTrack({
           let bg = 'bg-stone/70 border-gold/30';
           if (result?.success) bg = 'bg-sky-600/80 border-sky-300';
           else if (result && !result.success) bg = 'bg-crimson/80 border-crimson';
-          else if (needsTwo) bg = 'bg-amber-900/40 border-amber-400'; // protection round
+          else if (isCurrent) bg = 'border-gold bg-gold/30';
 
           return (
             <motion.button
@@ -43,13 +37,11 @@ export function MissionTrack({
               type="button"
               disabled={!clickable}
               onClick={() => clickable && onSelect?.(idx)}
-              animate={isCurrent ? { scale: [1, 1.1, 1] } : { scale: 1 }}
-              transition={isCurrent ? { duration: 1.4, repeat: Infinity } : { duration: 0.3 }}
               className={`relative flex h-12 w-12 flex-col items-center justify-center rounded-full border-2 ${bg} ${
                 clickable ? 'cursor-pointer ring-gold/40 hover:ring-2' : 'cursor-default'
               }`}
               title={`${t('game.missionOf', { round: idx + 1 })} · ${size}${
-                needsTwo ? ` · ${t('mission.needsTwoFails')}` : ''
+                needsTwo ? ' · 2✗' : ''
               }`}
             >
               {needsTwo && (
@@ -58,7 +50,7 @@ export function MissionTrack({
                 </span>
               )}
               <span className="text-sm font-bold text-parchment">{size}</span>
-              {needsTwo && <span className="text-[9px] font-bold text-amber-300">2✗</span>}
+              {needsTwo && <span className="text-[9px] font-semibold text-amber-300/80">2✗</span>}
               {result && (
                 <span className="absolute -bottom-1 -right-1 text-xs">
                   {result.success ? '✅' : '❌'}
@@ -68,9 +60,6 @@ export function MissionTrack({
           );
         })}
       </div>
-      {hasProtectionRound && (
-        <p className="text-center text-[10px] text-amber-300/80">{t('mission.protectionRound')}</p>
-      )}
       {onSelect && (
         <p className="text-center text-[10px] text-parchment/40">{t('mission.tapForHistory')}</p>
       )}

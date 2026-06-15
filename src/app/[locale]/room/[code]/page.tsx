@@ -5,11 +5,8 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { RoomHeader } from '@/components/lobby/RoomHeader';
-import { PlayerList } from '@/components/lobby/PlayerList';
 import { ConfigPanel } from '@/components/lobby/ConfigPanel';
-import { NameEditor } from '@/components/lobby/NameEditor';
 import { SeatPicker } from '@/components/lobby/SeatPicker';
-import { RosterEditor } from '@/components/lobby/RosterEditor';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { Button } from '@/components/ui/Button';
 import { useRoomConnection, roomActions } from '@/lib/socket/client';
@@ -35,8 +32,6 @@ export default function LobbyPage() {
   const seatedCount = snapshot?.members.filter((m) => !m.isSpectator).length ?? 0;
   const claimedCount = snapshot?.members.filter((m) => !m.isSpectator && m.claimed).length ?? 0;
   const canStart = seatedCount >= 5 && seatedCount <= 10;
-  const me = snapshot?.members.find((m) => m.id === myPlayerId);
-  const myName = me?.name ?? null;
 
   // Redirect into the game once it starts.
   useEffect(() => {
@@ -57,10 +52,6 @@ export default function LobbyPage() {
     if (!res.ok && res.error) setActionError(res.error.message);
   }
 
-  async function handleAction(fn: () => Promise<{ ok: boolean; error?: { message: string } }>) {
-    const res = await fn();
-    if (!res.ok && res.error) setActionError(res.error.message);
-  }
 
   async function handleClaim(seatId: string) {
     setActionError(null);
@@ -74,7 +65,7 @@ export default function LobbyPage() {
     }
   }
 
-  async function handleSpectate() {
+  async function handleStand() {
     setActionError(null);
     const res = await roomActions.releaseSeat();
     if (res.ok) {
@@ -84,6 +75,16 @@ export default function LobbyPage() {
     } else if (res.error) {
       setActionError(res.error.message);
     }
+  }
+
+  async function handleKick(id: string) {
+    setActionError(null);
+    return roomActions.kick(id);
+  }
+
+  async function handleRosterChange(names: string[]) {
+    setActionError(null);
+    return roomActions.setRoster(names);
   }
 
   if (!snapshot) {
@@ -109,38 +110,20 @@ export default function LobbyPage() {
       />
 
       {(notice?.type === 'join_error' || actionError) && (
-        <div className="rounded-lg border border-crimson/50 bg-crimson/10 px-4 py-2 text-sm text-crimson">
+        <div className="rounded-lg border border-crimson/50 bg-crimson/20 px-4 py-2 text-sm text-parchment">
           {actionError ?? notice?.message}
         </div>
       )}
 
-      {/* Seat picker — choose who you are (claim a seat or spectate). */}
       <SeatPicker
-        members={snapshot.members}
-        myPlayerId={myPlayerId}
-        onClaim={handleClaim}
-        onSpectate={handleSpectate}
-      />
-
-      {/* If seated, allow renaming yourself. */}
-      {myPlayerId && (
-        <div className="flex items-center justify-between rounded-lg border border-gold/15 bg-ink/30 px-4 py-2">
-          <span className="text-sm text-parchment/70">
-            {t('lobby.youAre')} <span className="text-gold">{myName ?? '…'}</span>
-          </span>
-          <NameEditor code={code} currentName={myName ?? ''} />
-        </div>
-      )}
-
-      {/* Host: edit the roster. */}
-      {isHost && <RosterEditor members={snapshot.members} />}
-
-      <PlayerList
         members={snapshot.members}
         hostPlayerId={snapshot.hostPlayerId}
         myPlayerId={myPlayerId}
         isHost={isHost}
-        onKick={(id) => handleAction(() => roomActions.kick(id))}
+        onClaim={handleClaim}
+        onStand={handleStand}
+        onKick={handleKick}
+        onRosterChange={handleRosterChange}
       />
 
       <ConfigPanel

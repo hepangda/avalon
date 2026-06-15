@@ -92,7 +92,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
             </div>
 
             {error && (
-              <div className="rounded-lg border border-crimson/50 bg-crimson/10 px-3 py-2 text-sm text-crimson">
+              <div className="rounded-lg border border-crimson/50 bg-crimson/20 px-3 py-2 text-sm text-parchment">
                 {error}
               </div>
             )}
@@ -131,7 +131,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
                         <button
                           disabled={busy}
                           onClick={() => void run(() => adminActions.unbind(p.id))}
-                          className="rounded px-2 py-0.5 text-xs text-crimson hover:bg-crimson/10 disabled:opacity-50"
+                          className="rounded px-2 py-0.5 text-xs text-crimson hover:bg-crimson/30 hover:text-parchment disabled:opacity-50"
                         >
                           {t('admin.unbindBtn')}
                         </button>
