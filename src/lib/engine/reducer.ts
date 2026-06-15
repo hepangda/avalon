@@ -377,6 +377,30 @@ function castVote(s: GameState, by: PlayerId, value: VoteValue, admin = false): 
 }
 
 // ---------------------------------------------------------------------------
+// RETRACT_VOTES (referee) → clear all votes, stay in Voting
+// ---------------------------------------------------------------------------
+
+function retractVotes(s: GameState): EngineResult {
+  if (s.phase !== 'Voting') return err('WRONG_PHASE', 'Not in Voting');
+  const next = clone(s);
+  next.votes = {};
+  return ok(next);
+}
+
+// ---------------------------------------------------------------------------
+// RETRACT_PROPOSAL (referee) → back to TeamBuilding, same leader re-proposes
+// ---------------------------------------------------------------------------
+
+function retractProposal(s: GameState): EngineResult {
+  if (s.phase !== 'Voting') return err('WRONG_PHASE', 'Not in Voting');
+  const next = clone(s);
+  next.proposedTeam = null;
+  next.votes = {};
+  next.phase = 'TeamBuilding';
+  return ok(next);
+}
+
+// ---------------------------------------------------------------------------
 // CAST_MISSION_CARD → (all in) MissionResult → route
 // ---------------------------------------------------------------------------
 
@@ -599,6 +623,10 @@ function dispatch(state: GameState, event: GameEvent): EngineResult {
       return proposeTeam(state, event.by, event.team, event.admin ?? false);
     case 'CAST_VOTE':
       return castVote(state, event.by, event.value, event.admin ?? false);
+    case 'RETRACT_VOTES':
+      return retractVotes(state);
+    case 'RETRACT_PROPOSAL':
+      return retractProposal(state);
     case 'CAST_MISSION_CARD':
       return castMissionCard(state, event.by, event.card);
     case 'USE_LADY':

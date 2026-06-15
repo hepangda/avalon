@@ -459,6 +459,30 @@ export function registerHandlers(io: AvalonServer, socket: AvalonSocket): void {
     return ack(ok());
   });
 
+  socket.on('admin:retractVotes', async (_p, ack) => {
+    const room = currentRoom(socket);
+    if (!room) return ack(fail('NOT_IN_ROOM', 'Not in a room'));
+    if (!isAdminSocket(socket)) return ack(fail('NOT_ADMIN', 'Referee panel not enabled'));
+    if (!room.game) return ack(fail('NO_GAME', 'No game in progress'));
+
+    const res = await applyEvent(io, room, { type: 'RETRACT_VOTES' });
+    if (!res.ok) return ack(fail(res.code, res.message));
+    pushAdminLog(io, room, 'admin.votesRetracted', { actor: adminActorName(room, socket) });
+    return ack(ok());
+  });
+
+  socket.on('admin:retractProposal', async (_p, ack) => {
+    const room = currentRoom(socket);
+    if (!room) return ack(fail('NOT_IN_ROOM', 'Not in a room'));
+    if (!isAdminSocket(socket)) return ack(fail('NOT_ADMIN', 'Referee panel not enabled'));
+    if (!room.game) return ack(fail('NO_GAME', 'No game in progress'));
+
+    const res = await applyEvent(io, room, { type: 'RETRACT_PROPOSAL' });
+    if (!res.ok) return ack(fail(res.code, res.message));
+    pushAdminLog(io, room, 'admin.proposalRetracted', { actor: adminActorName(room, socket) });
+    return ack(ok());
+  });
+
   // -------------------------------------------------------------------------
   // room:leave / disconnect.
   // -------------------------------------------------------------------------

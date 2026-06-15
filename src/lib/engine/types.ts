@@ -203,6 +203,8 @@ export type GameEvent =
   | { type: 'ACK_ROLE'; by: PlayerId }
   | { type: 'PROPOSE_TEAM'; by: PlayerId; team: PlayerId[]; admin?: boolean }
   | { type: 'CAST_VOTE'; by: PlayerId; value: VoteValue; admin?: boolean }
+  | { type: 'RETRACT_VOTES' }
+  | { type: 'RETRACT_PROPOSAL' }
   | { type: 'CAST_MISSION_CARD'; by: PlayerId; card: MissionCard }
   | { type: 'USE_LADY'; by: PlayerId; target: PlayerId }
   | { type: 'ASSASSINATE'; by: PlayerId; target: PlayerId }

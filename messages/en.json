@@ -145,7 +145,10 @@
     "missionOf": "Mission {round} of 5",
     "spectating": "Spectating — you see only public information",
     "reconnecting": "reconnecting",
-    "confirmLeave": "Confirm leave & release seat"
+    "confirmLeave": "Confirm leave & release seat",
+    "functions": "Functions",
+    "refereeTools": "Referee tools",
+    "leaveSeat": "Leave & release seat"
   },
   "mission": {
     "track": "Quest track",
@@ -260,6 +263,7 @@
     "panelTitle": "War Log",
     "tabPublic": "Public",
     "tabPrivate": "Private",
+    "tabFunctions": "Functions",
     "empty": "No entries yet",
     "details": "Details",
     "gameStarted": "The game begins with {count} players",
@@ -296,7 +300,9 @@
       "panelClosed": "{actor} disabled referee mode",
       "unbound": "⚠ {actor} unbound {target} (the seat can now be re-claimed)",
       "votedFor": "⚠ {actor} voted {value} on behalf of {target}",
-      "proposedFor": "⚠ {actor} proposed the team on behalf of leader {leader}"
+      "proposedFor": "⚠ {actor} proposed the team on behalf of leader {leader}",
+      "votesRetracted": "⚠ {actor} retracted all votes for this proposal",
+      "proposalRetracted": "⚠ {actor} retracted the proposal — back to team building"
     },
     "tall": "Fill height",
     "exitTall": "Exit fill"
@@ -321,7 +327,13 @@
     "selectPlayer": "Select a player",
     "proposeTitle": "Propose for the leader",
     "proposeHint": "Pick {size} member(s) for the current leader",
-    "proposeBtn": "Propose ({picked}/{size})"
+    "proposeBtn": "Propose ({picked}/{size})",
+    "retractVotesTitle": "Retract votes",
+    "retractVotesHint": "Before the result is published, clear everyone's cast votes so they can vote again.",
+    "retractVotesBtn": "Retract all votes",
+    "retractProposalTitle": "Retract proposal",
+    "retractProposalHint": "Cancel this proposal and return to team building for the current leader to propose again.",
+    "retractProposalBtn": "Retract proposal"
   },
   "replay": {
     "title": "Battle Replay",
