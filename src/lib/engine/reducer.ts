@@ -13,6 +13,8 @@ import type {
   PlayerId,
   PlayerSlot,
   RevealedRole,
+  Role,
+  Team,
   VoteValue,
 } from './types';
 import { isValidPlayerCount } from './config';
@@ -101,6 +103,35 @@ function logRoundStart(s: GameState): void {
     proposal: String(s.rejectionCount + 1),
     leader: leaderId(s),
   });
+}
+
+/** Canonical display order for roles in the lineup announcement. */
+const LINEUP_ROLE_ORDER: Role[] = [
+  'Merlin',
+  'Percival',
+  'LoyalServant',
+  'Morgana',
+  'Mordred',
+  'Oberon',
+  'Assassin',
+  'Minion',
+];
+
+/**
+ * Encode a team's role multiset as a compact, locale-neutral string for a log
+ * param, e.g. "Merlin,Percival,LoyalServant*3". The client decodes it and
+ * localizes each role name (the engine has no locale). Roles appear in
+ * canonical order; a count suffix is added only when >1.
+ */
+function encodeLineup(roles: Role[], team: Team): string {
+  const counts = new Map<Role, number>();
+  for (const r of roles) {
+    if (teamOf(r) !== team) continue;
+    counts.set(r, (counts.get(r) ?? 0) + 1);
+  }
+  return LINEUP_ROLE_ORDER.filter((r) => counts.has(r))
+    .map((r) => (counts.get(r)! > 1 ? `${r}*${counts.get(r)}` : r))
+    .join(',');
 }
 
 
@@ -208,8 +239,12 @@ function startGame(s: GameState, by: PlayerId): EngineResult {
   next.roleAcks = [];
   next.proposedTeam = null;
 
-  // Logs: public game start; per-player private role + perception.
+  // Logs: public game start + lineup; per-player private role + perception.
   pushPublic(next, 'gameStarted', { count: String(next.players.length) });
+  pushPublic(next, 'lineup', {
+    good: encodeLineup(next.config.roles, 'good'),
+    evil: encodeLineup(next.config.roles, 'evil'),
+  });
   for (const p of next.players) {
     pushPrivate(next, p.id, 'yourRole', { role: p.role });
     const known = computeKnownPlayers({ id: p.id, role: p.role }, next.players);

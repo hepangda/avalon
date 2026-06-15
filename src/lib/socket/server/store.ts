@@ -1,6 +1,5 @@
 import { customAlphabet } from 'nanoid';
 import type { PlayerId } from '@/lib/engine';
-import { randomName } from '@/lib/game/names';
 import type { RoomConfig, RoomMember, RoomRuntime, RoomSnapshot } from '../types';
 
 // Room codes: 6 uppercase letters/digits, unambiguous (no 0/O/1/I).
@@ -11,7 +10,7 @@ const makePlayerId = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 16);
 export const DEFAULT_ROOM_CONFIG: RoomConfig = {
   maxPlayers: 10,
   allowSpectators: true,
-  allowMidJoin: false,
+  allowMidJoin: true,
   options: {
     oberon: false,
     mordred: false,
@@ -105,25 +104,6 @@ export class GameStore {
       if (m.name.toLowerCase() === lower) return true;
     }
     return false;
-  }
-
-  /**
-   * Produce a unique name for the room. Starts from `desired` (or a random
-   * name if blank/taken), appending " 2", " 3"… until free.
-   */
-  uniqueName(room: RoomRuntime, desired: string, exceptPlayerId?: string): string {
-    let base = this.sanitizeName(desired);
-    if (!base) base = randomName();
-    if (!this.isNameTaken(room, base, exceptPlayerId)) return base;
-    // Try a few random names first (nicer than "Name 2"), then fall back to
-    // numeric suffixes which are guaranteed to terminate.
-    for (let i = 0; i < 5; i++) {
-      const candidate = randomName();
-      if (!this.isNameTaken(room, candidate, exceptPlayerId)) return candidate;
-    }
-    let n = 2;
-    while (this.isNameTaken(room, `${base} ${n}`, exceptPlayerId)) n++;
-    return `${base} ${n}`;
   }
 }
 

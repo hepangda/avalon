@@ -1,0 +1,50 @@
+name: avalon-online
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: avalon-online:latest
+    container_name: avalon-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-avalon}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-avalon}?schema=public
+      DIRECT_URL: postgresql://${POSTGRES_USER:-avalon}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-avalon}?schema=public
+    ports:
+      - "${APP_PORT:-8001}:3000"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: avalon-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-avalon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-avalon}
+    volumes:
+      - avalon_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-avalon} -d ${POSTGRES_DB:-avalon}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  avalon_pgdata:

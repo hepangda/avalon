@@ -42,10 +42,6 @@ export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPan
     onChange({ ...config, options: recommendedOptions(count) });
   }
 
-  function setPolicy<K extends keyof RoomConfig>(key: K, value: RoomConfig[K]) {
-    onChange({ ...config, [key]: value });
-  }
-
   return (
     <Card className="space-y-4">
       <div className="flex items-baseline justify-between">
@@ -100,22 +96,6 @@ export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPan
           description={t('lobby.descLady')}
           checked={config.options.ladyOfTheLake}
           onChange={(v) => setOption('ladyOfTheLake', v)}
-          disabled={!isHost}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <p className="text-xs uppercase tracking-wide text-parchment/50">{t('lobby.roomPolicy')}</p>
-        <Toggle
-          label={t('lobby.allowSpectators')}
-          checked={config.allowSpectators}
-          onChange={(v) => setPolicy('allowSpectators', v)}
-          disabled={!isHost}
-        />
-        <Toggle
-          label={t('lobby.allowMidJoin')}
-          checked={config.allowMidJoin}
-          onChange={(v) => setPolicy('allowMidJoin', v)}
           disabled={!isHost}
         />
       </div>

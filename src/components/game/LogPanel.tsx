@@ -57,9 +57,23 @@ export function LogPanel({ game }: { game: ClientGameState }) {
   function render(entry: ClientLogEntry): string {
     const resolved: Record<string, string | number> = {};
     const isAdmin = entry.style === 'admin';
+    // Lineup entries carry encoded role lists ("Merlin,LoyalServant*3") in the
+    // good/evil params; decode each into localized role names joined for display.
+    const decodeLineup = (encoded: string): string =>
+      encoded
+        .split(',')
+        .filter(Boolean)
+        .map((tok) => {
+          const [role, n] = tok.split('*');
+          const name = roleText.name(role as Role);
+          return n ? `${name} ×${n}` : name;
+        })
+        .join('、');
     if (entry.params) {
       for (const [k, v] of Object.entries(entry.params)) {
-        if (isAdmin && k === 'actor' && v === '__admin_someone__') {
+        if (entry.key === 'lineup' && (k === 'good' || k === 'evil') && typeof v === 'string') {
+          resolved[k] = decodeLineup(v);
+        } else if (isAdmin && k === 'actor' && v === '__admin_someone__') {
           // Admin operator who holds no seat → localized "someone".
           resolved[k] = t('admin.someone');
         } else if (isAdmin && k === 'value' && (v === 'approve' || v === 'reject')) {

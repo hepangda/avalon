@@ -31,7 +31,7 @@ export default function HomePage() {
 
   async function handleCreate() {
     // Blank seats become "玩家 X" / "Player X" (1-based seat number).
-    const names = roster.map((n, i) => n.trim() || t('lobby.defaultSeatName', { n: i + 1 }));
+    const names = roster.map((n, i) => n.trim() || t('home.defaultSeatName', { n: i + 1 }));
     setBusy(true);
     setError(null);
     try {
