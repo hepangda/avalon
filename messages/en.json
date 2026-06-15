@@ -54,7 +54,11 @@
     "descMorgana": "Appears as Merlin to Percival",
     "descMordred": "Hidden from Merlin",
     "descOberon": "Evil, but unknown to other evil players",
-    "descLady": "Inspect a player's alignment after missions 2–4"
+    "descLady": "Inspect a player's alignment after missions 2–4",
+    "token": "Token",
+    "missionPattern": "Mission pattern",
+    "missionNumber": "Mission {n}",
+    "failCardsRequired": "{count} fails"
   },
   "roles": {
     "Merlin": {
@@ -102,7 +106,18 @@
     "spectate": "Watch as a spectator",
     "leaveSeatSpectate": "Leave seat & spectate",
     "editRoster": "Edit roster",
-    "claimToJoin": "Claim an empty seat to join the game"
+    "claimToJoin": "Claim an empty seat to join the game",
+    "sitTitle": "Take a seat",
+    "sitDown": "Sit",
+    "standUp": "Stand",
+    "askStandUp": "Ask to leave",
+    "empty": "Empty seat",
+    "online": "Online",
+    "offline": "Offline",
+    "removeClaimedFirst": "This seat is occupied. Ask the player to stand first.",
+    "editSeats": "Edit seats",
+    "doneEditing": "Exit edit",
+    "spectatorSitHint": "Spectating. Choose an empty seat to sit down."
   },
   "roleReveal": {
     "title": "Your Secret Role",
@@ -134,8 +149,6 @@
   },
   "mission": {
     "track": "Quest track",
-    "needsTwoFails": "needs 2 fails",
-    "protectionRound": "🛡 Mission 4 is a “two-fail” quest: needs 2 fail cards to fail",
     "history": "Battle Log",
     "tapForHistory": "Tap a quest to see its details",
     "noHistory": "No record yet this round",
@@ -175,7 +188,7 @@
   },
   "missionVote": {
     "title": "The Quest Unfolds",
-    "twoFailsNeeded": "two fails needed to spoil it",
+    "twoFailsNeeded": "2x",
     "oneFailSpoils": "one fail spoils it",
     "success": "Success",
     "fail": "Fail",
@@ -249,10 +262,6 @@
     "tabPrivate": "Private",
     "empty": "No entries yet",
     "details": "Details",
-    "fullscreen": "Fullscreen",
-    "exitFullscreen": "Exit fullscreen",
-    "collapse": "Collapse",
-    "expand": "Expand",
     "gameStarted": "The game begins with {count} players",
     "lineup": "Lineup — Good: {good}; Evil: {evil}",
     "roundBegins": "Mission {round} begins",
@@ -288,7 +297,9 @@
       "unbound": "⚠ {actor} unbound {target} (the seat can now be re-claimed)",
       "votedFor": "⚠ {actor} voted {value} on behalf of {target}",
       "proposedFor": "⚠ {actor} proposed the team on behalf of leader {leader}"
-    }
+    },
+    "tall": "Fill height",
+    "exitTall": "Exit fill"
   },
   "proposal": {
     "label": "Proposal",

@@ -54,7 +54,7 @@ function RoundCard({
         {played && (
           <span
             className={`rounded-full px-2 py-0.5 text-xs ${
-              round.missionSuccess ? 'bg-sky-600/40 text-sky-200' : 'bg-crimson/40 text-crimson'
+              round.missionSuccess ? 'bg-sky-600/40 text-sky-200' : 'bg-crimson/50 text-parchment'
             }`}
           >
             {round.missionSuccess ? t('replay.missionSuccess') : t('replay.missionFail')}
@@ -98,7 +98,7 @@ function RoundCard({
             <span
               key={c.playerId}
               className={`rounded px-1.5 py-0.5 text-xs ${
-                c.card === 'fail' ? 'bg-crimson/30 text-crimson' : 'bg-sky-600/30 text-sky-200'
+                c.card === 'fail' ? 'bg-crimson/45 text-parchment' : 'bg-sky-600/30 text-sky-200'
               }`}
             >
               {nameOf(c.playerId)}: {c.card === 'fail' ? t('replay.playedFail') : t('replay.playedSuccess')}

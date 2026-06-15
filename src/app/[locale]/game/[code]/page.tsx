@@ -161,7 +161,7 @@ export default function GamePage() {
         {confirmLeave && (
           <button
             onClick={handleLeave}
-            className="rounded-full border border-crimson/60 bg-crimson/20 px-3 py-1.5 text-xs font-semibold text-crimson shadow-candle backdrop-blur hover:bg-crimson/30"
+            className="rounded-full border border-crimson/60 bg-crimson/40 px-3 py-1.5 text-xs font-semibold text-parchment shadow-candle backdrop-blur hover:bg-crimson/30"
           >
             {t('game.confirmLeave')}
           </button>

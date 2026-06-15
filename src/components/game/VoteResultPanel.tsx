@@ -4,11 +4,6 @@ import { useTranslations } from 'next-intl';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, ClientVoteRecord } from '@/lib/engine';
 
-/**
- * Renders one completed proposal's votes: the tally, the team, and each
- * player's approve/reject. Reused by the post-vote reveal and the round-history
- * popover.
- */
 export function VoteResultPanel({
   record,
   game,
@@ -18,8 +13,6 @@ export function VoteResultPanel({
   record: ClientVoteRecord;
   game: ClientGameState;
   compact?: boolean;
-  /** Show the "Proposal N" prefix (history view); omit it in the war log where
-   *  the surrounding log line already states the proposal number. */
   showProposalLabel?: boolean;
 }) {
   const t = useTranslations();
@@ -29,7 +22,6 @@ export function VoteResultPanel({
 
   return (
     <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
-      {/* Proposer + result + tally. */}
       <div className="flex items-center justify-between gap-2">
         <span className="min-w-0 truncate text-xs text-parchment/70">
           {showProposalLabel && (
@@ -41,7 +33,7 @@ export function VoteResultPanel({
         </span>
         <span
           className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-            record.approved ? 'bg-sky-600/40 text-sky-200' : 'bg-crimson/40 text-crimson'
+            record.approved ? 'bg-sky-600/40 text-sky-200' : 'bg-crimson/50 text-parchment'
           }`}
         >
           {record.approved ? t('vote.approved') : t('vote.rejectedResult')} ·{' '}
@@ -49,7 +41,6 @@ export function VoteResultPanel({
         </span>
       </div>
 
-      {/* Team members. */}
       {record.team.length > 0 && (
         <div className="flex flex-wrap items-baseline gap-1">
           <span className="text-xs text-parchment/50">{t('vote.teamLabel')}：</span>
@@ -64,7 +55,6 @@ export function VoteResultPanel({
         </div>
       )}
 
-      {/* Per-player vote detail. */}
       <div>
         <p className="mb-1 text-xs text-parchment/50">{t('vote.votesDetail')}</p>
         <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">

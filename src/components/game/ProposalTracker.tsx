@@ -29,7 +29,7 @@ export function ProposalTracker({ game }: { game: ClientGameState }) {
                 isRejected
                   ? 'border-crimson bg-crimson/70 text-parchment'
                   : isCurrent
-                    ? 'animate-pulse border-gold bg-gold/30 text-gold'
+                    ? 'border-gold bg-gold/30 text-gold'
                     : isHammer
                       ? 'border-crimson/50 bg-ink/40 text-crimson/70'
                       : 'border-gold/30 bg-ink/30 text-parchment/40'

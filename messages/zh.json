@@ -1,9 +1,9 @@
 {
   "common": {
     "appName": "阿瓦隆",
-    "tagline": "抵抗组织 · 召集你的宫廷，揪出潜藏的叛徒",
-    "loading": "正在进入大厅…",
-    "reconnecting": "正在重连…",
+    "tagline": "开个房间，拉朋友来一局",
+    "loading": "正在进入房间...",
+    "reconnecting": "正在重连...",
     "you": "你",
     "cancel": "取消",
     "save": "保存",
@@ -12,9 +12,9 @@
   },
   "home": {
     "createRoom": "创建房间",
-    "creating": "创建中…",
-    "or": "或加入",
-    "roomCode": "房间码",
+    "creating": "正在创建...",
+    "or": "已有房间？",
+    "roomCode": "输入房间码",
     "join": "加入",
     "rosterLabel": "玩家名册",
     "seatPlaceholder": "第 {n} 位玩家",
@@ -22,9 +22,9 @@
     "removeSeat": "移除",
     "rosterHint": "预先排好所有人的名字；留空将自动命名为「玩家 X」。可在房间页继续调整。",
     "defaultSeatName": "玩家 {n}",
-    "errInvalidCode": "请输入有效的房间码",
-    "errCreateFailed": "创建房间失败",
-    "errUnreachable": "无法连接到服务器"
+    "errInvalidCode": "房间码不对",
+    "errCreateFailed": "房间创建失败，请再试一次",
+    "errUnreachable": "连不上服务器，请稍后再试"
   },
   "lobby": {
     "roomCode": "房间码",
@@ -34,7 +34,7 @@
     "changeName": "修改名字",
     "nameEmpty": "名字不能为空",
     "players": "玩家",
-    "seated": "{count} 人就座",
+    "seated": "{count} 人已就坐",
     "host": "房主",
     "kick": "踢出",
     "spectators": "观战者",
@@ -54,17 +54,45 @@
     "descMorgana": "在派西维尔眼中显现为梅林",
     "descMordred": "对梅林隐身",
     "descOberon": "邪恶，但不为其他坏人所知",
-    "descLady": "在第 2–4 个任务后审视一名玩家的阵营"
+    "descLady": "在第 2–4 个任务后审视一名玩家的阵营",
+    "token": "标记",
+    "missionPattern": "任务版型",
+    "missionNumber": "任务 {n}",
+    "failCardsRequired": "{count} 失败"
   },
   "roles": {
-    "Merlin": { "name": "梅林", "blurb": "你知晓所有邪恶的仆从——但若暴露身份，刺客将取你性命。" },
-    "Percival": { "name": "派西维尔", "blurb": "你能看到梅林与莫甘娜，却无法分辨谁是谁。" },
-    "LoyalServant": { "name": "亚瑟的忠臣", "blurb": "你以纯洁之心侍奉王国，没有任何隐秘的情报。" },
-    "Morgana": { "name": "莫甘娜", "blurb": "在派西维尔眼中你显现为梅林，在好人之间播下疑云。" },
-    "Assassin": { "name": "刺客", "blurb": "即使邪恶在任务中落败，你仍可通过刺杀梅林获胜。" },
-    "Oberon": { "name": "奥伯伦", "blurb": "你是邪恶的一员，却不为同伴所知，也不知晓他们。" },
-    "Mordred": { "name": "莫德雷德", "blurb": "你连梅林都无法看见。邪恶最深的秘密。" },
-    "Minion": { "name": "莫德雷德的爪牙", "blurb": "你知晓你的邪恶同伙。破坏每一次征程。" }
+    "Merlin": {
+      "name": "梅林",
+      "blurb": "你知晓所有邪恶的仆从——但若暴露身份，刺客将取你性命。"
+    },
+    "Percival": {
+      "name": "派西维尔",
+      "blurb": "你能看到梅林与莫甘娜，却无法分辨谁是谁。"
+    },
+    "LoyalServant": {
+      "name": "亚瑟的忠臣",
+      "blurb": "你以纯洁之心侍奉王国，没有任何隐秘的情报。"
+    },
+    "Morgana": {
+      "name": "莫甘娜",
+      "blurb": "在派西维尔眼中你显现为梅林，在好人之间播下疑云。"
+    },
+    "Assassin": {
+      "name": "刺客",
+      "blurb": "即使邪恶在任务中落败，你仍可通过刺杀梅林获胜。"
+    },
+    "Oberon": {
+      "name": "奥伯伦",
+      "blurb": "你是邪恶的一员，却不为同伴所知，也不知晓他们。"
+    },
+    "Mordred": {
+      "name": "莫德雷德",
+      "blurb": "你连梅林都无法看见。邪恶最深的秘密。"
+    },
+    "Minion": {
+      "name": "莫德雷德的爪牙",
+      "blurb": "你知晓你的邪恶同伙。破坏每一次征程。"
+    }
   },
   "team": {
     "goodLabel": "效忠亚瑟",
@@ -78,7 +106,18 @@
     "spectate": "以旁观者身份观战",
     "leaveSeatSpectate": "离开座位改为旁观",
     "editRoster": "编辑名册",
-    "claimToJoin": "认领一个空座位加入游戏"
+    "claimToJoin": "认领一个空座位加入游戏",
+    "sitTitle": "就坐",
+    "sitDown": "坐下",
+    "standUp": "起立",
+    "askStandUp": "请离",
+    "empty": "空位",
+    "online": "在线",
+    "offline": "离线",
+    "removeClaimedFirst": "这个座位已经有人了，请先让 TA 起立",
+    "editSeats": "编辑座位",
+    "doneEditing": "退出编辑",
+    "spectatorSitHint": "旁观中，选择一个空位坐下"
   },
   "roleReveal": {
     "title": "你的秘密身份",
@@ -110,8 +149,6 @@
   },
   "mission": {
     "track": "任务进度",
-    "needsTwoFails": "需要两张失败票",
-    "protectionRound": "🛡 第 4 任务为「双失败保护轮」：需 2 张失败票才会失败",
     "history": "战况回顾",
     "tapForHistory": "点击任务查看该轮详情",
     "noHistory": "本轮暂无记录",
@@ -151,7 +188,7 @@
   },
   "missionVote": {
     "title": "征程展开",
-    "twoFailsNeeded": "需要两张失败票才能破坏",
+    "twoFailsNeeded": "2x",
     "oneFailSpoils": "一张失败票即可破坏",
     "success": "成功",
     "fail": "失败",
@@ -225,10 +262,6 @@
     "tabPrivate": "私密",
     "empty": "暂无记录",
     "details": "详情",
-    "fullscreen": "全屏",
-    "exitFullscreen": "退出全屏",
-    "collapse": "收起",
-    "expand": "展开",
     "gameStarted": "游戏开始，共 {count} 名玩家",
     "lineup": "本局阵容 — 好人：{good}；坏人：{evil}",
     "roundBegins": "第 {round} 个任务开始",
@@ -264,7 +297,9 @@
       "unbound": "⚠ {actor} 解绑了 {target}（该座位现可重新认领）",
       "votedFor": "⚠ {actor} 代 {target} 投了 {value}",
       "proposedFor": "⚠ {actor} 代队长 {leader} 进行了提名"
-    }
+    },
+    "tall": "占满高度",
+    "exitTall": "退出占满"
   },
   "proposal": {
     "label": "提名",
