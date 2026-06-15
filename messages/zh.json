@@ -145,7 +145,10 @@
     "missionOf": "第 {round} 个任务 / 共 5 个",
     "spectating": "观战中——你只能看到公开信息",
     "reconnecting": "正在重连",
-    "confirmLeave": "确认退出并解绑座位"
+    "confirmLeave": "确认退出并解绑座位",
+    "functions": "功能",
+    "refereeTools": "裁判功能",
+    "leaveSeat": "退出并离开座位"
   },
   "mission": {
     "track": "任务进度",
@@ -260,6 +263,7 @@
     "panelTitle": "战报",
     "tabPublic": "公开",
     "tabPrivate": "私密",
+    "tabFunctions": "功能",
     "empty": "暂无记录",
     "details": "详情",
     "gameStarted": "游戏开始，共 {count} 名玩家",
@@ -296,7 +300,9 @@
       "panelClosed": "{actor} 关闭了裁判功能",
       "unbound": "⚠ {actor} 解绑了 {target}（该座位现可重新认领）",
       "votedFor": "⚠ {actor} 代 {target} 投了 {value}",
-      "proposedFor": "⚠ {actor} 代队长 {leader} 进行了提名"
+      "proposedFor": "⚠ {actor} 代队长 {leader} 进行了提名",
+      "votesRetracted": "⚠ {actor} 撤回了本次提名的所有投票",
+      "proposalRetracted": "⚠ {actor} 撤回了本次提名，重新进入组队阶段"
     },
     "tall": "占满高度",
     "exitTall": "退出占满"
@@ -321,7 +327,13 @@
     "selectPlayer": "选择一名玩家",
     "proposeTitle": "代替队长提名",
     "proposeHint": "为当前队长选择 {size} 名队员",
-    "proposeBtn": "提名（{picked}/{size}）"
+    "proposeBtn": "提名（{picked}/{size}）",
+    "retractVotesTitle": "撤回投票",
+    "retractVotesHint": "在投票结果公布前，清空所有人已投的票，让大家重新投票。",
+    "retractVotesBtn": "撤回所有投票",
+    "retractProposalTitle": "撤回提名",
+    "retractProposalHint": "取消本次提名，回到组队阶段，由当前队长重新提名。",
+    "retractProposalBtn": "撤回提名"
   },
   "replay": {
     "title": "战局复盘",

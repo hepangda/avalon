@@ -3,8 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
-import { useRoomConnection, roomActions } from '@/lib/socket/client';
+import { useRoomConnection } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
 import { Card } from '@/components/ui/Card';
 import { PhaseTransition } from '@/components/animations';
@@ -23,7 +22,6 @@ import { MyIdentityButton } from '@/components/game/MyIdentityButton';
 import { InGameSeatClaim } from '@/components/game/InGameSeatClaim';
 import { ProposalTracker } from '@/components/game/ProposalTracker';
 import { LogPanel } from '@/components/game/LogPanel';
-import { AdminPanel } from '@/components/game/AdminPanel';
 import { useResultCue } from '@/lib/game/useResultCue';
 import { formatLatency, latencyTextClass } from '@/lib/utils/latency';
 import type { GamePhase } from '@/lib/engine';
@@ -32,7 +30,6 @@ export default function GamePage() {
   const t = useTranslations();
   const params = useParams<{ code: string }>();
   const code = (params.code ?? '').toUpperCase();
-  const router = useRouter();
 
   useRoomConnection(code);
 
@@ -44,18 +41,7 @@ export default function GamePage() {
   const selfLatency = useRoomStore((s) => s.selfLatency);
 
   const [historyRound, setHistoryRound] = useState<number | null>(null);
-  const [confirmLeave, setConfirmLeave] = useState(false);
   const { cue, dismiss } = useResultCue();
-
-  async function handleLeave() {
-    // Leaving frees (unbinds) our seat server-side; clear the local session so a
-    // later visit doesn't auto-rejoin it, then go home.
-    await roomActions.leave();
-    const { useSessionStore } = await import('@/lib/store/session');
-    useSessionStore.getState().setSession(code, { playerId: undefined });
-    useRoomStore.getState().reset();
-    router.push('/');
-  }
 
   if (!game) {
     return (
@@ -148,32 +134,7 @@ export default function GamePage() {
 
       {/* Log panel fills the remaining screen height. */}
       <div className="mx-auto flex w-full max-w-2xl min-h-0 flex-1 flex-col px-4 pb-4">
-        <LogPanel game={game} />
-      </div>
-
-      {/* Super-password (referee) panel — floating, available to anyone with the
-          password while a game is live. */}
-      <AdminPanel game={game} />
-
-      {/* Leave room — floating bottom-right, above the admin button. Leaving
-          frees (unbinds) this player's seat. Two-tap confirm to avoid misclicks. */}
-      <div className="fixed bottom-32 right-3 z-40 flex flex-col items-end gap-1">
-        {confirmLeave && (
-          <button
-            onClick={handleLeave}
-            className="rounded-full border border-crimson/60 bg-crimson/40 px-3 py-1.5 text-xs font-semibold text-parchment shadow-candle backdrop-blur hover:bg-crimson/30"
-          >
-            {t('game.confirmLeave')}
-          </button>
-        )}
-        <button
-          onClick={() => setConfirmLeave((c) => !c)}
-          aria-label={t('common.leave')}
-          title={t('common.leave')}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-gold/40 bg-ink/80 text-lg shadow-candle backdrop-blur hover:border-gold"
-        >
-          {confirmLeave ? '✕' : '🚪'}
-        </button>
+        <LogPanel game={game} code={code} />
       </div>
 
       <RoundHistoryModal

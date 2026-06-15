@@ -179,4 +179,8 @@ export const adminActions = {
       targetPlayerId,
       team,
     }),
+  retractVotes: () =>
+    emitWithAck<'admin:retractVotes', Record<string, never>, Ack>('admin:retractVotes', {}),
+  retractProposal: () =>
+    emitWithAck<'admin:retractProposal', Record<string, never>, Ack>('admin:retractProposal', {}),
 };

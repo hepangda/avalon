@@ -6,6 +6,7 @@ import { useRoleText } from '@/lib/game/useRoleText';
 import { seatLabel } from '@/lib/game/playerLabel';
 import { VoteResultPanel } from './VoteResultPanel';
 import { MissionCardReveal } from './MissionCardReveal';
+import { FunctionsPanel } from './FunctionsPanel';
 import type {
   ClientGameState,
   ClientLogEntry,
@@ -15,6 +16,7 @@ import type {
 } from '@/lib/engine';
 
 type Channel = 'public' | 'private';
+type Tab = Channel | 'functions';
 type Mode = 'inline' | 'tall';
 
 const PLAYER_PARAMS = ['player', 'leader', 'target', 'holder'];
@@ -28,11 +30,11 @@ function clock(at: number): string {
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-export function LogPanel({ game }: { game: ClientGameState }) {
+export function LogPanel({ game, code }: { game: ClientGameState; code: string }) {
   const t = useTranslations();
   const roleText = useRoleText();
   const [mode, setMode] = useState<Mode>('inline');
-  const [channel, setChannel] = useState<Channel>('public');
+  const [tab, setTab] = useState<Tab>('public');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const nameOf = (id: string) => {
@@ -90,74 +92,80 @@ export function LogPanel({ game }: { game: ClientGameState }) {
     return game.missionResults.find((m) => m.roundIndex === round);
   }
 
-  const entries = game.logs.filter((l) => l.channel === channel);
+  const entries = tab === 'functions' ? [] : game.logs.filter((l) => l.channel === tab);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [channel, entries.length]);
+  }, [tab, entries.length]);
 
   const body = (
     <>
       <div className="flex shrink-0 gap-1 border-b border-gold/15 px-3 pb-2">
-        {(['public', 'private'] as Channel[]).map((ch) => (
+        {(['public', 'private', 'functions'] as Tab[]).map((tb) => (
           <button
-            key={ch}
-            onClick={() => setChannel(ch)}
+            key={tb}
+            onClick={() => setTab(tb)}
             className={`rounded-full px-3 py-1 text-xs transition-colors ${
-              channel === ch
-                ? 'bg-gold/20 text-gold'
-                : 'text-parchment/50 hover:text-parchment'
+              tab === tb ? 'bg-gold/20 text-gold' : 'text-parchment/50 hover:text-parchment'
             }`}
           >
-            {ch === 'public' ? t('log.tabPublic') : t('log.tabPrivate')}
+            {tb === 'public'
+              ? t('log.tabPublic')
+              : tb === 'private'
+                ? t('log.tabPrivate')
+                : t('log.tabFunctions')}
           </button>
         ))}
       </div>
 
-      <div ref={scrollRef} className="flex-1 space-y-1.5 overflow-y-auto px-4 py-3">
-        {entries.length > 0 ? (
-          entries.map((entry) => {
-            const voteRec = voteRecordFor(entry);
-            const missionRec = missionResultFor(entry);
-            return (
-              <div key={entry.seq} className="text-sm leading-snug">
-                <div className="flex items-baseline gap-2">
-                  <span className="shrink-0 font-mono text-[11px] text-parchment/35">
-                    {clock(entry.at)}
-                  </span>
-                  <span
-                    className={
-                      entry.style === 'admin'
-                        ? 'font-semibold text-crimson'
-                        : 'text-parchment/85'
-                    }
-                  >
-                    {render(entry)}
-                  </span>
+      {tab === 'functions' ? (
+        <FunctionsPanel code={code} game={game} />
+      ) : (
+        <div ref={scrollRef} className="flex-1 space-y-1.5 overflow-y-auto px-4 py-3">
+          {entries.length > 0 ? (
+            entries.map((entry) => {
+              const voteRec = voteRecordFor(entry);
+              const missionRec = missionResultFor(entry);
+              return (
+                <div key={entry.seq} className="text-sm leading-snug">
+                  <div className="flex items-baseline gap-2">
+                    <span className="shrink-0 font-mono text-[11px] text-parchment/35">
+                      {clock(entry.at)}
+                    </span>
+                    <span
+                      className={
+                        entry.style === 'admin'
+                          ? 'font-semibold text-crimson'
+                          : 'text-parchment/85'
+                      }
+                    >
+                      {render(entry)}
+                    </span>
+                  </div>
+                  {voteRec && (
+                    <div className="ml-[3.2rem] mt-1.5 rounded-lg border border-gold/15 bg-ink/30 p-2.5">
+                      <VoteResultPanel record={voteRec} game={game} compact />
+                    </div>
+                  )}
+                  {missionRec && (
+                    <div className="ml-[3.2rem] mt-1.5 rounded-lg border border-gold/15 bg-ink/30 p-2.5">
+                      <MissionCardReveal
+                        teamSize={missionRec.teamSize}
+                        failCount={missionRec.failCount}
+                        instant
+                      />
+                    </div>
+                  )}
                 </div>
-                {voteRec && (
-                  <div className="ml-[3.2rem] mt-1.5 rounded-lg border border-gold/15 bg-ink/30 p-2.5">
-                    <VoteResultPanel record={voteRec} game={game} compact />
-                  </div>
-                )}
-                {missionRec && (
-                  <div className="ml-[3.2rem] mt-1.5 rounded-lg border border-gold/15 bg-ink/30 p-2.5">
-                    <MissionCardReveal
-                      teamSize={missionRec.teamSize}
-                      failCount={missionRec.failCount}
-                      instant
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })
-        ) : (
-          <p className="text-center text-sm text-parchment/40">{t('log.empty')}</p>
-        )}
-      </div>
+              );
+            })
+          ) : (
+            <p className="text-center text-sm text-parchment/40">{t('log.empty')}</p>
+          )}
+        </div>
+      )}
     </>
   );
 

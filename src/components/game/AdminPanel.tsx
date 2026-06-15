@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/Button';
 import { adminActions } from '@/lib/socket/client';
@@ -20,12 +21,22 @@ import type { ClientGameState } from '@/lib/engine';
  * Security: the operator never assumes a target's identity — all "act as"
  * actions are performed server-side, so no private role/vision leaks here.
  */
-export function AdminPanel({ game }: { game: ClientGameState }) {
+export function AdminPanel({
+  game,
+  open,
+  onClose,
+}: {
+  game: ClientGameState;
+  open: boolean;
+  onClose: () => void;
+}) {
   const t = useTranslations();
-  const [open, setOpen] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   // Act-as-player target selection.
   const [voteTarget, setVoteTarget] = useState('');
@@ -33,6 +44,11 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
 
   const players = game.players;
   const teamSize = game.config.missionSizes[game.roundIndex] ?? 0;
+
+  // Admin can only cast a vote for players who haven't voted yet.
+  const unvotedPlayers = players.filter(
+    (p) => !game.votes?.find((v) => v.playerId === p.id)?.hasVoted,
+  );
 
   async function handleAuth() {
     setError(null);
@@ -49,7 +65,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
   async function handleClose() {
     await adminActions.close();
     setAuthed(false);
-    setOpen(false);
+    onClose();
   }
 
   async function run(fn: () => Promise<{ ok: boolean; error?: { message: string } }>) {
@@ -66,24 +82,15 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
     );
   }
 
-  return (
-    <>
-      {/* Floating entry button. */}
-      <button
-        onClick={() => setOpen(true)}
-        aria-label={t('admin.title')}
-        className="fixed bottom-20 right-3 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-crimson/50 bg-ink/80 text-lg shadow-candle backdrop-blur hover:border-crimson"
-      >
-        🛠
-      </button>
+  if (!open || !mounted) return null;
 
-      {!open ? null : (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center">
-          <div className="w-full max-w-md space-y-4 rounded-xl border border-crimson/40 bg-ink-deep p-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg text-crimson">🛠 {t('admin.title')}</h2>
-              <button
-                onClick={() => setOpen(false)}
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center">
+      <div className="w-full max-w-md space-y-4 rounded-xl border border-crimson/40 bg-ink-deep p-4 shadow-xl">
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-lg text-crimson">🛠 {t('admin.title')}</h2>
+          <button
+            onClick={onClose}
                 className="text-parchment/50 hover:text-parchment"
                 aria-label={t('mission.close')}
               >
@@ -150,7 +157,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
                       className="w-full rounded-md border border-gold/30 bg-ink/50 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/70"
                     >
                       <option value="">{t('admin.selectPlayer')}</option>
-                      {players.map((p) => (
+                      {unvotedPlayers.map((p) => (
                         <option key={p.id} value={p.id}>
                           {seatLabel(p.seat, p.name)}
                         </option>
@@ -174,6 +181,41 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
                       </Button>
                     </div>
                   </section>
+                )}
+
+                {/* Retract votes / proposal (Voting phase only). */}
+                {game.phase === 'Voting' && (
+                  <>
+                    <section className="space-y-2">
+                      <h3 className="text-sm font-semibold text-gold">
+                        {t('admin.retractVotesTitle')}
+                      </h3>
+                      <p className="text-xs text-parchment/50">{t('admin.retractVotesHint')}</p>
+                      <Button
+                        variant="secondary"
+                        className="w-full"
+                        disabled={busy}
+                        onClick={() => void run(() => adminActions.retractVotes())}
+                      >
+                        {t('admin.retractVotesBtn')}
+                      </Button>
+                    </section>
+
+                    <section className="space-y-2">
+                      <h3 className="text-sm font-semibold text-gold">
+                        {t('admin.retractProposalTitle')}
+                      </h3>
+                      <p className="text-xs text-parchment/50">{t('admin.retractProposalHint')}</p>
+                      <Button
+                        variant="danger"
+                        className="w-full"
+                        disabled={busy}
+                        onClick={() => void run(() => adminActions.retractProposal())}
+                      >
+                        {t('admin.retractProposalBtn')}
+                      </Button>
+                    </section>
+                  </>
                 )}
 
                 {/* Propose the team for the leader (TeamBuilding only). */}
@@ -228,8 +270,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
               </div>
             )}
           </div>
-        </div>
-      )}
-    </>
+        </div>,
+    document.body,
   );
 }

@@ -137,6 +137,10 @@ export interface ClientToServerEvents {
   'admin:vote': (p: { targetPlayerId: PlayerId; value: VoteValue }, ack: (r: Ack) => void) => void;
   /** Propose the mission team on behalf of the current leader. Admin only. */
   'admin:propose': (p: { targetPlayerId: PlayerId; team: PlayerId[] }, ack: (r: Ack) => void) => void;
+  /** Clear all cast votes for the current proposal (before it resolves). Admin only. */
+  'admin:retractVotes': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  /** Cancel the current proposal and return to TeamBuilding for a re-proposal. Admin only. */
+  'admin:retractProposal': (p: Record<string, never>, ack: (r: Ack) => void) => void;
 }
 
 /** Events the server emits. */
