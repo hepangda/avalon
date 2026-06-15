@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: avalon-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: avalon
+      POSTGRES_PASSWORD: avalon
+      POSTGRES_DB: avalon
+    ports:
+      - '5432:5432'
+    volumes:
+      - avalon_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U avalon -d avalon']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  avalon_pgdata:
