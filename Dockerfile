@@ -4,16 +4,18 @@
 FROM node:22-slim AS base
 ENV PNPM_HOME="/pnpm"
 WORKDIR /app
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
+  && rm -rf /var/lib/apt/lists/* \
+  && npm install -g npm@11.6.2
 
 # ---- deps: install all dependencies (incl. dev, needed for build + tsx) ----
 FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN npm install -g npm@11.6.2
 RUN npm ci
 
 # ---- build: generate Prisma client + build Next ----
 FROM base AS build
-RUN npm install -g npm@11.6.2
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Prisma client must be generated before the Next build.
