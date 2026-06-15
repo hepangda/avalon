@@ -88,9 +88,9 @@ Fully destroy the deployment, including containers, network, database volume, an
 Useful operational commands:
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml ps
-docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f app
-docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f postgres
+set -a; . ./.env.prod; set +a; docker compose -f docker-compose.prod.yml ps
+set -a; . ./.env.prod; set +a; docker compose -f docker-compose.prod.yml logs -f app
+set -a; . ./.env.prod; set +a; docker compose -f docker-compose.prod.yml logs -f postgres
 ```
 
 To change the public port, edit `APP_PORT` in `.env.prod` and run `./scripts/prod-up.sh` again.
