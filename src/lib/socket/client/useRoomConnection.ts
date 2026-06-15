@@ -72,13 +72,24 @@ export function useRoomConnection(code: string | null) {
       useRoomStore.getState().setSelfLatency(null);
     }
 
+    function onNotice(n: { type: string; message?: string }) {
+      // Being kicked (host) or unbound (referee) frees our seat server-side; drop
+      // the local seat identity so the "who are you?" picker reloads to an
+      // unclaimed state instead of still highlighting our old seat.
+      if (n.type === 'kicked' || n.type === 'unbound') {
+        useRoomStore.getState().setMyPlayerId(null);
+        useSessionStore.getState().setSession(upperCode, { playerId: undefined });
+      }
+      store.setNotice(n);
+    }
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('room:snapshot', store.setSnapshot);
     socket.on('state:sync', store.setGame);
     socket.on('private:reveal', store.setReveal);
     socket.on('private:lady', store.setLadyResult);
-    socket.on('system:notice', store.setNotice);
+    socket.on('system:notice', onNotice);
 
     const pingTimer = setInterval(ping, 4000);
 
@@ -99,7 +110,7 @@ export function useRoomConnection(code: string | null) {
       socket.off('state:sync', store.setGame);
       socket.off('private:reveal', store.setReveal);
       socket.off('private:lady', store.setLadyResult);
-      socket.off('system:notice', store.setNotice);
+      socket.off('system:notice', onNotice);
     };
   }, [code]);
 }

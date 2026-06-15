@@ -46,7 +46,7 @@ export default function LobbyPage() {
   }, [snapshot?.status, code, router]);
 
   async function handleConfig(config: RoomConfig) {
-    if (snapshot) useRoomStore.getState().setSnapshot({ ...snapshot, config });
+    setActionError(null);
     const res = await roomActions.config(config);
     if (!res.ok && res.error) setActionError(res.error.message);
   }

@@ -572,8 +572,9 @@ async function applyRoster(
 function sanitizeConfig(config: RoomConfig, roster: string[]): RoomConfig {
   return {
     maxPlayers: Math.min(10, Math.max(5, Math.floor(config.maxPlayers))),
-    allowSpectators: Boolean(config.allowSpectators),
-    allowMidJoin: Boolean(config.allowMidJoin),
+    // Spectators and mid-join are always allowed (no longer host-configurable).
+    allowSpectators: true,
+    allowMidJoin: true,
     options: {
       oberon: Boolean(config.options?.oberon),
       mordred: Boolean(config.options?.mordred),
