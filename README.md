@@ -95,6 +95,87 @@ set -a; . ./.env.prod; set +a; docker compose -f docker-compose.prod.yml logs -f
 
 To change the public port, edit `APP_PORT` in `.env.prod` and run `./scripts/prod-up.sh` again.
 
+## Kubernetes deployment
+
+This project also includes plain Kubernetes manifests in `k8s/`. They deploy one app Pod, one Postgres StatefulSet, internal Services, and an Istio Gateway/VirtualService for `avalon.pangda.app`.
+
+Important: game room state is currently stored in memory inside a single Node.js process, so keep the app at `replicas: 1`. Scaling to multiple app Pods requires externalizing room state or adding routing that always sends a room to the same process.
+
+Prerequisites:
+
+```bash
+kubectl version --client
+docker buildx version
+```
+
+The cluster should have Istio installed with an ingress gateway whose labels include `istio: ingressgateway`. Point the DNS record for `avalon.pangda.app` at that ingress gateway's external address.
+
+Build and push the production image:
+
+```bash
+docker build -t YOUR_REGISTRY/avalon-online:latest .
+docker push YOUR_REGISTRY/avalon-online:latest
+```
+
+Point the deployment at that image:
+
+```bash
+kubectl kustomize k8s | sed 's#avalon-online:latest#YOUR_REGISTRY/avalon-online:latest#' | kubectl apply -f -
+```
+
+Before production use, change `POSTGRES_PASSWORD`, `DATABASE_URL`, and `DIRECT_URL` in `k8s/secret.yaml`. If you already use a managed Postgres database, replace those two URLs with the managed database connection string and skip `k8s/postgres.yaml` in `k8s/kustomization.yaml`.
+
+For a local cluster, load the image into the cluster instead of pushing it:
+
+```bash
+docker build -t avalon-online:latest .
+minikube image load avalon-online:latest
+# or, for Kind:
+kind load docker-image avalon-online:latest
+kubectl apply -k k8s
+```
+
+After deployment, open:
+
+```text
+http://avalon.pangda.app
+```
+
+To find the Istio ingress address:
+
+```bash
+kubectl -n istio-system get svc istio-ingressgateway
+```
+
+For any cluster, you can also test the app Service directly through port-forwarding:
+
+```bash
+kubectl -n avalon port-forward svc/avalon-app 8001:3000
+```
+
+Then open:
+
+```text
+http://localhost:8001
+```
+
+Istio Gateway and VirtualService resources are defined in `k8s/ingress.yaml`. Socket.IO uses normal HTTP/WebSocket upgrade traffic, which Istio passes through the HTTP route.
+
+Useful operational commands:
+
+```bash
+kubectl -n avalon get pods,svc,gateway,virtualservice
+kubectl -n istio-system get svc istio-ingressgateway
+kubectl -n avalon logs deploy/avalon-app -f
+kubectl -n avalon logs statefulset/postgres -f
+```
+
+Remove the Kubernetes deployment:
+
+```bash
+kubectl delete -k k8s
+```
+
 ## Render deployment
 
 1. Push this repo to GitHub.
