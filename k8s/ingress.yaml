@@ -1,0 +1,39 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: avalon-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - avalon.pangda.app
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - avalon.pangda.app
+      tls:
+        mode: SIMPLE
+        credentialName: avalon-tls
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: avalon-app
+spec:
+  hosts:
+    - avalon.pangda.app
+  gateways:
+    - avalon-gateway
+  http:
+    - route:
+        - destination:
+            host: avalon-app
+            port:
+              number: 3000
