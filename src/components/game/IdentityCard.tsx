@@ -10,20 +10,11 @@ import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, VisibilityInfo } from '@/lib/engine';
 
 /**
- * A persistent "My Role" button + modal so players can re-check their secret
- * identity and what they perceive at any time during the game. Reads from the
- * always-present game.selfRole / game.knownPlayers (reliable across reconnects),
- * not the one-shot reveal event.
- *
- * The fullscreen overlay is rendered through a portal to document.body so it
- * escapes any ancestor that creates a containing block for position:fixed
- * (e.g. the header Card uses backdrop-blur, which would otherwise trap it).
+ * The viewer's identity hole-card, for the hand. Shown face-down (crest); a tap
+ * opens the full modal with the role, blurb and what you perceive about others
+ * (reads from game.selfRole / game.knownPlayers, reliable across reconnects).
  */
-export function MyIdentityButton({
-  game,
-}: {
-  game: ClientGameState;
-}) {
+export function IdentityCard({ game }: { game: ClientGameState }) {
   const t = useTranslations();
   const roleText = useRoleText();
   const [open, setOpen] = useState(false);
@@ -109,12 +100,24 @@ export function MyIdentityButton({
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-full border border-gold/40 bg-stone/70 px-3 py-1.5 text-xs text-parchment hover:border-gold/80 hover:shadow-candle"
+        title={t('identity.myRole')}
+        className="flex shrink-0 flex-col items-center gap-1"
       >
-        {t('identity.myRole')}
+        <span className="relative flex h-[4.6rem] w-[3.3rem] items-center justify-center rounded-lg border-2 border-gold/40 bg-gradient-to-br from-royal to-ink shadow-lg shadow-black/40 transition-shadow hover:shadow-candle">
+          <span className="absolute inset-1.5 rounded-md border border-gold/20" />
+          <span
+            className="text-2xl text-gold/85"
+            style={{ textShadow: '0 0 12px rgba(201,162,39,0.45)' }}
+          >
+            ⚜
+          </span>
+        </span>
+        <span className="text-[10px] text-parchment/55">{t('identity.myRole')}</span>
       </button>
       {mounted ? createPortal(overlay, document.body) : null}
     </>
   );
 }
+

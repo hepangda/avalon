@@ -169,6 +169,7 @@
     "rejectionWarning": "⚠ 再被否决 {n} 次，坏人将获胜",
     "proposeTeam": "提名此队伍",
     "chooseMore": "再选 {n} 名",
+    "retract": "撤回",
     "awaitingLeader": "等待队长的决定…"
   },
   "vote": {
@@ -213,6 +214,7 @@
     "watersReveal": "水面揭示出 {name} 的阵营为",
     "onlyYouSeen": "只有你看到了这一结果。征程继续…",
     "examine": "审视 {name}",
+    "examineShort": "审视",
     "selectPlayer": "选择一名玩家",
     "notYours": "湖中仙女的目光不由你指引。"
   },
@@ -221,6 +223,7 @@
     "goodPrevailed": "好人在任务中获胜——但若梅林倒下，邪恶仍将取胜。",
     "nameMerlin": "指认你认为是梅林的那个人。",
     "strikeDown": "刺杀 {name}",
+    "strike": "刺杀",
     "chooseTarget": "选择你的目标",
     "contemplating": "刺客正在思忖这命运攸关的抉择…"
   },
