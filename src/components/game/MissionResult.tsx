@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Card } from '@/components/ui/Card';
 import { VoteResultPanel } from './VoteResultPanel';
 import type { ClientGameState } from '@/lib/engine';
 
@@ -18,10 +17,10 @@ export function MissionResult({ game }: { game: ClientGameState }) {
     .at(-1);
 
   return (
-    <Card className="space-y-4 text-center">
-      <h2 className="font-serif text-xl text-gold">
+    <div className="space-y-4 text-center">
+      <h3 className="font-serif text-lg text-gold">
         {t('missionResult.resolved', { round: last.roundIndex + 1 })}
-      </h2>
+      </h3>
 
       <motion.div
         initial={{ scale: 0.5, opacity: 0, rotate: -8 }}
@@ -52,6 +51,6 @@ export function MissionResult({ game }: { game: ClientGameState }) {
       )}
 
       <p className="text-xs text-parchment/40">{t('missionResult.nextSoon')}</p>
-    </Card>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
-import type { CueKind } from '@/components/game/ResultOverlay';
+/** What kind of result a cue announces. */
+export type CueKind = 'voteApproved' | 'voteRejected' | 'missionSuccess' | 'missionFail';
 
 export interface CueCounts {
   votes: number;

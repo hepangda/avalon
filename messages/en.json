@@ -169,6 +169,7 @@
     "rejectionWarning": "⚠ {n} rejection(s) until evil wins",
     "proposeTeam": "Propose this team",
     "chooseMore": "Choose {n} more",
+    "retract": "Retract",
     "awaitingLeader": "Awaiting the leader's decision…"
   },
   "vote": {
@@ -213,6 +214,7 @@
     "watersReveal": "The waters reveal {name} to be",
     "onlyYouSeen": "Only you have seen this. The quest continues…",
     "examine": "Examine {name}",
+    "examineShort": "Examine",
     "selectPlayer": "Select a player",
     "notYours": "The Lady's gaze is not yours to direct."
   },
@@ -221,6 +223,7 @@
     "goodPrevailed": "Good has prevailed on the quests — but if Merlin falls, evil yet triumphs.",
     "nameMerlin": "Name the one you believe to be Merlin.",
     "strikeDown": "Strike down {name}",
+    "strike": "Strike",
     "chooseTarget": "Choose your target",
     "contemplating": "The Assassin contemplates their fateful choice…"
   },

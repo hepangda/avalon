@@ -93,7 +93,7 @@ function FlipMissionCard({
   const isFail = card === 'fail';
 
   return (
-    <div style={{ perspective: 800 }} className="h-20 w-14">
+    <div style={{ perspective: 800 }} className="h-20 w-14 shrink-0">
       <motion.div
         initial={{ rotateY: instant ? 180 : 0 }}
         animate={{ rotateY: 180 }}
