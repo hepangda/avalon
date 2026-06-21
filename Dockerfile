@@ -4,9 +4,16 @@
 FROM node:22-slim AS base
 ENV PNPM_HOME="/pnpm"
 WORKDIR /app
-RUN apt-get update \
+ARG APT_MIRROR=deb.debian.org
+ARG NPM_REGISTRY=https://registry.npmjs.org/
+RUN sed -i \
+    -e "s#http://deb.debian.org/debian#http://${APT_MIRROR}/debian#g" \
+    -e "s#http://deb.debian.org/debian-security#http://${APT_MIRROR}/debian-security#g" \
+    /etc/apt/sources.list.d/debian.sources \
+  && apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/* \
+  && npm config set registry "${NPM_REGISTRY}" \
   && npm install -g npm@11.6.2
 
 # ---- deps: install all dependencies (incl. dev, needed for build + tsx) ----

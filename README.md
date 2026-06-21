@@ -67,6 +67,12 @@ Deploy from the repository directory:
 ./scripts/prod-up.sh
 ```
 
+On Aliyun ECS, use the Aliyun deployment mode to build with Aliyun Debian mirrors and the npmmirror npm registry:
+
+```bash
+./scripts/prod-up.sh --aliyun
+```
+
 The first run creates `.env.prod` automatically and generates a database password. The app is exposed at:
 
 ```text
@@ -113,8 +119,29 @@ The cluster should have Istio installed with an ingress gateway whose labels inc
 Build and push the production image:
 
 ```bash
-docker build -t YOUR_REGISTRY/avalon-online:latest .
-docker push YOUR_REGISTRY/avalon-online:latest
+docker buildx build \
+  --platform linux/amd64 \
+  -t YOUR_REGISTRY/avalon-online:latest \
+  --push .
+```
+
+The production node currently runs `linux/amd64`. If you build `latest` on an
+ARM machine and push only an ARM image, Kubernetes can fail with `ErrImagePull`
+and `no match for platform in manifest`. To publish an image that works on both
+AMD64 and ARM64 nodes, push a multi-platform image instead:
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t YOUR_REGISTRY/avalon-online:latest \
+  --push .
+```
+
+Verify the pushed platforms when image pulls fail:
+
+```bash
+docker buildx imagetools inspect YOUR_REGISTRY/avalon-online:latest
+kubectl describe pod -n avalon -l app.kubernetes.io/name=avalon-app
 ```
 
 Point the deployment at that image:
