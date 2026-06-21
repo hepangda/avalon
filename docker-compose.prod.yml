@@ -5,6 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        APT_MIRROR: ${APT_MIRROR:-deb.debian.org}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org/}
     image: avalon-online:latest
     container_name: avalon-app
     restart: unless-stopped
