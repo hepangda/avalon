@@ -20,8 +20,19 @@ export function useRoomConnection(code: string | null) {
   useEffect(() => {
     if (!code) return;
     const socket = getSocket();
-    const store = useRoomStore.getState();
     const upperCode = code.toUpperCase();
+
+    // The room store is a process-global singleton that survives client-side
+    // navigation. If it still holds another room's state (e.g. a finished
+    // game's GameOver snapshot), clear it before we connect so the stale state
+    // can't leak into this room — otherwise a leftover `status: 'finished'`
+    // snapshot or `phase: 'GameOver'` game could trigger a wrong redirect or
+    // render the previous game's end screen.
+    if (useRoomStore.getState().roomCode !== upperCode) {
+      useRoomStore.getState().reset();
+      useRoomStore.getState().setRoomCode(upperCode);
+    }
+    const store = useRoomStore.getState();
 
     async function doJoin() {
       const session = useSessionStore.getState().getSession(upperCode);

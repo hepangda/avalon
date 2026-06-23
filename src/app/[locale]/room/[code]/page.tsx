@@ -33,12 +33,16 @@ export default function LobbyPage() {
   const claimedCount = snapshot?.members.filter((m) => !m.isSpectator && m.claimed).length ?? 0;
   const canStart = seatedCount >= 5 && seatedCount <= 10;
 
-  // Redirect into the game once it starts.
+  // Redirect into the game once it starts. Guard on the snapshot's own code:
+  // the room store is a global singleton that can briefly still hold a previous
+  // room's snapshot right after navigation, and acting on its stale 'finished'
+  // status would wrongly bounce us into that old game's end screen.
   useEffect(() => {
-    if (snapshot?.status === 'in_game' || snapshot?.status === 'finished') {
+    if (snapshot?.code !== code) return;
+    if (snapshot.status === 'in_game' || snapshot.status === 'finished') {
       router.replace(`/game/${code}`);
     }
-  }, [snapshot?.status, code, router]);
+  }, [snapshot?.code, snapshot?.status, code, router]);
 
   async function handleConfig(config: RoomConfig) {
     setActionError(null);
@@ -87,7 +91,7 @@ export default function LobbyPage() {
     return roomActions.setRoster(names);
   }
 
-  if (!snapshot) {
+  if (!snapshot || snapshot.code !== code) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="animate-pulse text-parchment/60">
