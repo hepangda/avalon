@@ -13,6 +13,12 @@ spec:
       hosts:
         - avalon.pangda.app
     - port:
+        number: 8001
+        name: http-with-port
+        protocol: HTTP
+      hosts:
+        - "*"
+    - port:
         number: 443
         name: https
         protocol: HTTPS
@@ -28,7 +34,7 @@ metadata:
   name: avalon-app
 spec:
   hosts:
-    - avalon.pangda.app
+    - "*"
   gateways:
     - avalon-gateway
   http:

@@ -47,7 +47,11 @@ export default function GamePage() {
   useRoomConnection(code);
 
   const conn = useRoomStore((s) => s.conn);
-  const game = useRoomStore((s) => s.game);
+  const rawGame = useRoomStore((s) => s.game);
+  const roomCode = useRoomStore((s) => s.roomCode);
+  // The room store is a global singleton; ignore a game still held over from a
+  // previously-visited room so we never render its (e.g. GameOver) state here.
+  const game = rawGame && roomCode === code ? rawGame : null;
   const reveal = useRoomStore((s) => s.reveal);
   const ladyResult = useRoomStore((s) => s.ladyResult);
   const myPlayerId = useRoomStore((s) => s.myPlayerId);

@@ -19,6 +19,13 @@ interface LadyResult {
 
 interface RoomState {
   conn: ConnStatus;
+  /**
+   * The room code the current snapshot/game/identity belongs to. The store is a
+   * process-global singleton that survives client-side navigation, so this tags
+   * which room the held state is for — letting consumers ignore (and the
+   * connection layer reset) state left over from a previously-visited room.
+   */
+  roomCode: string | null;
   myPlayerId: string | null;
   /** True if this client authenticated as the room host (owner token). */
   isHost: boolean;
@@ -31,6 +38,7 @@ interface RoomState {
   selfLatency: number | null;
 
   setConn: (c: ConnStatus) => void;
+  setRoomCode: (code: string | null) => void;
   setMyPlayerId: (id: string | null) => void;
   setIsHost: (v: boolean) => void;
   setSnapshot: (s: RoomSnapshot) => void;
@@ -44,6 +52,7 @@ interface RoomState {
 
 export const useRoomStore = create<RoomState>((set) => ({
   conn: 'connecting',
+  roomCode: null,
   myPlayerId: null,
   isHost: false,
   snapshot: null,
@@ -54,6 +63,7 @@ export const useRoomStore = create<RoomState>((set) => ({
   selfLatency: null,
 
   setConn: (conn) => set({ conn }),
+  setRoomCode: (roomCode) => set({ roomCode }),
   setMyPlayerId: (myPlayerId) => set({ myPlayerId }),
   setIsHost: (isHost) => set({ isHost }),
   setSnapshot: (snapshot) => set({ snapshot }),
@@ -64,6 +74,9 @@ export const useRoomStore = create<RoomState>((set) => ({
   setSelfLatency: (selfLatency) => set({ selfLatency }),
   reset: () =>
     set({
+      roomCode: null,
+      myPlayerId: null,
+      isHost: false,
       snapshot: null,
       game: null,
       reveal: null,
