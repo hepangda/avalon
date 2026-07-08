@@ -1,17 +1,15 @@
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { FlatCompat } from '@eslint/eslintrc';
+import tseslint from 'typescript-eslint';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({ baseDirectory: __dirname });
-
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
+const eslintConfig = tseslint.config(
   {
-    // Allow intentionally-unused args/vars prefixed with underscore.
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { ecmaFeatures: { jsx: true } },
+    },
+    plugins: { '@typescript-eslint': tseslint.plugin },
     rules: {
+      // Allow intentionally-unused args/vars prefixed with underscore.
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
@@ -30,6 +28,9 @@ const eslintConfig = [
       ],
     },
   },
-];
+  {
+    ignores: ['dist/**', 'node_modules/**', '.wrangler/**', '.next/**'],
+  },
+);
 
 export default eslintConfig;

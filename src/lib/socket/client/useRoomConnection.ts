@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { getSocket, emitWithAck } from './socket';
+import { useEffect } from 'react';
+import { connectRoom, emitWithAck, getConnection, type ConnState } from './socket';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
-import type { Ack, RoomConfig } from '../types';
+import type { ClientGameState, PlayerId, Role, Team, VisibilityInfo } from '@/lib/engine';
+import type { Ack, RoomConfig, RoomSnapshot } from '../types';
 
 /**
  * Connect to a room and keep the room store in sync. Handles initial join and
@@ -15,11 +16,8 @@ import type { Ack, RoomConfig } from '../types';
  * Joining does NOT take a seat — the seat picker drives `room:claimSeat`.
  */
 export function useRoomConnection(code: string | null) {
-  const joinedRef = useRef(false);
-
   useEffect(() => {
     if (!code) return;
-    const socket = getSocket();
     const upperCode = code.toUpperCase();
 
     // The room store is a process-global singleton that survives client-side
@@ -52,7 +50,6 @@ export function useRoomConnection(code: string | null) {
             store.setMyPlayerId(res.data.playerId);
             useSessionStore.getState().setSession(upperCode, { playerId: res.data.playerId });
           }
-          joinedRef.current = true;
         } else if (res.error) {
           store.setNotice({ type: 'join_error', message: res.error.message });
         }
@@ -64,23 +61,13 @@ export function useRoomConnection(code: string | null) {
     // Latency heartbeat: time the ack round-trip, store it locally, and report
     // the previous measurement so the server can share it with the room.
     let lastRtt: number | undefined;
-    const ping = () => {
-      if (!socket.connected) return;
+    async function ping() {
+      const conn = getConnection();
+      if (!conn?.connected) return;
       const sent = performance.now();
-      socket.emit('net:ping', { rtt: lastRtt }, () => {
-        lastRtt = Math.round(performance.now() - sent);
-        useRoomStore.getState().setSelfLatency(lastRtt);
-      });
-    };
-
-    function onConnect() {
-      store.setConn('connected');
-      void doJoin(); // (re)join on every (re)connect
-      ping();
-    }
-    function onDisconnect() {
-      store.setConn('disconnected');
-      useRoomStore.getState().setSelfLatency(null);
+      await conn.emit('net:ping', { rtt: lastRtt });
+      lastRtt = Math.round(performance.now() - sent);
+      useRoomStore.getState().setSelfLatency(lastRtt);
     }
 
     function onNotice(n: { type: string; message?: string }) {
@@ -94,34 +81,50 @@ export function useRoomConnection(code: string | null) {
       store.setNotice(n);
     }
 
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-    socket.on('room:snapshot', store.setSnapshot);
-    socket.on('state:sync', store.setGame);
-    socket.on('private:reveal', store.setReveal);
-    socket.on('private:lady', store.setLadyResult);
-    socket.on('system:notice', onNotice);
-
-    const pingTimer = setInterval(ping, 4000);
-
-    if (socket.connected) {
-      store.setConn('connected');
-      void doJoin();
-      ping();
-    } else {
-      store.setConn('connecting');
-      socket.connect();
+    function onPush(event: string, payload: unknown) {
+      switch (event) {
+        case 'room:snapshot':
+          store.setSnapshot(payload as RoomSnapshot);
+          break;
+        case 'state:sync':
+          store.setGame(payload as ClientGameState);
+          break;
+        case 'private:reveal':
+          store.setReveal(payload as { selfRole: Role; knownPlayers: VisibilityInfo[] });
+          break;
+        case 'private:lady':
+          store.setLadyResult(payload as { targetId: PlayerId; loyalty: Team });
+          break;
+        case 'system:notice':
+          onNotice(payload as { type: string; message?: string });
+          break;
+        default:
+          break;
+      }
     }
+
+    function onState(s: ConnState) {
+      if (s === 'connected') {
+        store.setConn('connected');
+        void doJoin(); // (re)join on every (re)connect
+        void ping();
+      } else if (s === 'connecting') {
+        store.setConn('connecting');
+      } else {
+        store.setConn('disconnected');
+        useRoomStore.getState().setSelfLatency(null);
+      }
+    }
+
+    connectRoom(upperCode, { onState, onPush });
+    const pingTimer = setInterval(() => void ping(), 4000);
 
     return () => {
       clearInterval(pingTimer);
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-      socket.off('room:snapshot', store.setSnapshot);
-      socket.off('state:sync', store.setGame);
-      socket.off('private:reveal', store.setReveal);
-      socket.off('private:lady', store.setLadyResult);
-      socket.off('system:notice', onNotice);
+      // Detach this effect's handlers so its closures can't write to the store
+      // after unmount. The connection itself persists across navigation (e.g.
+      // lobby → game reuse it); the next consumer re-attaches via connectRoom.
+      getConnection()?.setHandlers({});
     };
   }, [code]);
 }

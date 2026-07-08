@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { roomActions } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
 import type { ClientGameState } from '@/lib/engine';

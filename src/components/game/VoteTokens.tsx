@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, ClientVoteRecord, VoteValue } from '@/lib/engine';

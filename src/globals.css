@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --font-cinzel: 'Cinzel', Georgia, serif;
+  --font-body: 'EB Garamond', system-ui, sans-serif;
+}
+
+body {
+  /* Layered stone + candlelight: a warm radial glow over a dark stone field,
+     with a subtle vignette to draw the eye inward. */
+  background-color: theme('colors.ink.deep');
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201, 162, 39, 0.08), transparent 70%),
+    radial-gradient(ellipse 100% 100% at 50% 120%, rgba(43, 58, 107, 0.12), transparent 70%),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.012) 0px,
+      rgba(255, 255, 255, 0.012) 1px,
+      transparent 1px,
+      transparent 6px
+    );
+  background-attachment: fixed;
+  color: theme('colors.parchment.DEFAULT');
+  font-family: theme('fontFamily.body');
+}
+
+@layer components {
+  /* A parchment-styled panel: warm gradient, gilt border, soft inner light. */
+  .panel {
+    @apply rounded-xl border border-gold/30 bg-gradient-to-b from-stone/70 to-stone-dark/80 shadow-xl shadow-black/40 backdrop-blur;
+    box-shadow:
+      theme('boxShadow.inset'),
+      0 12px 40px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Gilt heading with a faint glow. */
+  .gilt {
+    @apply font-serif text-gold;
+    text-shadow: 0 0 18px rgba(201, 162, 39, 0.25);
+  }
+
+  /* Ornamental divider with a centered gem. */
+  .divider {
+    @apply flex items-center gap-3 text-gold/40;
+  }
+  .divider::before,
+  .divider::after {
+    content: '';
+    @apply h-px flex-1 bg-gradient-to-r from-transparent via-gold/30 to-transparent;
+  }
+}
+
+/* Respect reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

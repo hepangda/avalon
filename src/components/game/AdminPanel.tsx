@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { adminActions } from '@/lib/socket/client';
 import { seatLabel } from '@/lib/game/playerLabel';
