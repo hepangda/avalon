@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { FlipCard } from '@/components/animations';
 import { gameActions } from '@/lib/socket/client';

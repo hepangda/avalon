@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { VoteResultPanel } from './VoteResultPanel';
 import { MissionCardReveal } from './MissionCardReveal';

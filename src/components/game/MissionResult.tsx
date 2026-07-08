@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { VoteResultPanel } from './VoteResultPanel';
 import type { ClientGameState } from '@/lib/engine';
 

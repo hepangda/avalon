@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState } from '@/lib/engine';
 

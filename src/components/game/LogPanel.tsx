@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { seatLabel } from '@/lib/game/playerLabel';
 import { VoteResultPanel } from './VoteResultPanel';

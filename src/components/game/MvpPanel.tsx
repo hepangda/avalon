@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
 import { ROLE_SIGIL, TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';

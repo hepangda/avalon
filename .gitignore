@@ -1,18 +1,15 @@
 node_modules/
-.next/
-out/
-build/
 dist/
+build/
+
+# Cloudflare / Wrangler
+.wrangler/
+worker-configuration.d.ts
 
 # Env
 .env
 .env.local
 .env*.local
-.env.docker
-.env.prod
-
-# Prisma generated client
-src/generated/
 
 # Logs & OS
 *.log

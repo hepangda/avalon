@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { ROLE_SIGIL, ROLE_TEAM_UI, TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { labelById } from '@/lib/game/playerLabel';

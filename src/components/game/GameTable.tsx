@@ -2,7 +2,7 @@
 
 import { Fragment, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
 import { latencyDotClass } from '@/lib/utils/latency';
 import type { ClientGameState, ClientPlayer } from '@/lib/engine';
