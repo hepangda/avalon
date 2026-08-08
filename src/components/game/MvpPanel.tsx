@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
-import { ROLE_SIGIL, TEAM_COLOR } from '@/lib/game/roleMeta';
+import { RolePortrait } from './GameArt';
+import { TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { seatLabel } from '@/lib/game/playerLabel';
 import type { ReplayData } from '@/lib/game/replayTypes';
@@ -44,9 +45,11 @@ export function MvpPanel({ replay }: { replay: ReplayData }) {
                 >
                   <td className="px-1 py-1.5">
                     <span className="flex items-center gap-1.5">
-                      {role && <span>{ROLE_SIGIL[role]}</span>}
+                      {role && <RolePortrait role={role} className="h-7 w-7 rounded-full" />}
                       <span className="text-parchment">
-                        {seatOf.has(s.playerId) ? seatLabel(seatOf.get(s.playerId)!, s.name) : s.name}
+                        {seatOf.has(s.playerId)
+                          ? seatLabel(seatOf.get(s.playerId)!, s.name)
+                          : s.name}
                       </span>
                       {isMvp && <span title={t('mvp.mvp')}>⭐</span>}
                       {role && (

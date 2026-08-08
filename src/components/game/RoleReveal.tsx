@@ -5,8 +5,9 @@ import { motion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { FlipCard } from '@/components/animations';
+import { GameIcon, RolePortrait } from './GameArt';
 import { gameActions } from '@/lib/socket/client';
-import { ROLE_SIGIL, ROLE_TEAM_UI, TEAM_COLOR } from '@/lib/game/roleMeta';
+import { ROLE_TEAM_UI, TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, Role, VisibilityInfo } from '@/lib/engine';
@@ -51,7 +52,10 @@ export function RoleReveal({ game, reveal }: RoleRevealProps) {
         className="h-64 w-44 cursor-pointer"
         back={
           <div className="flex h-full w-full flex-col items-center justify-center rounded-2xl border-2 border-gold/50 bg-gradient-to-b from-stone to-ink shadow-2xl">
-            <span className="text-5xl">⚜️</span>
+            <GameIcon
+              name="crest"
+              className="h-20 w-20 drop-shadow-[0_0_16px_rgba(201,162,39,0.35)]"
+            />
             <span className="mt-3 text-xs uppercase tracking-widest text-parchment/50">
               {t('roleReveal.tapToReveal')}
             </span>
@@ -67,7 +71,11 @@ export function RoleReveal({ game, reveal }: RoleRevealProps) {
                   : 'border-sky-400/50 bg-gradient-to-b from-sky-900/40 to-ink'
               }`}
             >
-              <span className="text-5xl">{ROLE_SIGIL[role]}</span>
+              <RolePortrait
+                role={role}
+                alt={roleText.name(role)}
+                className="h-28 w-28 rounded-full shadow-lg shadow-black/40"
+              />
               <span className="font-serif text-xl text-gold">{roleText.name(role)}</span>
               <span className={`text-xs uppercase tracking-wide ${TEAM_COLOR[team]}`}>
                 {roleText.teamLabel(team)}

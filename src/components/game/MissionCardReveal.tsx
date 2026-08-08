@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
+import { GameIcon } from './GameArt';
 
 type Card = 'success' | 'fail';
 
@@ -73,7 +74,12 @@ export function MissionCardReveal({
       </p>
       <div className="flex flex-wrap items-center justify-center gap-2">
         {cards.map((card, i) => (
-          <FlipMissionCard key={i} card={card} delay={FIRST_DELAY + i * STAGGER} instant={instant} />
+          <FlipMissionCard
+            key={i}
+            card={card}
+            delay={FIRST_DELAY + i * STAGGER}
+            instant={instant}
+          />
         ))}
       </div>
     </div>
@@ -97,15 +103,26 @@ function FlipMissionCard({
       <motion.div
         initial={{ rotateY: instant ? 180 : 0 }}
         animate={{ rotateY: 180 }}
-        transition={instant ? { duration: 0 } : { delay, duration: FLIP_DURATION, ease: 'easeInOut' }}
-        style={{ transformStyle: 'preserve-3d', position: 'relative', width: '100%', height: '100%' }}
+        transition={
+          instant ? { duration: 0 } : { delay, duration: FLIP_DURATION, ease: 'easeInOut' }
+        }
+        style={{
+          transformStyle: 'preserve-3d',
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+        }}
       >
         {/* Back (face-down) */}
         <div
-          style={{ backfaceVisibility: 'hidden', position: 'absolute', inset: 0 }}
+          style={{
+            backfaceVisibility: 'hidden',
+            position: 'absolute',
+            inset: 0,
+          }}
           className="flex items-center justify-center rounded-lg border-2 border-gold/50 bg-gradient-to-b from-stone to-ink"
         >
-          <span className="text-2xl opacity-60">⚜️</span>
+          <GameIcon name="crest" className="h-9 w-9 opacity-70" />
         </div>
         {/* Front (revealed) */}
         <div
@@ -119,7 +136,7 @@ function FlipMissionCard({
             isFail ? 'border-crimson bg-crimson/30' : 'border-sky-300 bg-sky-600/30'
           }`}
         >
-          <span className="text-2xl">{isFail ? '💀' : '✨'}</span>
+          <GameIcon name={isFail ? 'missionFail' : 'missionSuccess'} className="h-9 w-9" />
           <span
             className={`text-[10px] font-bold ${isFail ? 'text-crimson-bright' : 'text-sky-200'}`}
           >

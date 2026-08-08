@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
 import { IdentityCard } from './IdentityCard';
+import { GameIcon, type GameIconName } from './GameArt';
 import { gameActions } from '@/lib/socket/client';
 import { ROLE_TEAM_UI } from '@/lib/game/roleMeta';
 import type { ClientGameState, ClientPlayer } from '@/lib/engine';
@@ -132,8 +133,22 @@ export function HandArea({
                 exit={reduce ? { opacity: 0 } : { y: -180, opacity: 0, scale: 0.85 }}
                 transition={{ duration: 0.35 }}
               >
-                <ActionCard tone="approve" sigil="🛡️" label={t('vote.approve')} dealIndex={0} reduce={!!reduce} onPlay={() => vote('approve')} />
-                <ActionCard tone="reject" sigil="🗡️" label={t('vote.reject')} dealIndex={1} reduce={!!reduce} onPlay={() => vote('reject')} />
+                <ActionCard
+                  tone="approve"
+                  icon="approve"
+                  label={t('vote.approve')}
+                  dealIndex={0}
+                  reduce={!!reduce}
+                  onPlay={() => vote('approve')}
+                />
+                <ActionCard
+                  tone="reject"
+                  icon="reject"
+                  label={t('vote.reject')}
+                  dealIndex={1}
+                  reduce={!!reduce}
+                  onPlay={() => vote('reject')}
+                />
               </motion.div>
             )}
 
@@ -144,10 +159,17 @@ export function HandArea({
                 exit={reduce ? { opacity: 0 } : { y: -180, opacity: 0, scale: 0.85 }}
                 transition={{ duration: 0.35 }}
               >
-                <ActionCard tone="approve" sigil="✨" label={t('missionVote.success')} dealIndex={0} reduce={!!reduce} onPlay={() => playMission('success')} />
+                <ActionCard
+                  tone="approve"
+                  icon="missionSuccess"
+                  label={t('missionVote.success')}
+                  dealIndex={0}
+                  reduce={!!reduce}
+                  onPlay={() => playMission('success')}
+                />
                 <ActionCard
                   tone="reject"
-                  sigil="💀"
+                  icon="missionFail"
                   label={t('missionVote.fail')}
                   dealIndex={1}
                   reduce={!!reduce}
@@ -159,13 +181,23 @@ export function HandArea({
             )}
 
             {game.phase === 'Voting' && alreadyVoted && (
-              <motion.span key="voted" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-parchment/50">
+              <motion.span
+                key="voted"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs text-parchment/50"
+              >
                 {t('vote.castWaiting')}
               </motion.span>
             )}
 
             {game.phase === 'MissionVote' && onTeam && missionPlayed && (
-              <motion.span key="sealed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-parchment/50">
+              <motion.span
+                key="sealed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs text-parchment/50"
+              >
                 {t('missionVote.sealed')}
               </motion.span>
             )}
@@ -195,7 +227,13 @@ export function HandArea({
  * scroll. The inner padding leaves room so lifted cards are not clipped. A drag
  * that moved is swallowed so it doesn't also select a card.
  */
-function DragScrollRow({ children, innerClassName }: { children: ReactNode; innerClassName?: string }) {
+function DragScrollRow({
+  children,
+  innerClassName,
+}: {
+  children: ReactNode;
+  innerClassName?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const st = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
 
@@ -204,7 +242,12 @@ function DragScrollRow({ children, innerClassName }: { children: ReactNode; inne
       ref={ref}
       onPointerDown={(e) => {
         if (e.pointerType !== 'mouse' || !ref.current) return;
-        st.current = { active: true, startX: e.clientX, startScroll: ref.current.scrollLeft, moved: false };
+        st.current = {
+          active: true,
+          startX: e.clientX,
+          startScroll: ref.current.scrollLeft,
+          moved: false,
+        };
       }}
       onPointerMove={(e) => {
         if (!st.current.active || !ref.current) return;
@@ -235,7 +278,7 @@ function DragScrollRow({ children, innerClassName }: { children: ReactNode; inne
 /** A large play card (vote / mission) that deals in and flies up when played. */
 function ActionCard({
   tone,
-  sigil,
+  icon,
   label,
   dealIndex,
   reduce,
@@ -244,7 +287,7 @@ function ActionCard({
   onPlay,
 }: {
   tone: 'approve' | 'reject';
-  sigil: string;
+  icon: GameIconName;
   label: string;
   dealIndex: number;
   reduce: boolean;
@@ -261,7 +304,16 @@ function ActionCard({
       title={lockedHint}
       initial={reduce ? false : { y: -150, opacity: 0, rotate: approve ? -10 : 10, scale: 0.8 }}
       animate={{ y: 0, opacity: 1, rotate: 0, scale: 1 }}
-      transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 320, damping: 24, delay: dealIndex * 0.12 }}
+      transition={
+        reduce
+          ? { duration: 0 }
+          : {
+              type: 'spring',
+              stiffness: 320,
+              damping: 24,
+              delay: dealIndex * 0.12,
+            }
+      }
       whileHover={reduce || disabled ? undefined : { y: -10, scale: 1.05 }}
       whileTap={disabled ? undefined : { scale: 0.96 }}
       className={cn(
@@ -273,8 +325,10 @@ function ActionCard({
             : 'border-crimson-bright/70 bg-gradient-to-br from-crimson-bright to-crimson',
       )}
     >
-      <span className="text-3xl drop-shadow">{sigil}</span>
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-parchment">{label}</span>
+      <GameIcon name={icon} className="h-10 w-10 drop-shadow" />
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-parchment">
+        {label}
+      </span>
       {disabled && <span className="absolute right-1.5 top-1.5 text-xs">🔒</span>}
     </motion.button>
   );
@@ -306,7 +360,9 @@ function NomineeHandCard({
       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold/20 text-xs text-gold">
         {player.seat + 1}
       </span>
-      <span className="max-w-full truncate text-[9px] leading-tight text-parchment">{player.name}</span>
+      <span className="max-w-full truncate text-[9px] leading-tight text-parchment">
+        {player.name}
+      </span>
     </motion.button>
   );
 }
@@ -331,7 +387,7 @@ function ConfirmCard({
       : tone === 'sky'
         ? 'border-sky-300 bg-gradient-to-br from-sky-500 to-royal text-parchment'
         : 'border-gold-bright bg-gradient-to-br from-gold-bright to-gold text-ink-deep';
-  const icon = tone === 'crimson' ? '🗡️' : tone === 'sky' ? '🌊' : '✓';
+  const icon: GameIconName = tone === 'crimson' ? 'reject' : tone === 'sky' ? 'lady' : 'crest';
   return (
     <motion.button
       type="button"
@@ -340,7 +396,9 @@ function ConfirmCard({
       initial={reduce ? false : { y: -150, opacity: 0, scale: 0.8 }}
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={reduce ? { opacity: 0 } : { y: -90, opacity: 0, scale: 0.7 }}
-      transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 320, damping: 22, delay: 0.18 }}
+      transition={
+        reduce ? { duration: 0 } : { type: 'spring', stiffness: 320, damping: 22, delay: 0.18 }
+      }
       whileHover={reduce || disabled ? undefined : { y: -8, scale: 1.05 }}
       whileTap={disabled ? undefined : { scale: 0.96 }}
       className={cn(
@@ -348,7 +406,7 @@ function ConfirmCard({
         cls,
       )}
     >
-      <span className="text-3xl leading-none">{icon}</span>
+      <GameIcon name={icon} className="h-10 w-10" />
       <span className="text-center text-[11px] font-semibold leading-tight">{label}</span>
     </motion.button>
   );

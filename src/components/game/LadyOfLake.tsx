@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'use-intl';
+import { GameIcon } from './GameArt';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState } from '@/lib/engine';
 
@@ -23,7 +24,7 @@ export function LadyOfLake({
 
   return (
     <div className="text-center">
-      <span className="text-3xl">🌊</span>
+      <GameIcon name="lady" className="mx-auto h-12 w-12" />
       <h3 className="font-serif text-lg text-sky-300">{t('lady.title')}</h3>
       <p className="text-sm text-parchment/60">
         {isHolder

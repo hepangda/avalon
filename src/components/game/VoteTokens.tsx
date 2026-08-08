@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
+import { GameIcon, type GameIconName } from './GameArt';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, ClientVoteRecord, VoteValue } from '@/lib/engine';
 
 /**
- * Physical "vote token" primitives drawn procedurally with CSS gradients +
- * glyphs (no art assets). A token has three beats: an empty slot, a face-down
+ * Physical "vote token" primitives drawn with CSS surfaces and generated
+ * emblems. A token has three beats: an empty slot, a face-down
  * token that slams down when the player commits (hiding the choice), and a flip
  * that reveals approve/reject. Honors prefers-reduced-motion.
  *
@@ -64,7 +65,12 @@ function VoteToken({
             reduce
               ? { duration: 0 }
               : {
-                  rotateY: { delay: flipDelay, type: 'spring', stiffness: 210, damping: 20 },
+                  rotateY: {
+                    delay: flipDelay,
+                    type: 'spring',
+                    stiffness: 210,
+                    damping: 20,
+                  },
                   // High stiffness + lowish damping = a snappy "slam" with a touch of overshoot.
                   default: { type: 'spring', stiffness: 520, damping: 17 },
                 }
@@ -96,16 +102,14 @@ function TokenBack({ highlight }: { highlight: boolean }) {
         'absolute inset-0 flex items-center justify-center rounded-lg border bg-gradient-to-br from-royal to-ink shadow-lg shadow-black/40',
         highlight ? 'border-gold/70' : 'border-gold/35',
       )}
-      style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+      style={{
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+      }}
     >
       {/* Inner gilt ring for a struck-coin feel. */}
       <span className="absolute inset-1.5 rounded-md border border-gold/20" />
-      <span
-        className="text-2xl text-gold/85 sm:text-[1.75rem]"
-        style={{ textShadow: '0 0 12px rgba(201,162,39,0.45)' }}
-      >
-        ⚜
-      </span>
+      <GameIcon name="crest" className="h-9 w-9 drop-shadow-[0_0_10px_rgba(201,162,39,0.45)]" />
     </div>
   );
 }
@@ -130,7 +134,7 @@ function TokenFront({ value }: { value?: VoteValue }) {
       }}
     >
       <span className="absolute inset-1.5 rounded-md border border-white/15" />
-      <span className="text-2xl drop-shadow sm:text-[1.6rem]">{approve ? '🛡️' : '🗡️'}</span>
+      <GameIcon name={approve ? 'approve' : 'reject'} className="h-9 w-9 drop-shadow" />
       <span className="text-[10px] font-semibold uppercase tracking-wide text-parchment">
         {value ? t(approve ? 'vote.approve' : 'vote.reject') : ''}
       </span>
@@ -269,16 +273,24 @@ function PileCard({
                 y: { type: 'spring', stiffness: 420, damping: 20 },
                 scale: { type: 'spring', stiffness: 420, damping: 20 },
                 opacity: { duration: 0.2 },
-                rotateY: { delay: flipDelay, type: 'spring', stiffness: 220, damping: 20 },
+                rotateY: {
+                  delay: flipDelay,
+                  type: 'spring',
+                  stiffness: 220,
+                  damping: 20,
+                },
               }
         }
       >
         {/* Face-down. */}
         <span
           className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-gold/45 bg-gradient-to-br from-royal to-ink"
-          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+          }}
         >
-          <span className="text-xl leading-none text-gold/80">⚜</span>
+          <GameIcon name="crest" className="h-7 w-7 opacity-80" />
           <span className="text-[9px] leading-none text-gold/45">{seat}</span>
         </span>
         {/* Revealed. */}
@@ -295,7 +307,7 @@ function PileCard({
             transform: 'rotateY(180deg)',
           }}
         >
-          <span className="text-2xl font-bold leading-none">{vote ? (approve ? '✓' : '✕') : ''}</span>
+          {vote && <GameIcon name={approve ? 'approve' : 'reject'} className="h-7 w-7" />}
           <span className="text-[9px] leading-none opacity-80">{seat}</span>
         </span>
       </motion.span>
@@ -331,8 +343,14 @@ export function OutcomeBanner({
 
   const good = kind === 'voteApproved' || kind === 'missionSuccess';
   const isVote = kind === 'voteApproved' || kind === 'voteRejected';
-  const icon =
-    kind === 'voteApproved' ? '🛡️' : kind === 'voteRejected' ? '🗡️' : kind === 'missionSuccess' ? '✨' : '💀';
+  const icon: GameIconName =
+    kind === 'voteApproved'
+      ? 'approve'
+      : kind === 'voteRejected'
+        ? 'reject'
+        : kind === 'missionSuccess'
+          ? 'missionSuccess'
+          : 'missionFail';
   const detail = isVote
     ? t('vote.tally', { approves, rejects })
     : t('missionResult.failCards', { count: failCount });
@@ -350,7 +368,7 @@ export function OutcomeBanner({
           : 'border-crimson-bright/60 bg-crimson/25 text-parchment',
       )}
     >
-      <span>{icon}</span>
+      <GameIcon name={icon} className="h-7 w-7" />
       <span className="font-serif">{t(`cue.${kind}`)}</span>
       <span className="text-xs tabular-nums opacity-80">{detail}</span>
     </motion.button>
