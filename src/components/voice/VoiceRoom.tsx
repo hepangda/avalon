@@ -58,18 +58,17 @@ export function VoiceRoom() {
     }
   }, [disconnect, eligibleKey]);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
       mountedRef.current = false;
-      eligibleKeyRef.current = null;
       joinAttemptRef.current += 1;
       const current = meetingRef.current;
       meetingRef.current = undefined;
       activeKeyRef.current = null;
       if (current) void current.leave();
-    },
-    [],
-  );
+    };
+  }, []);
 
   async function joinVoice() {
     if (!eligibleKey || joining || meetingRef.current) return;

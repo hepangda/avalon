@@ -108,6 +108,7 @@ function VoiceDock({
   const closeMicrophone = useCallback(() => {
     latchedRef.current = false;
     pressingRef.current = false;
+    pressSourceRef.current = null;
     setLatched(false);
     setPressing(false);
     setDesiredAudio(false);
