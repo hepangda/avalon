@@ -26,6 +26,7 @@ import { LogPanel } from '@/components/game/LogPanel';
 import { GameIcon } from '@/components/game/GameArt';
 import { useResultCue } from '@/lib/game/useResultCue';
 import { formatLatency, latencyTextClass } from '@/lib/utils/latency';
+import { cn } from '@/lib/utils/cn';
 import type { ClientPlayer } from '@/lib/engine';
 
 /** The table's interaction surface for the current phase. */
@@ -55,6 +56,8 @@ export default function GamePage() {
   const ladyResult = useRoomStore((s) => s.ladyResult);
   const myPlayerId = useRoomStore((s) => s.myPlayerId);
   const selfLatency = useRoomStore((s) => s.selfLatency);
+  const snapshot = useRoomStore((s) => s.snapshot);
+  const voiceEnabled = snapshot?.code === code && snapshot.config.voiceEnabled;
 
   const [historyRound, setHistoryRound] = useState<number | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
@@ -83,7 +86,7 @@ export default function GamePage() {
 
   if (game.phase === 'GameOver') {
     return (
-      <main className="min-h-screen py-6">
+      <main className={cn('min-h-screen py-6', voiceEnabled && 'pb-48')}>
         <GameOverReveal game={game} gameId={game.gameId} />
       </main>
     );
@@ -308,7 +311,12 @@ export default function GamePage() {
   );
 
   return (
-    <main className="flex h-[100dvh] flex-col overflow-hidden">
+    <main
+      className={cn(
+        'flex h-[100dvh] flex-col overflow-hidden',
+        voiceEnabled && 'pb-48',
+      )}
+    >
       {needsRoleReveal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-deep py-6">
           <RoleReveal game={game} reveal={reveal} myPlayerId={myPlayerId} />

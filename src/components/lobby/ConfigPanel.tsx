@@ -109,6 +109,13 @@ export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPan
         )}
       </div>
 
+      {config.voiceEnabled && (
+        <section className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-3 py-2">
+          <p className="text-sm font-medium text-emerald-200">🎙 {t('voice.roomEnabled')}</p>
+          <p className="text-xs text-parchment/55">{t('voice.roomEnabledHint')}</p>
+        </section>
+      )}
+
       {isHost && (
         <>
           <Button variant="secondary" className="w-full" onClick={applyRecommended}>

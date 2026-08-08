@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
 import ReplayPage from './pages/ReplayPage';
+import { VoiceRoom } from './components/voice/VoiceRoom';
 
 /**
  * Validates the `:locale` segment and provides i18n for everything under it.
@@ -17,6 +18,7 @@ function LocaleLayout() {
   return (
     <I18nProvider>
       <Outlet />
+      <VoiceRoom />
     </I18nProvider>
   );
 }
