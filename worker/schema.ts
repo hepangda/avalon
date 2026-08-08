@@ -45,6 +45,12 @@ CREATE TABLE IF NOT EXISTS voice_participant (
   player_id      TEXT PRIMARY KEY,
   participant_id TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS voice_revocation (
+  player_id      TEXT PRIMARY KEY,
+  participant_id TEXT NOT NULL,
+  meeting_id     TEXT NOT NULL,
+  attempts       INTEGER NOT NULL DEFAULT 0
+);
 `;
 
 export interface RoomMetaRow {

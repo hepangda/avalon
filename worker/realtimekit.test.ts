@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   addRealtimeKitParticipant,
   createRealtimeKitMeeting,
+  deleteRealtimeKitParticipant,
   getRealtimeKitCredentials,
   RealtimeKitApiError,
   refreshRealtimeKitParticipantToken,
@@ -75,6 +76,20 @@ describe('RealtimeKit API client', () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       'https://api.cloudflare.com/client/v4/accounts/account-id/realtime/kit/app-id/meetings/meeting-id/participants/participant-id/token',
     );
+  });
+
+  it('deletes a participant when the provider returns no body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      deleteRealtimeKitParticipant(credentials, 'meeting-id', 'participant-id'),
+    ).resolves.toBeUndefined();
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
+      'https://api.cloudflare.com/client/v4/accounts/account-id/realtime/kit/app-id/meetings/meeting-id/participants/participant-id',
+    );
+    expect(init.method).toBe('DELETE');
   });
 
   it('reports provider failures without returning response details', async () => {
