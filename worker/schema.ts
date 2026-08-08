@@ -33,6 +33,18 @@ CREATE TABLE IF NOT EXISTS game_event (
   payload    TEXT    NOT NULL,
   created_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS player_session (
+  player_id TEXT PRIMARY KEY,
+  token     TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS voice_meeting (
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  meeting_id TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS voice_participant (
+  player_id      TEXT PRIMARY KEY,
+  participant_id TEXT NOT NULL
+);
 `;
 
 export interface RoomMetaRow {
@@ -75,11 +87,12 @@ export interface RoomMeta {
 }
 
 export function parseMeta(row: RoomMetaRow): RoomMeta {
+  const config = JSON.parse(row.config) as RoomConfig;
   return {
     code: row.code,
     hostToken: row.host_token,
     status: row.status as RoomStatus,
-    config: JSON.parse(row.config) as RoomConfig,
+    config: { ...config, voiceEnabled: Boolean(config.voiceEnabled) },
     gameId: row.game_id,
     seed: row.seed,
   };

@@ -6,6 +6,10 @@ export interface Env {
   ROOM: DurableObjectNamespace<RoomDurableObject>;
   REPLAY: DurableObjectNamespace<ReplayDurableObject>;
   ASSETS: Fetcher;
+  CLOUDFLARE_ACCOUNT_ID?: string;
+  REALTIMEKIT_APP_ID?: string;
+  REALTIMEKIT_API_TOKEN?: string;
+  REALTIMEKIT_PRESET_NAME?: string;
 }
 
 /**

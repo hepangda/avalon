@@ -9,6 +9,7 @@ export const DEFAULT_ROOM_CONFIG: RoomConfig = {
   maxPlayers: 10,
   allowSpectators: true,
   allowMidJoin: true,
+  voiceEnabled: false,
   options: {
     oberon: false,
     mordred: false,
@@ -43,10 +44,14 @@ export function claimableSeats(members: Members): RoomMember[] {
     .sort((a, b) => a.seat - b.seat);
 }
 
-export function snapshot(meta: RoomMeta, members: Members): RoomSnapshot {
+export function snapshot(
+  meta: RoomMeta,
+  members: Members,
+  hostPlayerId: string | null,
+): RoomSnapshot {
   return {
     code: meta.code,
-    hostPlayerId: meta.hostToken,
+    hostPlayerId,
     status: meta.status,
     config: meta.config,
     members: [...members.values()].sort((a, b) => {
@@ -71,12 +76,17 @@ export function isNameTaken(members: Members, name: string, exceptPlayerId?: str
   return false;
 }
 
-export function sanitizeConfig(config: RoomConfig, roster: string[]): RoomConfig {
+export function sanitizeConfig(
+  config: RoomConfig,
+  roster: string[],
+  voiceEnabled = Boolean(config.voiceEnabled),
+): RoomConfig {
   return {
     maxPlayers: clampInt(config.maxPlayers, 5, 10),
     // Spectators and mid-join are always allowed (no longer host-configurable).
     allowSpectators: true,
     allowMidJoin: true,
+    voiceEnabled,
     options: {
       oberon: Boolean(config.options?.oberon),
       mordred: Boolean(config.options?.mordred),
@@ -103,6 +113,7 @@ export function mergeConfig(partial: Partial<RoomConfig> | undefined, roster: st
     ),
     allowSpectators: base.allowSpectators ?? DEFAULT_ROOM_CONFIG.allowSpectators,
     allowMidJoin: base.allowMidJoin ?? DEFAULT_ROOM_CONFIG.allowMidJoin,
+    voiceEnabled: Boolean(base.voiceEnabled),
     options: { ...DEFAULT_ROOM_CONFIG.options, ...(base.options ?? {}) },
     roster,
   };

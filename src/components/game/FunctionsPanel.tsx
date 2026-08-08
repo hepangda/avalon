@@ -31,7 +31,9 @@ export function FunctionsPanel({ code, game }: { code: string; game: ClientGameS
     // later visit doesn't auto-rejoin it, then go home.
     await roomActions.leave();
     const { useSessionStore } = await import('@/lib/store/session');
-    useSessionStore.getState().setSession(code, { playerId: undefined });
+    useSessionStore
+      .getState()
+      .setSession(code, { playerId: undefined, playerToken: undefined });
     useRoomStore.getState().reset();
     router.push('/');
   }

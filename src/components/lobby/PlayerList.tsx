@@ -9,7 +9,7 @@ import type { RoomMember } from '@/lib/socket/types';
 
 interface PlayerListProps {
   members: RoomMember[];
-  hostPlayerId: string;
+  hostPlayerId: string | null;
   myPlayerId: string | null;
   isHost: boolean;
   onKick: (id: string) => void;

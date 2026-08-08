@@ -8,3 +8,9 @@ export const makeCode = customAlphabet(ROOM_ALPHABET, 6);
 
 /** Generate a 16-char opaque player id / host token. */
 export const makePlayerId = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 16);
+
+/** Generate an opaque bearer token used to prove ownership of a claimed seat. */
+export const makeSessionToken = customAlphabet(
+  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+  32,
+);

@@ -32,6 +32,12 @@ app.post('/api/rooms', async (c) => {
     const stub = c.env.ROOM.get(c.env.ROOM.idFromName(code));
     const res = await stub.init({ code, roster, config });
     if (res.ok) return c.json({ code, hostToken: res.hostToken }, 201);
+    if (res.error === 'VOICE_UNAVAILABLE') {
+      return c.json(
+        { code: 'VOICE_UNAVAILABLE', error: 'Voice rooms are temporarily unavailable' },
+        503,
+      );
+    }
   }
   return c.json({ error: 'Failed to create room' }, 500);
 });
