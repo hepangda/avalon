@@ -61,7 +61,10 @@ export default function LobbyPage() {
     if (res.ok && res.data) {
       useRoomStore.getState().setMyPlayerId(res.data.playerId);
       const { useSessionStore } = await import('@/lib/store/session');
-      useSessionStore.getState().setSession(code, { playerId: res.data.playerId });
+      useSessionStore.getState().setSession(code, {
+        playerId: res.data.playerId,
+        playerToken: res.data.playerToken,
+      });
     } else if (res.error) {
       setActionError(res.error.message);
     }
@@ -73,7 +76,9 @@ export default function LobbyPage() {
     if (res.ok) {
       useRoomStore.getState().setMyPlayerId(null);
       const { useSessionStore } = await import('@/lib/store/session');
-      useSessionStore.getState().setSession(code, { playerId: undefined });
+      useSessionStore
+        .getState()
+        .setSession(code, { playerId: undefined, playerToken: undefined });
     } else if (res.error) {
       setActionError(res.error.message);
     }

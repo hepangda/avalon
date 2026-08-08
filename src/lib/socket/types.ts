@@ -16,6 +16,8 @@ export interface RoomConfig {
   maxPlayers: number;
   allowSpectators: boolean;
   allowMidJoin: boolean;
+  /** Whether this room has an associated Cloudflare RealtimeKit voice meeting. */
+  voiceEnabled: boolean;
   options: GameOptions;
   /** Host-defined roster: the name of each seat, seat 0..roster.length-1. */
   roster: string[];
@@ -43,7 +45,8 @@ export interface RoomMember {
  */
 export interface RoomSnapshot {
   code: string;
-  hostPlayerId: PlayerId;
+  /** The host's claimed seat, when the host currently occupies one. */
+  hostPlayerId: PlayerId | null;
   status: RoomStatus;
   config: RoomConfig;
   members: RoomMember[];
@@ -57,7 +60,7 @@ export interface RoomSnapshot {
 export interface RoomRuntime {
   code: string;
   roomId: string; // DB Room.id
-  hostPlayerId: PlayerId;
+  hostPlayerId: PlayerId | null;
   status: RoomStatus;
   config: RoomConfig;
   members: Map<PlayerId, RoomMember>;
@@ -92,7 +95,7 @@ export interface Ack<T = undefined> {
 /** Events the client emits. The third arg is always an ack callback. */
 export interface ClientToServerEvents {
   'room:join': (
-    p: { code: string; playerId?: PlayerId; hostToken?: string },
+    p: { code: string; playerId?: PlayerId; playerToken?: string; hostToken?: string },
     ack: (r: Ack<{ playerId?: PlayerId; isHost: boolean }>) => void,
   ) => void;
   'room:leave': (p: Record<string, never>, ack: (r: Ack) => void) => void;
@@ -103,11 +106,19 @@ export interface ClientToServerEvents {
   'room:start': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   /** Claim a roster seat by its player id (must be unclaimed). Switches seats
    *  if the caller already holds one. */
-  'room:claimSeat': (p: { seatId: PlayerId }, ack: (r: Ack<{ playerId: PlayerId }>) => void) => void;
+  'room:claimSeat': (
+    p: { seatId: PlayerId },
+    ack: (r: Ack<{ playerId: PlayerId; playerToken: string }>) => void,
+  ) => void;
   /** Release the caller's current seat (becomes a spectator / unseated). */
   'room:releaseSeat': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   /** Host edits the roster (lobby only): the full ordered list of seat names. */
   'room:setRoster': (p: { names: string[] }, ack: (r: Ack) => void) => void;
+  /** Obtain a short-lived RealtimeKit participant token for the claimed seat. */
+  'voice:token': (
+    p: Record<string, never>,
+    ack: (r: Ack<{ authToken: string }>) => void,
+  ) => void;
   'game:ackRole': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'game:proposeTeam': (p: { team: PlayerId[] }, ack: (r: Ack) => void) => void;
   'game:vote': (p: { value: VoteValue }, ack: (r: Ack) => void) => void;

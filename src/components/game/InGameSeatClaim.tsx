@@ -30,7 +30,10 @@ export function InGameSeatClaim({ code, game }: { code: string; game: ClientGame
     if (res.ok && res.data) {
       useRoomStore.getState().setMyPlayerId(res.data.playerId);
       const { useSessionStore } = await import('@/lib/store/session');
-      useSessionStore.getState().setSession(code, { playerId: res.data.playerId });
+      useSessionStore.getState().setSession(code, {
+        playerId: res.data.playerId,
+        playerToken: res.data.playerToken,
+      });
     } else if (res.error) {
       setError(res.error.message);
     }

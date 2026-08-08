@@ -10,7 +10,7 @@ import type { Ack, RoomMember } from '@/lib/socket/types';
 
 interface SeatPickerProps {
   members: RoomMember[];
-  hostPlayerId: string;
+  hostPlayerId: string | null;
   myPlayerId: string | null;
   isHost: boolean;
   onClaim: (seatId: string) => void;

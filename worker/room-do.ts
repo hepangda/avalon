@@ -17,7 +17,15 @@ import type { Ack, RoomConfig, RoomMember, RoomStatus } from '@/lib/socket/types
 import type { ClientEvent, WireRequest } from '@/lib/socket/protocol';
 import { buildReplayFromEvents } from './replay-builder';
 import { DEFAULT_ATTACHMENT, type Env, type SocketAttachment } from './env';
-import { makePlayerId } from './ids';
+import { makePlayerId, makeSessionToken } from './ids';
+import {
+  addRealtimeKitParticipant,
+  createRealtimeKitMeeting,
+  deleteRealtimeKitParticipant,
+  getRealtimeKitCredentials,
+  RealtimeKitApiError,
+  refreshRealtimeKitParticipantToken,
+} from './realtimekit';
 import {
   DDL,
   parseMember,
@@ -62,6 +70,7 @@ export class RoomDurableObject extends DurableObject<Env> {
   private members = new Map<string, RoomMember>();
   private game: GameState | null = null;
   private eventSeq = 0;
+  private voiceMeetingId: string | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -88,6 +97,9 @@ export class RoomDurableObject extends DurableObject<Env> {
     }
     this.meta = parseMeta(row);
     this.eventSeq = row.event_seq;
+    this.voiceMeetingId =
+      this.sql.exec<{ meeting_id: string }>('SELECT meeting_id FROM voice_meeting WHERE id = 1').one()
+        ?.meeting_id ?? null;
     const playerRows = this.sql
       .exec<PlayerRow>('SELECT id, name, seat, is_spectator, claimed, connected FROM player')
       .toArray();
@@ -135,12 +147,29 @@ export class RoomDurableObject extends DurableObject<Env> {
     code: string;
     roster?: string[];
     config?: Partial<RoomConfig>;
-  }): Promise<{ ok: boolean; hostToken?: string }> {
+  }): Promise<
+    | { ok: true; hostToken: string }
+    | { ok: false; error: 'ROOM_EXISTS' | 'VOICE_UNAVAILABLE' }
+  > {
     this.ensureLoaded();
-    if (this.meta) return { ok: false };
+    if (this.meta) return { ok: false, error: 'ROOM_EXISTS' };
     const hostToken = makePlayerId();
     const roster = sanitizeRoster(input.roster ?? []);
     const config = mergeConfig(input.config, roster);
+    let voiceMeetingId: string | null = null;
+    if (config.voiceEnabled) {
+      const credentials = getRealtimeKitCredentials(this.env);
+      if (!credentials) return { ok: false, error: 'VOICE_UNAVAILABLE' };
+      try {
+        voiceMeetingId = await createRealtimeKitMeeting(
+          credentials,
+          `Avalon ${input.code}`,
+        );
+      } catch (error) {
+        this.logRealtimeKitError('create meeting', error);
+        return { ok: false, error: 'VOICE_UNAVAILABLE' };
+      }
+    }
     const seats: RoomMember[] = roster.map((name, i) => ({
       id: makePlayerId(),
       name,
@@ -157,8 +186,12 @@ export class RoomDurableObject extends DurableObject<Env> {
       JSON.stringify(config),
     );
     for (const s of seats) this.persistPlayer(s);
+    if (voiceMeetingId) {
+      this.sql.exec('INSERT INTO voice_meeting (id, meeting_id) VALUES (1, ?)', voiceMeetingId);
+    }
     this.meta = { code: input.code, hostToken, status: 'lobby', config, gameId: null, seed: null };
     this.members = new Map(seats.map((s) => [s.id, s]));
+    this.voiceMeetingId = voiceMeetingId;
     return { ok: true, hostToken };
   }
 
@@ -170,6 +203,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     maxPlayers: number;
     allowSpectators: boolean;
     allowMidJoin: boolean;
+    voiceEnabled: boolean;
   } | null> {
     this.ensureLoaded();
     if (!this.meta) return null;
@@ -181,6 +215,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       maxPlayers: this.meta.config.maxPlayers,
       allowSpectators: this.meta.config.allowSpectators,
       allowMidJoin: this.meta.config.allowMidJoin,
+      voiceEnabled: this.meta.config.voiceEnabled,
     };
   }
 
@@ -243,6 +278,8 @@ export class RoomDurableObject extends DurableObject<Env> {
         return this.handleReleaseSeat(ws);
       case 'room:setRoster':
         return this.handleSetRoster(ws, payload);
+      case 'voice:token':
+        return this.handleVoiceToken(ws);
       case 'room:config':
         return this.handleConfig(ws, payload);
       case 'room:rename':
@@ -317,14 +354,18 @@ export class RoomDurableObject extends DurableObject<Env> {
     payload: unknown,
   ): Promise<Ack<{ playerId?: string; isHost: boolean }>> {
     if (!this.meta) return fail('ROOM_NOT_FOUND', 'Room not found');
-    const { playerId, hostToken } = (payload ?? {}) as { playerId?: string; hostToken?: string };
+    const { playerId, playerToken, hostToken } = (payload ?? {}) as {
+      playerId?: string;
+      playerToken?: string;
+      hostToken?: string;
+    };
 
     const isHost = !!hostToken && hostToken === this.meta.hostToken;
-    this.setAttach(ws, { isHost });
+    this.setAttach(ws, { playerId: undefined, isHost });
 
-    if (playerId && this.members.has(playerId)) {
+    if (playerId && playerToken && this.members.has(playerId)) {
       const member = this.members.get(playerId)!;
-      if (member.claimed) {
+      if (member.claimed && this.playerSessionToken(playerId) === playerToken) {
         // Supersede any stale socket still bound to this seat.
         const existing = this.wsForPlayer(playerId);
         if (existing && existing !== ws) this.setAttach(existing, { playerId: undefined });
@@ -348,7 +389,7 @@ export class RoomDurableObject extends DurableObject<Env> {
   private async handleClaimSeat(
     ws: WebSocket,
     payload: unknown,
-  ): Promise<Ack<{ playerId: string }>> {
+  ): Promise<Ack<{ playerId: string; playerToken: string }>> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     const { seatId } = (payload ?? {}) as { seatId?: string };
     const target = seatId ? this.members.get(seatId) : undefined;
@@ -358,10 +399,13 @@ export class RoomDurableObject extends DurableObject<Env> {
 
     const prevId = this.attach(ws).playerId;
     if (prevId && prevId !== seatId) {
+      await this.revokeVoiceParticipant(prevId);
       this.releaseSeat(prevId);
       if (this.game) await this.applyEvent({ type: 'SET_CONNECTED', by: prevId, connected: false });
     }
 
+    const playerToken = this.playerSessionToken(seatId) ?? makeSessionToken();
+    this.persistPlayerSession(seatId, playerToken);
     target.claimed = true;
     target.connected = true;
     this.persistPlayer(target);
@@ -369,13 +413,14 @@ export class RoomDurableObject extends DurableObject<Env> {
     if (this.game) await this.applyEvent({ type: 'SET_CONNECTED', by: seatId, connected: true });
     this.broadcastRoom();
     if (this.game) this.syncOne(seatId);
-    return ok({ playerId: seatId });
+    return ok({ playerId: seatId, playerToken });
   }
 
   private async handleReleaseSeat(ws: WebSocket): Promise<Ack> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     const pid = this.attach(ws).playerId;
     if (!pid) return ok();
+    await this.revokeVoiceParticipant(pid);
     this.releaseSeat(pid);
     if (this.game) {
       await this.applyEvent({ type: 'SET_CONNECTED', by: pid, connected: false });
@@ -385,12 +430,12 @@ export class RoomDurableObject extends DurableObject<Env> {
     return ok();
   }
 
-  private handleSetRoster(ws: WebSocket, payload: unknown): Ack {
+  private async handleSetRoster(ws: WebSocket, payload: unknown): Promise<Ack> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     if (!this.attach(ws).isHost) return fail('NOT_HOST', 'Only host');
     if (this.meta.status !== 'lobby') return fail('WRONG_PHASE', 'Game already started');
     const { names } = (payload ?? {}) as { names?: string[] };
-    const res = this.applyRoster(names ?? []);
+    const res = await this.applyRoster(names ?? []);
     if (!res.ok) return res;
     this.broadcastRoom();
     return ok();
@@ -402,7 +447,11 @@ export class RoomDurableObject extends DurableObject<Env> {
     if (this.meta.status !== 'lobby') return fail('WRONG_PHASE', 'Game already started');
     const { config } = (payload ?? {}) as { config?: RoomConfig };
     if (!config) return fail('INVALID', 'No config');
-    this.meta.config = sanitizeConfig(config, this.meta.config.roster);
+    this.meta.config = sanitizeConfig(
+      config,
+      this.meta.config.roster,
+      this.meta.config.voiceEnabled,
+    );
     this.persistConfig();
     this.broadcastRoom();
     return ok();
@@ -426,7 +475,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     return ok({ name: desired });
   }
 
-  private handleKick(ws: WebSocket, payload: unknown): Ack {
+  private async handleKick(ws: WebSocket, payload: unknown): Promise<Ack> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     if (!this.attach(ws).isHost) return fail('NOT_HOST', 'Only host');
     if (this.meta.status !== 'lobby') return fail('WRONG_PHASE', 'Cannot kick mid-game');
@@ -436,6 +485,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     }
     const targetWs = this.wsForPlayer(targetPlayerId);
     if (targetWs) this.send(targetWs, 'system:notice', { type: 'kicked', message: 'You were removed' });
+    await this.revokeVoiceParticipant(targetPlayerId);
     this.releaseSeat(targetPlayerId);
     this.broadcastRoom();
     return ok();
@@ -515,6 +565,50 @@ export class RoomDurableObject extends DurableObject<Env> {
     return ok();
   }
 
+  private async handleVoiceToken(
+    ws: WebSocket,
+  ): Promise<Ack<{ authToken: string }>> {
+    if (!this.meta?.config.voiceEnabled || !this.voiceMeetingId) {
+      return fail('VOICE_DISABLED', 'This room does not have voice enabled');
+    }
+    const playerId = this.attach(ws).playerId;
+    const member = playerId ? this.members.get(playerId) : undefined;
+    if (!playerId || !member?.claimed || this.wsForPlayer(playerId) !== ws) {
+      return fail('SEAT_REQUIRED', 'Claim a seat before joining voice');
+    }
+    const credentials = getRealtimeKitCredentials(this.env);
+    if (!credentials) return fail('VOICE_UNAVAILABLE', 'Voice is temporarily unavailable');
+
+    try {
+      const existingParticipantId = this.voiceParticipantId(playerId);
+      if (existingParticipantId) {
+        try {
+          const authToken = await refreshRealtimeKitParticipantToken(
+            credentials,
+            this.voiceMeetingId,
+            existingParticipantId,
+          );
+          return ok({ authToken });
+        } catch (error) {
+          if (!(error instanceof RealtimeKitApiError) || error.status !== 404) throw error;
+          this.deleteVoiceParticipantRecord(playerId);
+        }
+      }
+
+      const participant = await addRealtimeKitParticipant(
+        credentials,
+        this.voiceMeetingId,
+        playerId,
+        member.name,
+      );
+      this.persistVoiceParticipant(playerId, participant.participantId);
+      return ok({ authToken: participant.authToken });
+    } catch (error) {
+      this.logRealtimeKitError('issue participant token', error);
+      return fail('VOICE_UNAVAILABLE', 'Voice is temporarily unavailable');
+    }
+  }
+
   private handleAdminAuth(ws: WebSocket): Ack<{ ok: boolean }> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     this.setAttach(ws, { isAdmin: true });
@@ -540,6 +634,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     const actor = this.adminActorName(ws);
     const targetName = target.name;
     const targetWs = this.wsForPlayer(targetPlayerId);
+    await this.revokeVoiceParticipant(targetPlayerId);
     this.releaseSeat(targetPlayerId);
     if (targetWs) {
       this.send(targetWs, 'system:notice', { type: 'unbound', message: 'You were unbound by a referee' });
@@ -612,6 +707,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       this.broadcastRoom();
       return ok();
     }
+    await this.revokeVoiceParticipant(pid);
     this.releaseSeat(pid);
     if (this.game) await this.applyEvent({ type: 'SET_CONNECTED', by: pid, connected: false });
     this.broadcastRoom();
@@ -629,6 +725,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     const member = this.members.get(pid);
     if (this.meta.status === 'lobby') {
       // Lobby drop: free the seat so someone else can claim it.
+      await this.revokeVoiceParticipant(pid);
       this.releaseSeat(pid);
       this.broadcastRoom();
     } else {
@@ -736,7 +833,7 @@ export class RoomDurableObject extends DurableObject<Env> {
 
   private broadcastRoom(): void {
     if (!this.meta) return;
-    const snap = snapshot(this.meta, this.members);
+    const snap = snapshot(this.meta, this.members, this.currentHostPlayerId());
     for (const w of this.ctx.getWebSockets()) this.send(w, 'room:snapshot', snap);
   }
 
@@ -779,7 +876,7 @@ export class RoomDurableObject extends DurableObject<Env> {
   // Roster reconciliation (ported from handlers.applyRoster)
   // ---------------------------------------------------------------------------
 
-  private applyRoster(names: string[]): Ack {
+  private async applyRoster(names: string[]): Promise<Ack> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     const desired = names.slice(0, 10).map((n, i) => sanitizeName(n) || fallbackSeatName(i));
     const seats = activePlayers(this.members);
@@ -811,6 +908,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     // Drop trailing unclaimed seats.
     for (let i = desired.length; i < seats.length; i++) {
       const seat = seats[i]!;
+      await this.revokeVoiceParticipant(seat.id);
       this.members.delete(seat.id);
       this.deletePlayer(seat.id);
     }
@@ -838,6 +936,14 @@ export class RoomDurableObject extends DurableObject<Env> {
     return undefined;
   }
 
+  private currentHostPlayerId(): string | null {
+    for (const ws of this.ctx.getWebSockets()) {
+      const attachment = this.attach(ws);
+      if (attachment.isHost && attachment.playerId) return attachment.playerId;
+    }
+    return null;
+  }
+
   /** Mark a seat unclaimed + offline and drop its socket binding. Seat stays. */
   private releaseSeat(playerId: string): void {
     const member = this.members.get(playerId);
@@ -846,8 +952,28 @@ export class RoomDurableObject extends DurableObject<Env> {
       member.connected = false;
       this.persistPlayer(member);
     }
+    this.deletePlayerSession(playerId);
     const holder = this.wsForPlayer(playerId);
     if (holder) this.setAttach(holder, { playerId: undefined });
+  }
+
+  private async revokeVoiceParticipant(playerId: string): Promise<void> {
+    const participantId = this.voiceParticipantId(playerId);
+    if (!participantId || !this.voiceMeetingId) return;
+    const credentials = getRealtimeKitCredentials(this.env);
+    if (!credentials) return;
+    try {
+      await deleteRealtimeKitParticipant(credentials, this.voiceMeetingId, participantId);
+      this.deleteVoiceParticipantRecord(playerId);
+    } catch (error) {
+      this.logRealtimeKitError('delete participant', error);
+    }
+  }
+
+  private logRealtimeKitError(action: string, error: unknown): void {
+    const detail =
+      error instanceof RealtimeKitApiError ? `HTTP ${error.status}` : 'unexpected error';
+    console.error(`[room-do] RealtimeKit ${action} failed: ${detail}`);
   }
 
   private adminActorName(ws: WebSocket): string {
@@ -903,8 +1029,55 @@ export class RoomDurableObject extends DurableObject<Env> {
     );
   }
 
+  private playerSessionToken(playerId: string): string | null {
+    return (
+      this.sql
+        .exec<{ token: string }>('SELECT token FROM player_session WHERE player_id = ?', playerId)
+        .one()?.token ?? null
+    );
+  }
+
+  private persistPlayerSession(playerId: string, token: string): void {
+    this.sql.exec(
+      `INSERT INTO player_session (player_id, token) VALUES (?, ?)
+       ON CONFLICT(player_id) DO UPDATE SET token=excluded.token`,
+      playerId,
+      token,
+    );
+  }
+
+  private deletePlayerSession(playerId: string): void {
+    this.sql.exec('DELETE FROM player_session WHERE player_id = ?', playerId);
+  }
+
+  private voiceParticipantId(playerId: string): string | null {
+    return (
+      this.sql
+        .exec<{ participant_id: string }>(
+          'SELECT participant_id FROM voice_participant WHERE player_id = ?',
+          playerId,
+        )
+        .one()?.participant_id ?? null
+    );
+  }
+
+  private persistVoiceParticipant(playerId: string, participantId: string): void {
+    this.sql.exec(
+      `INSERT INTO voice_participant (player_id, participant_id) VALUES (?, ?)
+       ON CONFLICT(player_id) DO UPDATE SET participant_id=excluded.participant_id`,
+      playerId,
+      participantId,
+    );
+  }
+
+  private deleteVoiceParticipantRecord(playerId: string): void {
+    this.sql.exec('DELETE FROM voice_participant WHERE player_id = ?', playerId);
+  }
+
   private deletePlayer(id: string): void {
     this.sql.exec('DELETE FROM player WHERE id = ?', id);
+    this.deletePlayerSession(id);
+    this.deleteVoiceParticipantRecord(id);
   }
 }
 

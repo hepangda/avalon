@@ -8,11 +8,13 @@ import { persist } from 'zustand/middleware';
  * same seat after a refresh or network drop. Keyed by room code.
  *
  * - `playerId` is the claimed seat's id (absent until the player claims a seat).
+ * - `playerToken` proves ownership of that seat during reconnect.
  * - `hostToken` is the opaque owner token (present only in the creator's
  *   browser); whoever holds it is the room host.
  */
 interface SessionEntry {
   playerId?: string;
+  playerToken?: string;
   name?: string;
   hostToken?: string;
 }

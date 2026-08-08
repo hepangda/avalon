@@ -37,11 +37,12 @@ export function useRoomConnection(code: string | null) {
       try {
         const res = await emitWithAck<
           'room:join',
-          { code: string; playerId?: string; hostToken?: string },
+          { code: string; playerId?: string; playerToken?: string; hostToken?: string },
           Ack<{ playerId?: string; isHost: boolean }>
         >('room:join', {
           code: upperCode,
           playerId: session?.playerId,
+          playerToken: session?.playerToken,
           hostToken: session?.hostToken,
         });
         if (res.ok && res.data) {
@@ -49,6 +50,11 @@ export function useRoomConnection(code: string | null) {
           if (res.data.playerId) {
             store.setMyPlayerId(res.data.playerId);
             useSessionStore.getState().setSession(upperCode, { playerId: res.data.playerId });
+          } else if (session?.playerId) {
+            store.setMyPlayerId(null);
+            useSessionStore
+              .getState()
+              .setSession(upperCode, { playerId: undefined, playerToken: undefined });
           }
         } else if (res.error) {
           store.setNotice({ type: 'join_error', message: res.error.message });
@@ -76,7 +82,9 @@ export function useRoomConnection(code: string | null) {
       // unclaimed state instead of still highlighting our old seat.
       if (n.type === 'kicked' || n.type === 'unbound') {
         useRoomStore.getState().setMyPlayerId(null);
-        useSessionStore.getState().setSession(upperCode, { playerId: undefined });
+        useSessionStore
+          .getState()
+          .setSession(upperCode, { playerId: undefined, playerToken: undefined });
       }
       store.setNotice(n);
     }
@@ -142,15 +150,22 @@ export const roomActions = {
       targetPlayerId,
     }),
   claimSeat: (seatId: string) =>
-    emitWithAck<'room:claimSeat', { seatId: string }, Ack<{ playerId: string }>>('room:claimSeat', {
-      seatId,
-    }),
+    emitWithAck<
+      'room:claimSeat',
+      { seatId: string },
+      Ack<{ playerId: string; playerToken: string }>
+    >('room:claimSeat', { seatId }),
   releaseSeat: () =>
     emitWithAck<'room:releaseSeat', Record<string, never>, Ack>('room:releaseSeat', {}),
   setRoster: (names: string[]) =>
     emitWithAck<'room:setRoster', { names: string[] }, Ack>('room:setRoster', { names }),
   start: () => emitWithAck<'room:start', Record<string, never>, Ack>('room:start', {}),
   leave: () => emitWithAck<'room:leave', Record<string, never>, Ack>('room:leave', {}),
+  voiceToken: () =>
+    emitWithAck<'voice:token', Record<string, never>, Ack<{ authToken: string }>>(
+      'voice:token',
+      {},
+    ),
 };
 
 /** Game-phase action wrappers. */
