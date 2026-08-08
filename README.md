@@ -32,6 +32,29 @@ npm run dev
 
 `npm run dev` runs Vite with the Cloudflare plugin, so the React app, the Hono Worker, and the Durable Objects (including WebSockets) all run together in a local `workerd` runtime. Open multiple browser tabs or phones on the same network to simulate players.
 
+## Voice rooms (Cloudflare RealtimeKit)
+
+Room creators can enable an audio-only room before creating it. Seated players explicitly join voice, start muted, and can hold the mobile-friendly talk button, keep the microphone open, mute it, or switch input devices. RealtimeKit media state drives the participant microphone and speaking indicators; speech is not tied to game turns.
+
+Create a RealtimeKit app and a preset whose meeting type is **Voice**. The preset must allow participants to produce audio without stage approval. Set its active participant/grid capacity to at least 10 so every Avalon player can be represented.
+
+For local development, add these values to an ignored `.dev.vars` file:
+
+```dotenv
+CLOUDFLARE_ACCOUNT_ID=<account-id>
+REALTIMEKIT_APP_ID=<realtimekit-app-id>
+REALTIMEKIT_PRESET_NAME=<voice-preset-name>
+REALTIMEKIT_API_TOKEN=<api-token>
+```
+
+The API token stays Worker-side and needs only the Cloudflare **Realtime / Realtime Admin** permission. For production, configure the three identifiers as Worker variables and store the token as a secret, for example:
+
+```bash
+npx wrangler secret put REALTIMEKIT_API_TOKEN
+```
+
+Never expose this token through a `VITE_*` variable. If these settings are absent, normal rooms continue to work and attempts to create a voice room return a configuration error.
+
 To run the production build locally in a Miniflare runtime (closest to deployed behavior):
 
 ```bash
