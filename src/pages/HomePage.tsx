@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { GameIcon } from '@/components/game/GameArt';
+import { Toggle } from '@/components/ui/Toggle';
 import { useSessionStore } from '@/lib/store/session';
 
 const DEFAULT_SEAT_COUNT = 5;
@@ -15,6 +16,7 @@ export default function HomePage() {
   const router = useRouter();
 
   const [joinCode, setJoinCode] = useState('');
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,11 +30,18 @@ export default function HomePage() {
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roster: names }),
+        body: JSON.stringify({ roster: names, config: { voiceEnabled } }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? t('home.errCreateFailed'));
+        const body = (await res.json().catch(() => ({}))) as {
+          code?: string;
+          error?: string;
+        };
+        throw new Error(
+          body.code === 'VOICE_UNAVAILABLE'
+            ? t('home.errVoiceUnavailable')
+            : (body.error ?? t('home.errCreateFailed')),
+        );
       }
       const { code, hostToken } = (await res.json()) as {
         code: string;
@@ -70,6 +79,13 @@ export default function HomePage() {
         </header>
 
         <Card className="space-y-4 p-4 sm:p-5">
+          <Toggle
+            checked={voiceEnabled}
+            onChange={setVoiceEnabled}
+            label={t('home.voiceRoom')}
+            description={t('home.voiceRoomHint')}
+            disabled={busy}
+          />
           <Button
             className="h-14 w-full text-base sm:text-lg"
             onClick={handleCreate}

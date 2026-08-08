@@ -105,7 +105,11 @@ export default function LobbyPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-4 p-4">
+    <main
+      className={`mx-auto max-w-2xl space-y-4 p-4 ${
+        snapshot.config.voiceEnabled ? 'pb-48' : ''
+      }`}
+    >
       <div className="flex justify-end">
         <LocaleSwitcher />
       </div>
