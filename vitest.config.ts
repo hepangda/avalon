@@ -3,7 +3,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'worker/**/*.test.ts'],
     environment: 'node',
   },
   resolve: {
