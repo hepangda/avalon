@@ -5,7 +5,8 @@ import { useTranslations } from 'use-intl';
 import { Link } from '@/i18n/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ROLE_SIGIL, TEAM_COLOR } from '@/lib/game/roleMeta';
+import { GameIcon, RolePortrait } from './GameArt';
+import { TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState } from '@/lib/engine';
@@ -41,7 +42,10 @@ export function GameOverReveal({
         transition={{ type: 'spring', stiffness: 160, damping: 14 }}
         className="text-center"
       >
-        <p className="text-5xl">{goodWon ? '⚜️' : '🗡️'}</p>
+        <GameIcon
+          name={goodWon ? 'crest' : 'reject'}
+          className="mx-auto h-20 w-20 drop-shadow-[0_0_18px_rgba(201,162,39,0.3)]"
+        />
         <h1 className={`font-serif text-4xl ${goodWon ? 'text-sky-300' : 'text-crimson'}`}>
           {goodWon ? t('gameOver.goodTriumphs') : t('gameOver.evilPrevails')}
         </h1>
@@ -75,7 +79,7 @@ export function GameOverReveal({
                 className="flex items-center justify-between rounded-lg border border-gold/15 bg-ink/30 px-3 py-2"
               >
                 <span className="flex items-center gap-2">
-                  <span>{ROLE_SIGIL[r.role]}</span>
+                  <RolePortrait role={r.role} className="h-10 w-10 rounded-full" />
                   <span className="text-parchment">{nameOf(r.playerId)}</span>
                   {outcome.assassinTargetId === r.playerId && (
                     <span className="text-xs text-crimson">{t('gameOver.targeted')}</span>

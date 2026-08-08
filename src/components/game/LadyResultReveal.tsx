@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
+import { GameIcon } from './GameArt';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, Team } from '@/lib/engine';
 
@@ -55,7 +56,7 @@ export function LadyResultReveal({
         onClick={(e) => e.stopPropagation()}
       >
         <div>
-          <span className="text-3xl">🌊</span>
+          <GameIcon name="lady" className="mx-auto h-12 w-12" />
           <p className="mt-1 text-sm text-parchment/70">{t('lady.watersReveal', { name })}</p>
         </div>
 
@@ -70,9 +71,12 @@ export function LadyResultReveal({
           >
             <div
               className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-sky-300/50 bg-gradient-to-br from-royal to-ink"
-              style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+              }}
             >
-              <span className="text-4xl text-sky-200/70">🌊</span>
+              <GameIcon name="lady" className="h-16 w-16 opacity-80" />
             </div>
             <div
               className={cn(
@@ -85,8 +89,10 @@ export function LadyResultReveal({
                 transform: 'rotateY(180deg)',
               }}
             >
-              <span className="text-4xl">{evil ? '🗡️' : '🛡️'}</span>
-              <span className={cn('font-serif text-xl', evil ? 'text-crimson-bright' : 'text-sky-200')}>
+              <GameIcon name={evil ? 'reject' : 'approve'} className="h-14 w-14" />
+              <span
+                className={cn('font-serif text-xl', evil ? 'text-crimson-bright' : 'text-sky-200')}
+              >
                 {evil ? t('team.evil') : t('team.good')}
               </span>
             </div>

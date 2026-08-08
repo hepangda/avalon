@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
+import { GameIcon } from '@/components/game/GameArt';
 import { useSessionStore } from '@/lib/store/session';
 
 const DEFAULT_SEAT_COUNT = 5;
@@ -33,7 +34,10 @@ export default function HomePage() {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? t('home.errCreateFailed'));
       }
-      const { code, hostToken } = (await res.json()) as { code: string; hostToken: string };
+      const { code, hostToken } = (await res.json()) as {
+        code: string;
+        hostToken: string;
+      };
       useSessionStore.getState().setSession(code, { hostToken });
       router.push(`/room/${code}`);
     } catch (e) {
@@ -57,7 +61,10 @@ export default function HomePage() {
 
       <section className="w-full max-w-md space-y-5">
         <header className="text-center">
-          <div className="mb-2 animate-flicker text-4xl">⚜️</div>
+          <GameIcon
+            name="crest"
+            className="mx-auto mb-1 h-16 w-16 animate-flicker drop-shadow-[0_0_16px_rgba(201,162,39,0.35)]"
+          />
           <h1 className="gilt text-4xl tracking-wide sm:text-5xl">{t('common.appName')}</h1>
           <p className="mt-2 text-sm text-parchment/55">{t('common.tagline')}</p>
         </header>

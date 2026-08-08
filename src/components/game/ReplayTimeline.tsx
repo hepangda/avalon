@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
+import { GameIcon } from './GameArt';
 import { seatLabel } from '@/lib/game/playerLabel';
 import type { ReplayData, ReplayRound } from '@/lib/game/replayTypes';
 
@@ -86,9 +87,7 @@ function RoundCard({
       )}
 
       {/* Votes on the final proposal. */}
-      {round.votes.length > 0 && (
-        <VoteRow votes={round.votes} nameOf={nameOf} t={t} />
-      )}
+      {round.votes.length > 0 && <VoteRow votes={round.votes} nameOf={nameOf} t={t} />}
 
       {/* Mission cards (post-game only). */}
       {played && round.missionCards.length > 0 && (
@@ -101,7 +100,8 @@ function RoundCard({
                 c.card === 'fail' ? 'bg-crimson/45 text-parchment' : 'bg-sky-600/30 text-sky-200'
               }`}
             >
-              {nameOf(c.playerId)}: {c.card === 'fail' ? t('replay.playedFail') : t('replay.playedSuccess')}
+              {nameOf(c.playerId)}:{' '}
+              {c.card === 'fail' ? t('replay.playedFail') : t('replay.playedSuccess')}
             </span>
           ))}
         </div>
@@ -109,8 +109,8 @@ function RoundCard({
 
       {/* Lady of the Lake inspection after this round. */}
       {lady && (
-        <p className="border-t border-gold/10 pt-2 text-xs text-parchment/70">
-          🌊{' '}
+        <p className="flex items-center gap-1.5 border-t border-gold/10 pt-2 text-xs text-parchment/70">
+          <GameIcon name="lady" className="h-5 w-5" />
           {t('replay.ladyResult', {
             holder: nameOf(lady.holderPlayerId),
             target: nameOf(lady.targetPlayerId),

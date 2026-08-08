@@ -5,7 +5,7 @@ import type { Role, Team } from '@/lib/engine';
 
 /**
  * Locale-aware accessors for role display text. Pairs with the non-text data
- * in roleMeta.ts (ROLE_SIGIL, ROLE_TEAM_UI, TEAM_COLOR).
+ * in roleMeta.ts (ROLE_PORTRAIT, ROLE_TEAM_UI, TEAM_COLOR).
  */
 export function useRoleText() {
   const t = useTranslations();

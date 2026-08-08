@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'use-intl';
-import { ROLE_SIGIL, ROLE_TEAM_UI, TEAM_COLOR } from '@/lib/game/roleMeta';
+import { GameIcon, RolePortrait } from './GameArt';
+import { ROLE_TEAM_UI, TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, VisibilityInfo } from '@/lib/engine';
@@ -53,11 +54,15 @@ export function IdentityCard({ game }: { game: ClientGameState }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 ${
+              className={`mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 ${
                 team === 'evil' ? 'border-crimson/60' : 'border-sky-400/50'
               } bg-ink/50 shadow-candle`}
             >
-              <span className="text-5xl">{ROLE_SIGIL[role]}</span>
+              <RolePortrait
+                role={role}
+                alt={roleText.name(role)}
+                className="h-full w-full rounded-full"
+              />
             </div>
             <div>
               <h2 className="gilt text-2xl">{roleText.name(role)}</h2>
@@ -107,12 +112,7 @@ export function IdentityCard({ game }: { game: ClientGameState }) {
       >
         <span className="relative flex h-[4.6rem] w-[3.3rem] items-center justify-center rounded-lg border-2 border-gold/40 bg-gradient-to-br from-royal to-ink shadow-lg shadow-black/40 transition-shadow hover:shadow-candle">
           <span className="absolute inset-1.5 rounded-md border border-gold/20" />
-          <span
-            className="text-2xl text-gold/85"
-            style={{ textShadow: '0 0 12px rgba(201,162,39,0.45)' }}
-          >
-            ⚜
-          </span>
+          <GameIcon name="crest" className="h-9 w-9 drop-shadow-[0_0_10px_rgba(201,162,39,0.45)]" />
         </span>
         <span className="text-[10px] text-parchment/55">{t('identity.myRole')}</span>
       </button>
@@ -120,4 +120,3 @@ export function IdentityCard({ game }: { game: ClientGameState }) {
     </>
   );
 }
-

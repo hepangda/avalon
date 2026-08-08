@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { ReplayTimeline } from '@/components/game/ReplayTimeline';
 import { MvpPanel } from '@/components/game/MvpPanel';
-import { ROLE_SIGIL, TEAM_COLOR } from '@/lib/game/roleMeta';
+import { GameIcon, RolePortrait } from '@/components/game/GameArt';
+import { TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { seatLabel } from '@/lib/game/playerLabel';
 import { teamOf } from '@/lib/engine';
@@ -93,7 +94,10 @@ export default function ReplayPage() {
       {/* Outcome banner */}
       {data.outcome && (
         <Card className="text-center">
-          <p className="text-4xl">{goodWon ? '⚜️' : '🗡️'}</p>
+          <GameIcon
+            name={goodWon ? 'crest' : 'reject'}
+            className="mx-auto h-16 w-16 drop-shadow-[0_0_16px_rgba(201,162,39,0.28)]"
+          />
           <p className={`font-serif text-2xl ${goodWon ? 'text-sky-300' : 'text-crimson'}`}>
             {t('replay.outcome', {
               winner: goodWon ? t('replay.goodWon') : t('replay.evilWon'),
@@ -118,7 +122,7 @@ export default function ReplayPage() {
                 key={r.playerId}
                 className="flex items-center gap-1.5 rounded-lg border border-gold/15 bg-ink/30 px-2 py-1.5 text-sm"
               >
-                <span>{ROLE_SIGIL[r.role]}</span>
+                <RolePortrait role={r.role} className="h-8 w-8 rounded-full" />
                 <span className="text-parchment">{nameOf(r.playerId)}</span>
                 <span className={`ml-auto text-xs ${TEAM_COLOR[teamOf(r.role)]}`}>
                   {roleText.name(r.role)}
@@ -144,7 +148,9 @@ export default function ReplayPage() {
               target: nameOf(data.assassination.targetPlayerId),
             })}
           </p>
-          <p className={`text-sm ${data.assassination.hitMerlin ? 'text-crimson' : 'text-sky-300'}`}>
+          <p
+            className={`text-sm ${data.assassination.hitMerlin ? 'text-crimson' : 'text-sky-300'}`}
+          >
             {data.assassination.hitMerlin ? t('replay.hitMerlin') : t('replay.missedMerlin')}
           </p>
         </Card>

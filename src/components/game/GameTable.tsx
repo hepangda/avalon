@@ -4,6 +4,7 @@ import { Fragment, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
+import { GameIcon } from './GameArt';
 import { latencyDotClass } from '@/lib/utils/latency';
 import type { ClientGameState, ClientPlayer } from '@/lib/engine';
 
@@ -74,9 +75,7 @@ export function GameTable({
       )}
 
       {/* Centre display: the shared play area / progress board. */}
-      <div className="relative rounded-xl border border-gold/15 bg-ink/40 px-3 py-2.5">
-        {board}
-      </div>
+      <div className="relative rounded-xl border border-gold/15 bg-ink/40 px-3 py-2.5">{board}</div>
 
       <div className="relative flex items-start justify-center gap-2 sm:gap-3">
         {bottom.map((p) => (
@@ -178,14 +177,14 @@ function Seat({
         <span className="relative text-gold">{player.seat + 1}</span>
 
         {player.isLeader && (
-          <span className="absolute -right-1 -top-2 text-sm" title="Leader">
-            👑
-          </span>
+          <GameIcon name="leader" className="absolute -right-2 -top-2.5 h-6 w-6" title="Leader" />
         )}
         {player.isLadyHolder && (
-          <span className="absolute -left-1 -top-2 text-sm" title="Lady of the Lake">
-            🌊
-          </span>
+          <GameIcon
+            name="lady"
+            className="absolute -left-2 -top-2.5 h-6 w-6"
+            title="Lady of the Lake"
+          />
         )}
         <span
           className={cn(
@@ -203,7 +202,9 @@ function Seat({
       >
         {player.name}
       </span>
-      {isMe && <span className="text-[9px] leading-none text-parchment/40">({t('common.you')})</span>}
+      {isMe && (
+        <span className="text-[9px] leading-none text-parchment/40">({t('common.you')})</span>
+      )}
 
       {badge && <span className="mt-0.5">{badge}</span>}
     </motion.button>

@@ -23,6 +23,7 @@ import { GameOverReveal } from '@/components/game/GameOverReveal';
 import { RoundHistoryModal } from '@/components/game/RoundHistoryModal';
 import { InGameSeatClaim } from '@/components/game/InGameSeatClaim';
 import { LogPanel } from '@/components/game/LogPanel';
+import { GameIcon } from '@/components/game/GameArt';
 import { useResultCue } from '@/lib/game/useResultCue';
 import { formatLatency, latencyTextClass } from '@/lib/utils/latency';
 import type { ClientPlayer } from '@/lib/engine';
@@ -78,8 +79,7 @@ export default function GamePage() {
 
   // Per-player role-reveal overlay: shown to a seated player who hasn't yet
   // acked their role. Driven by projected roleAcks, so it survives reconnect.
-  const needsRoleReveal =
-    !!myPlayerId && !game.isSpectator && !game.roleAcks.includes(myPlayerId);
+  const needsRoleReveal = !!myPlayerId && !game.isSpectator && !game.roleAcks.includes(myPlayerId);
 
   if (game.phase === 'GameOver') {
     return (
@@ -128,7 +128,12 @@ export default function GamePage() {
 
   let table: TableInteraction = {};
   if (game.phase === 'TeamBuilding' && isLeader) {
-    table = { selectable: true, selectedIds: selected, highlightIds: selected, onToggle: toggleTeam };
+    table = {
+      selectable: true,
+      selectedIds: selected,
+      highlightIds: selected,
+      onToggle: toggleTeam,
+    };
   } else if (game.phase === 'Voting') {
     table = { highlightIds: proposedTeam };
   } else if (game.phase === 'MissionVote') {
@@ -180,7 +185,8 @@ export default function GamePage() {
       size: 1,
       confirmLabel: t('assassin.strike'),
       tone: 'crimson',
-      onConfirm: async () => (selected[0] ? (await gameActions.assassinate(selected[0])).ok : false),
+      onConfirm: async () =>
+        selected[0] ? (await gameActions.assassinate(selected[0])).ok : false,
     };
   }
 
@@ -247,13 +253,31 @@ export default function GamePage() {
             )}
 
             {game.phase === 'TeamBuilding' && (
-              <PickPile game={game} selected={selected} size={teamSize} tone="gold" onRemove={toggleTeam} />
+              <PickPile
+                game={game}
+                selected={selected}
+                size={teamSize}
+                tone="gold"
+                onRemove={toggleTeam}
+              />
             )}
             {game.phase === 'Assassination' && (
-              <PickPile game={game} selected={selected} size={1} tone="crimson" onRemove={toggleSingle} />
+              <PickPile
+                game={game}
+                selected={selected}
+                size={1}
+                tone="crimson"
+                onRemove={toggleSingle}
+              />
             )}
             {game.phase === 'LadyOfLake' && isHolder && !ladyResolved && (
-              <PickPile game={game} selected={selected} size={1} tone="sky" onRemove={toggleSingle} />
+              <PickPile
+                game={game}
+                selected={selected}
+                size={1}
+                tone="sky"
+                onRemove={toggleSingle}
+              />
             )}
 
             {game.phase === 'MissionVote' && (
@@ -263,7 +287,7 @@ export default function GamePage() {
                     key={i}
                     className="flex h-20 w-14 shrink-0 items-center justify-center rounded-lg border-2 border-gold/50 bg-gradient-to-b from-stone to-ink text-2xl opacity-60"
                   >
-                    ⚜️
+                    <GameIcon name="crest" className="h-9 w-9" />
                   </span>
                 ))}
               </div>

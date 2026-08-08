@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { GameIcon, RolePortrait } from '@/components/game/GameArt';
 import { cn } from '@/lib/utils/cn';
 import type { GameOptions, Role } from '@/lib/engine';
 import {
@@ -15,7 +16,7 @@ import {
   missionSizesFor,
   requiredFailsFor,
 } from '@/lib/engine';
-import { ROLE_SIGIL, ROLE_TEAM_UI, TEAM_COLOR } from '@/lib/game/roleMeta';
+import { ROLE_TEAM_UI, TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import type { RoomConfig } from '@/lib/socket/types';
 
@@ -100,7 +101,10 @@ export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPan
         <h2 className="font-serif text-xl text-gold">{t('lobby.configuration')}</h2>
         {composition && (
           <span className="text-sm text-parchment/50">
-            {t('lobby.goodEvil', { good: composition.good, evil: composition.evil })}
+            {t('lobby.goodEvil', {
+              good: composition.good,
+              evil: composition.evil,
+            })}
           </span>
         )}
       </div>
@@ -213,12 +217,7 @@ function IdentityStyleCard({
 }) {
   const t = useTranslations();
   const team = role ? ROLE_TEAM_UI[role] : side === 'neutral' ? null : side;
-  const sigil = role ? ROLE_SIGIL[role] : '*';
-  const teamLabel = team
-    ? role
-      ? t(`team.${team}`)
-      : t(`team.${team}`)
-    : t('lobby.token');
+  const teamLabel = team ? (role ? t(`team.${team}`) : t(`team.${team}`)) : t('lobby.token');
   return (
     <div
       className={cn(
@@ -232,15 +231,21 @@ function IdentityStyleCard({
         selected ? 'opacity-100 ring-2 ring-gold/40' : 'opacity-45 grayscale',
       )}
     >
-      <span className={compact ? 'text-4xl' : 'text-5xl'}>{sigil}</span>
-      <span className={cn('font-serif text-gold', compact ? 'text-base' : 'text-xl')}>
-        {label}
-      </span>
+      {role ? (
+        <RolePortrait
+          role={role}
+          alt={label}
+          className={cn(
+            'rounded-full shadow-lg shadow-black/40',
+            compact ? 'h-16 w-16' : 'h-20 w-20',
+          )}
+        />
+      ) : (
+        <GameIcon name="lady" className={compact ? 'h-16 w-16' : 'h-20 w-20'} />
+      )}
+      <span className={cn('font-serif text-gold', compact ? 'text-base' : 'text-xl')}>{label}</span>
       <span
-        className={cn(
-          'text-xs uppercase tracking-wide',
-          team ? TEAM_COLOR[team] : 'text-gold',
-        )}
+        className={cn('text-xs uppercase tracking-wide', team ? TEAM_COLOR[team] : 'text-gold')}
       >
         {teamLabel}
       </span>

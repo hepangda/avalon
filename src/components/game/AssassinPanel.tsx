@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
+import { GameIcon } from './GameArt';
 import type { ClientGameState } from '@/lib/engine';
 
 /**
@@ -13,8 +14,12 @@ export function AssassinPanel({ game }: { game: ClientGameState }) {
   const isAssassin = !!game.assassinCandidates;
 
   return (
-    <motion.div className="text-center" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-      <span className="text-3xl">🗡️</span>
+    <motion.div
+      className="text-center"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <GameIcon name="reject" className="mx-auto h-12 w-12" />
       <h3 className="font-serif text-xl text-crimson">{t('assassin.title')}</h3>
       <p className="text-sm text-parchment/60">
         {isAssassin ? t('assassin.nameMerlin') : t('assassin.contemplating')}
