@@ -61,6 +61,9 @@ function VoiceDock({
   const pressingRef = useRef(false);
   const desiredAudioRef = useRef(false);
   const syncingRef = useRef(false);
+  const pressSourceRef = useRef<
+    { kind: 'pointer'; pointerId: number } | { kind: 'keyboard'; key: string } | null
+  >(null);
 
   const syncMicrophone = useCallback(async () => {
     if (syncingRef.current) return;
@@ -75,6 +78,7 @@ function VoiceDock({
     } catch {
       latchedRef.current = false;
       pressingRef.current = false;
+      pressSourceRef.current = null;
       desiredAudioRef.current = false;
       setLatched(false);
       setPressing(false);
@@ -178,19 +182,33 @@ function VoiceDock({
     .filter((member) => !member.isSpectator && member.claimed)
     .sort((a, b) => a.seat - b.seat);
 
-  function startPushToTalk(event?: PointerEvent<HTMLButtonElement>) {
+  function beginPushToTalk() {
     if (latchedRef.current || pressingRef.current) return;
-    if (event) event.currentTarget.setPointerCapture(event.pointerId);
     pressingRef.current = true;
     setPressing(true);
     setDesiredAudio(true);
   }
 
-  function stopPushToTalk() {
+  function endPushToTalk() {
     if (!pressingRef.current) return;
     pressingRef.current = false;
     setPressing(false);
     setDesiredAudio(latchedRef.current);
+  }
+
+  function handlePointerDown(event: PointerEvent<HTMLButtonElement>) {
+    if (event.button !== 0 || latchedRef.current || pressingRef.current || pressSourceRef.current)
+      return;
+    pressSourceRef.current = { kind: 'pointer', pointerId: event.pointerId };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    beginPushToTalk();
+  }
+
+  function handlePointerEnd(event: PointerEvent<HTMLButtonElement>) {
+    const source = pressSourceRef.current;
+    if (source?.kind !== 'pointer' || source.pointerId !== event.pointerId) return;
+    pressSourceRef.current = null;
+    endPushToTalk();
   }
 
   function toggleLatched() {
@@ -201,16 +219,26 @@ function VoiceDock({
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if ((event.key === ' ' || event.key === 'Enter') && !event.repeat) {
+    if (
+      (event.key === ' ' || event.key === 'Enter') &&
+      !event.repeat &&
+      !pressSourceRef.current
+    ) {
       event.preventDefault();
-      startPushToTalk();
+      pressSourceRef.current = { kind: 'keyboard', key: event.key };
+      beginPushToTalk();
     }
   }
 
   function handleKeyUp(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.key === ' ' || event.key === 'Enter') {
+    if (
+      (event.key === ' ' || event.key === 'Enter') &&
+      pressSourceRef.current?.kind === 'keyboard' &&
+      pressSourceRef.current.key === event.key
+    ) {
       event.preventDefault();
-      stopPushToTalk();
+      pressSourceRef.current = null;
+      endPushToTalk();
     }
   }
 
@@ -323,10 +351,10 @@ function VoiceDock({
         type="button"
         aria-pressed={pressing}
         disabled={latched}
-        onPointerDown={startPushToTalk}
-        onPointerUp={stopPushToTalk}
-        onPointerCancel={stopPushToTalk}
-        onLostPointerCapture={stopPushToTalk}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onLostPointerCapture={handlePointerEnd}
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
         onContextMenu={(event) => event.preventDefault()}

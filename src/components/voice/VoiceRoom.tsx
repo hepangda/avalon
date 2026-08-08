@@ -26,14 +26,19 @@ export function VoiceRoom() {
   const meetingRef = useRef<RealtimeKitClient | undefined>(undefined);
   const activeKeyRef = useRef<string | null>(null);
   const eligibleKeyRef = useRef(eligibleKey);
+  const mountedRef = useRef(true);
+  const joinAttemptRef = useRef(0);
   eligibleKeyRef.current = eligibleKey;
 
   const disconnect = useCallback(async () => {
+    joinAttemptRef.current += 1;
     const current = meetingRef.current;
     meetingRef.current = undefined;
     activeKeyRef.current = null;
-    setMeeting(undefined);
-    setJoining(false);
+    if (mountedRef.current) {
+      setMeeting(undefined);
+      setJoining(false);
+    }
     if (!current) return;
     try {
       if (current.self.audioEnabled) await current.self.disableAudio();
@@ -55,8 +60,12 @@ export function VoiceRoom() {
 
   useEffect(
     () => () => {
+      mountedRef.current = false;
+      eligibleKeyRef.current = null;
+      joinAttemptRef.current += 1;
       const current = meetingRef.current;
       meetingRef.current = undefined;
+      activeKeyRef.current = null;
       if (current) void current.leave();
     },
     [],
@@ -65,36 +74,59 @@ export function VoiceRoom() {
   async function joinVoice() {
     if (!eligibleKey || joining || meetingRef.current) return;
     const attemptKey = eligibleKey;
+    const attemptId = ++joinAttemptRef.current;
+    const isCurrentAttempt = () =>
+      mountedRef.current &&
+      joinAttemptRef.current === attemptId &&
+      eligibleKeyRef.current === attemptKey;
+    activeKeyRef.current = attemptKey;
     setJoining(true);
     setError(null);
 
+    let nextMeeting: RealtimeKitClient | undefined;
     try {
       const token = await roomActions.voiceToken();
       if (!token.ok || !token.data?.authToken) throw new Error('token');
+      if (!isCurrentAttempt()) return;
 
       const { default: Client } = await import('@cloudflare/realtimekit');
-      const nextMeeting = await Client.init({
+      if (!isCurrentAttempt()) return;
+      nextMeeting = await Client.init({
         authToken: token.data.authToken,
         defaults: { audio: false, video: false },
       });
-      if (eligibleKeyRef.current !== attemptKey) {
+      if (!isCurrentAttempt()) {
         await nextMeeting.leave();
         return;
       }
-
-      await nextMeeting.join();
-      if (eligibleKeyRef.current !== attemptKey) {
-        await nextMeeting.leave();
-        return;
-      }
-
       meetingRef.current = nextMeeting;
       activeKeyRef.current = attemptKey;
+
+      await nextMeeting.join();
+      if (!isCurrentAttempt() || meetingRef.current !== nextMeeting) {
+        await nextMeeting.leave();
+        return;
+      }
+
       setMeeting(nextMeeting);
     } catch {
-      setError(t('voice.joinFailed'));
+      if (nextMeeting && meetingRef.current === nextMeeting) {
+        meetingRef.current = undefined;
+        activeKeyRef.current = null;
+      }
+      if (nextMeeting) {
+        try {
+          await nextMeeting.leave();
+        } catch {
+          // Initialization may fail before a room is fully joined.
+        }
+      }
+      if (isCurrentAttempt()) {
+        activeKeyRef.current = null;
+        setError(t('voice.joinFailed'));
+      }
     } finally {
-      setJoining(false);
+      if (isCurrentAttempt()) setJoining(false);
     }
   }
 
