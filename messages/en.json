@@ -147,7 +147,11 @@
     "holdToTalk": "Hold to talk",
     "releaseToMute": "Release to stop",
     "micFailed": "Could not open the microphone. Check browser permission and your device.",
-    "deviceFailed": "Could not switch microphones"
+    "deviceFailed": "Could not switch microphones",
+    "micHttpsRequired": "Microphone access on iPhone and iPad requires HTTPS. Reopen this page over HTTPS.",
+    "micPermissionDenied": "Microphone access was denied. Allow it in Safari's website settings, then try again.",
+    "micUnsupported": "This browser cannot request microphone access. Use the latest Safari over HTTPS.",
+    "micUnavailable": "No microphone is available, or another app is using it."
   },
   "roleReveal": {
     "title": "Your Secret Role",
