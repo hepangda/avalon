@@ -84,6 +84,24 @@ export function VoiceRoom() {
 
     let nextMeeting: RealtimeKitClient | undefined;
     try {
+      const microphoneFailure = await requestMicrophonePermission();
+      if (microphoneFailure) {
+        if (isCurrentAttempt()) {
+          activeKeyRef.current = null;
+          setError(
+            microphoneFailure === 'insecure'
+              ? t('voice.micHttpsRequired')
+              : microphoneFailure === 'denied'
+                ? t('voice.micPermissionDenied')
+                : microphoneFailure === 'unsupported'
+                  ? t('voice.micUnsupported')
+                  : t('voice.micUnavailable'),
+          );
+        }
+        return;
+      }
+      if (!isCurrentAttempt()) return;
+
       const token = await roomActions.voiceToken();
       if (!token.ok || !token.data?.authToken) throw new Error('token');
       if (!isCurrentAttempt()) return;
@@ -168,6 +186,25 @@ export function VoiceRoom() {
       {error && <p className="mt-1 text-xs text-crimson">{error}</p>}
     </section>
   );
+}
+
+type MicrophonePermissionFailure = 'insecure' | 'unsupported' | 'denied' | 'unavailable';
+
+async function requestMicrophonePermission(): Promise<MicrophonePermissionFailure | null> {
+  if (!window.isSecureContext) return 'insecure';
+  if (!navigator.mediaDevices?.getUserMedia) return 'unsupported';
+
+  try {
+    // Run this before any network await so iOS associates its prompt with the tap.
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    for (const track of stream.getTracks()) track.stop();
+    return null;
+  } catch (error) {
+    if (error instanceof DOMException) {
+      if (error.name === 'NotAllowedError' || error.name === 'SecurityError') return 'denied';
+    }
+    return 'unavailable';
+  }
 }
 
 function VoiceStatusDock({ message }: { message: string }) {

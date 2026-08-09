@@ -147,7 +147,11 @@
     "holdToTalk": "按住发言",
     "releaseToMute": "松开结束发言",
     "micFailed": "无法开启麦克风，请检查浏览器权限和设备",
-    "deviceFailed": "切换麦克风失败"
+    "deviceFailed": "切换麦克风失败",
+    "micHttpsRequired": "iPhone 和 iPad 仅允许网页通过 HTTPS 使用麦克风，请改用 HTTPS 重新打开。",
+    "micPermissionDenied": "麦克风权限已被拒绝，请在 Safari 的网站设置中允许后重试。",
+    "micUnsupported": "当前浏览器无法请求麦克风权限，请通过 HTTPS 使用最新版 Safari。",
+    "micUnavailable": "未找到可用麦克风，或麦克风正被其他应用占用。"
   },
   "roleReveal": {
     "title": "你的秘密身份",
