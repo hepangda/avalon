@@ -4,6 +4,7 @@ import { useSessionStore } from '@/lib/store/session';
 const SILENT_AUTH_TIMEOUT_MS = 6_000;
 let silentAuthDisabled = false;
 let silentAuthPromise: Promise<AuthUser | null> | null = null;
+let cancelSilentAuthAttempt: (() => void) | null = null;
 
 export interface AuthUser {
   id: string;
@@ -35,9 +36,18 @@ function attemptSilentAuth(): Promise<AuthUser | null> {
       if (finished) return;
       finished = true;
       window.clearTimeout(timer);
+      cancelSilentAuthAttempt = null;
       const user = await readAuthUser().catch(() => null);
       frame.remove();
       resolve(user);
+    };
+    cancelSilentAuthAttempt = () => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(timer);
+      frame.remove();
+      cancelSilentAuthAttempt = null;
+      resolve(null);
     };
     frame.hidden = true;
     frame.tabIndex = -1;
@@ -48,6 +58,11 @@ function attemptSilentAuth(): Promise<AuthUser | null> {
     const timer = window.setTimeout(() => void finish(), SILENT_AUTH_TIMEOUT_MS);
   });
   return silentAuthPromise;
+}
+
+function disableSilentAuth(): void {
+  silentAuthDisabled = true;
+  cancelSilentAuthAttempt?.();
 }
 
 /**
@@ -90,12 +105,15 @@ export function useAuthIdentity() {
   }, []);
 
   const login = useCallback((nextPath: string) => {
+    // A user-initiated sign-in is interactive. Stop any background
+    // prompt=none request before navigating to the regular login endpoint.
+    disableSilentAuth();
     window.location.assign(`/api/auth/login?next=${encodeURIComponent(nextPath)}`);
   }, []);
 
   const logout = useCallback(async () => {
     // Explicit logout must not immediately sign the same IdP session back in.
-    silentAuthDisabled = true;
+    disableSilentAuth();
     await fetch('/api/auth/logout', { method: 'POST' });
     useSessionStore.getState().clearAccountAvatar();
     setUser(null);

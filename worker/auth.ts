@@ -134,6 +134,8 @@ export async function beginOidcLogin(
     );
     authorizationUrl.searchParams.set("prompt", "none");
   } else {
+    // Interactive login must never inherit prompt=none from a discovery URL.
+    authorizationUrl.searchParams.delete("prompt");
     authorizationUrl.searchParams.set("state", state);
     setCookie(
       c,
