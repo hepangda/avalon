@@ -317,6 +317,20 @@ describe('Role reveal is per-player (no global RoleReveal gate)', () => {
     expect(keys).toContain('proposalBegins');
   });
 
+  it.each(['joined', 'left', 'dropped'] as const)(
+    'records a tagged voice %s event without changing game phase',
+    (status) => {
+      const started = apply(freshGame(), { type: 'START_GAME', by: 'p0' });
+      const next = apply(started, { type: 'SET_VOICE_PRESENCE', by: 'p2', status });
+      expect(next.phase).toBe(started.phase);
+      expect(next.logs.at(-1)).toMatchObject({
+        key: `voice.${status}`,
+        params: { player: 'p2' },
+        style: 'voice',
+      });
+    },
+  );
+
   it('ACK_ROLE records the player without changing phase, and is idempotent', () => {
     let s = apply(freshGame(), { type: 'START_GAME', by: 'p0' });
     s = apply(s, { type: 'ACK_ROLE', by: 'p2' });

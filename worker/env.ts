@@ -10,6 +10,12 @@ export interface Env {
   REALTIMEKIT_APP_ID?: string;
   REALTIMEKIT_API_TOKEN?: string;
   REALTIMEKIT_PRESET_NAME?: string;
+  OIDC_ISSUER?: string;
+  OIDC_CLIENT_ID?: string;
+  OIDC_CLIENT_SECRET?: string;
+  OIDC_RESOURCE?: string;
+  OIDC_SESSION_SECRET?: string;
+  ENVIRONMENT?: string;
 }
 
 /**

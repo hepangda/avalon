@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS room_meta (
 CREATE TABLE IF NOT EXISTS player (
   id           TEXT    PRIMARY KEY,
   name         TEXT    NOT NULL,
+  avatar_url   TEXT,
   seat         INTEGER NOT NULL,
   is_spectator INTEGER NOT NULL DEFAULT 0,
   claimed      INTEGER NOT NULL DEFAULT 0,
@@ -44,6 +45,11 @@ CREATE TABLE IF NOT EXISTS voice_meeting (
 CREATE TABLE IF NOT EXISTS voice_participant (
   player_id      TEXT PRIMARY KEY,
   participant_id TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS voice_presence (
+  player_id  TEXT PRIMARY KEY,
+  state      TEXT    NOT NULL,
+  updated_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS voice_revocation (
   player_id      TEXT PRIMARY KEY,
@@ -68,6 +74,7 @@ export interface PlayerRow {
   [key: string]: SqlStorageValue;
   id: string;
   name: string;
+  avatar_url: string | null;
   seat: number;
   is_spectator: number;
   claimed: number;
@@ -108,6 +115,7 @@ export function parseMember(row: PlayerRow): RoomMember {
   return {
     id: row.id,
     name: row.name,
+    ...(row.avatar_url ? { avatarUrl: row.avatar_url } : {}),
     seat: row.seat,
     isSpectator: row.is_spectator === 1,
     claimed: row.claimed === 1,

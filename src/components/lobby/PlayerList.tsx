@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { latencyDotClass } from '@/lib/utils/latency';
 import type { RoomMember } from '@/lib/socket/types';
 
@@ -51,9 +52,12 @@ export function PlayerList({
                 className="flex items-center justify-between rounded-lg border border-gold/15 bg-ink/30 px-3 py-2"
               >
               <span className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gold/20 text-xs text-gold">
-                  {m.seat + 1}
-                </span>
+                <PlayerAvatar
+                  avatarUrl={m.avatarUrl}
+                  name={m.name}
+                  seat={m.seat}
+                  className="h-7 w-7 shrink-0 border border-gold/20 text-xs"
+                />
                 <span className="text-parchment">{m.name}</span>
                 {isRoomHost && (
                   <span className="rounded bg-gold/20 px-1.5 py-0.5 text-[10px] uppercase text-gold">

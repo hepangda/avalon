@@ -58,7 +58,7 @@ function pushPublic(
   s: GameState,
   key: string,
   params?: Record<string, string | number>,
-  style?: 'admin',
+  style?: 'admin' | 'voice',
 ): void {
   s.logSeq += 1;
   s.logs.push({
@@ -597,6 +597,17 @@ function setConnected(s: GameState, by: PlayerId, connected: boolean): EngineRes
   return ok(next);
 }
 
+function setVoicePresence(
+  s: GameState,
+  by: PlayerId,
+  status: 'joined' | 'left' | 'dropped',
+): EngineResult {
+  if (!playerById(s, by)) return err('UNKNOWN_PLAYER', `Unknown player ${by}`);
+  const next = clone(s);
+  pushPublic(next, `voice.${status}`, { player: by }, 'voice');
+  return ok(next);
+}
+
 // ---------------------------------------------------------------------------
 // Public reducer
 // ---------------------------------------------------------------------------
@@ -635,6 +646,8 @@ function dispatch(state: GameState, event: GameEvent): EngineResult {
       return assassinate(state, event.by, event.target);
     case 'SET_CONNECTED':
       return setConnected(state, event.by, event.connected);
+    case 'SET_VOICE_PRESENCE':
+      return setVoicePresence(state, event.by, event.status);
     default: {
       const _exhaustive: never = event;
       return err('WRONG_PHASE', `Unhandled event ${JSON.stringify(_exhaustive)}`);

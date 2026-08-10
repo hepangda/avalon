@@ -1,9 +1,17 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import type { RoomConfig } from '@/lib/socket/types';
 import type { Env } from './env';
 import { makeCode } from './ids';
 import { RoomDurableObject } from './room-do';
 import { ReplayDurableObject } from './replay-do';
+import {
+  AuthError,
+  beginOidcLogin,
+  clearAuthSession,
+  completeOidcLogin,
+  getCurrentAuthUser,
+  safeReturnPath,
+} from './auth';
 
 /**
  * Worker entry. Hono serves the JSON API and forwards WebSocket upgrades to the
@@ -15,9 +23,73 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.get('/api/health', (c) => c.json({ ok: true, status: 'healthy' }));
 
+app.get('/api/auth/session', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  try {
+    return c.json({ user: await getCurrentAuthUser(c) });
+  } catch (error) {
+    return authErrorResponse(c, error);
+  }
+});
+
+app.get('/api/auth/login', async (c) => {
+  try {
+    const existing = await getCurrentAuthUser(c);
+    if (existing) return c.redirect(safeReturnPath(c.req.query('next')) ?? '/');
+    return c.redirect(await beginOidcLogin(c, c.req.query('next')));
+  } catch (error) {
+    return authErrorResponse(c, error);
+  }
+});
+
+// Best-effort OIDC session discovery for the home screen. This endpoint is loaded in
+// a hidden iframe with `prompt=none`, so an unavailable IdP session never
+// navigates the visible application away from the room.
+app.get('/api/auth/silent', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  try {
+    const existing = await getCurrentAuthUser(c);
+    if (existing) return c.redirect('/api/auth/silent/complete');
+    return c.redirect(
+      await beginOidcLogin(c, '/api/auth/silent/complete', { silent: true }),
+    );
+  } catch (error) {
+    return authErrorResponse(c, error);
+  }
+});
+
+app.get('/api/auth/silent/complete', (c) => {
+  c.header('Cache-Control', 'no-store');
+  return c.body(null, 204);
+});
+
+app.get('/api/auth/callback', async (c) => {
+  try {
+    const next = await completeOidcLogin(c, new URL(c.req.url).searchParams);
+    return c.redirect(next ?? '/');
+  } catch (error) {
+    return authErrorResponse(c, error);
+  }
+});
+
+app.post('/api/auth/logout', (c) => {
+  clearAuthSession(c);
+  return c.json({ ok: true });
+});
+
 // Create a room: generate a code, initialize a fresh Durable Object, retry on
 // the (rare) code collision.
 app.post('/api/rooms', async (c) => {
+  let creator;
+  try {
+    creator = await getCurrentAuthUser(c);
+  } catch (error) {
+    return authErrorResponse(c, error);
+  }
+  if (!creator) {
+    return c.json({ code: 'CREATE_ROOM_TOKEN_REQUIRED', error: 'Sign in to create a room' }, 401);
+  }
+
   let body: { roster?: unknown; config?: unknown };
   try {
     body = await c.req.json();
@@ -30,13 +102,34 @@ app.post('/api/rooms', async (c) => {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = makeCode();
     const stub = c.env.ROOM.get(c.env.ROOM.idFromName(code));
-    const res = await stub.init({ code, roster, config });
-    if (res.ok) return c.json({ code, hostToken: res.hostToken }, 201);
+    const res = await stub.init({
+      code,
+      roster,
+      config: { ...config, voiceEnabled: true },
+      creator: { name: creator.username, avatarUrl: creator.picture },
+    });
+    if (res.ok) {
+      return c.json(
+        {
+          code,
+          hostToken: res.hostToken,
+          playerId: res.playerId,
+          playerToken: res.playerToken,
+        },
+        201,
+      );
+    }
     if (res.error === 'VOICE_UNAVAILABLE') {
       return c.json(
-        { code: 'VOICE_UNAVAILABLE', error: 'Voice rooms are temporarily unavailable' },
+        {
+          code: 'VOICE_UNAVAILABLE',
+          error: 'Voice rooms are temporarily unavailable',
+        },
         503,
       );
+    }
+    if (res.error === 'INVALID_CREATOR') {
+      return c.json({ code: 'OIDC_USERINFO_INVALID', error: 'Invalid OAuth username' }, 502);
     }
   }
   return c.json({ error: 'Failed to create room' }, 500);
@@ -74,3 +167,16 @@ app.get('/rooms/:code/ws', (c) => {
 
 export default app;
 export { RoomDurableObject, ReplayDurableObject };
+
+function authErrorResponse(c: Context<{ Bindings: Env }>, error: unknown) {
+  if (error instanceof AuthError) {
+    return c.json({ code: error.code, error: error.message }, error.status);
+  }
+  console.error(
+    JSON.stringify({
+      message: 'Authentication request failed',
+      error: error instanceof Error ? error.message : String(error),
+    }),
+  );
+  return c.json({ code: 'AUTH_FAILED', error: 'Authentication failed' }, 500);
+}

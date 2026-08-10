@@ -9,6 +9,7 @@ import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { Button } from '@/components/ui/Button';
 import { useRoomConnection, roomActions } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
+import { useSessionStore } from '@/lib/store/session';
 import type { RoomConfig } from '@/lib/socket/types';
 
 export default function LobbyPage() {
@@ -25,6 +26,8 @@ export default function LobbyPage() {
   const isHost = useRoomStore((s) => s.isHost);
   const notice = useRoomStore((s) => s.notice);
   const selfLatency = useRoomStore((s) => s.selfLatency);
+  const identityName = useSessionStore((s) => s.lastName);
+  const identityAvatarUrl = useSessionStore((s) => s.lastAvatarUrl);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const seatedCount = snapshot?.members.filter((m) => !m.isSpectator).length ?? 0;
@@ -42,6 +45,17 @@ export default function LobbyPage() {
     }
   }, [snapshot?.code, snapshot?.status, code, router]);
 
+  useEffect(() => {
+    if (!myPlayerId || !identityName.trim() || conn !== 'connected') return;
+    let active = true;
+    void roomActions.rename(identityName).then((result) => {
+      if (active && !result.ok && result.error) setActionError(result.error.message);
+    });
+    return () => {
+      active = false;
+    };
+  }, [conn, identityName, myPlayerId]);
+
   async function handleConfig(config: RoomConfig) {
     setActionError(null);
     const res = await roomActions.config(config);
@@ -54,10 +68,14 @@ export default function LobbyPage() {
     if (!res.ok && res.error) setActionError(res.error.message);
   }
 
+  async function handleLeave() {
+    await roomActions.leave();
+    router.push('/');
+  }
 
   async function handleClaim(seatId: string) {
     setActionError(null);
-    const res = await roomActions.claimSeat(seatId);
+    const res = await roomActions.claimSeat(seatId, identityName, identityAvatarUrl);
     if (res.ok && res.data) {
       useRoomStore.getState().setMyPlayerId(res.data.playerId);
       const { useSessionStore } = await import('@/lib/store/session');
@@ -105,11 +123,7 @@ export default function LobbyPage() {
   }
 
   return (
-    <main
-      className={`mx-auto max-w-2xl space-y-4 p-4 ${
-        snapshot.config.voiceEnabled ? 'pb-48' : ''
-      }`}
-    >
+    <main className="mx-auto max-w-2xl space-y-4 px-4 pt-4 pb-[calc(11rem+env(safe-area-inset-bottom))]">
       <div className="flex justify-end">
         <LocaleSwitcher />
       </div>
@@ -161,10 +175,7 @@ export default function LobbyPage() {
 
       <button
         className="mx-auto block text-xs text-parchment/40 hover:text-parchment/70"
-        onClick={async () => {
-          await roomActions.leave();
-          router.push('/');
-        }}
+        onClick={() => void handleLeave()}
       >
         {t('common.leave')}
       </button>

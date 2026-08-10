@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { roomActions } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
+import { useSessionStore } from '@/lib/store/session';
 import type { ClientGameState } from '@/lib/engine';
 
 /**
@@ -16,6 +17,8 @@ export function InGameSeatClaim({ code, game }: { code: string; game: ClientGame
   const t = useTranslations();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const identityName = useSessionStore((state) => state.lastName);
+  const identityAvatarUrl = useSessionStore((state) => state.lastAvatarUrl);
 
   const openSeats = game.players
     .filter((p) => p.claimed === false)
@@ -25,7 +28,7 @@ export function InGameSeatClaim({ code, game }: { code: string; game: ClientGame
   async function claim(seatId: string) {
     setBusy(seatId);
     setError(null);
-    const res = await roomActions.claimSeat(seatId);
+    const res = await roomActions.claimSeat(seatId, identityName, identityAvatarUrl);
     setBusy(null);
     if (res.ok && res.data) {
       useRoomStore.getState().setMyPlayerId(res.data.playerId);

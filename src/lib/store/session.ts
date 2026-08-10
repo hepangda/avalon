@@ -22,10 +22,13 @@ interface SessionEntry {
 interface SessionState {
   sessions: Record<string, SessionEntry>; // code (upper) → entry
   lastName: string;
+  lastAvatarUrl?: string;
   setSession: (code: string, entry: Partial<SessionEntry>) => void;
   getSession: (code: string) => SessionEntry | undefined;
   clearSession: (code: string) => void;
   setLastName: (name: string) => void;
+  setAccountIdentity: (name: string, avatarUrl?: string) => void;
+  clearAccountAvatar: () => void;
 }
 
 export const useSessionStore = create<SessionState>()(
@@ -33,6 +36,7 @@ export const useSessionStore = create<SessionState>()(
     (set, get) => ({
       sessions: {},
       lastName: '',
+      lastAvatarUrl: undefined,
       setSession: (code, entry) =>
         set((s) => {
           const key = code.toUpperCase();
@@ -49,7 +53,10 @@ export const useSessionStore = create<SessionState>()(
           delete next[code.toUpperCase()];
           return { sessions: next };
         }),
-      setLastName: (name) => set({ lastName: name }),
+      // Choosing an anonymous name must not reuse a previous account avatar.
+      setLastName: (name) => set({ lastName: name, lastAvatarUrl: undefined }),
+      setAccountIdentity: (name, avatarUrl) => set({ lastName: name, lastAvatarUrl: avatarUrl }),
+      clearAccountAvatar: () => set({ lastAvatarUrl: undefined }),
     }),
     { name: 'avalon-session' },
   ),

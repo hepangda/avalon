@@ -4,6 +4,12 @@
   "main": "worker/index.ts",
   "compatibility_date": "2025-01-01",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "OIDC_ISSUER": "https://auth.pangda.app",
+    "OIDC_CLIENT_ID": "avalon",
+    "OIDC_RESOURCE": "https://avalon.pangda.app/createRoom",
+    "ENVIRONMENT": "production"
+  },
   "assets": {
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
