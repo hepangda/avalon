@@ -5,6 +5,7 @@ import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { latencyDotClass } from '@/lib/utils/latency';
 import type { Ack, RoomMember } from '@/lib/socket/types';
 
@@ -134,9 +135,12 @@ export function SeatPicker({
               key={seat.id}
               className="flex items-start gap-2 rounded-lg border border-gold/15 bg-ink/30 p-2"
             >
-              <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-gold/20 text-xs text-gold">
-                {seat.seat + 1}
-              </span>
+              <PlayerAvatar
+                avatarUrl={seat.avatarUrl}
+                name={seat.name}
+                seat={seat.seat}
+                className="mt-0.5 h-8 w-8 shrink-0 border border-gold/20 text-xs"
+              />
 
               <div className="min-w-0 flex-1 space-y-1">
                 {editingRoster ? (

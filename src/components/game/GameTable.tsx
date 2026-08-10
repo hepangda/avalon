@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils/cn';
 import { GameIcon } from './GameArt';
 import { latencyDotClass } from '@/lib/utils/latency';
 import type { ClientGameState, ClientPlayer } from '@/lib/engine';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 
 interface GameTableProps {
   game: ClientGameState;
@@ -160,7 +161,10 @@ function Seat({
       )}
       title={player.name}
     >
-      <span
+      <PlayerAvatar
+        avatarUrl={player.avatarUrl}
+        name={player.name}
+        seat={player.seat}
         className={cn(
           'relative flex h-11 w-11 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors',
           ringClass,
@@ -174,8 +178,6 @@ function Seat({
             transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           />
         )}
-        <span className="relative text-gold">{player.seat + 1}</span>
-
         {player.isLeader && (
           <GameIcon name="leader" className="absolute -right-2 -top-2.5 h-6 w-6" title="Leader" />
         )}
@@ -192,7 +194,7 @@ function Seat({
             latencyDotClass(player.connected, player.latency),
           )}
         />
-      </span>
+      </PlayerAvatar>
 
       <span
         className={cn(

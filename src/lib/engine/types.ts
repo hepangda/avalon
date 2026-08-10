@@ -136,9 +136,9 @@ export interface LogEntry {
   key: string;
   /** Params interpolated into the message (names resolved client-side). */
   params?: Record<string, string | number>;
-  /** Visual style hint. 'admin' marks a super-password (referee) action; the
-   *  client renders these in red so the table can audit who did what. */
-  style?: 'admin';
+  /** Visual style hint. Referee actions are red; voice-presence events carry
+   *  their own compact label in the public war log. */
+  style?: 'admin' | 'voice';
 }
 
 /**
@@ -208,7 +208,10 @@ export type GameEvent =
   | { type: 'CAST_MISSION_CARD'; by: PlayerId; card: MissionCard }
   | { type: 'USE_LADY'; by: PlayerId; target: PlayerId }
   | { type: 'ASSASSINATE'; by: PlayerId; target: PlayerId }
-  | { type: 'SET_CONNECTED'; by: PlayerId; connected: boolean };
+  | { type: 'SET_CONNECTED'; by: PlayerId; connected: boolean }
+  | { type: 'SET_VOICE_PRESENCE'; by: PlayerId; status: VoicePresenceStatus };
+
+export type VoicePresenceStatus = 'joined' | 'left' | 'dropped';
 
 // ---------------------------------------------------------------------------
 // Effects (declarative; interpreted by the Socket layer, never by the engine)
@@ -275,6 +278,8 @@ export type EngineResult =
 export interface ClientPlayer {
   id: PlayerId;
   name: string;
+  /** OAuth profile picture copied from room membership by the socket layer. */
+  avatarUrl?: string;
   seat: number;
   connected: boolean;
   /** Self-measured round-trip latency in ms. Filled by the socket layer (the
@@ -320,7 +325,7 @@ export interface ClientLogEntry {
   channel: 'public' | 'private';
   key: string;
   params?: Record<string, string | number>;
-  style?: 'admin';
+  style?: 'admin' | 'voice';
 }
 
 export interface ClientGameState {

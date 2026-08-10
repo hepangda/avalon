@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useTranslations } from 'use-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/Button';
@@ -6,7 +7,8 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { GameIcon } from '@/components/game/GameArt';
-import { Toggle } from '@/components/ui/Toggle';
+import { IdentityPanel } from '@/components/home/IdentityPanel';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { useSessionStore } from '@/lib/store/session';
 
 const DEFAULT_SEAT_COUNT = 5;
@@ -14,13 +16,18 @@ const DEFAULT_SEAT_COUNT = 5;
 export default function HomePage() {
   const t = useTranslations();
   const router = useRouter();
+  const location = useLocation();
+  const { user: authUser, loading: authLoading, login, logout } = useAuthIdentity();
 
   const [joinCode, setJoinCode] = useState('');
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleCreate() {
+  const handleCreate = useCallback(async () => {
+    if (!authUser) {
+      setError(t('home.signInRequiredToCreate'));
+      return;
+    }
     const names = Array.from({ length: DEFAULT_SEAT_COUNT }, (_, i) =>
       t('home.defaultSeatName', { n: i + 1 }),
     );
@@ -30,31 +37,41 @@ export default function HomePage() {
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roster: names, config: { voiceEnabled } }),
+        body: JSON.stringify({ roster: names }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as {
           code?: string;
           error?: string;
         };
+        if (res.status === 401 || body.code === 'CREATE_ROOM_TOKEN_REQUIRED') {
+          await logout();
+          setError(t('home.signInRequiredToCreate'));
+          return;
+        }
         throw new Error(
-          body.code === 'VOICE_UNAVAILABLE'
-            ? t('home.errVoiceUnavailable')
-            : (body.error ?? t('home.errCreateFailed')),
+          body.code === 'VOICE_UNAVAILABLE' ? t('home.errVoiceUnavailable') : (body.error ?? t('home.errCreateFailed')),
         );
       }
-      const { code, hostToken } = (await res.json()) as {
+      const { code, hostToken, playerId, playerToken } = (await res.json()) as {
         code: string;
         hostToken: string;
+        playerId: string;
+        playerToken: string;
       };
-      useSessionStore.getState().setSession(code, { hostToken });
+      useSessionStore.getState().setSession(code, {
+        hostToken,
+        playerId,
+        playerToken,
+        name: authUser.username,
+      });
       router.push(`/room/${code}`);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
-  }
+  }, [authUser, logout, router, t]);
 
   function handleJoin() {
     const code = joinCode.trim().toUpperCase();
@@ -78,19 +95,17 @@ export default function HomePage() {
           <p className="mt-2 text-sm text-parchment/55">{t('common.tagline')}</p>
         </header>
 
+        <IdentityPanel
+          user={authUser}
+          loading={authLoading}
+          onLogin={() => login(location.pathname)}
+          onLogout={logout}
+        />
+
         <Card className="space-y-4 p-4 sm:p-5">
-          <Toggle
-            checked={voiceEnabled}
-            onChange={setVoiceEnabled}
-            label={t('home.voiceRoom')}
-            description={t('home.voiceRoomHint')}
-            disabled={busy}
-          />
-          <Button
-            className="h-14 w-full text-base sm:text-lg"
-            onClick={handleCreate}
-            disabled={busy}
-          >
+          <p className="font-serif text-sm font-semibold text-gold">{t('home.roomActionsTitle')}</p>
+
+          <Button className="h-14 w-full text-base sm:text-lg" onClick={handleCreate} disabled={busy || authLoading}>
             {busy ? t('home.creating') : t('home.createRoom')}
           </Button>
 
@@ -108,11 +123,7 @@ export default function HomePage() {
               className="h-11 min-w-0 uppercase tracking-widest"
               autoComplete="off"
             />
-            <Button
-              variant="secondary"
-              className="h-11 min-w-20 shrink-0 whitespace-nowrap px-5"
-              onClick={handleJoin}
-            >
+            <Button variant="secondary" className="h-11 min-w-20 shrink-0 whitespace-nowrap px-5" onClick={handleJoin}>
               {t('home.join')}
             </Button>
           </div>

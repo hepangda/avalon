@@ -1,10 +1,21 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { createPortal } from 'react-dom';
 import type RealtimeKitClient from '@cloudflare/realtimekit';
 import { useLocation } from 'react-router-dom';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { roomActions } from '@/lib/socket/client';
+import type { VoicePresenceStatus } from '@/lib/engine';
 import { useRoomStore } from '@/lib/store/room';
+import { voiceOverlayClass } from './styles';
 
 const VoiceSession = lazy(() => import('./VoiceSession'));
 
@@ -23,6 +34,7 @@ export function VoiceRoom() {
   const [meeting, setMeeting] = useState<RealtimeKitClient>();
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dockTarget, setDockTarget] = useState<HTMLElement | null>(null);
   const meetingRef = useRef<RealtimeKitClient | undefined>(undefined);
   const activeKeyRef = useRef<string | null>(null);
   const eligibleKeyRef = useRef(eligibleKey);
@@ -30,27 +42,41 @@ export function VoiceRoom() {
   const joinAttemptRef = useRef(0);
   eligibleKeyRef.current = eligibleKey;
 
-  const disconnect = useCallback(async () => {
-    joinAttemptRef.current += 1;
-    const current = meetingRef.current;
-    meetingRef.current = undefined;
-    activeKeyRef.current = null;
-    if (mountedRef.current) {
-      setMeeting(undefined);
-      setJoining(false);
-    }
-    if (!current) return;
-    try {
-      if (current.self.audioEnabled) await current.self.disableAudio();
-    } catch {
-      // Leaving still tears down the SDK-owned track.
-    }
-    try {
-      await current.leave();
-    } catch {
-      // The session may already have ended remotely.
-    }
-  }, []);
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setDockTarget(document.getElementById('voice-dock-slot'));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname, snapshot?.status]);
+
+  const disconnect = useCallback(
+    async (status: Exclude<VoicePresenceStatus, 'joined'> = 'left') => {
+      joinAttemptRef.current += 1;
+      const current = meetingRef.current;
+      meetingRef.current = undefined;
+      activeKeyRef.current = null;
+      if (mountedRef.current) {
+        setMeeting(undefined);
+        setJoining(false);
+      }
+      if (!current) return;
+      try {
+        if (current.self.audioEnabled) await current.self.disableAudio();
+      } catch {
+        // Leaving still tears down the SDK-owned track.
+      }
+      await Promise.race([
+        roomActions.voicePresence(status),
+        new Promise((resolve) => window.setTimeout(resolve, 800)),
+      ]);
+      try {
+        await current.leave();
+      } catch {
+        // The session may already have ended remotely.
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     if (activeKeyRef.current && activeKeyRef.current !== eligibleKey) {
@@ -125,6 +151,7 @@ export function VoiceRoom() {
         return;
       }
 
+      await roomActions.voicePresence('joined');
       setMeeting(nextMeeting);
     } catch {
       if (nextMeeting && meetingRef.current === nextMeeting) {
@@ -149,43 +176,80 @@ export function VoiceRoom() {
 
   if (!enabled || !snapshot) return null;
 
+  const integrated = Boolean(dockTarget);
+  let control: ReactNode;
+
   if (meeting) {
-    return (
-      <Suspense fallback={<VoiceStatusDock message={t('voice.joining')} />}>
+    control = (
+      <Suspense fallback={<VoiceStatusDock message={t('voice.joining')} integrated={integrated} />}>
         <VoiceSession
           meeting={meeting}
           members={snapshot.members}
           myPlayerId={playerId!}
-          onLeave={() => void disconnect()}
+          integrated={integrated}
+          onLeave={(status) => void disconnect(status)}
+          onReconnect={() => void roomActions.voicePresence('joined')}
+          onParticipantDropped={(droppedPlayerId) =>
+            void roomActions.voiceDropped(droppedPlayerId)
+          }
         />
       </Suspense>
     );
-  }
+  } else {
+    const status = !playerId
+      ? t('voice.claimSeatFirst')
+      : conn !== 'connected'
+        ? t('voice.waitingForRoom')
+        : t('voice.readyToJoin');
 
-  return (
-    <section className={dockClass} aria-label={t('voice.title')}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-serif text-sm font-semibold text-gold">🎙 {t('voice.title')}</p>
-          <p className="truncate text-xs text-parchment/55" aria-live="polite">
-            {!playerId
-              ? t('voice.claimSeatFirst')
-              : conn !== 'connected'
-                ? t('voice.waitingForRoom')
-                : t('voice.readyToJoin')}
-          </p>
-        </div>
-        <Button
-          className="h-11 shrink-0 px-5"
+    control = integrated ? (
+      <section className="relative flex h-full shrink-0" aria-label={t('voice.title')}>
+        <button
+          type="button"
+          className="panel flex w-11 shrink-0 items-center justify-center gap-1.5 px-0 py-2 text-sm text-parchment transition hover:border-emerald-400/50 hover:text-emerald-200 disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto sm:px-3"
           disabled={!playerId || conn !== 'connected' || joining}
           onClick={() => void joinVoice()}
+          title={status}
         >
-          {joining ? t('voice.joining') : t('voice.join')}
-        </Button>
-      </div>
-      {error && <p className="mt-1 text-xs text-crimson">{error}</p>}
-    </section>
-  );
+          <span className={joining ? 'animate-pulse' : ''} aria-hidden="true">
+            🎙
+          </span>
+          <span className="hidden whitespace-nowrap sm:inline">
+            {joining ? t('voice.joining') : t('voice.join')}
+          </span>
+        </button>
+        <span className="sr-only" aria-live="polite">
+          {status}
+        </span>
+        {error && (
+          <p className="absolute right-0 bottom-[calc(100%+0.5rem)] z-50 w-64 rounded-lg border border-crimson/40 bg-ink-deep/95 p-2 text-xs text-crimson shadow-xl">
+            {error}
+          </p>
+        )}
+      </section>
+    ) : (
+      <section className={voiceOverlayClass} aria-label={t('voice.title')}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-serif text-sm font-semibold text-gold">🎙 {t('voice.title')}</p>
+            <p className="truncate text-xs text-parchment/55" aria-live="polite">
+              {status}
+            </p>
+          </div>
+          <Button
+            className="h-11 shrink-0 px-5"
+            disabled={!playerId || conn !== 'connected' || joining}
+            onClick={() => void joinVoice()}
+          >
+            {joining ? t('voice.joining') : t('voice.join')}
+          </Button>
+        </div>
+        {error && <p className="mt-1 text-xs text-crimson">{error}</p>}
+      </section>
+    );
+  }
+
+  return dockTarget ? createPortal(control, dockTarget) : control;
 }
 
 type MicrophonePermissionFailure = 'insecure' | 'unsupported' | 'denied' | 'unavailable';
@@ -207,10 +271,24 @@ async function requestMicrophonePermission(): Promise<MicrophonePermissionFailur
   }
 }
 
-function VoiceStatusDock({ message }: { message: string }) {
+function VoiceStatusDock({ message, integrated }: { message: string; integrated: boolean }) {
   const t = useTranslations();
+  if (integrated) {
+    return (
+      <div
+        className="panel flex w-11 shrink-0 items-center justify-center px-0 py-2 text-sm text-parchment/55 sm:w-auto sm:px-3"
+        aria-label={t('voice.title')}
+        title={message}
+      >
+        <span className="animate-pulse" aria-hidden="true">
+          🎙
+        </span>
+        <span className="sr-only">{message}</span>
+      </div>
+    );
+  }
   return (
-    <section className={dockClass} aria-label={t('voice.title')}>
+    <section className={voiceOverlayClass} aria-label={t('voice.title')}>
       <p className="animate-pulse text-center text-sm text-parchment/65">{message}</p>
     </section>
   );
@@ -224,6 +302,3 @@ function isRoomRoute(pathname: string, code: string): boolean {
     segments[2]?.toUpperCase() === code
   );
 }
-
-const dockClass =
-  'fixed inset-x-0 bottom-0 z-[60] mx-auto w-full max-w-2xl border-t border-gold/30 bg-ink-deep/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_35px_rgba(0,0,0,0.55)] backdrop-blur';

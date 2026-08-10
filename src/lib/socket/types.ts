@@ -6,6 +6,7 @@ import type {
   Role,
   Team,
   VisibilityInfo,
+  VoicePresenceStatus,
 } from '@/lib/engine';
 
 /**
@@ -29,6 +30,8 @@ export type RoomStatus = 'lobby' | 'in_game' | 'finished';
 export interface RoomMember {
   id: PlayerId;
   name: string;
+  /** OAuth profile picture when this seat belongs to an authenticated user. */
+  avatarUrl?: string;
   seat: number;
   isSpectator: boolean;
   connected: boolean;
@@ -107,7 +110,7 @@ export interface ClientToServerEvents {
   /** Claim a roster seat by its player id (must be unclaimed). Switches seats
    *  if the caller already holds one. */
   'room:claimSeat': (
-    p: { seatId: PlayerId },
+    p: { seatId: PlayerId; name?: string; avatarUrl?: string },
     ack: (r: Ack<{ playerId: PlayerId; playerToken: string }>) => void,
   ) => void;
   /** Release the caller's current seat (becomes a spectator / unseated). */
@@ -119,6 +122,11 @@ export interface ClientToServerEvents {
     p: Record<string, never>,
     ack: (r: Ack<{ authToken: string }>) => void,
   ) => void;
+  /** Report this seat's own RealtimeKit presence transition. */
+  'voice:presence': (p: { status: VoicePresenceStatus }, ack: (r: Ack) => void) => void;
+  /** A connected voice peer observed another participant disappear. The server
+   *  only accepts the first report while that target is still marked joined. */
+  'voice:dropped': (p: { playerId: PlayerId }, ack: (r: Ack) => void) => void;
   'game:ackRole': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'game:proposeTeam': (p: { team: PlayerId[] }, ack: (r: Ack) => void) => void;
   'game:vote': (p: { value: VoteValue }, ack: (r: Ack) => void) => void;

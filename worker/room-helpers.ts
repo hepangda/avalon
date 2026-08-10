@@ -9,7 +9,7 @@ export const DEFAULT_ROOM_CONFIG: RoomConfig = {
   maxPlayers: 10,
   allowSpectators: true,
   allowMidJoin: true,
-  voiceEnabled: false,
+  voiceEnabled: true,
   options: {
     oberon: false,
     mordred: false,
@@ -66,6 +66,17 @@ export function sanitizeName(raw: string): string {
   return raw.replace(/\s+/g, ' ').trim().slice(0, 24);
 }
 
+/** Accept only bounded HTTP(S) profile-image URLs supplied by the saved identity. */
+export function sanitizeAvatarUrl(raw: unknown): string | undefined {
+  if (typeof raw !== 'string' || raw.length > 2_048) return undefined;
+  try {
+    const url = new URL(raw);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** True if `name` is taken by another member (case-insensitive). */
 export function isNameTaken(members: Members, name: string, exceptPlayerId?: string): boolean {
   const lower = name.toLowerCase();
@@ -103,6 +114,12 @@ export function sanitizeRoster(raw: string[]): string[] {
   return raw.slice(0, 10).map((n, i) => sanitizeName(n) || fallbackSeatName(i));
 }
 
+/** Restore the host-defined identity of a lobby seat after its occupant stands. */
+export function restoreLobbySeatIdentity(member: RoomMember, roster: string[]): void {
+  member.name = sanitizeName(roster[member.seat] ?? '') || fallbackSeatName(member.seat);
+  delete member.avatarUrl;
+}
+
 export function mergeConfig(partial: Partial<RoomConfig> | undefined, roster: string[]): RoomConfig {
   const base = partial ?? {};
   return {
@@ -113,7 +130,8 @@ export function mergeConfig(partial: Partial<RoomConfig> | undefined, roster: st
     ),
     allowSpectators: base.allowSpectators ?? DEFAULT_ROOM_CONFIG.allowSpectators,
     allowMidJoin: base.allowMidJoin ?? DEFAULT_ROOM_CONFIG.allowMidJoin,
-    voiceEnabled: Boolean(base.voiceEnabled),
+    // Every newly-created room is a voice room. The client cannot opt out.
+    voiceEnabled: true,
     options: { ...DEFAULT_ROOM_CONFIG.options, ...(base.options ?? {}) },
     roster,
   };

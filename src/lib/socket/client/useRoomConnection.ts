@@ -4,7 +4,14 @@ import { useEffect } from 'react';
 import { connectRoom, emitWithAck, getConnection, type ConnState } from './socket';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
-import type { ClientGameState, PlayerId, Role, Team, VisibilityInfo } from '@/lib/engine';
+import type {
+  ClientGameState,
+  PlayerId,
+  Role,
+  Team,
+  VisibilityInfo,
+  VoicePresenceStatus,
+} from '@/lib/engine';
 import type { Ack, RoomConfig, RoomSnapshot } from '../types';
 
 /**
@@ -149,12 +156,16 @@ export const roomActions = {
     emitWithAck<'room:transferHost', { targetPlayerId: string }, Ack>('room:transferHost', {
       targetPlayerId,
     }),
-  claimSeat: (seatId: string) =>
+  claimSeat: (seatId: string, name?: string, avatarUrl?: string) =>
     emitWithAck<
       'room:claimSeat',
-      { seatId: string },
+      { seatId: string; name?: string; avatarUrl?: string },
       Ack<{ playerId: string; playerToken: string }>
-    >('room:claimSeat', { seatId }),
+    >('room:claimSeat', {
+      seatId,
+      ...(name?.trim() ? { name } : {}),
+      ...(avatarUrl ? { avatarUrl } : {}),
+    }),
   releaseSeat: () =>
     emitWithAck<'room:releaseSeat', Record<string, never>, Ack>('room:releaseSeat', {}),
   setRoster: (names: string[]) =>
@@ -166,6 +177,12 @@ export const roomActions = {
       'voice:token',
       {},
     ),
+  voicePresence: (status: VoicePresenceStatus) =>
+    emitWithAck<'voice:presence', { status: VoicePresenceStatus }, Ack>('voice:presence', {
+      status,
+    }),
+  voiceDropped: (playerId: string) =>
+    emitWithAck<'voice:dropped', { playerId: string }, Ack>('voice:dropped', { playerId }),
 };
 
 /** Game-phase action wrappers. */

@@ -9,6 +9,7 @@ import { GameIcon, type GameIconName } from './GameArt';
 import { gameActions } from '@/lib/socket/client';
 import { ROLE_TEAM_UI } from '@/lib/game/roleMeta';
 import type { ClientGameState, ClientPlayer } from '@/lib/engine';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 
 /** A "play cards to pick targets" phase (nomination / assassination). */
 export interface PickConfig {
@@ -357,9 +358,12 @@ function NomineeHandCard({
       whileHover={reduce ? undefined : { y: -8, scale: 1.04 }}
       className="flex h-[4.6rem] w-12 shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-gold/40 bg-ink/60 px-1 shadow-md"
     >
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold/20 text-xs text-gold">
-        {player.seat + 1}
-      </span>
+      <PlayerAvatar
+        avatarUrl={player.avatarUrl}
+        name={player.name}
+        seat={player.seat}
+        className="h-6 w-6 shrink-0 text-xs"
+      />
       <span className="max-w-full truncate text-[9px] leading-tight text-parchment">
         {player.name}
       </span>

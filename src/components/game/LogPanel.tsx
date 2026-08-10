@@ -9,6 +9,11 @@ import { seatLabel } from '@/lib/game/playerLabel';
 import { VoteResultPanel } from './VoteResultPanel';
 import { MissionCardReveal } from './MissionCardReveal';
 import { FunctionsPanel } from './FunctionsPanel';
+import {
+  announceBottomDockView,
+  BOTTOM_DOCK_VIEW_EVENT,
+  type BottomDockView,
+} from '@/components/ui/bottomDock';
 import type {
   ClientGameState,
   ClientLogEntry,
@@ -45,6 +50,19 @@ export function LogPanel({ game, code }: { game: ClientGameState; code: string }
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    const closeForVoice = (event: Event) => {
+      if ((event as CustomEvent<BottomDockView>).detail === 'voice') setView(null);
+    };
+    window.addEventListener(BOTTOM_DOCK_VIEW_EVENT, closeForVoice);
+    return () => window.removeEventListener(BOTTOM_DOCK_VIEW_EVENT, closeForVoice);
+  }, []);
+
+  function openView(next: Exclude<View, null>) {
+    announceBottomDockView(next);
+    setView(next);
+  }
 
   const nameOf = (id: string) => {
     const p = game.players.find((x) => x.id === id);
@@ -170,10 +188,17 @@ export function LogPanel({ game, code }: { game: ClientGameState; code: string }
                             <span className="shrink-0 font-mono text-[11px] text-parchment/35">
                               {clock(entry.at)}
                             </span>
+                            {entry.style === 'voice' && (
+                              <span className="shrink-0 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-200">
+                                {t('log.voiceTag')}
+                              </span>
+                            )}
                             <span
                               className={
                                 entry.style === 'admin'
                                   ? 'font-semibold text-crimson'
+                                  : entry.style === 'voice'
+                                    ? 'text-emerald-100/85'
                                   : 'text-parchment/85'
                               }
                             >
@@ -213,22 +238,30 @@ export function LogPanel({ game, code }: { game: ClientGameState; code: string }
     <>
       <div className="flex items-stretch gap-2">
         <button
-          onClick={() => setView('log')}
+          onClick={() => openView('log')}
           className="panel flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left"
         >
           <span className="gilt shrink-0 text-sm">{t('log.panelTitle')}</span>
+          {latest?.style === 'voice' && (
+            <span className="shrink-0 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-emerald-200">
+              {t('log.voiceTag')}
+            </span>
+          )}
           <span className="min-w-0 flex-1 truncate text-xs text-parchment/45">
             {latest ? render(latest) : ''}
           </span>
           <span className="shrink-0 text-parchment/40">▴</span>
         </button>
 
+        <div id="voice-dock-slot" className="flex shrink-0" />
+
         <button
-          onClick={() => setView('functions')}
-          className="panel flex shrink-0 items-center gap-1.5 px-4 py-2 text-sm text-parchment hover:border-gold/60"
+          onClick={() => openView('functions')}
+          className="panel flex w-11 shrink-0 items-center justify-center gap-1.5 px-0 py-2 text-sm text-parchment hover:border-gold/60 sm:w-auto sm:px-4"
+          aria-label={t('log.tabFunctions')}
         >
           <span>⚙</span>
-          <span>{t('log.tabFunctions')}</span>
+          <span className="hidden sm:inline">{t('log.tabFunctions')}</span>
         </button>
       </div>
 
