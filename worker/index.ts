@@ -36,7 +36,9 @@ app.get('/api/auth/login', async (c) => {
   try {
     const existing = await getCurrentAuthUser(c);
     if (existing) return c.redirect(safeReturnPath(c.req.query('next')) ?? '/');
-    return c.redirect(await beginOidcLogin(c, c.req.query('next')));
+    return c.redirect(
+      await beginOidcLogin(c, c.req.query('next'), { silent: false }),
+    );
   } catch (error) {
     return authErrorResponse(c, error);
   }

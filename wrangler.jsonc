@@ -4,11 +4,24 @@
   "main": "worker/index.ts",
   "compatibility_date": "2025-01-01",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "avalon.pangda.app",
+      "zone_name": "pangda.app",
+      "custom_domain": true,
+      "enabled": true,
+      "previews_enabled": false
+    }
+  ],
   "vars": {
+    "CLOUDFLARE_ACCOUNT_ID": "892f2823540b75d9e27453e2c6e089d0",
     "OIDC_ISSUER": "https://auth.pangda.app",
     "OIDC_CLIENT_ID": "avalon",
     "OIDC_RESOURCE": "https://avalon.pangda.app/createRoom",
-    "ENVIRONMENT": "production"
+    "ENVIRONMENT": "production",
+    "REALTIMEKIT_APP_ID": "d04cae48-f9e8-4dda-8e20-87369c465be0",
+    "REALTIMEKIT_PRESET_ID": "0d6b502b-6ae2-4cb5-b7bc-09deda979e9a",
+    "REALTIMEKIT_PRESET_NAME": "avalon-voice"
   },
   "assets": {
     "binding": "ASSETS",

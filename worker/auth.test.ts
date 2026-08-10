@@ -69,6 +69,43 @@ describe("silent OIDC authorization", () => {
       vi.unstubAllGlobals();
     }
   });
+
+  it("omits prompt for a user-initiated interactive authorization", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(authDevDiscovery), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    try {
+      const context = {
+        env: {
+          OIDC_ISSUER: "https://auth-dev.pangda.app",
+          OIDC_CLIENT_ID: "avalon_local",
+          OIDC_CLIENT_SECRET: "client-secret",
+          OIDC_RESOURCE: "https://avalon.pangda.app/createRoom",
+          OIDC_SESSION_SECRET:
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          ENVIRONMENT: "development",
+        },
+        req: { url: "http://localhost:5173/api/auth/login" },
+        header: vi.fn(),
+      } as unknown as Parameters<typeof beginOidcLogin>[0];
+
+      const authorizationUrl = new URL(
+        await beginOidcLogin(context, "/zh", { silent: false }),
+      );
+      expect(authorizationUrl.searchParams.has("prompt")).toBe(false);
+      expect(authorizationUrl.searchParams.get("state")).not.toMatch(
+        /^silent\./u,
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe("OIDC discovery validation", () => {
