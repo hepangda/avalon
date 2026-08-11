@@ -6,10 +6,14 @@ import { RoomDurableObject } from './room-do';
 import { ReplayDurableObject } from './replay-do';
 import {
   AuthError,
+  OidcCallbackFailure,
+  authCallbackUiError,
+  authErrorRedirectPath,
   beginOidcLogin,
   clearAuthSession,
   completeOidcLogin,
   getCurrentAuthUser,
+  isSilentOidcCallback,
   safeReturnPath,
 } from './auth';
 
@@ -40,7 +44,13 @@ app.get('/api/auth/login', async (c) => {
       await beginOidcLogin(c, c.req.query('next'), { silent: false }),
     );
   } catch (error) {
-    return authErrorResponse(c, error);
+    logAuthNavigationError(error);
+    return c.redirect(
+      authErrorRedirectPath(
+        c.req.query('next'),
+        authCallbackUiError(error),
+      ),
+    );
   }
 });
 
@@ -56,7 +66,8 @@ app.get('/api/auth/silent', async (c) => {
       await beginOidcLogin(c, '/api/auth/silent/complete', { silent: true }),
     );
   } catch (error) {
-    return authErrorResponse(c, error);
+    logAuthNavigationError(error);
+    return c.redirect('/api/auth/silent/complete');
   }
 });
 
@@ -66,11 +77,24 @@ app.get('/api/auth/silent/complete', (c) => {
 });
 
 app.get('/api/auth/callback', async (c) => {
+  const query = new URL(c.req.url).searchParams;
   try {
-    const next = await completeOidcLogin(c, new URL(c.req.url).searchParams);
+    const next = await completeOidcLogin(c, query);
     return c.redirect(next ?? '/');
   } catch (error) {
-    return authErrorResponse(c, error);
+    const callbackFailure =
+      error instanceof OidcCallbackFailure ? error : null;
+    if (callbackFailure?.silent || isSilentOidcCallback(query)) {
+      logAuthNavigationError(error);
+      return c.redirect('/api/auth/silent/complete');
+    }
+    logAuthNavigationError(error);
+    return c.redirect(
+      authErrorRedirectPath(
+        callbackFailure?.returnPath,
+        callbackFailure?.uiCode ?? authCallbackUiError(error),
+      ),
+    );
   }
 });
 
@@ -181,4 +205,16 @@ function authErrorResponse(c: Context<{ Bindings: Env }>, error: unknown) {
     }),
   );
   return c.json({ code: 'AUTH_FAILED', error: 'Authentication failed' }, 500);
+}
+
+function logAuthNavigationError(error: unknown) {
+  const original =
+    error instanceof OidcCallbackFailure ? error.originalError : error;
+  if (original instanceof AuthError && original.status < 500) return;
+  console.error(
+    JSON.stringify({
+      message: 'Authentication navigation failed',
+      error: original instanceof Error ? original.message : String(original),
+    }),
+  );
 }

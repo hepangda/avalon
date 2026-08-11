@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslations } from 'use-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -22,6 +22,33 @@ export default function HomePage() {
   const [joinCode, setJoinCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const code = params.get('authError');
+    if (!code) return;
+
+    const translationKey =
+      code === 'denied'
+        ? 'home.authDenied'
+        : code === 'login_required'
+          ? 'home.authLoginRequired'
+          : code === 'unavailable'
+            ? 'home.authUnavailable'
+            : code === 'invalid_flow'
+              ? 'home.authInvalidFlow'
+              : 'home.authFailed';
+    setAuthError(t(translationKey));
+
+    params.delete('authError');
+    const search = params.toString();
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${location.pathname}${search ? `?${search}` : ''}${location.hash}`,
+    );
+  }, [location.hash, location.pathname, location.search, t]);
 
   const handleCreate = useCallback(async () => {
     if (!authUser) {
@@ -98,7 +125,11 @@ export default function HomePage() {
         <IdentityPanel
           user={authUser}
           loading={authLoading}
-          onLogin={() => login(location.pathname)}
+          authError={authError}
+          onLogin={() => {
+            setAuthError(null);
+            login(location.pathname);
+          }}
           onLogout={logout}
         />
 

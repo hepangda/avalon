@@ -21,7 +21,7 @@ const FLOW_AAD = new TextEncoder().encode("avalon:oidc-flow:v1");
 const SESSION_AAD = new TextEncoder().encode("avalon:oidc-session:v1");
 
 type AppContext = Context<{ Bindings: Env }>;
-type AuthStatus = 400 | 401 | 502 | 503;
+type AuthStatus = 400 | 401 | 500 | 502 | 503;
 
 interface OidcMetadata {
   issuer: string;
@@ -67,6 +67,13 @@ interface OidcLoginOptions {
   silent?: boolean;
 }
 
+export type AuthCallbackUiError =
+  | "denied"
+  | "login_required"
+  | "unavailable"
+  | "invalid_flow"
+  | "failed";
+
 export interface AuthUser {
   id: string;
   username: string;
@@ -81,6 +88,25 @@ export class AuthError extends Error {
   ) {
     super(message);
     this.name = "AuthError";
+  }
+}
+
+export class OidcCallbackFailure extends Error {
+  readonly authError: AuthError;
+
+  constructor(
+    readonly originalError: unknown,
+    readonly returnPath: string | null,
+    readonly silent: boolean,
+    readonly uiCode: AuthCallbackUiError,
+  ) {
+    const authError =
+      originalError instanceof AuthError
+        ? originalError
+        : new AuthError("AUTH_FAILED", 500, "Authentication failed");
+    super(authError.message);
+    this.name = "OidcCallbackFailure";
+    this.authError = authError;
   }
 }
 
@@ -181,38 +207,51 @@ export async function completeOidcLogin(
   ) {
     throw new AuthError("OIDC_FLOW_INVALID", 400);
   }
-  if (query.get("error")) throw new AuthError("OIDC_AUTHORIZATION_DENIED", 401);
-  const code = query.get("code");
-  if (!code) throw new AuthError("OIDC_FLOW_INVALID", 400);
+  const providerError = query.get("error");
+  try {
+    if (providerError) {
+      throw new AuthError("OIDC_AUTHORIZATION_DENIED", 401);
+    }
+    const code = query.get("code");
+    if (!code) throw new AuthError("OIDC_FLOW_INVALID", 400);
 
-  const config = oidcConfig(c.env, new URL(c.req.url).origin);
-  const metadata = await discoverOidc(config);
-  const tokens = await exchangeTokens(
-    config,
-    metadata,
-    new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: config.redirectUri,
-      code_verifier: flow.verifier,
-    }),
-  );
-  const subject = await verifyIdToken(
-    metadata,
-    config,
-    tokens.idToken,
-    flow.nonce,
-  );
-  await verifyAccessToken(metadata, config, tokens.accessToken, subject);
-  const user = await fetchUserInfo(
-    metadata,
-    tokens.accessToken,
-    allowsLoopback(c.env),
-    config.issuer,
-  );
-  if (user.id !== subject) throw new AuthError("OIDC_USERINFO_INVALID", 502);
-  await setSessionCookie(c, storedSession(tokens, user));
-  return flow.next;
+    const config = oidcConfig(c.env, new URL(c.req.url).origin);
+    const metadata = await discoverOidc(config);
+    const tokens = await exchangeTokens(
+      config,
+      metadata,
+      new URLSearchParams({
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: config.redirectUri,
+        code_verifier: flow.verifier,
+      }),
+    );
+    const subject = await verifyIdToken(
+      metadata,
+      config,
+      tokens.idToken,
+      flow.nonce,
+    );
+    await verifyAccessToken(metadata, config, tokens.accessToken, subject);
+    const user = await fetchUserInfo(
+      metadata,
+      tokens.accessToken,
+      allowsLoopback(c.env),
+      config.issuer,
+    );
+    if (user.id !== subject)
+      throw new AuthError("OIDC_USERINFO_INVALID", 502);
+    await setSessionCookie(c, storedSession(tokens, user));
+    return flow.next;
+  } catch (error) {
+    throw new OidcCallbackFailure(
+      error,
+      flow.next,
+      Boolean(flow.silent),
+      authCallbackUiError(error, providerError),
+    );
+  }
 }
 
 /** Return a valid create-room identity, refreshing and re-checking its API token when needed. */
@@ -302,6 +341,53 @@ export function safeReturnPath(
   return parsed.origin === base.origin
     ? `${parsed.pathname}${parsed.search}${parsed.hash}`
     : null;
+}
+
+export function isSilentOidcCallback(query: URLSearchParams): boolean {
+  return query.get("state")?.startsWith(SILENT_STATE_PREFIX) ?? false;
+}
+
+export function authCallbackUiError(
+  error: unknown,
+  providerError?: string | null,
+): AuthCallbackUiError {
+  switch (providerError?.toLowerCase()) {
+    case "access_denied":
+      return "denied";
+    case "interaction_required":
+    case "login_required":
+      return "login_required";
+    case "server_error":
+    case "temporarily_unavailable":
+      return "unavailable";
+  }
+  if (error instanceof AuthError) {
+    if (
+      error.code === "OIDC_FLOW_INVALID" ||
+      error.code === "OIDC_GRANT_INVALID"
+    ) {
+      return "invalid_flow";
+    }
+    if (
+      error.code === "OIDC_NOT_CONFIGURED" ||
+      error.code === "OIDC_UNAVAILABLE"
+    ) {
+      return "unavailable";
+    }
+  }
+  return "failed";
+}
+
+export function authErrorRedirectPath(
+  requestedPath: string | null | undefined,
+  code: AuthCallbackUiError,
+): string {
+  const url = new URL(
+    safeReturnPath(requestedPath) ?? "/zh",
+    "https://avalon.invalid",
+  );
+  url.searchParams.set("authError", code);
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 function oidcConfig(env: Env, appOrigin: string): OidcConfig {
@@ -497,13 +583,17 @@ async function exchangeTokens(
   } catch {
     throw new AuthError("OIDC_UNAVAILABLE", 503);
   }
+  const responseBody = await response.json().catch(() => null);
   if (!response.ok) {
+    if (oauthErrorCode(responseBody) === "invalid_grant") {
+      throw new AuthError("OIDC_GRANT_INVALID", 401);
+    }
     throw new AuthError(
       response.status < 500 ? "OIDC_SESSION_INVALID" : "OIDC_UNAVAILABLE",
       response.status < 500 ? 401 : 503,
     );
   }
-  const value = record(await response.json().catch(() => null));
+  const value = record(responseBody);
   const accessToken = requiredString(
     value.access_token,
     "OIDC_TOKEN_RESPONSE_INVALID",
@@ -845,6 +935,12 @@ function record(value: unknown): Record<string, unknown> {
     throw new AuthError("OIDC_RESPONSE_INVALID", 502);
   }
   return value as Record<string, unknown>;
+}
+
+function oauthErrorCode(value: unknown): string | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const error = (value as Record<string, unknown>).error;
+  return typeof error === "string" ? error.toLowerCase() : null;
 }
 
 function requiredString(
