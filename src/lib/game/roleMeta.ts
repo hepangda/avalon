@@ -18,7 +18,7 @@ export const ROLE_TEAM_UI: Record<Role, Team> = {
 
 export const ROLE_PORTRAIT: Record<Role, string> = {
   Merlin: '/assets/game/roles/merlin.webp',
-  Percival: '/assets/game/roles/percival-v2.webp',
+  Percival: '/assets/game/roles/percival-v3.webp',
   LoyalServant: '/assets/game/roles/loyal-servant.webp',
   Morgana: '/assets/game/roles/morgana.webp',
   Assassin: '/assets/game/roles/assassin.webp',
