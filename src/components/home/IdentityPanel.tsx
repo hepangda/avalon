@@ -9,6 +9,7 @@ import { useSessionStore } from '@/lib/store/session';
 interface IdentityPanelProps {
   user: AuthUser | null;
   loading: boolean;
+  authError?: string | null;
   onLogin: () => void;
   onLogout: () => Promise<void>;
 }
@@ -17,7 +18,7 @@ function normalizeName(value: string): string {
   return value.replace(/\s+/g, ' ').trim().slice(0, 24);
 }
 
-export function IdentityPanel({ user, loading, onLogin, onLogout }: IdentityPanelProps) {
+export function IdentityPanel({ user, loading, authError, onLogin, onLogout }: IdentityPanelProps) {
   const t = useTranslations();
   const lastName = useSessionStore((state) => state.lastName);
   const setLastName = useSessionStore((state) => state.setLastName);
@@ -118,6 +119,7 @@ export function IdentityPanel({ user, loading, onLogin, onLogout }: IdentityPane
         </div>
       )}
 
+      {authError && <p className="text-xs text-crimson">{authError}</p>}
       {error && <p className="text-xs text-crimson">{error}</p>}
       {saved && <p className="text-xs text-emerald-300/75">{t('home.identitySaved')}</p>}
     </Card>

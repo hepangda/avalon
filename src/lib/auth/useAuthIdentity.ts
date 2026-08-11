@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSessionStore } from '@/lib/store/session';
 
 const SILENT_AUTH_TIMEOUT_MS = 6_000;
-let silentAuthDisabled = false;
+let silentAuthDisabled =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).has('authError');
 let silentAuthPromise: Promise<AuthUser | null> | null = null;
 let cancelSilentAuthAttempt: (() => void) | null = null;
 
