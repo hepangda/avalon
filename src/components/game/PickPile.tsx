@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils/cn';
+import { useRoleText } from '@/lib/game/useRoleText';
 import type { ClientGameState } from '@/lib/engine';
 
 /**
@@ -17,6 +18,7 @@ export function PickPile({
   size,
   tone,
   onRemove,
+  revealRoles = false,
 }: {
   game: ClientGameState;
   selected: string[];
@@ -25,8 +27,11 @@ export function PickPile({
   /** Tap a card to retract it. Omit for a read-only display (e.g. the team
    *  being voted on). */
   onRemove?: (id: string) => void;
+  /** Display the server-projected identity on these face-up cards. */
+  revealRoles?: boolean;
 }) {
   const reduce = useReducedMotion();
+  const roleText = useRoleText();
   const players = selected
     .map((id) => game.players.find((p) => p.id === id))
     .filter((p): p is NonNullable<typeof p> => !!p);
@@ -46,7 +51,12 @@ export function PickPile({
         : 'bg-gold/25 text-gold';
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
+    <div
+      className={cn(
+        'flex items-center justify-center',
+        revealRoles ? 'w-full gap-1.5' : 'flex-wrap gap-2',
+      )}
+    >
       <AnimatePresence mode="popLayout" initial={false}>
         {players.map((p) => (
           <motion.button
@@ -60,7 +70,8 @@ export function PickPile({
             exit={reduce ? { opacity: 0 } : { y: 64, opacity: 0, scale: 0.6 }}
             transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 24 }}
             className={cn(
-              'flex h-16 w-12 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border-2 px-1',
+              'flex flex-col items-center justify-center gap-1 rounded-lg border-2 px-1',
+              revealRoles ? 'h-24 w-14 min-w-0' : 'h-16 w-12 shrink-0',
               filled,
               onRemove ? 'cursor-pointer' : 'cursor-default',
             )}
@@ -71,6 +82,11 @@ export function PickPile({
             <span className="max-w-full truncate text-[9px] leading-tight text-parchment">
               {p.name}
             </span>
+            {revealRoles && p.role && (
+              <span className="max-w-full break-words text-[10px] font-semibold leading-tight text-parchment">
+                {roleText.name(p.role)}
+              </span>
+            )}
           </motion.button>
         ))}
       </AnimatePresence>

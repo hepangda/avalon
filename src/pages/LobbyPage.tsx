@@ -15,7 +15,7 @@ import type { RoomConfig } from '@/lib/socket/types';
 export default function LobbyPage() {
   const t = useTranslations();
   const params = useParams();
-  const code = (params.code ?? '').toUpperCase();
+  const code = params.code ?? '';
   const router = useRouter();
 
   useRoomConnection(code);

@@ -104,7 +104,7 @@ app.post('/api/auth/logout', (c) => {
 });
 
 // Create a room: generate a code, initialize a fresh Durable Object, retry on
-// the (rare) code collision.
+// code collisions.
 app.post('/api/rooms', async (c) => {
   let creator;
   try {
@@ -163,7 +163,8 @@ app.post('/api/rooms', async (c) => {
 
 // Public, non-sensitive room preview for the join page.
 app.get('/api/rooms/:code', async (c) => {
-  const code = c.req.param('code').toUpperCase();
+  const code = c.req.param('code');
+  if (!/^[0-9]{4}$/.test(code)) return c.json({ error: 'Invalid room code' }, 400);
   const stub = c.env.ROOM.get(c.env.ROOM.idFromName(code));
   const preview = await stub.preview();
   if (!preview) return c.json({ error: 'Room not found' }, 404);
@@ -183,10 +184,11 @@ app.get('/api/games/:id/replay', async (c) => {
 // WebSocket upgrade → forward the request to the room's Durable Object, which
 // completes the handshake with the Hibernation API.
 app.get('/rooms/:code/ws', (c) => {
+  const code = c.req.param('code');
+  if (!/^[0-9]{4}$/.test(code)) return c.json({ error: 'Invalid room code' }, 400);
   if (c.req.header('Upgrade') !== 'websocket') {
     return c.json({ error: 'Expected websocket' }, 426);
   }
-  const code = c.req.param('code').toUpperCase();
   const stub = c.env.ROOM.get(c.env.ROOM.idFromName(code));
   return stub.fetch(c.req.raw);
 });

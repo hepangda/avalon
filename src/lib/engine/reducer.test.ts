@@ -3,6 +3,7 @@ import type { EngineContext, GameState, Role } from './types';
 import { createGame, reduce } from './reducer';
 import { createRng } from './rng';
 import { teamOf } from './roles';
+import { canStartAssassination } from './fsm';
 import { buildStartedGame, firstK, FIVE_P, evilIds, DEFAULT_OPTIONS } from './testkit';
 
 const CTX: EngineContext = { now: 0, rng: createRng('ctx') };
@@ -240,6 +241,149 @@ describe('Assassination', () => {
     const s = reachAssassination();
     const merlin = s.players.find((p) => p.role === 'Merlin')!.id;
     expectRefusal(s, { type: 'ASSASSINATE', by: merlin, target: merlin }, 'NOT_ASSASSIN');
+  });
+});
+
+describe('Early assassination', () => {
+  it('refuses good players, evil allies, and unknown callers without mutation', () => {
+    const s = buildStartedGame(FIVE_P);
+    const before = structuredClone(s);
+    for (const by of ['p0', 'p3', 'outsider']) {
+      expectRefusal(s, { type: 'START_ASSASSINATION', by }, 'NOT_ASSASSIN');
+    }
+    expect(s).toEqual(before);
+  });
+
+  it('cannot start without an assassin, before play, or after assassination begins or ends', () => {
+    const noAssassin = buildStartedGame([
+      'Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Minion',
+    ]);
+    expect(canStartAssassination(noAssassin)).toBe(false);
+    expectRefusal(noAssassin, { type: 'START_ASSASSINATION', by: 'p4' }, 'WRONG_PHASE');
+
+    const started = buildStartedGame(FIVE_P);
+    const lobby: GameState = { ...started, phase: 'Lobby' };
+    const assassination = apply(started, { type: 'START_ASSASSINATION', by: 'p4' });
+    const finished = apply(assassination, { type: 'ASSASSINATE', by: 'p4', target: 'p0' });
+    for (const s of [lobby, assassination, finished]) {
+      const before = structuredClone(s);
+      expect(canStartAssassination(s)).toBe(false);
+      expectRefusal(s, { type: 'START_ASSASSINATION', by: 'p4' }, 'WRONG_PHASE');
+      expect(s).toEqual(before);
+    }
+  });
+
+  it('can begin during role reveal and a miss gives good victory before any mission', () => {
+    const s = buildStartedGame(FIVE_P);
+    s.phase = 'RoleReveal';
+    const next = apply(s, { type: 'START_ASSASSINATION', by: 'p4' });
+    expect(next.phase).toBe('Assassination');
+    expect(next.outcome).toBeNull();
+    const finished = apply(next, { type: 'ASSASSINATE', by: 'p4', target: 'p2' });
+    expect(finished.phase).toBe('GameOver');
+    expect(finished.outcome).toMatchObject({
+      winner: 'good',
+      reason: 'assassin_missed',
+      assassinTargetId: 'p2',
+      missionTally: { good: 0, evil: 0 },
+    });
+  });
+
+  it('discards an unfinished proposal without inventing a completed vote or allowing retraction', () => {
+    let s = buildStartedGame(FIVE_P);
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    for (const p of s.players.slice(0, -1)) {
+      s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
+    }
+
+    const before = structuredClone(s);
+    const next = apply(s, { type: 'START_ASSASSINATION', by: 'p4' });
+    expect(next.phase).toBe('Assassination');
+    expect(next.proposedTeam).toBeNull();
+    expect(next.votes).toEqual({});
+    expect(next.voteHistory).toEqual(before.voteHistory);
+    expect(next.missionResults).toEqual([]);
+    expect(next.rejectionCount).toBe(1);
+    expect(next.logs.at(-1)).toMatchObject({
+      channel: 'public',
+      key: 'earlyAssassination',
+      params: { player: 'p4' },
+    });
+    expect(s).toEqual(before);
+    expectRefusal(next, { type: 'CAST_VOTE', by: 'p4', value: 'approve' }, 'WRONG_PHASE');
+    expectRefusal(next, { type: 'RETRACT_PROPOSAL' }, 'WRONG_PHASE');
+    expectRefusal(next, { type: 'RETRACT_VOTES' }, 'WRONG_PHASE');
+    expectRefusal(next, { type: 'PROPOSE_TEAM', by: leader(next), team: ['p0', 'p1'], admin: true }, 'WRONG_PHASE');
+  });
+
+  it('interrupts an in-flight mission and a Merlin hit preserves the completed mission tally', () => {
+    let s = buildStartedGame(FIVE_P);
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
+    for (const id of s.proposedTeam!) s = apply(s, { type: 'CAST_MISSION_CARD', by: id, card: 'success' });
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: ['p0', 'p1', 'p3'] });
+    for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
+    s = apply(s, { type: 'CAST_MISSION_CARD', by: 'p3', card: 'fail' });
+
+    const before = structuredClone(s);
+    const next = apply(s, { type: 'START_ASSASSINATION', by: 'p4' });
+    expect(next.phase).toBe('Assassination');
+    expect(next.proposedTeam).toBeNull();
+    expect(next.votes).toEqual({});
+    expect(next.missionCards).toEqual({});
+    expect(next.voteHistory).toEqual(before.voteHistory);
+    expect(next.missionResults).toEqual(before.missionResults);
+    expect(s).toEqual(before);
+    expectRefusal(next, { type: 'CAST_MISSION_CARD', by: 'p0', card: 'success' }, 'WRONG_PHASE');
+    expectRefusal(next, { type: 'ASSASSINATE', by: 'p4', target: 'p3' }, 'ASSASSIN_TARGET_INVALID');
+
+    const finished = apply(next, { type: 'ASSASSINATE', by: 'p4', target: 'p0' });
+    expect(finished.phase).toBe('GameOver');
+    expect(finished.outcome).toMatchObject({
+      winner: 'evil',
+      reason: 'assassinated_merlin',
+      assassinTargetId: 'p0',
+      missionTally: { good: 1, evil: 0 },
+    });
+  });
+
+  it('cancels a pending Lady inspection without changing earlier inspections or mission history', () => {
+    let s = buildStartedGame(FIVE_P, { ladyOfTheLake: true });
+    for (const team of [['p0', 'p3'], ['p0', 'p1', 'p2'], ['p0', 'p1']]) {
+      s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
+      for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
+      for (const id of team) {
+        s = apply(s, { type: 'CAST_MISSION_CARD', by: id, card: id === 'p3' ? 'fail' : 'success' });
+      }
+      if (s.roundIndex === 1 && s.phase === 'LadyOfLake') {
+        s = apply(s, { type: 'USE_LADY', by: s.ladyHolderId!, target: 'p0' });
+      }
+    }
+    expect(s.phase).toBe('LadyOfLake');
+    expect(s.pendingLady).toBe(true);
+
+    const before = structuredClone(s);
+    const next = apply(s, { type: 'START_ASSASSINATION', by: 'p4' });
+    expect(next.phase).toBe('Assassination');
+    expect(next.pendingLady).toBe(false);
+    expect(next.proposedTeam).toBeNull();
+    expect(next.votes).toEqual({});
+    expect(next.voteHistory).toEqual(before.voteHistory);
+    expect(next.missionResults).toEqual(before.missionResults);
+    expect(next.ladyHolderId).toBe(before.ladyHolderId);
+    expect(next.ladyInspectedIds).toEqual(before.ladyInspectedIds);
+    expect(next.lastLadyResult).toEqual(before.lastLadyResult);
+    expect(s).toEqual(before);
+    expectRefusal(next, { type: 'USE_LADY', by: 'p0', target: 'p1' }, 'WRONG_PHASE');
+
+    const finished = apply(next, { type: 'ASSASSINATE', by: 'p4', target: 'p2' });
+    expect(finished.outcome).toMatchObject({
+      winner: 'good',
+      reason: 'assassin_missed',
+      missionTally: { good: 2, evil: 1 },
+    });
   });
 });
 

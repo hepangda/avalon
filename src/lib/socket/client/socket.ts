@@ -143,12 +143,11 @@ let current: RoomConnection | null = null;
 
 /** Open (or reuse) the single active room connection for `code`. */
 export function connectRoom(code: string, handlers: RoomHandlers): RoomConnection {
-  const upper = code.toUpperCase();
-  if (current && current.code !== upper) {
+  if (current && current.code !== code) {
     current.close();
     current = null;
   }
-  if (!current) current = new RoomConnection(upper);
+  if (!current) current = new RoomConnection(code);
   current.setHandlers(handlers);
   current.connect();
   return current;

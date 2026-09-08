@@ -14,7 +14,7 @@
     "createRoom": "创建房间",
     "creating": "正在创建...",
     "or": "已有房间？",
-    "roomCode": "输入房间码",
+    "roomCode": "4 位数字房间码",
     "join": "加入",
     "rosterLabel": "玩家名册",
     "seatPlaceholder": "第 {n} 位玩家",
@@ -39,7 +39,7 @@
     "authUnavailable": "登录服务暂时不可用，请稍后再试。",
     "authInvalidFlow": "登录请求已过期，请重新登录。",
     "authFailed": "登录失败，请重新尝试。",
-    "errInvalidCode": "房间码不对",
+    "errInvalidCode": "请输入 4 位数字房间码",
     "errCreateFailed": "房间创建失败，请再试一次",
     "errVoiceUnavailable": "语音房暂时不可用，请检查 RealtimeKit 配置或稍后重试",
     "errUnreachable": "连不上服务器，请稍后再试"
@@ -97,7 +97,7 @@
     },
     "Assassin": {
       "name": "刺客",
-      "blurb": "即使邪恶在任务中落败，你仍可通过刺杀梅林获胜。"
+      "blurb": "你可以提前终止任务，或在好人赢得三个任务后出手。刺中梅林则坏人获胜，刺错则好人获胜。"
     },
     "Oberon": {
       "name": "奥伯伦",
@@ -275,7 +275,15 @@
     "strikeDown": "刺杀 {name}",
     "strike": "刺杀",
     "chooseTarget": "选择你的目标",
-    "contemplating": "刺客正在思忖这命运攸关的抉择…"
+    "contemplating": "刺客正在思忖这命运攸关的抉择…",
+    "identitiesPublic": "所有坏人身份（包括奥伯伦）现已公开，好人身份仍然保密。",
+    "startEarly": "提前进入刺杀",
+    "earlyConsequences": "立即终止所有任务，并向所有人公开每位坏人的身份（包括奥伯伦）。好人身份仍然保密。",
+    "earlyOutcome": "随后由你选择刺杀目标：刺中梅林则坏人获胜，刺错则好人获胜，不再按任务结果判定胜负。",
+    "irreversible": "此操作不可撤销，任务不会继续。",
+    "confirmStart": "终止任务并进入刺杀",
+    "starting": "正在进入刺杀…",
+    "startFailed": "无法进入刺杀，请检查网络连接后重试。"
   },
   "gameOver": {
     "goodTriumphs": "好人胜利",
@@ -333,6 +341,7 @@
     "goodWinsMissions": "好人完成三个任务，正义胜利！",
     "goodWinsMissionsAssassin": "好人完成三个任务——但刺客仍有最后一击",
     "evilWinsMissions": "坏人破坏三个任务，黑暗胜利！",
+    "earlyAssassination": "{player} 提前终止任务并进入刺杀——所有坏人身份已公开",
     "assassinStruck": "刺客对 {target} 出手",
     "assassinHitMerlin": "刺客刺中了梅林，坏人胜利！",
     "assassinMissed": "刺客刺杀失败，好人胜利！",

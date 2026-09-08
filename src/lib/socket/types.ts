@@ -132,6 +132,7 @@ export interface ClientToServerEvents {
   'game:vote': (p: { value: VoteValue }, ack: (r: Ack) => void) => void;
   'game:missionCard': (p: { card: MissionCard }, ack: (r: Ack) => void) => void;
   'game:useLady': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
+  'game:startAssassination': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'game:assassinate': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
   /**
    * Latency heartbeat. The client measures round-trip time by timing the ack,

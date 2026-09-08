@@ -14,7 +14,7 @@
     "createRoom": "Create a Room",
     "creating": "Creating…",
     "or": "or join",
-    "roomCode": "ROOM CODE",
+    "roomCode": "4-digit room code",
     "join": "Join",
     "rosterLabel": "Player roster",
     "seatPlaceholder": "Player {n}",
@@ -39,7 +39,7 @@
     "authUnavailable": "The sign-in service is temporarily unavailable. Please try again later.",
     "authInvalidFlow": "The sign-in request expired. Please sign in again.",
     "authFailed": "Sign-in failed. Please try again.",
-    "errInvalidCode": "Enter a valid room code",
+    "errInvalidCode": "Enter a 4-digit room code",
     "errCreateFailed": "Failed to create room",
     "errVoiceUnavailable": "Voice rooms are unavailable. Check RealtimeKit configuration or try again later.",
     "errUnreachable": "Could not reach the server"
@@ -97,7 +97,7 @@
     },
     "Assassin": {
       "name": "Assassin",
-      "blurb": "If evil loses the missions, you may still win by slaying Merlin."
+      "blurb": "End the quests early or strike after good wins three quests. Slay Merlin and evil wins; miss and good wins."
     },
     "Oberon": {
       "name": "Oberon",
@@ -275,7 +275,15 @@
     "strikeDown": "Strike down {name}",
     "strike": "Strike",
     "chooseTarget": "Choose your target",
-    "contemplating": "The Assassin contemplates their fateful choice…"
+    "contemplating": "The Assassin contemplates their fateful choice…",
+    "identitiesPublic": "All evil roles, including Oberon, are now public. Good roles stay hidden.",
+    "startEarly": "Start assassination early",
+    "earlyConsequences": "Stop all quests now and reveal every evil role, including Oberon, to everyone. Good roles will stay hidden.",
+    "earlyOutcome": "You will then choose a target: hit Merlin and evil wins; miss Merlin and good wins, regardless of the quest results.",
+    "irreversible": "This cannot be undone. Quests will not resume.",
+    "confirmStart": "Stop quests & start assassination",
+    "starting": "Starting assassination…",
+    "startFailed": "Could not start assassination. Check your connection and try again."
   },
   "gameOver": {
     "goodTriumphs": "Good Triumphs",
@@ -333,6 +341,7 @@
     "goodWinsMissions": "Good completes three missions — the realm is saved!",
     "goodWinsMissionsAssassin": "Good completes three missions — but the Assassin has one strike left",
     "evilWinsMissions": "Evil sabotages three missions — darkness wins!",
+    "earlyAssassination": "{player} ends the quests early and starts assassination — all evil roles are revealed",
     "assassinStruck": "The Assassin strikes at {target}",
     "assassinHitMerlin": "The Assassin found Merlin — evil wins!",
     "assassinMissed": "The Assassin struck in vain — good wins!",

@@ -8,7 +8,7 @@ import { isLocale, routing, type Locale } from './routing';
  * Locale-aware navigation helpers backed by react-router. Drop-in replacement
  * for the old next-intl `@/i18n/navigation` module: components importing
  * `Link`, `useRouter`, `usePathname` from here are unchanged. Paths passed in
- * are locale-agnostic (e.g. `/room/ABC`); the active locale prefix is added
+ * are locale-agnostic (e.g. `/room/0123`); the active locale prefix is added
  * automatically, or overridden via the `{ locale }` option.
  */
 
@@ -57,7 +57,7 @@ export function useRouter() {
 
 type LocaleLinkProps = Omit<LinkProps, 'to'> & { href: string; locale?: string };
 
-/** `<Link href="/room/ABC">` — locale prefix added automatically. */
+/** `<Link href="/room/0123">` — locale prefix added automatically. */
 export const Link = forwardRef<HTMLAnchorElement, LocaleLinkProps>(function Link(
   { href, locale, ...rest },
   ref,

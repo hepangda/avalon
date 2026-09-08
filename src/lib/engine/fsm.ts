@@ -18,6 +18,22 @@ export function assassinInPlay(s: GameState): boolean {
   return s.players.some((p) => p.role === 'Assassin');
 }
 
+/** Whether normal play can be ended early by the assigned assassin. */
+export function canStartAssassination(s: GameState): boolean {
+  if (s.assassinId === null || !assassinInPlay(s)) return false;
+  switch (s.phase) {
+    case 'RoleReveal':
+    case 'TeamBuilding':
+    case 'Voting':
+    case 'MissionVote':
+    case 'MissionResult':
+    case 'LadyOfLake':
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function playerById(s: GameState, id: PlayerId) {
   return s.players.find((p) => p.id === id);
 }

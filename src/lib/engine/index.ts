@@ -30,6 +30,7 @@ export {
   goodWins,
   evilWins,
   assassinInPlay,
+  canStartAssassination,
   leaderId,
   currentMissionSize,
   currentRequiredFails,

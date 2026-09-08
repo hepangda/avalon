@@ -8,6 +8,7 @@ import type {
   Role,
 } from './types';
 import { missionSizesFor, requiredFailsFor } from './config';
+import { canStartAssassination } from './fsm';
 import { teamOf } from './roles';
 import { computeKnownPlayers } from './visibility';
 
@@ -23,13 +24,17 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
   const self = state.players.find((p) => p.id === viewerId) ?? null;
   const isSpectator = self === null;
   const isGameOver = state.phase === 'GameOver';
+  const isAssassination = state.phase === 'Assassination';
 
   const leaderSeatPlayer = state.players.find((p) => p.seat === state.leaderIndex);
   const leaderPlayerId = leaderSeatPlayer?.id ?? null;
 
-  // Players: roles only for self (pre-GameOver) or everyone (GameOver).
+  // Own role is private; evil roles become public at Assassination, all at GameOver.
   const players: ClientPlayer[] = state.players.map((p) => {
-    const showRole = isGameOver || (self !== null && p.id === self.id);
+    const showRole =
+      isGameOver ||
+      (self !== null && p.id === self.id) ||
+      (isAssassination && teamOf(p.role) === 'evil');
     return {
       id: p.id,
       name: p.name,
@@ -121,7 +126,7 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
   // Assassin candidates: only the assassin during Assassination sees the list
   // of valid (good-team) targets — but as ids only, not their roles.
   let assassinCandidates: PlayerId[] | undefined;
-  if (state.phase === 'Assassination' && self !== null && state.assassinId === self.id) {
+  if (isAssassination && self !== null && state.assassinId === self.id) {
     assassinCandidates = state.players
       .filter((p) => teamOf(p.role) === 'good')
       .map((p) => p.id);
@@ -149,6 +154,8 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
     },
     lady,
     ...(privateLadyResult ? { privateLadyResult } : {}),
+    canStartAssassination:
+      self !== null && state.assassinId === self.id && canStartAssassination(state),
     ...(assassinCandidates ? { assassinCandidates } : {}),
     outcome: isGameOver ? state.outcome : null,
     isSpectator,

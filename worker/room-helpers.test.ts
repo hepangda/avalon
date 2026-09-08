@@ -37,7 +37,7 @@ describe('room snapshots', () => {
       claimed: true,
     };
     const meta: RoomMeta = {
-      code: 'ABC123',
+      code: '0123',
       hostToken: 'private-host-token',
       status: 'lobby',
       config: { ...DEFAULT_ROOM_CONFIG, roster: [member.name] },

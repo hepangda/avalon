@@ -101,8 +101,8 @@ export default function HomePage() {
   }, [authUser, logout, router, t]);
 
   function handleJoin() {
-    const code = joinCode.trim().toUpperCase();
-    if (code.length < 4) return setError(t('home.errInvalidCode'));
+    const code = joinCode.trim();
+    if (!/^[0-9]{4}$/.test(code)) return setError(t('home.errInvalidCode'));
     router.push(`/room/${code}`);
   }
 
@@ -145,13 +145,15 @@ export default function HomePage() {
           <div className="flex gap-2">
             <Input
               value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ''))}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleJoin();
               }}
               placeholder={t('home.roomCode')}
-              maxLength={6}
-              className="h-11 min-w-0 uppercase tracking-widest"
+              maxLength={4}
+              inputMode="numeric"
+              pattern="[0-9]{4}"
+              className="h-11 min-w-0 tracking-widest"
               autoComplete="off"
             />
             <Button variant="secondary" className="h-11 min-w-20 shrink-0 whitespace-nowrap px-5" onClick={handleJoin}>

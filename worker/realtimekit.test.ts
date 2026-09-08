@@ -27,7 +27,7 @@ describe('RealtimeKit API client', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(createRealtimeKitMeeting(credentials, 'Avalon ABC123')).resolves.toBe(
+    await expect(createRealtimeKitMeeting(credentials, 'Avalon 0123')).resolves.toBe(
       'meeting-id',
     );
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -38,7 +38,7 @@ describe('RealtimeKit API client', () => {
     const headers = init.headers as Record<string, string>;
     expect(headers.Authorization?.split(' ')).toEqual(['Bearer', credentials.apiToken]);
     expect(headers['Content-Type']).toBe('application/json');
-    expect(JSON.parse(String(init.body))).toEqual({ title: 'Avalon ABC123' });
+    expect(JSON.parse(String(init.body))).toEqual({ title: 'Avalon 0123' });
   });
 
   it('adds a participant using the configured voice preset', async () => {

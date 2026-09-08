@@ -12,7 +12,7 @@ function setupVoting(): GameState {
 }
 
 describe('projectStateForViewer — security boundary', () => {
-  it('a player sees only their own role pre-GameOver', () => {
+  it('a player sees only their own role before Assassination', () => {
     const s = buildStartedGame(FIVE_P);
     const view = projectStateForViewer(s, 'p0');
     const self = view.players.find((p) => p.id === 'p0')!;
@@ -99,11 +99,59 @@ describe('projectStateForViewer — security boundary', () => {
     s.phase = 'Assassination';
     const assassin = s.assassinId!;
     const view = projectStateForViewer(s, assassin);
-    expect(view.assassinCandidates).toBeDefined();
-    // Candidates are the 3 good players; ids only.
-    expect(view.assassinCandidates!.length).toBe(3);
+    expect(view.assassinCandidates).toEqual(['p0', 'p1', 'p2']);
     const other = projectStateForViewer(s, 'p0');
     expect(other.assassinCandidates).toBeUndefined();
+  });
+
+  it('reveals every evil role, including Oberon, at Assassination without exposing good identities', () => {
+    const roles: Role[] = [
+      'Merlin',
+      'Percival',
+      'LoyalServant',
+      'LoyalServant',
+      'LoyalServant',
+      'LoyalServant',
+      'Morgana',
+      'Mordred',
+      'Oberon',
+      'Assassin',
+    ];
+    const state = buildStartedGame(roles);
+    const viewers = [...state.players.map((player) => player.id), 'spectator'];
+    const evilRoles = [
+      ['p6', 'Morgana'],
+      ['p7', 'Mordred'],
+      ['p8', 'Oberon'],
+      ['p9', 'Assassin'],
+    ];
+
+    for (const viewer of viewers) {
+      const before = projectStateForViewer(state, viewer);
+      expect(before.players.filter((player) => player.id !== viewer && player.role)).toEqual([]);
+    }
+
+    state.phase = 'Assassination';
+    for (const viewer of viewers) {
+      const view = projectStateForViewer(state, viewer);
+      const visibleOthers = view.players
+        .filter((player) => player.id !== viewer && player.role)
+        .map((player) => [player.id, player.role]);
+      expect(visibleOthers).toEqual(evilRoles.filter(([id]) => id !== viewer));
+    }
+  });
+
+  it('offers early assassination only to the active assassin, never other players or spectators', () => {
+    const state = buildStartedGame(FIVE_P);
+    for (const viewer of [...state.players.map((player) => player.id), 'spectator']) {
+      expect(projectStateForViewer(state, viewer).canStartAssassination).toBe(
+        viewer === state.assassinId,
+      );
+    }
+    for (const phase of ['Lobby', 'Assassination', 'GameOver'] as const) {
+      state.phase = phase;
+      expect(projectStateForViewer(state, state.assassinId!).canStartAssassination).toBe(false);
+    }
   });
 
   it('full reveal only at GameOver', () => {
@@ -121,20 +169,4 @@ describe('projectStateForViewer — security boundary', () => {
     expect(view.players.every((p) => p.role !== undefined)).toBe(true);
   });
 
-  it('roles never present before GameOver for non-self players (deep check)', () => {
-    const roles: Role[] = FIVE_P;
-    const s = buildStartedGame(roles);
-    const view = projectStateForViewer(s, 'p1'); // Percival
-    const leakedRoles = view.players.filter((p) => p.id !== 'p1' && p.role !== undefined);
-    expect(leakedRoles).toHaveLength(0);
-  });
-
-  it('projects roleAcks so the client can gate the role-reveal overlay', () => {
-    const s = buildStartedGame(FIVE_P);
-    s.roleAcks = ['p1', 'p3'];
-    const view = projectStateForViewer(s, 'p2');
-    expect(view.roleAcks).toEqual(['p1', 'p3']);
-    // It's a copy, not the engine's array.
-    expect(view.roleAcks).not.toBe(s.roleAcks);
-  });
 });

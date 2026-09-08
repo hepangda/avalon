@@ -18,6 +18,8 @@ A production-grade online implementation of Avalon for 5-10 friends. Joining sta
 
 The authoritative game state for a room lives in a single **Durable Object** (`worker/room-do.ts`), one instance per room code. Because a DO is single-threaded and addressable by name from anywhere, it replaces the old "single Node process + in-memory store" model with the same semantics but no single point of failure and automatic per-room scaling.
 
+Room codes are exactly four ASCII digits (`0000`–`9999`), kept as strings to preserve leading zeros. The join input and HTTP/WebSocket room endpoints require this format; legacy six-character codes are no longer accepted. Creation tries up to five random codes on collisions without overwriting existing rooms. Room state is not automatically reclaimed, so the 10,000-code space counts retained rooms, not just currently connected rooms.
+
 - A pure deterministic engine in `src/lib/engine/` drives the rules (unchanged, runtime-agnostic).
 - Clients connect over **native WebSockets** (`/rooms/:code/ws`) which the Worker forwards to the room's Durable Object. The DO uses the **Hibernation API** so idle rooms cost nothing while keeping connections alive. Per-viewer state projection ensures clients never see hidden roles or mission cards.
 - The append-only **event log** is persisted in the DO's own **SQLite** and is the single source of truth: on wake the DO deterministically replays it to rebuild state, and on game over it reconstructs the full `ReplayData` and ships it to a per-game `ReplayDurableObject` (keyed by game id). **There is no external database** — Postgres/Prisma were removed entirely.
@@ -82,9 +84,9 @@ npx wrangler secret put OIDC_CLIENT_SECRET
 openssl rand -base64 32 | tr '+/' '-_' | tr -d '=' | npx wrangler secret put OIDC_SESSION_SECRET
 ```
 
-For local development, use a separately registered staging/local client and put `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_RESOURCE`, `OIDC_SESSION_SECRET`, and `ENVIRONMENT=development` in the ignored `.dev.vars` file. Its callback must be `http://localhost:5173/api/auth/callback`. In KeyForge, grant the client and `https://avalon.pangda.app/createRoom` API to the `all` group so every authenticated user can create a room.
+For same-machine local development, start KeyForge at `http://localhost:17001` and open Avalon at `http://localhost:5173`. Use the separately registered `avalon_local` client and set `OIDC_ISSUER=http://localhost:17001`, `OIDC_CLIENT_ID=avalon_local`, `OIDC_CLIENT_SECRET`, `OIDC_RESOURCE`, `OIDC_SESSION_SECRET`, and `ENVIRONMENT=development` in the ignored `.dev.vars` file. The client callback must be exactly `http://localhost:5173/api/auth/callback`. This path does not require Cloudflare Tunnel; keep both local services running. In KeyForge, grant the client and `https://avalon.pangda.app/createRoom` API to the `all` group so every authenticated user can create a room.
 
-The current `auth-dev.pangda.app` discovery document publishes its internal `http://localhost:17001` origin. Development mode recognizes only that exact alias, validates all published endpoints against it, and rebases endpoint and avatar URLs to the approved public `auth-dev.pangda.app` origin. Production keeps strict issuer matching.
+For HTTPS tunnel testing, `https://auth-dev.pangda.app` remains supported but requires a connected Cloudflare Tunnel (HTTP 530 / error 1033 means that route is unavailable). Its discovery document publishes the internal `http://localhost:17001` origin. Development mode recognizes only that exact alias, validates all published endpoints against it, and rebases endpoint and avatar URLs to the public `auth-dev.pangda.app` origin. Production keeps strict issuer matching.
 
 To run the production build locally in a Miniflare runtime (closest to deployed behavior):
 
@@ -135,3 +137,7 @@ Durable Object storage is created automatically on first use; there is no migrat
 ## Game flow
 
 Lobby -> role reveal -> team building -> vote -> mission -> result, repeated up to 5 missions. If enabled, Lady of the Lake runs after missions 2-4. If good wins 3 missions, assassination runs before game over. Finished games include full reveal and replay.
+
+During assassination, every evil identity—including Oberon and Mordred—is revealed on a face-up player card in the center of the table, visible to players and spectators. Each card shows the seat number, player name, and role. Table seats keep their original presentation, and target selection is unchanged. Good identities remain private until game over.
+
+The assassin can also choose **Functions → Start assassination early** during active play. After an irreversible confirmation, unfinished votes, mission cards, and any pending Lady inspection are abandoned; completed history is preserved. Quests do not resume: hitting Merlin gives evil the win, while missing gives good the win, regardless of the mission tally. Other players and spectators cannot initiate the action.

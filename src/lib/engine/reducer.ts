@@ -25,6 +25,7 @@ import {
   allCardsIn,
   allVotesIn,
   assassinInPlay,
+  canStartAssassination,
   currentMissionSize,
   currentRequiredFails,
   evilWins,
@@ -532,6 +533,26 @@ function applyLadyOfLake(s: GameState, by: PlayerId, target: PlayerId): EngineRe
 }
 
 // ---------------------------------------------------------------------------
+// START_ASSASSINATION → abandon unfinished decisions, enter Assassination
+// ---------------------------------------------------------------------------
+
+function startAssassination(s: GameState, by: PlayerId): EngineResult {
+  if (!canStartAssassination(s)) {
+    return err('WRONG_PHASE', 'Assassination cannot be started now');
+  }
+  if (s.assassinId !== by) return err('NOT_ASSASSIN', 'Only the assassin may act');
+
+  const next = clone(s);
+  next.phase = 'Assassination';
+  next.proposedTeam = null;
+  next.votes = {};
+  next.missionCards = {};
+  next.pendingLady = false;
+  pushPublic(next, 'earlyAssassination', { player: by });
+  return ok(next);
+}
+
+// ---------------------------------------------------------------------------
 // ASSASSINATE → GameOver
 // ---------------------------------------------------------------------------
 
@@ -642,6 +663,8 @@ function dispatch(state: GameState, event: GameEvent): EngineResult {
       return castMissionCard(state, event.by, event.card);
     case 'USE_LADY':
       return applyLadyOfLake(state, event.by, event.target);
+    case 'START_ASSASSINATION':
+      return startAssassination(state, event.by);
     case 'ASSASSINATE':
       return assassinate(state, event.by, event.target);
     case 'SET_CONNECTED':

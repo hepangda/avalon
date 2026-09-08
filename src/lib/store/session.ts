@@ -20,7 +20,7 @@ interface SessionEntry {
 }
 
 interface SessionState {
-  sessions: Record<string, SessionEntry>; // code (upper) → entry
+  sessions: Record<string, SessionEntry>; // room code → entry
   lastName: string;
   lastAvatarUrl?: string;
   setSession: (code: string, entry: Partial<SessionEntry>) => void;
@@ -39,18 +39,17 @@ export const useSessionStore = create<SessionState>()(
       lastAvatarUrl: undefined,
       setSession: (code, entry) =>
         set((s) => {
-          const key = code.toUpperCase();
-          const merged = { ...s.sessions[key], ...entry };
+          const merged = { ...s.sessions[code], ...entry };
           return {
-            sessions: { ...s.sessions, [key]: merged },
+            sessions: { ...s.sessions, [code]: merged },
             lastName: entry.name || s.lastName,
           };
         }),
-      getSession: (code) => get().sessions[code.toUpperCase()],
+      getSession: (code) => get().sessions[code],
       clearSession: (code) =>
         set((s) => {
           const next = { ...s.sessions };
-          delete next[code.toUpperCase()];
+          delete next[code];
           return { sessions: next };
         }),
       // Choosing an anonymous name must not reuse a previous account avatar.

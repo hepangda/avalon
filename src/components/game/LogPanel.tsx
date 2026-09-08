@@ -160,7 +160,11 @@ export function LogPanel({ game, code }: { game: ClientGameState; code: string }
             </div>
 
             {view === 'functions' ? (
-              <FunctionsPanel code={code} game={game} />
+              <FunctionsPanel
+                code={code}
+                game={game}
+                onAssassinationStarted={() => setView(null)}
+              />
             ) : (
               <>
                 <div className="flex shrink-0 gap-1 border-b border-gold/15 px-3 py-2">

@@ -299,6 +299,6 @@ function isRoomRoute(pathname: string, code: string): boolean {
   return (
     segments.length === 3 &&
     (segments[1] === 'room' || segments[1] === 'game') &&
-    segments[2]?.toUpperCase() === code
+    segments[2] === code
   );
 }

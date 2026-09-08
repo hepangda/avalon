@@ -388,6 +388,8 @@ export class RoomDurableObject extends DurableObject<Env> {
           by: pid,
           target: (payload as { targetPlayerId: string }).targetPlayerId,
         }));
+      case 'game:startAssassination':
+        return this.gameAction(ws, (pid) => ({ type: 'START_ASSASSINATION', by: pid }));
       case 'game:assassinate':
         return this.gameAction(ws, (pid) => ({
           type: 'ASSASSINATE',

@@ -207,6 +207,7 @@ export type GameEvent =
   | { type: 'RETRACT_PROPOSAL' }
   | { type: 'CAST_MISSION_CARD'; by: PlayerId; card: MissionCard }
   | { type: 'USE_LADY'; by: PlayerId; target: PlayerId }
+  | { type: 'START_ASSASSINATION'; by: PlayerId }
   | { type: 'ASSASSINATE'; by: PlayerId; target: PlayerId }
   | { type: 'SET_CONNECTED'; by: PlayerId; connected: boolean }
   | { type: 'SET_VOICE_PRESENCE'; by: PlayerId; status: VoicePresenceStatus };
@@ -289,7 +290,8 @@ export interface ClientPlayer {
    *  (the engine has no notion of claiming). An unclaimed seat is open for a
    *  joiner to take; a claimed-but-disconnected seat is held for reconnect. */
   claimed?: boolean;
-  role?: Role; // populated only for self (pre-GameOver) or everyone (GameOver)
+  /** Self's role, all evil roles during Assassination, or everyone's at GameOver. */
+  role?: Role;
   isLeader: boolean;
   isLadyHolder: boolean;
 }
@@ -356,6 +358,8 @@ export interface ClientGameState {
     pending: boolean;
   } | null;
   privateLadyResult?: { targetId: PlayerId; loyalty: Team };
+  /** Whether this viewer is the assassin and may end normal play immediately. */
+  canStartAssassination: boolean;
   assassinCandidates?: PlayerId[]; // populated only for the assassin during Assassination
   outcome: GameOutcome | null;
   isSpectator: boolean;

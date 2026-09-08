@@ -41,7 +41,7 @@ interface TableInteraction {
 export default function GamePage() {
   const t = useTranslations();
   const params = useParams();
-  const code = (params.code ?? '').toUpperCase();
+  const code = params.code ?? '';
 
   useRoomConnection(code);
 

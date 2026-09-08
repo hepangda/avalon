@@ -25,7 +25,7 @@ import type { Ack, RoomConfig, RoomSnapshot } from '../types';
 export function useRoomConnection(code: string | null) {
   useEffect(() => {
     if (!code) return;
-    const upperCode = code.toUpperCase();
+    const roomCode = code;
 
     // The room store is a process-global singleton that survives client-side
     // navigation. If it still holds another room's state (e.g. a finished
@@ -33,21 +33,21 @@ export function useRoomConnection(code: string | null) {
     // can't leak into this room — otherwise a leftover `status: 'finished'`
     // snapshot or `phase: 'GameOver'` game could trigger a wrong redirect or
     // render the previous game's end screen.
-    if (useRoomStore.getState().roomCode !== upperCode) {
+    if (useRoomStore.getState().roomCode !== roomCode) {
       useRoomStore.getState().reset();
-      useRoomStore.getState().setRoomCode(upperCode);
+      useRoomStore.getState().setRoomCode(roomCode);
     }
     const store = useRoomStore.getState();
 
     async function doJoin() {
-      const session = useSessionStore.getState().getSession(upperCode);
+      const session = useSessionStore.getState().getSession(roomCode);
       try {
         const res = await emitWithAck<
           'room:join',
           { code: string; playerId?: string; playerToken?: string; hostToken?: string },
           Ack<{ playerId?: string; isHost: boolean }>
         >('room:join', {
-          code: upperCode,
+          code: roomCode,
           playerId: session?.playerId,
           playerToken: session?.playerToken,
           hostToken: session?.hostToken,
@@ -56,12 +56,12 @@ export function useRoomConnection(code: string | null) {
           useRoomStore.getState().setIsHost(res.data.isHost);
           if (res.data.playerId) {
             store.setMyPlayerId(res.data.playerId);
-            useSessionStore.getState().setSession(upperCode, { playerId: res.data.playerId });
+            useSessionStore.getState().setSession(roomCode, { playerId: res.data.playerId });
           } else if (session?.playerId) {
             store.setMyPlayerId(null);
             useSessionStore
               .getState()
-              .setSession(upperCode, { playerId: undefined, playerToken: undefined });
+              .setSession(roomCode, { playerId: undefined, playerToken: undefined });
           }
         } else if (res.error) {
           store.setNotice({ type: 'join_error', message: res.error.message });
@@ -91,7 +91,7 @@ export function useRoomConnection(code: string | null) {
         useRoomStore.getState().setMyPlayerId(null);
         useSessionStore
           .getState()
-          .setSession(upperCode, { playerId: undefined, playerToken: undefined });
+          .setSession(roomCode, { playerId: undefined, playerToken: undefined });
       }
       store.setNotice(n);
     }
@@ -131,7 +131,7 @@ export function useRoomConnection(code: string | null) {
       }
     }
 
-    connectRoom(upperCode, { onState, onPush });
+    connectRoom(roomCode, { onState, onPush });
     const pingTimer = setInterval(() => void ping(), 4000);
 
     return () => {
@@ -200,6 +200,8 @@ export const gameActions = {
     emitWithAck<'game:useLady', { targetPlayerId: string }, Ack>('game:useLady', {
       targetPlayerId,
     }),
+  startAssassination: () =>
+    emitWithAck<'game:startAssassination', Record<string, never>, Ack>('game:startAssassination', {}),
   assassinate: (targetPlayerId: string) =>
     emitWithAck<'game:assassinate', { targetPlayerId: string }, Ack>('game:assassinate', {
       targetPlayerId,
