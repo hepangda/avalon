@@ -8,7 +8,8 @@
     "cancel": "取消",
     "save": "保存",
     "leave": "离开房间",
-    "back": "返回"
+    "back": "返回",
+    "confirm": "确认"
   },
   "home": {
     "createRoom": "创建房间",
@@ -42,7 +43,8 @@
     "errInvalidCode": "请输入 4 位数字房间码",
     "errCreateFailed": "房间创建失败，请再试一次",
     "errVoiceUnavailable": "语音房暂时不可用，请检查 RealtimeKit 配置或稍后重试",
-    "errUnreachable": "连不上服务器，请稍后再试"
+    "errUnreachable": "连不上服务器，请稍后再试",
+    "nameLimit": "ID 最多 10 个字符（汉字、字母或混合均按字符计数）。"
   },
   "lobby": {
     "roomCode": "房间码",
@@ -167,7 +169,8 @@
     "micHttpsRequired": "iPhone 和 iPad 仅允许网页通过 HTTPS 使用麦克风，请改用 HTTPS 重新打开。",
     "micPermissionDenied": "麦克风权限已被拒绝，请在 Safari 的网站设置中允许后重试。",
     "micUnsupported": "当前浏览器无法请求麦克风权限，请通过 HTTPS 使用最新版 Safari。",
-    "micUnavailable": "未找到可用麦克风，或麦克风正被其他应用占用。"
+    "micUnavailable": "未找到可用麦克风，或麦克风正被其他应用占用。",
+    "keyboardHint": "按住空格键发言，松开静音（输入文字时不触发）"
   },
   "roleReveal": {
     "title": "你的秘密身份",
@@ -280,7 +283,7 @@
     "startEarly": "提前进入刺杀",
     "earlyConsequences": "立即终止所有任务，并向所有人公开每位坏人的身份（包括奥伯伦）。好人身份仍然保密。",
     "earlyOutcome": "随后由你选择刺杀目标：刺中梅林则坏人获胜，刺错则好人获胜，不再按任务结果判定胜负。",
-    "irreversible": "此操作不可撤销，任务不会继续。",
+    "irreversible": "已公开的坏人身份无法撤回；若需纠正阶段，请使用裁判功能。",
     "confirmStart": "终止任务并进入刺杀",
     "starting": "正在进入刺杀…",
     "startFailed": "无法进入刺杀，请检查网络连接后重试。"
@@ -296,7 +299,12 @@
     "courtRevealed": "宫廷揭晓",
     "targeted": "🎯 被指认",
     "viewReplay": "查看复盘",
-    "newGame": "新游戏"
+    "newGame": "返回首页",
+    "playAgain": "再来一局 · 返回准备页",
+    "restarting": "正在返回准备页…",
+    "restartFailed": "返回准备页失败，请重试。",
+    "waitingRestart": "等待房主开启下一局",
+    "keepRoomHint": "保留房间号、玩家座位和配置，全员一起返回准备页。"
   },
   "locale": {
     "switch": "语言",
@@ -370,7 +378,9 @@
       "votedFor": "⚠ {actor} 代 {target} 投了 {value}",
       "proposedFor": "⚠ {actor} 代队长 {leader} 进行了提名",
       "votesRetracted": "⚠ {actor} 撤回了本次提名的所有投票",
-      "proposalRetracted": "⚠ {actor} 撤回了本次提名，重新进入组队阶段"
+      "proposalRetracted": "⚠ {actor} 撤回了本次提名，重新进入组队阶段",
+      "assassinationStarted": "{actor} 通过裁判功能发起了梅林指认",
+      "phaseReturned": "{actor} 通过裁判功能返回了「{phase}」，该阶段重新进行"
     },
     "tall": "占满高度",
     "exitTall": "退出占满"
@@ -401,7 +411,12 @@
     "retractVotesBtn": "撤回所有投票",
     "retractProposalTitle": "撤回提名",
     "retractProposalHint": "取消本次提名，回到组队阶段，由当前队长重新提名。",
-    "retractProposalBtn": "撤回提名"
+    "retractProposalBtn": "撤回提名",
+    "phaseTitle": "阶段控制",
+    "startAssassination": "发起梅林指认",
+    "previousPhase": "返回上一阶段",
+    "previousPhaseHint": "恢复上一阶段的队长、队伍和任务记录，并清空该阶段待提交的投票或任务牌。已经公开的身份或验人信息无法撤回。",
+    "startAssassinationHint": "立即结束当前讨论或投票，由刺客指认梅林。指认正确则邪恶方获胜，错误则正义方获胜。"
   },
   "replay": {
     "title": "战局复盘",

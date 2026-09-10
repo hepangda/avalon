@@ -171,6 +171,9 @@ export const roomActions = {
   setRoster: (names: string[]) =>
     emitWithAck<'room:setRoster', { names: string[] }, Ack>('room:setRoster', { names }),
   start: () => emitWithAck<'room:start', Record<string, never>, Ack>('room:start', {}),
+  restart: () => emitWithAck<'room:restart', Record<string, never>, Ack>('room:restart', {}),
+  removeSeat: (seatId: string) =>
+    emitWithAck<'room:removeSeat', { seatId: string }, Ack>('room:removeSeat', { seatId }),
   leave: () => emitWithAck<'room:leave', Record<string, never>, Ack>('room:leave', {}),
   voiceToken: () =>
     emitWithAck<'voice:token', Record<string, never>, Ack<{ authToken: string }>>(
@@ -210,6 +213,10 @@ export const gameActions = {
 
 /** Referee (admin) action wrappers. */
 export const adminActions = {
+  startAssassination: () =>
+    emitWithAck<'admin:startAssassination', Record<string, never>, Ack>('admin:startAssassination', {}),
+  previousPhase: () =>
+    emitWithAck<'admin:previousPhase', Record<string, never>, Ack>('admin:previousPhase', {}),
   auth: () =>
     emitWithAck<'admin:auth', Record<string, never>, Ack<{ ok: boolean }>>('admin:auth', {}),
   close: () => emitWithAck<'admin:close', Record<string, never>, Ack>('admin:close', {}),

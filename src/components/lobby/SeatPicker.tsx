@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { MAX_NAME_LENGTH } from '@/lib/game/displayName';
 import { Input } from '@/components/ui/Input';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { latencyDotClass } from '@/lib/utils/latency';
@@ -18,6 +19,7 @@ interface SeatPickerProps {
   onStand: () => void;
   onKick: (seatId: string) => Promise<Ack>;
   onRosterChange: (names: string[]) => Promise<Ack>;
+  onRemoveSeat: (seatId: string) => Promise<Ack>;
 }
 
 export function SeatPicker({
@@ -29,6 +31,7 @@ export function SeatPicker({
   onStand,
   onKick,
   onRosterChange,
+  onRemoveSeat,
 }: SeatPickerProps) {
   const t = useTranslations();
   const seats = members.filter((m) => !m.isSpectator).sort((a, b) => a.seat - b.seat);
@@ -77,16 +80,16 @@ export function SeatPicker({
     void pushRoster(next);
   }
 
-  function removeSeat(i: number) {
+  async function removeSeat(i: number) {
     const seat = seats[i];
     if (!seat) return;
     if (seat.claimed) {
       setError(t('seat.removeClaimedFirst'));
       return;
     }
-    const next = draft.filter((_, idx) => idx !== i);
-    setDraft(next);
-    void pushRoster(next);
+    setError(null);
+    const res = await onRemoveSeat(seat.id);
+    if (!res.ok && res.error) setError(res.error.message);
   }
 
   async function askStand(seatId: string) {
@@ -152,7 +155,7 @@ export function SeatPicker({
                       if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                     }}
                     placeholder={t('home.seatPlaceholder', { n: i + 1 })}
-                    maxLength={24}
+                    maxLength={MAX_NAME_LENGTH}
                     autoComplete="off"
                     className="h-9"
                   />
@@ -184,11 +187,11 @@ export function SeatPicker({
 
               <div className="flex h-9 shrink-0 items-center justify-end gap-1">
                 {editingRoster ? (
-                  seats.length > 5 && (
+                  seats.length > 1 && !seat.claimed && (
                     <Button
                       variant="ghost"
                       className="h-9 min-w-16 whitespace-nowrap px-3 text-xs text-crimson"
-                      onClick={() => removeSeat(i)}
+                      onClick={() => void removeSeat(i)}
                     >
                       {t('home.removeSeat')}
                     </Button>

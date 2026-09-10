@@ -8,7 +8,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "leave": "Leave room",
-    "back": "Back"
+    "back": "Back",
+    "confirm": "Confirm"
   },
   "home": {
     "createRoom": "Create a Room",
@@ -42,7 +43,8 @@
     "errInvalidCode": "Enter a 4-digit room code",
     "errCreateFailed": "Failed to create room",
     "errVoiceUnavailable": "Voice rooms are unavailable. Check RealtimeKit configuration or try again later.",
-    "errUnreachable": "Could not reach the server"
+    "errUnreachable": "Could not reach the server",
+    "nameLimit": "IDs can contain up to 10 characters, including Chinese characters and letters."
   },
   "lobby": {
     "roomCode": "Room code",
@@ -167,7 +169,8 @@
     "micHttpsRequired": "Microphone access on iPhone and iPad requires HTTPS. Reopen this page over HTTPS.",
     "micPermissionDenied": "Microphone access was denied. Allow it in Safari's website settings, then try again.",
     "micUnsupported": "This browser cannot request microphone access. Use the latest Safari over HTTPS.",
-    "micUnavailable": "No microphone is available, or another app is using it."
+    "micUnavailable": "No microphone is available, or another app is using it.",
+    "keyboardHint": "Hold Space to talk, release to mute (disabled while typing)"
   },
   "roleReveal": {
     "title": "Your Secret Role",
@@ -280,7 +283,7 @@
     "startEarly": "Start assassination early",
     "earlyConsequences": "Stop all quests now and reveal every evil role, including Oberon, to everyone. Good roles will stay hidden.",
     "earlyOutcome": "You will then choose a target: hit Merlin and evil wins; miss Merlin and good wins, regardless of the quest results.",
-    "irreversible": "This cannot be undone. Quests will not resume.",
+    "irreversible": "Revealed evil roles cannot be hidden again. A referee can restore the previous phase.",
     "confirmStart": "Stop quests & start assassination",
     "starting": "Starting assassination…",
     "startFailed": "Could not start assassination. Check your connection and try again."
@@ -296,7 +299,12 @@
     "courtRevealed": "The court revealed",
     "targeted": "🎯 targeted",
     "viewReplay": "View Replay",
-    "newGame": "New Game"
+    "newGame": "Back to home",
+    "playAgain": "Play again · Return to lobby",
+    "restarting": "Returning to lobby…",
+    "restartFailed": "Could not return to the lobby. Please retry.",
+    "waitingRestart": "Waiting for the host to start another game",
+    "keepRoomHint": "Everyone returns together, keeping the room code, seats and settings."
   },
   "locale": {
     "switch": "Language",
@@ -370,7 +378,9 @@
       "votedFor": "⚠ {actor} voted {value} on behalf of {target}",
       "proposedFor": "⚠ {actor} proposed the team on behalf of leader {leader}",
       "votesRetracted": "⚠ {actor} retracted all votes for this proposal",
-      "proposalRetracted": "⚠ {actor} retracted the proposal — back to team building"
+      "proposalRetracted": "⚠ {actor} retracted the proposal — back to team building",
+      "assassinationStarted": "{actor} started Merlin identification as referee",
+      "phaseReturned": "{actor} returned to {phase} as referee; that phase will be played again"
     },
     "tall": "Fill height",
     "exitTall": "Exit fill"
@@ -401,7 +411,12 @@
     "retractVotesBtn": "Retract all votes",
     "retractProposalTitle": "Retract proposal",
     "retractProposalHint": "Cancel this proposal and return to team building for the current leader to propose again.",
-    "retractProposalBtn": "Retract proposal"
+    "retractProposalBtn": "Retract proposal",
+    "phaseTitle": "Phase controls",
+    "startAssassination": "Start Merlin identification",
+    "previousPhase": "Return to previous phase",
+    "previousPhaseHint": "Restore the previous phase, leader, team and results. Votes or mission cards for that phase must be submitted again. Revealed identities and inspections cannot be forgotten.",
+    "startAssassinationHint": "End the current discussion or voting and let the assassin identify Merlin. Hitting Merlin wins for evil; missing wins for good."
   },
   "replay": {
     "title": "Battle Replay",

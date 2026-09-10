@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { MAX_NAME_LENGTH, sanitizeName } from '@/lib/game/displayName';
 import { Input } from '@/components/ui/Input';
 import type { AuthUser } from '@/lib/auth/useAuthIdentity';
 import { useSessionStore } from '@/lib/store/session';
@@ -12,10 +13,6 @@ interface IdentityPanelProps {
   authError?: string | null;
   onLogin: () => void;
   onLogout: () => Promise<void>;
-}
-
-function normalizeName(value: string): string {
-  return value.replace(/\s+/g, ' ').trim().slice(0, 24);
 }
 
 export function IdentityPanel({ user, loading, authError, onLogin, onLogout }: IdentityPanelProps) {
@@ -31,7 +28,7 @@ export function IdentityPanel({ user, loading, authError, onLogin, onLogout }: I
   }, [draft, lastName]);
 
   function saveAnonymousIdentity() {
-    const name = normalizeName(draft);
+    const name = sanitizeName(draft);
     if (!name) {
       setSaved(false);
       setError(t('home.nameEmpty'));
@@ -105,7 +102,7 @@ export function IdentityPanel({ user, loading, authError, onLogin, onLogout }: I
               if (event.key === 'Enter') saveAnonymousIdentity();
             }}
             placeholder={t('home.anonymousNamePlaceholder')}
-            maxLength={24}
+            maxLength={MAX_NAME_LENGTH}
             autoComplete="nickname"
             className="h-10 min-w-0"
           />
@@ -118,6 +115,8 @@ export function IdentityPanel({ user, loading, authError, onLogin, onLogout }: I
           </Button>
         </div>
       )}
+
+      <p className="text-xs text-parchment/45">{t('home.nameLimit')}</p>
 
       {authError && <p className="text-xs text-crimson">{authError}</p>}
       {error && <p className="text-xs text-crimson">{error}</p>}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'use-intl';
+import { MAX_NAME_LENGTH } from '@/lib/game/displayName';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { roomActions } from '@/lib/socket/client';
@@ -51,7 +52,7 @@ export function NameEditor({ code, currentName }: { code: string; currentName: s
         <Input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          maxLength={24}
+          maxLength={MAX_NAME_LENGTH}
           autoFocus
           onKeyDown={(e) => {
             if (e.key === 'Enter') void save();

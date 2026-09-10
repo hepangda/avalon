@@ -35,8 +35,10 @@ export function AdminPanel({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [confirmPhase, setConfirmPhase] = useState<'assassination' | 'previous' | null>(null);
 
   useEffect(() => setMounted(true), []);
+  useEffect(() => setConfirmPhase(null), [game.phase, game.phaseRevision, open]);
 
   // Act-as-player target selection.
   const [voteTarget, setVoteTarget] = useState('');
@@ -86,191 +88,254 @@ export function AdminPanel({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center">
-      <div className="w-full max-w-md space-y-4 rounded-xl border border-crimson/40 bg-ink-deep p-4 shadow-xl">
+      <div
+        className="max-h-[calc(100dvh-1.5rem)] w-full max-w-md space-y-4 overflow-y-auto rounded-xl border border-crimson/40 bg-ink-deep p-4 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('admin.title')}
+      >
         <div className="flex items-center justify-between">
           <h2 className="font-serif text-lg text-crimson">🛠 {t('admin.title')}</h2>
           <button
             onClick={onClose}
-                className="text-parchment/50 hover:text-parchment"
-                aria-label={t('mission.close')}
+            className="text-parchment/50 hover:text-parchment"
+            aria-label={t('mission.close')}
+          >
+            ✕
+          </button>
+        </div>
+
+        {error && (
+          <div className="rounded-lg border border-crimson/50 bg-crimson/20 px-3 py-2 text-sm text-parchment">
+            {error}
+          </div>
+        )}
+
+        {!authed ? (
+          <div className="space-y-3">
+            <p className="text-sm text-parchment/60">{t('admin.enableHint')}</p>
+            <Button
+              variant="danger"
+              className="w-full"
+              disabled={busy}
+              onClick={() => void handleAuth()}
+            >
+              {t('admin.open')}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-gold">{t('admin.phaseTitle')}</h3>
+              {game.phase !== 'Assassination' &&
+                game.phase !== 'GameOver' &&
+                game.phase !== 'Lobby' && (
+                  <Button
+                    variant="danger"
+                    className="w-full"
+                    disabled={busy}
+                    onClick={() => setConfirmPhase('assassination')}
+                  >
+                    {t('admin.startAssassination')}
+                  </Button>
+                )}
+              <Button
+                variant="secondary"
+                className="w-full"
+                disabled={busy || !game.previousPhase}
+                onClick={() => setConfirmPhase('previous')}
               >
-                ✕
-              </button>
-            </div>
-
-            {error && (
-              <div className="rounded-lg border border-crimson/50 bg-crimson/20 px-3 py-2 text-sm text-parchment">
-                {error}
-              </div>
-            )}
-
-            {!authed ? (
-              <div className="space-y-3">
-                <p className="text-sm text-parchment/60">{t('admin.enableHint')}</p>
-                <Button
-                  variant="danger"
-                  className="w-full"
-                  disabled={busy}
-                  onClick={() => void handleAuth()}
-                >
-                  {t('admin.open')}
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-5">
-                {/* Unbind a player. */}
-                <section className="space-y-2">
-                  <h3 className="text-sm font-semibold text-gold">{t('admin.unbindTitle')}</h3>
-                  <p className="text-xs text-parchment/50">{t('admin.unbindHint')}</p>
-                  <div className="space-y-1.5">
-                    {players.map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center justify-between rounded-md border border-gold/15 bg-ink/30 px-3 py-1.5 text-sm"
-                      >
-                        <span className="text-parchment/85">
-                          {seatLabel(p.seat, p.name)}
-                          <span className={p.connected ? 'text-emerald-400' : 'text-parchment/40'}>
-                            {' '}
-                            ●
-                          </span>
-                        </span>
-                        <button
-                          disabled={busy}
-                          onClick={() => void run(() => adminActions.unbind(p.id))}
-                          className="rounded px-2 py-0.5 text-xs text-crimson hover:bg-crimson/30 hover:text-parchment disabled:opacity-50"
-                        >
-                          {t('admin.unbindBtn')}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Vote for a player (Voting phase only). */}
-                {game.phase === 'Voting' && (
-                  <section className="space-y-2">
-                    <h3 className="text-sm font-semibold text-gold">{t('admin.voteTitle')}</h3>
-                    <select
-                      value={voteTarget}
-                      onChange={(e) => setVoteTarget(e.target.value)}
-                      className="w-full rounded-md border border-gold/30 bg-ink/50 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/70"
-                    >
-                      <option value="">{t('admin.selectPlayer')}</option>
-                      {unvotedPlayers.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {seatLabel(p.seat, p.name)}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex gap-2">
-                      <Button
-                        className="flex-1"
-                        disabled={!voteTarget || busy}
-                        onClick={() => void run(() => adminActions.vote(voteTarget, 'approve'))}
-                      >
-                        👍 {t('vote.approve')}
-                      </Button>
-                      <Button
-                        variant="danger"
-                        className="flex-1"
-                        disabled={!voteTarget || busy}
-                        onClick={() => void run(() => adminActions.vote(voteTarget, 'reject'))}
-                      >
-                        👎 {t('vote.reject')}
-                      </Button>
-                    </div>
-                  </section>
-                )}
-
-                {/* Retract votes / proposal (Voting phase only). */}
-                {game.phase === 'Voting' && (
-                  <>
-                    <section className="space-y-2">
-                      <h3 className="text-sm font-semibold text-gold">
-                        {t('admin.retractVotesTitle')}
-                      </h3>
-                      <p className="text-xs text-parchment/50">{t('admin.retractVotesHint')}</p>
-                      <Button
-                        variant="secondary"
-                        className="w-full"
-                        disabled={busy}
-                        onClick={() => void run(() => adminActions.retractVotes())}
-                      >
-                        {t('admin.retractVotesBtn')}
-                      </Button>
-                    </section>
-
-                    <section className="space-y-2">
-                      <h3 className="text-sm font-semibold text-gold">
-                        {t('admin.retractProposalTitle')}
-                      </h3>
-                      <p className="text-xs text-parchment/50">{t('admin.retractProposalHint')}</p>
-                      <Button
-                        variant="danger"
-                        className="w-full"
-                        disabled={busy}
-                        onClick={() => void run(() => adminActions.retractProposal())}
-                      >
-                        {t('admin.retractProposalBtn')}
-                      </Button>
-                    </section>
-                  </>
-                )}
-
-                {/* Propose the team for the leader (TeamBuilding only). */}
-                {game.phase === 'TeamBuilding' && (
-                  <section className="space-y-2">
-                    <h3 className="text-sm font-semibold text-gold">{t('admin.proposeTitle')}</h3>
-                    <p className="text-xs text-parchment/50">
-                      {t('admin.proposeHint', { size: teamSize })}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {players.map((p) => {
-                        const sel = proposeSel.includes(p.id);
-                        return (
-                          <button
-                            key={p.id}
-                            onClick={() => toggleProposeMember(p.id)}
-                            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                              sel
-                                ? 'border-gold bg-gold/20 text-gold'
-                                : 'border-gold/20 text-parchment/70 hover:border-gold/50'
-                            }`}
-                          >
-                            {seatLabel(p.seat, p.name)}
-                          </button>
-                        );
-                      })}
-                    </div>
+                {t('admin.previousPhase')}
+                {game.previousPhase && ` · ${t(`phase.${game.previousPhase}`)}`}
+              </Button>
+              {confirmPhase && (
+                <div className="space-y-2 rounded-lg border border-crimson/40 p-3">
+                  <p className="text-xs text-parchment/70">
+                    {t(
+                      confirmPhase === 'previous'
+                        ? 'admin.previousPhaseHint'
+                        : 'admin.startAssassinationHint',
+                    )}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" disabled={busy} onClick={() => setConfirmPhase(null)}>
+                      {t('common.cancel')}
+                    </Button>
                     <Button
                       variant="danger"
-                      className="w-full"
-                      disabled={proposeSel.length !== teamSize || busy}
+                      disabled={busy}
                       onClick={() =>
                         void run(async () => {
-                          const leader = players.find((p) => p.seat === game.leaderIndex);
-                          const res = await adminActions.propose(leader?.id ?? '', proposeSel);
-                          if (res.ok) setProposeSel([]);
-                          return res;
+                          const result = await (confirmPhase === 'previous'
+                            ? adminActions.previousPhase()
+                            : adminActions.startAssassination());
+                          if (result.ok) setConfirmPhase(null);
+                          return result;
                         })
                       }
                     >
-                      {t('admin.proposeBtn', { picked: proposeSel.length, size: teamSize })}
+                      {t('common.confirm')}
                     </Button>
-                  </section>
-                )}
-
-                <button
-                  onClick={() => void handleClose()}
-                  className="w-full rounded-md border border-gold/20 px-3 py-2 text-sm text-parchment/60 hover:text-parchment"
-                >
-                  {t('admin.close')}
-                </button>
+                  </div>
+                </div>
+              )}
+            </section>
+            {/* Unbind a player. */}
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-gold">{t('admin.unbindTitle')}</h3>
+              <p className="text-xs text-parchment/50">{t('admin.unbindHint')}</p>
+              <div className="space-y-1.5">
+                {players.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between rounded-md border border-gold/15 bg-ink/30 px-3 py-1.5 text-sm"
+                  >
+                    <span className="text-parchment/85">
+                      {seatLabel(p.seat, p.name)}
+                      <span className={p.connected ? 'text-emerald-400' : 'text-parchment/40'}>
+                        {' '}
+                        ●
+                      </span>
+                    </span>
+                    <button
+                      disabled={busy}
+                      onClick={() => void run(() => adminActions.unbind(p.id))}
+                      className="rounded px-2 py-0.5 text-xs text-crimson hover:bg-crimson/30 hover:text-parchment disabled:opacity-50"
+                    >
+                      {t('admin.unbindBtn')}
+                    </button>
+                  </div>
+                ))}
               </div>
+            </section>
+
+            {/* Vote for a player (Voting phase only). */}
+            {game.phase === 'Voting' && (
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold text-gold">{t('admin.voteTitle')}</h3>
+                <select
+                  value={voteTarget}
+                  onChange={(e) => setVoteTarget(e.target.value)}
+                  className="w-full rounded-md border border-gold/30 bg-ink/50 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/70"
+                >
+                  <option value="">{t('admin.selectPlayer')}</option>
+                  {unvotedPlayers.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {seatLabel(p.seat, p.name)}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <Button
+                    className="flex-1"
+                    disabled={!voteTarget || busy}
+                    onClick={() => void run(() => adminActions.vote(voteTarget, 'approve'))}
+                  >
+                    👍 {t('vote.approve')}
+                  </Button>
+                  <Button
+                    variant="danger"
+                    className="flex-1"
+                    disabled={!voteTarget || busy}
+                    onClick={() => void run(() => adminActions.vote(voteTarget, 'reject'))}
+                  >
+                    👎 {t('vote.reject')}
+                  </Button>
+                </div>
+              </section>
             )}
+
+            {/* Retract votes / proposal (Voting phase only). */}
+            {game.phase === 'Voting' && (
+              <>
+                <section className="space-y-2">
+                  <h3 className="text-sm font-semibold text-gold">
+                    {t('admin.retractVotesTitle')}
+                  </h3>
+                  <p className="text-xs text-parchment/50">{t('admin.retractVotesHint')}</p>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    disabled={busy}
+                    onClick={() => void run(() => adminActions.retractVotes())}
+                  >
+                    {t('admin.retractVotesBtn')}
+                  </Button>
+                </section>
+
+                <section className="space-y-2">
+                  <h3 className="text-sm font-semibold text-gold">
+                    {t('admin.retractProposalTitle')}
+                  </h3>
+                  <p className="text-xs text-parchment/50">{t('admin.retractProposalHint')}</p>
+                  <Button
+                    variant="danger"
+                    className="w-full"
+                    disabled={busy}
+                    onClick={() => void run(() => adminActions.retractProposal())}
+                  >
+                    {t('admin.retractProposalBtn')}
+                  </Button>
+                </section>
+              </>
+            )}
+
+            {/* Propose the team for the leader (TeamBuilding only). */}
+            {game.phase === 'TeamBuilding' && (
+              <section className="space-y-2">
+                <h3 className="text-sm font-semibold text-gold">{t('admin.proposeTitle')}</h3>
+                <p className="text-xs text-parchment/50">
+                  {t('admin.proposeHint', { size: teamSize })}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {players.map((p) => {
+                    const sel = proposeSel.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => toggleProposeMember(p.id)}
+                        className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                          sel
+                            ? 'border-gold bg-gold/20 text-gold'
+                            : 'border-gold/20 text-parchment/70 hover:border-gold/50'
+                        }`}
+                      >
+                        {seatLabel(p.seat, p.name)}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="danger"
+                  className="w-full"
+                  disabled={proposeSel.length !== teamSize || busy}
+                  onClick={() =>
+                    void run(async () => {
+                      const leader = players.find((p) => p.seat === game.leaderIndex);
+                      const res = await adminActions.propose(leader?.id ?? '', proposeSel);
+                      if (res.ok) setProposeSel([]);
+                      return res;
+                    })
+                  }
+                >
+                  {t('admin.proposeBtn', {
+                    picked: proposeSel.length,
+                    size: teamSize,
+                  })}
+                </Button>
+              </section>
+            )}
+
+            <button
+              onClick={() => void handleClose()}
+              className="w-full rounded-md border border-gold/20 px-3 py-2 text-sm text-parchment/60 hover:text-parchment"
+            >
+              {t('admin.close')}
+            </button>
           </div>
-        </div>,
+        )}
+      </div>
+    </div>,
     document.body,
   );
 }

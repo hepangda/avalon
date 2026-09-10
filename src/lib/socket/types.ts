@@ -107,6 +107,8 @@ export interface ClientToServerEvents {
   'room:kick': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
   'room:transferHost': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
   'room:start': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'room:restart': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'room:removeSeat': (p: { seatId: PlayerId }, ack: (r: Ack) => void) => void;
   /** Claim a roster seat by its player id (must be unclaimed). Switches seats
    *  if the caller already holds one. */
   'room:claimSeat': (
@@ -161,6 +163,8 @@ export interface ClientToServerEvents {
   'admin:retractVotes': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   /** Cancel the current proposal and return to TeamBuilding for a re-proposal. Admin only. */
   'admin:retractProposal': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'admin:startAssassination': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'admin:previousPhase': (p: Record<string, never>, ack: (r: Ack) => void) => void;
 }
 
 /** Events the server emits. */

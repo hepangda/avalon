@@ -18,8 +18,14 @@ export function useResultCue(): { cue: ActiveCue | null; dismiss: () => void } {
   const game = useRoomStore((s) => s.game);
   const [cue, setCue] = useState<ActiveCue | null>(null);
   const seen = useRef<CueCounts | null>(null);
+  const revision = useRef(game?.phaseRevision);
 
   useEffect(() => {
+    if (!game || revision.current !== game.phaseRevision) {
+      seen.current = null;
+      revision.current = game?.phaseRevision;
+      setCue(null);
+    }
     if (!game) return;
     const { cue: nextCue, next } = decideCue(seen.current, game);
     seen.current = next;

@@ -149,6 +149,7 @@ export default function LobbyPage() {
         onStand={handleStand}
         onKick={handleKick}
         onRosterChange={handleRosterChange}
+        onRemoveSeat={roomActions.removeSeat}
       />
 
       <ConfigPanel

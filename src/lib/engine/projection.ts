@@ -134,6 +134,8 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
 
   return {
     phase: state.phase,
+    previousPhase: state.phaseHistory?.at(-1)?.phase,
+    phaseRevision: state.phaseRevision ?? 0,
     roundIndex: state.roundIndex,
     leaderIndex: state.leaderIndex,
     rejectionCount: state.rejectionCount,

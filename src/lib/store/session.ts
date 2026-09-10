@@ -1,5 +1,6 @@
 'use client';
 
+import { sanitizeName } from '@/lib/game/displayName';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -39,10 +40,11 @@ export const useSessionStore = create<SessionState>()(
       lastAvatarUrl: undefined,
       setSession: (code, entry) =>
         set((s) => {
-          const merged = { ...s.sessions[code], ...entry };
+          const normalized = entry.name === undefined ? entry : { ...entry, name: sanitizeName(entry.name) };
+          const merged = { ...s.sessions[code], ...normalized };
           return {
             sessions: { ...s.sessions, [code]: merged },
-            lastName: entry.name || s.lastName,
+            lastName: normalized.name || s.lastName,
           };
         }),
       getSession: (code) => get().sessions[code],
@@ -53,8 +55,8 @@ export const useSessionStore = create<SessionState>()(
           return { sessions: next };
         }),
       // Choosing an anonymous name must not reuse a previous account avatar.
-      setLastName: (name) => set({ lastName: name, lastAvatarUrl: undefined }),
-      setAccountIdentity: (name, avatarUrl) => set({ lastName: name, lastAvatarUrl: avatarUrl }),
+      setLastName: (name) => set({ lastName: sanitizeName(name), lastAvatarUrl: undefined }),
+      setAccountIdentity: (name, avatarUrl) => set({ lastName: sanitizeName(name), lastAvatarUrl: avatarUrl }),
       clearAccountAvatar: () => set({ lastAvatarUrl: undefined }),
     }),
     { name: 'avalon-session' },

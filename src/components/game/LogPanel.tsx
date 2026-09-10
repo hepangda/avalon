@@ -90,6 +90,8 @@ export function LogPanel({ game, code }: { game: ClientGameState; code: string }
           resolved[k] = t('admin.someone');
         } else if (isAdmin && k === 'value' && (v === 'approve' || v === 'reject')) {
           resolved[k] = v === 'approve' ? t('vote.approve') : t('vote.reject');
+        } else if (isAdmin && k === 'phase') {
+          resolved[k] = t(`phase.${v}`);
         } else if (isAdmin) {
           resolved[k] = v;
         } else if (PLAYER_PARAMS.includes(k) && typeof v === 'string') {

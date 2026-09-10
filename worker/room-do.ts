@@ -344,6 +344,10 @@ export class RoomDurableObject extends DurableObject<Env> {
         return this.handleReleaseSeat(ws);
       case 'room:setRoster':
         return this.handleSetRoster(ws, payload);
+      case 'room:removeSeat':
+        return this.handleRemoveSeat(ws, payload);
+      case 'room:restart':
+        return this.handleRestart(ws);
       case 'voice:token':
         return this.handleVoiceToken(ws);
       case 'voice:presence':
@@ -412,6 +416,10 @@ export class RoomDurableObject extends DurableObject<Env> {
         return this.handleAdminRetract(ws, 'votes');
       case 'admin:retractProposal':
         return this.handleAdminRetract(ws, 'proposal');
+      case 'admin:startAssassination':
+        return this.handleAdminPhase(ws, 'assassination');
+      case 'admin:previousPhase':
+        return this.handleAdminPhase(ws, 'previous');
       default:
         return fail('UNKNOWN_EVENT', `Unknown event: ${String(event)}`);
     }
@@ -546,6 +554,55 @@ export class RoomDurableObject extends DurableObject<Env> {
       this.meta.config.voiceEnabled,
     );
     this.persistConfig();
+    this.broadcastRoom();
+    return ok();
+  }
+
+  private handleRemoveSeat(ws: WebSocket, payload: unknown): Ack {
+    if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
+    if (!this.attach(ws).isHost) return fail('NOT_HOST', 'Only host');
+    if (this.meta.status !== 'lobby') return fail('WRONG_PHASE', 'Game already started');
+    const { seatId } = (payload ?? {}) as { seatId?: string };
+    const target = seatId ? this.members.get(seatId) : undefined;
+    if (!target || target.isSpectator) return fail('UNKNOWN_SEAT', 'No such seat');
+    if (target.claimed) return fail('SEAT_CLAIMED', 'Cannot remove a claimed seat');
+    const seats = activePlayers(this.members);
+    if (seats.length <= 1) return fail('INVALID_PLAYER_COUNT', 'Keep at least one seat');
+
+    const remaining = seats.filter((seat) => seat.id !== target.id)
+      .map((seat, index) => ({ ...seat, seat: index }));
+    const roster = this.meta.config.roster.filter((_, index) => index !== target.seat);
+    const config = { ...this.meta.config, roster };
+    this.ctx.storage.transactionSync(() => {
+      this.deletePlayer(target.id);
+      for (const seat of remaining) this.persistPlayer(seat);
+      this.sql.exec('UPDATE room_meta SET config = ? WHERE id = 1', JSON.stringify(config));
+    });
+    this.members.delete(target.id);
+    for (const seat of remaining) this.members.set(seat.id, seat);
+    this.meta.config = config;
+    this.broadcastRoom();
+    return ok();
+  }
+
+  private async handleRestart(ws: WebSocket): Promise<Ack> {
+    if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
+    if (!this.attach(ws).isHost) return fail('NOT_HOST', 'Only host');
+    if (this.meta.status !== 'finished' || this.game?.phase !== 'GameOver') {
+      return fail('WRONG_PHASE', 'The game must finish before returning to the lobby');
+    }
+    // Do not discard the log until its completed replay has been stored.
+    await this.archiveReplay();
+    this.ctx.storage.transactionSync(() => {
+      this.sql.exec('DELETE FROM game_event');
+      this.sql.exec("UPDATE room_meta SET status = 'lobby', game_id = NULL, seed = NULL, event_seq = 0 WHERE id = 1");
+    });
+    this.meta.status = 'lobby';
+    this.meta.gameId = null;
+    this.meta.seed = null;
+    this.eventSeq = 0;
+    this.game = null;
+    for (const socket of this.ctx.getWebSockets()) this.setAttach(socket, { isAdmin: false });
     this.broadcastRoom();
     return ok();
   }
@@ -847,6 +904,18 @@ export class RoomDurableObject extends DurableObject<Env> {
     return ok();
   }
 
+  private async handleAdminPhase(ws: WebSocket, action: 'assassination' | 'previous'): Promise<Ack> {
+    if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
+    if (!this.attach(ws).isAdmin) return fail('NOT_ADMIN', 'Referee panel not enabled');
+    if (!this.game) return fail('NO_GAME', 'No game in progress');
+    const actor = this.adminActorName(ws);
+    const res = await this.applyEvent(action === 'previous'
+      ? { type: 'PREVIOUS_PHASE', actor }
+      : { type: 'START_ASSASSINATION', by: this.game.assassinId ?? '', admin: true, actor });
+    if (res.ok) this.broadcastRoom();
+    return res;
+  }
+
   // ---------------------------------------------------------------------------
   // Leave / disconnect
   // ---------------------------------------------------------------------------
@@ -927,6 +996,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       }
     }
 
+    if (event.type === 'PREVIOUS_PHASE') this.setStatus('in_game');
     this.broadcastState();
     return ok();
   }
@@ -951,7 +1021,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       seated,
       events,
     );
-    if (!replay) return;
+    if (!replay?.outcome) throw new Error('Cannot archive an incomplete replay');
     const stub = this.env.REPLAY.get(this.env.REPLAY.idFromName(this.meta.gameId));
     await stub.store(replay);
   }

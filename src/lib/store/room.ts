@@ -66,8 +66,10 @@ export const useRoomStore = create<RoomState>((set) => ({
   setRoomCode: (roomCode) => set({ roomCode }),
   setMyPlayerId: (myPlayerId) => set({ myPlayerId }),
   setIsHost: (isHost) => set({ isHost }),
-  setSnapshot: (snapshot) => set({ snapshot }),
-  setGame: (game) => set({ game }),
+  setSnapshot: (snapshot) => set(snapshot.status === 'lobby'
+    ? { snapshot, game: null, reveal: null, ladyResult: null }
+    : { snapshot }),
+  setGame: (game) => set({ game, ladyResult: game.privateLadyResult ?? null }),
   setReveal: (reveal) => set({ reveal }),
   setLadyResult: (ladyResult) => set({ ladyResult }),
   setNotice: (notice) => set({ notice }),

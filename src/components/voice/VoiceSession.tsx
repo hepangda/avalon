@@ -28,6 +28,7 @@ import {
 import { cn } from '@/lib/utils/cn';
 import type { RoomMember } from '@/lib/socket/types';
 import { voiceOverlayClass } from './styles';
+import { isPushToTalkShortcut } from './keyboard';
 
 interface VoiceSessionProps {
   meeting: RealtimeKitClient;
@@ -230,19 +231,50 @@ function VoiceDock({
     .filter((member) => !member.isSpectator && member.claimed)
     .sort((a, b) => a.seat - b.seat);
 
-  function beginPushToTalk() {
+  const beginPushToTalk = useCallback(() => {
     if (latchedRef.current || pressingRef.current) return;
     pressingRef.current = true;
     setPressing(true);
     setDesiredAudio(true);
-  }
+  }, [setDesiredAudio]);
 
-  function endPushToTalk() {
+  const endPushToTalk = useCallback(() => {
     if (!pressingRef.current) return;
     pressingRef.current = false;
     setPressing(false);
     setDesiredAudio(latchedRef.current);
-  }
+  }, [setDesiredAudio]);
+
+  useEffect(() => {
+    const keyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === ' ' && pressSourceRef.current?.kind === 'keyboard') {
+        event.preventDefault();
+        return;
+      }
+      if (!isPushToTalkShortcut(event) || latchedRef.current || pressSourceRef.current) return;
+      event.preventDefault();
+      pressSourceRef.current = { kind: 'keyboard', key: event.key };
+      beginPushToTalk();
+    };
+    const keyUp = (event: globalThis.KeyboardEvent) => {
+      const source = pressSourceRef.current;
+      if (source?.kind !== 'keyboard' || source.key !== event.key) return;
+      event.preventDefault();
+      pressSourceRef.current = null;
+      endPushToTalk();
+    };
+    window.addEventListener('keydown', keyDown);
+    // Capture releases even when focus moved or a dialog consumes the key.
+    window.addEventListener('keyup', keyUp, true);
+    return () => {
+      window.removeEventListener('keydown', keyDown);
+      window.removeEventListener('keyup', keyUp, true);
+      if (pressSourceRef.current?.kind === 'keyboard') {
+        pressSourceRef.current = null;
+        endPushToTalk();
+      }
+    };
+  }, [beginPushToTalk, endPushToTalk]);
 
   function handlePointerDown(event: PointerEvent<HTMLButtonElement>) {
     if (event.button !== 0 || latchedRef.current || pressingRef.current || pressSourceRef.current)
@@ -395,6 +427,9 @@ function VoiceDock({
       <button
         type="button"
         aria-pressed={pressing}
+        data-push-to-talk
+        aria-keyshortcuts="Space"
+        title={t('voice.keyboardHint')}
         disabled={latched}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerEnd}
@@ -476,6 +511,7 @@ function VoiceDock({
                 {participantStrip}
                 {deviceSelector}
                 {microphoneControls}
+                <p className="hidden text-center text-xs text-parchment/50 sm:block">{t('voice.keyboardHint')}</p>
                 {error && (
                   <p className="text-center text-xs text-crimson" aria-live="polite">
                     {error}
@@ -498,8 +534,10 @@ function VoiceDock({
           <button
             type="button"
             aria-pressed={pressing}
+            data-push-to-talk
+            aria-keyshortcuts="Space"
             aria-label={latched ? t('voice.micIsOpen') : t('voice.holdToTalk')}
-            title={latched ? t('voice.micIsOpen') : t('voice.holdToTalk')}
+            title={latched ? t('voice.micIsOpen') : t('voice.keyboardHint')}
             disabled={latched}
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerEnd}
@@ -594,6 +632,7 @@ function VoiceDock({
       {expanded && <div className="mb-2">{participantStrip}</div>}
       {expanded && <div className="mb-2">{deviceSelector}</div>}
       {microphoneControls}
+      <p className="hidden text-center text-xs text-parchment/50 sm:block">{t('voice.keyboardHint')}</p>
       {error && (
         <p className="mt-1 text-center text-xs text-crimson" aria-live="polite">
           {error}

@@ -34,6 +34,14 @@ class ReplayBuilder {
   private readonly ladyChecks: ReplayLadyCheck[] = [];
   private assassination: ReplayData['assassination'] = null;
 
+  copy(): ReplayBuilder {
+    const copy = new ReplayBuilder();
+    for (const [index, round] of this.rounds) copy.rounds.set(index, structuredClone(round));
+    copy.ladyChecks.push(...structuredClone(this.ladyChecks));
+    copy.assassination = structuredClone(this.assassination);
+    return copy;
+  }
+
   onCheckpoint(kind: CheckpointKind, prev: GameState | null, s: GameState): void {
     switch (kind) {
       case 'vote':
@@ -55,15 +63,16 @@ class ReplayBuilder {
 
   /** Mirrors the `vote` checkpoint: create the round on its first proposal
    *  (leader/teamSize from that proposal), then append every proposal's votes. */
-  private onVote(prev: GameState | null, s: GameState): void {
-    const roundIndex = s.roundIndex;
-    const proposalTeam = prev?.proposedTeam ?? s.proposedTeam ?? [];
-    const votes = prev?.votes ?? {};
-    const leaderSeat = prev?.leaderIndex ?? s.leaderIndex;
-    const leader = (prev ?? s).players.find((p) => p.seat === leaderSeat)?.id ?? '';
+  private onVote(_prev: GameState | null, s: GameState): void {
+    const record = s.voteHistory.at(-1);
+    if (!record) return;
+    const roundIndex = record.roundIndex;
+    const proposalTeam = record.team;
+    const votes = record.votes;
+    const leader = record.leaderId;
 
     const round = this.ensureRound(roundIndex, leader, proposalTeam.length, proposalTeam);
-    const proposalIndex = prev?.rejectionCount ?? 0;
+    const proposalIndex = record.proposalIndex;
     for (const [playerId, value] of Object.entries(votes)) {
       round.votes.push({ proposalIndex, playerId, value });
     }
@@ -174,11 +183,19 @@ export function buildReplayFromEvents(
   if (!created.ok) return null;
 
   let state = created.state;
-  const builder = new ReplayBuilder();
+  let builder = new ReplayBuilder();
+  const history: ReplayBuilder[] = [];
   for (const { seq, event, createdAt } of events) {
     const ctx = { now: createdAt, rng: createRng(`${seed}:${seq}`) };
     const result = reduce(state, event, ctx);
-    if (!result.ok) break;
+    if (!result.ok) return null;
+    if (event.type === 'PREVIOUS_PHASE') {
+      const previous = history.pop();
+      if (!previous) return null;
+      builder = previous;
+    } else if (state.phase !== 'Lobby' && result.state.phase !== state.phase) {
+      history.push(builder.copy());
+    }
     const prev = state;
     state = result.state;
     for (const effect of result.effects) {

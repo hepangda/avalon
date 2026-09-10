@@ -51,7 +51,7 @@ export function HandArea({
   const [missionPlayed, setMissionPlayed] = useState<'success' | 'fail' | null>(null);
   const [confirming, setConfirming] = useState(false);
 
-  const phaseKey = `${game.phase}-${game.roundIndex}-${game.rejectionCount}`;
+  const phaseKey = `${game.phase}-${game.roundIndex}-${game.rejectionCount}-${game.phaseRevision}`;
   useEffect(() => {
     setCast(null);
     setMissionPlayed(null);

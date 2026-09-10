@@ -1,3 +1,4 @@
+import { useRouter } from '@/i18n/navigation';
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
@@ -42,6 +43,12 @@ export default function GamePage() {
   const t = useTranslations();
   const params = useParams();
   const code = params.code ?? '';
+  const router = useRouter();
+  const snapshot = useRoomStore((s) => s.snapshot);
+  const isHost = useRoomStore((s) => s.isHost);
+  useEffect(() => {
+    if (snapshot?.code === code && snapshot.status === 'lobby') router.replace(`/room/${code}`);
+  }, [code, router, snapshot?.code, snapshot?.status]);
 
   useRoomConnection(code);
 
@@ -62,10 +69,13 @@ export default function GamePage() {
   const { cue, dismiss } = useResultCue();
 
   // Clear the table selection whenever the proposal / phase changes.
-  const selKey = `${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}`;
+  const selKey = `${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}`;
   useEffect(() => {
     setSelected([]);
   }, [selKey]);
+  useEffect(() => {
+    setLadySeen(null);
+  }, [game?.phaseRevision]);
 
   if (!game) {
     return (
@@ -84,7 +94,7 @@ export default function GamePage() {
   if (game.phase === 'GameOver') {
     return (
       <main className="min-h-screen py-6">
-        <GameOverReveal game={game} gameId={game.gameId} />
+        <GameOverReveal game={game} gameId={game.gameId} isHost={isHost} />
       </main>
     );
   }

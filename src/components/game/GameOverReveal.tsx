@@ -1,6 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { roomActions } from '@/lib/socket/client';
+import { AdminPanel } from './AdminPanel';
 import { useTranslations } from 'use-intl';
 import { Link } from '@/i18n/navigation';
 import { Card } from '@/components/ui/Card';
@@ -14,12 +17,30 @@ import type { ClientGameState } from '@/lib/engine';
 export function GameOverReveal({
   game,
   gameId,
+  isHost,
 }: {
   game: ClientGameState;
   gameId?: string | null;
+  isHost?: boolean;
 }) {
   const t = useTranslations();
   const roleText = useRoleText();
+  const [restarting, setRestarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [adminOpen, setAdminOpen] = useState(false);
+  async function restart() {
+    if (restarting) return;
+    setRestarting(true);
+    setError(null);
+    try {
+      const result = await roomActions.restart();
+      if (!result.ok) setError(result.error?.message ?? t('gameOver.restartFailed'));
+    } catch {
+      setError(t('gameOver.restartFailed'));
+    } finally {
+      setRestarting(false);
+    }
+  }
   const outcome = game.outcome;
   if (!outcome) return null;
   const goodWon = outcome.winner === 'good';
@@ -90,6 +111,30 @@ export function GameOverReveal({
             ))}
         </ul>
       </Card>
+
+      {isHost !== undefined && (
+        <div className="space-y-2">
+          {isHost ? (
+            <Button className="w-full" disabled={restarting} onClick={() => void restart()}>
+              {t(restarting ? 'gameOver.restarting' : 'gameOver.playAgain')}
+            </Button>
+          ) : (
+            <p className="text-center text-sm text-parchment/60">{t('gameOver.waitingRestart')}</p>
+          )}
+          <p className="text-center text-xs text-parchment/50">{t('gameOver.keepRoomHint')}</p>
+          {error && (
+            <p role="alert" className="text-sm text-crimson">
+              {error}
+            </p>
+          )}
+          {!game.isSpectator && (
+            <Button variant="ghost" className="w-full" onClick={() => setAdminOpen(true)}>
+              {t('game.refereeTools')}
+            </Button>
+          )}
+          <AdminPanel game={game} open={adminOpen} onClose={() => setAdminOpen(false)} />
+        </div>
+      )}
 
       <div className="flex gap-3">
         {gameId && (

@@ -1,4 +1,6 @@
 import { fallbackSeatName } from '@/lib/game/names';
+import { sanitizeName } from '@/lib/game/displayName';
+export { sanitizeName } from '@/lib/game/displayName';
 import type { RoomConfig, RoomMember, RoomSnapshot } from '@/lib/socket/types';
 import type { RoomMeta } from './schema';
 
@@ -59,11 +61,6 @@ export function snapshot(
       return a.seat - b.seat;
     }),
   };
-}
-
-/** Normalize a requested name; empty/whitespace yields ''. Max 24 chars. */
-export function sanitizeName(raw: string): string {
-  return raw.replace(/\s+/g, ' ').trim().slice(0, 24);
 }
 
 /** Accept only bounded HTTP(S) profile-image URLs supplied by the saved identity. */

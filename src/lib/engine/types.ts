@@ -180,7 +180,16 @@ export interface GameState {
 
   assassinId: PlayerId | null;
   outcome: GameOutcome | null;
+  /** Server-only checkpoints for referee rollback; never sent to viewers. */
+  phaseHistory?: PhaseCheckpoint[];
+  phaseRevision?: number;
 }
+
+export type PhaseCheckpoint = Pick<GameState,
+  | 'phase' | 'roundIndex' | 'leaderIndex' | 'rejectionCount' | 'proposedTeam'
+  | 'votes' | 'missionCards' | 'missionResults' | 'voteHistory' | 'ladyHolderId'
+  | 'ladyInspectedIds' | 'pendingLady' | 'lastLadyResult' | 'outcome'
+>;
 
 // ---------------------------------------------------------------------------
 // Visibility (what a viewer learns at RoleReveal)
@@ -207,7 +216,8 @@ export type GameEvent =
   | { type: 'RETRACT_PROPOSAL' }
   | { type: 'CAST_MISSION_CARD'; by: PlayerId; card: MissionCard }
   | { type: 'USE_LADY'; by: PlayerId; target: PlayerId }
-  | { type: 'START_ASSASSINATION'; by: PlayerId }
+  | { type: 'START_ASSASSINATION'; by: PlayerId; admin?: boolean; actor?: string }
+  | { type: 'PREVIOUS_PHASE'; actor: string }
   | { type: 'ASSASSINATE'; by: PlayerId; target: PlayerId }
   | { type: 'SET_CONNECTED'; by: PlayerId; connected: boolean }
   | { type: 'SET_VOICE_PRESENCE'; by: PlayerId; status: VoicePresenceStatus };
@@ -332,6 +342,8 @@ export interface ClientLogEntry {
 
 export interface ClientGameState {
   phase: GamePhase;
+  previousPhase?: GamePhase;
+  phaseRevision?: number;
   roundIndex: number;
   leaderIndex: number;
   rejectionCount: number;

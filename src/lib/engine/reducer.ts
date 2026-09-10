@@ -12,6 +12,7 @@ import type {
   MissionCard,
   PlayerId,
   PlayerSlot,
+  PhaseCheckpoint,
   RevealedRole,
   Role,
   Team,
@@ -536,11 +537,11 @@ function applyLadyOfLake(s: GameState, by: PlayerId, target: PlayerId): EngineRe
 // START_ASSASSINATION → abandon unfinished decisions, enter Assassination
 // ---------------------------------------------------------------------------
 
-function startAssassination(s: GameState, by: PlayerId): EngineResult {
+function startAssassination(s: GameState, by: PlayerId, admin = false, actor?: string): EngineResult {
   if (!canStartAssassination(s)) {
     return err('WRONG_PHASE', 'Assassination cannot be started now');
   }
-  if (s.assassinId !== by) return err('NOT_ASSASSIN', 'Only the assassin may act');
+  if (!admin && s.assassinId !== by) return err('NOT_ASSASSIN', 'Only the assassin may act');
 
   const next = clone(s);
   next.phase = 'Assassination';
@@ -548,7 +549,43 @@ function startAssassination(s: GameState, by: PlayerId): EngineResult {
   next.votes = {};
   next.missionCards = {};
   next.pendingLady = false;
-  pushPublic(next, 'earlyAssassination', { player: by });
+  if (admin) pushPublic(next, 'admin.assassinationStarted', { actor: actor ?? by }, 'admin');
+  else pushPublic(next, 'earlyAssassination', { player: by });
+  return ok(next);
+}
+
+/** Capture gameplay only: identities, connections, role acknowledgements and
+ * the audit log remain current when a referee rewinds. */
+function phaseCheckpoint(s: GameState): PhaseCheckpoint {
+  return structuredClone({
+    phase: s.phase,
+    roundIndex: s.roundIndex,
+    leaderIndex: s.leaderIndex,
+    rejectionCount: s.rejectionCount,
+    proposedTeam: s.proposedTeam,
+    votes: s.votes,
+    missionCards: s.missionCards,
+    missionResults: s.missionResults,
+    voteHistory: s.voteHistory,
+    ladyHolderId: s.ladyHolderId,
+    ladyInspectedIds: s.ladyInspectedIds,
+    pendingLady: s.pendingLady,
+    lastLadyResult: s.lastLadyResult,
+    outcome: s.outcome,
+  });
+}
+
+function previousPhase(s: GameState, actor: string): EngineResult {
+  const checkpoint = s.phaseHistory?.at(-1);
+  if (!checkpoint) return err('WRONG_PHASE', 'No previous phase to return to');
+  const next = clone(s);
+  Object.assign(next, structuredClone(checkpoint));
+  next.phaseHistory = next.phaseHistory!.slice(0, -1);
+  next.phaseRevision = (s.phaseRevision ?? 0) + 1;
+  if (next.phase === 'Voting') next.votes = {};
+  // An interrupted mission is replayed by every team member.
+  next.missionCards = {};
+  pushPublic(next, 'admin.phaseReturned', { actor, phase: next.phase }, 'admin');
   return ok(next);
 }
 
@@ -638,6 +675,9 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
   // Stamp the wall-clock time on any log entries created during this reduce
   // (push helpers leave `at: 0`). Keeps the engine pure — time is injected.
   if (result.ok) {
+    if (event.type !== 'PREVIOUS_PHASE' && state.phase !== 'Lobby' && result.state.phase !== state.phase) {
+      result.state.phaseHistory = [...(state.phaseHistory ?? []), phaseCheckpoint(state)];
+    }
     for (const log of result.state.logs) {
       if (log.at === 0) log.at = ctx.now;
     }
@@ -664,7 +704,9 @@ function dispatch(state: GameState, event: GameEvent): EngineResult {
     case 'USE_LADY':
       return applyLadyOfLake(state, event.by, event.target);
     case 'START_ASSASSINATION':
-      return startAssassination(state, event.by);
+      return startAssassination(state, event.by, event.admin, event.actor);
+    case 'PREVIOUS_PHASE':
+      return previousPhase(state, event.actor);
     case 'ASSASSINATE':
       return assassinate(state, event.by, event.target);
     case 'SET_CONNECTED':

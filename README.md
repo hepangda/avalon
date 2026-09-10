@@ -38,6 +38,8 @@ npm run dev
 
 Every newly-created room includes an audio-only room. Seated players explicitly join voice, start muted, and can hold the mobile-friendly talk button, keep the microphone open, mute it, or switch input devices. RealtimeKit media state drives the participant microphone and speaking indicators; speech is not tied to game turns.
 
+On desktop, hold **Space** from the game table to speak and release it to mute. Text fields and other keyboard controls keep their normal behavior. Switching tabs or moving focus out of the browser closes the microphone.
+
 Create a RealtimeKit app and a preset whose meeting type is **Voice**. The preset must allow participants to produce audio without stage approval. Set its active participant/grid capacity to at least 10 so every Avalon player can be represented.
 
 For local development, add these values to an ignored `.dev.vars` file:
@@ -140,4 +142,10 @@ Lobby -> role reveal -> team building -> vote -> mission -> result, repeated up 
 
 During assassination, every evil identity—including Oberon and Mordred—is revealed on a face-up player card in the center of the table, visible to players and spectators. Each card shows the seat number, player name, and role. Table seats keep their original presentation, and target selection is unchanged. Good identities remain private until game over.
 
-The assassin can also choose **Functions → Start assassination early** during active play. After an irreversible confirmation, unfinished votes, mission cards, and any pending Lady inspection are abandoned; completed history is preserved. Quests do not resume: hitting Merlin gives evil the win, while missing gives good the win, regardless of the mission tally. Other players and spectators cannot initiate the action.
+The assassin can also choose **Functions → Start assassination early** during active play. After confirmation, unfinished votes, mission cards, and any pending Lady inspection are abandoned; completed history is preserved. Without a referee rollback, quests do not resume: hitting Merlin gives evil the win, while missing gives good the win, regardless of the mission tally. Other players and spectators cannot use the assassin-only action; referees have a separate phase-control action.
+
+The referee panel also provides **Start Merlin identification** and **Return to previous phase**. Returning restores the prior leader, proposal, round and completed results; votes or mission cards in the restored phase must be submitted again. Repeated returns walk back through the phase history without redealing identities or changing seat ownership. Already-revealed information cannot be withdrawn. Referee phase actions are recorded in the public log, survive reconnection, and are reflected in the final replay.
+
+After a game, the host can choose **Play again → Return to lobby** to bring everyone back to preparation in the same room. Room code, seat identities, reconnect tokens, configuration and voice meeting are preserved. The completed replay is archived before reset; the next deal gets a new game ID and fresh roles. Referees can also return from GameOver to correct the last phase; finishing again updates that game's replay.
+
+Lobby hosts can remove any unclaimed seat by its stable seat ID. Remaining seats are renumbered without changing their occupants or reconnect tokens. Display names are normalized to at most 10 Unicode characters, for Chinese, Latin and mixed names alike, at both the identity UI and server boundary.
