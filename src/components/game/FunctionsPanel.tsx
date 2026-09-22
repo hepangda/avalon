@@ -12,10 +12,10 @@ import { useRoomStore } from '@/lib/store/room';
 import type { ClientGameState } from '@/lib/engine';
 
 /**
- * Contents of the war-log's "functions" channel: out-of-band actions surfaced
+ * Contents of the game tools' "functions" sheet: out-of-band actions surfaced
  * as buttons — early assassination, referee tools, and leaving the room.
  * Irreversible actions use a two-tap confirm to avoid misclicks.
- * Rendered inline by LogPanel; overlays portal to document.body so
+ * Rendered inline by GameTools; overlays portal to document.body so
  * they escape the panel's clipping/stacking context (e.g. its tall mode).
  */
 export function FunctionsPanel({
@@ -29,7 +29,6 @@ export function FunctionsPanel({
 }) {
   const t = useTranslations();
   const router = useRouter();
-  const [adminOpen, setAdminOpen] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmAssassination, setConfirmAssassination] = useState(false);
   const [startingAssassination, setStartingAssassination] = useState(false);
@@ -116,17 +115,7 @@ export function FunctionsPanel({
         </button>
       )}
 
-      {!game.isSpectator && (
-        <button
-          onClick={() => setAdminOpen(true)}
-          className="flex w-full items-center gap-3 rounded-lg border border-gold/20 bg-ink/30 px-4 py-3 text-left transition-colors hover:border-gold/60 hover:bg-gold/5"
-        >
-          <span className="flex w-8 shrink-0 justify-center text-2xl">🛠</span>
-          <span className="min-w-0 flex-1 text-sm font-semibold text-parchment">
-            {t('game.refereeTools')}
-          </span>
-        </button>
-      )}
+      {!game.isSpectator && <AdminPanel game={game} />}
 
       <button
         onClick={() => setConfirmLeave(true)}
@@ -241,7 +230,6 @@ export function FunctionsPanel({
           document.body,
         )}
 
-      <AdminPanel game={game} open={adminOpen} onClose={() => setAdminOpen(false)} />
     </div>
   );
 }

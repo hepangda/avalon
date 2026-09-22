@@ -4,24 +4,37 @@ import type { RoomMeta } from './schema';
 import {
   DEFAULT_ROOM_CONFIG,
   mergeConfig,
-  restoreLobbySeatIdentity,
+  restoreSeatIdentity,
   sanitizeAvatarUrl,
   sanitizeConfig,
   snapshot,
 } from './room-helpers';
 
-describe('voice room configuration', () => {
-  it('defaults every new room to voice enabled', () => {
-    expect(mergeConfig(undefined, []).voiceEnabled).toBe(true);
-    expect(mergeConfig({ voiceEnabled: false }, []).voiceEnabled).toBe(true);
+describe('game rule configuration', () => {
+  it.each([
+    [undefined, 5], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5],
+    [0, 1], [6, 5], [2.9, 2], [NaN, 5], [Infinity, 5],
+  ])('normalizes rejection limit %s to %i on creation and updates', (raw, expected) => {
+    const config = {
+      ...DEFAULT_ROOM_CONFIG,
+      options: { ...DEFAULT_ROOM_CONFIG.options, maxRejections: raw },
+    };
+    expect(mergeConfig(config, []).options.maxRejections).toBe(expected);
+    expect(sanitizeConfig(config, []).options.maxRejections).toBe(expected);
   });
 
-  it('does not allow lobby edits to turn voice off', () => {
-    const created = mergeConfig(undefined, ['Player 1']);
-    expect(created.voiceEnabled).toBe(true);
-
-    const edited = sanitizeConfig({ ...created, voiceEnabled: false }, created.roster, true);
-    expect(edited.voiceEnabled).toBe(true);
+  it.each([
+    [false, false, false], [true, false, true],
+    [false, true, true], [true, true, true],
+  ])('bundles Morgana=%s and Percival=%s on creation and updates', (morgana, percival, enabled) => {
+    const config = {
+      ...DEFAULT_ROOM_CONFIG,
+      options: { ...DEFAULT_ROOM_CONFIG.options, morgana, percival },
+    };
+    for (const normalized of [mergeConfig(config, []), sanitizeConfig(config, [])]) {
+      expect(normalized.options.morgana).toBe(enabled);
+      expect(normalized.options.percival).toBe(enabled);
+    }
   });
 });
 
@@ -64,7 +77,7 @@ describe('lobby seat identities', () => {
       claimed: true,
     };
 
-    restoreLobbySeatIdentity(member, ['玩家 1', '玩家 2']);
+    restoreSeatIdentity(member, ['玩家 1', '玩家 2']);
 
     expect(member.name).toBe('玩家 2');
     expect(member.avatarUrl).toBeUndefined();

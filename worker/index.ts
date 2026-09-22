@@ -157,7 +157,7 @@ app.post('/api/rooms', async (c) => {
     const res = await stub.init({
       code,
       roster,
-      config: { ...config, voiceEnabled: true },
+      config,
       creator: { name: accountDisplayName(creator), avatarUrl: creator.picture },
     });
     if (res.ok) {
@@ -169,15 +169,6 @@ app.post('/api/rooms', async (c) => {
           playerToken: res.playerToken,
         },
         201,
-      );
-    }
-    if (res.error === 'VOICE_UNAVAILABLE') {
-      return c.json(
-        {
-          code: 'VOICE_UNAVAILABLE',
-          error: 'Voice rooms are temporarily unavailable',
-        },
-        503,
       );
     }
     if (res.error === 'INVALID_CREATOR') {
@@ -200,6 +191,8 @@ app.get('/api/rooms/:code', async (c) => {
 // Full replay for a finished game, keyed by gameId (routes straight to the
 // ReplayDurableObject — no Postgres, no index).
 app.get('/api/games/:id/replay', async (c) => {
+  // Referee corrections may replace the record, so never cache an old version or 404.
+  c.header('Cache-Control', 'no-store');
   const id = c.req.param('id');
   const stub = c.env.REPLAY.get(c.env.REPLAY.idFromName(id));
   const replay = await stub.load();

@@ -97,15 +97,31 @@ function FlipMissionCard({
 }) {
   const t = useTranslations();
   const isFail = card === 'fail';
+  const face = (
+    <div
+      className={`flex h-full w-full flex-col items-center justify-center rounded-lg border-2 ${
+        isFail ? 'border-crimson bg-crimson/30' : 'border-sky-300 bg-sky-600/30'
+      }`}
+    >
+      <GameIcon name={isFail ? 'missionFail' : 'missionSuccess'} className="h-9 w-9" />
+      <span
+        className={`text-[10px] font-bold ${isFail ? 'text-crimson-bright' : 'text-sky-200'}`}
+      >
+        {isFail ? t('cue.cardFail') : t('cue.cardSuccess')}
+      </span>
+    </div>
+  );
+
+  // History cards are flat: keeping a rotated back face here can flicker when
+  // the containing modal finishes its opacity/transform animation.
+  if (instant) return <div className="h-20 w-14 shrink-0">{face}</div>;
 
   return (
     <div style={{ perspective: 800 }} className="h-20 w-14 shrink-0">
       <motion.div
-        initial={{ rotateY: instant ? 180 : 0 }}
+        initial={{ rotateY: 0 }}
         animate={{ rotateY: 180 }}
-        transition={
-          instant ? { duration: 0 } : { delay, duration: FLIP_DURATION, ease: 'easeInOut' }
-        }
+        transition={{ delay, duration: FLIP_DURATION, ease: 'easeInOut' }}
         style={{
           transformStyle: 'preserve-3d',
           position: 'relative',
@@ -132,16 +148,8 @@ function FlipMissionCard({
             position: 'absolute',
             inset: 0,
           }}
-          className={`flex flex-col items-center justify-center rounded-lg border-2 ${
-            isFail ? 'border-crimson bg-crimson/30' : 'border-sky-300 bg-sky-600/30'
-          }`}
         >
-          <GameIcon name={isFail ? 'missionFail' : 'missionSuccess'} className="h-9 w-9" />
-          <span
-            className={`text-[10px] font-bold ${isFail ? 'text-crimson-bright' : 'text-sky-200'}`}
-          >
-            {isFail ? t('cue.cardFail') : t('cue.cardSuccess')}
-          </span>
+          {face}
         </div>
       </motion.div>
     </div>

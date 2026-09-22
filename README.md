@@ -34,31 +34,6 @@ npm run dev
 
 `npm run dev` runs Vite with the Cloudflare plugin, so the React app, the Hono Worker, and the Durable Objects (including WebSockets) all run together in a local `workerd` runtime. Open multiple browser tabs or phones on the same network to simulate players.
 
-## Voice rooms (Cloudflare RealtimeKit)
-
-Every newly-created room includes an audio-only room. Seated players explicitly join voice, start muted, and can hold the mobile-friendly talk button, keep the microphone open, mute it, or switch input devices. RealtimeKit media state drives the participant microphone and speaking indicators; speech is not tied to game turns.
-
-On desktop, hold **Space** from the game table to speak and release it to mute. Text fields and other keyboard controls keep their normal behavior. Switching tabs or moving focus out of the browser closes the microphone.
-
-Create a RealtimeKit app and a preset whose meeting type is **Voice**. The preset must allow participants to produce audio without stage approval. Set its active participant/grid capacity to at least 10 so every Avalon player can be represented.
-
-For local development, add these values to an ignored `.dev.vars` file:
-
-```dotenv
-CLOUDFLARE_ACCOUNT_ID=<account-id>
-REALTIMEKIT_APP_ID=<realtimekit-app-id>
-REALTIMEKIT_PRESET_NAME=<voice-preset-name>
-REALTIMEKIT_API_TOKEN=<api-token>
-```
-
-The API token stays Worker-side and needs only the Cloudflare **Realtime / Realtime Admin** permission. For production, configure the three identifiers as Worker variables and store the token as a secret, for example:
-
-```bash
-npx wrangler secret put REALTIMEKIT_API_TOKEN
-```
-
-Never expose this token through a `VITE_*` variable. Because voice is now part of every room, room creation returns a configuration error when these settings are absent; joining existing rooms remains available.
-
 ## Room-creator OAuth (Pangda Auth / KeyForge)
 
 Creating a room uses an OIDC Authorization Code flow with S256 PKCE. The Worker keeps the tokens in an encrypted HttpOnly cookie and accepts creation only after verifying an access token whose audience is exactly `https://avalon.pangda.app/createRoom`. Room preview and WebSocket join routes stay public. The creator's saved game alias (or `preferred_username` when no alias is set) becomes the first seat name, and the OIDC `picture` claim becomes its avatar.
@@ -140,14 +115,31 @@ Durable Object storage is created automatically on first use; there is no migrat
 
 ## Game flow
 
-Lobby -> role reveal -> team building -> vote -> mission -> result, repeated up to 5 missions. If enabled, Lady of the Lake runs after missions 2-4. If good wins 3 missions, assassination runs before game over. Finished games include full reveal and replay.
+Lobby -> role reveal -> team building -> vote -> mission -> result, repeated up to 5 missions. If enabled, Lady of the Lake runs after missions 2-4. If the blue team wins 3 missions, assassination runs before game over. Finished games include full reveal and replay.
 
-During assassination, every evil identity—including Oberon and Mordred—is revealed on a face-up player card in the center of the table, visible to players and spectators. Each card shows the seat number, player name, and role. Table seats keep their original presentation, and target selection is unchanged. Good identities remain private until game over.
+During assassination, every red team identity—including Oberon and Mordred—is revealed on a face-up player card in the center of the table, visible to players and spectators. Each card shows the seat number, player name, and role. Table seats keep their original presentation, and target selection is unchanged. Blue team identities remain private until game over.
 
-The assassin can also choose **Functions → Start assassination early** during active play. After confirmation, unfinished votes, mission cards, and any pending Lady inspection are abandoned; completed history is preserved. Without a referee rollback, quests do not resume: hitting Merlin gives evil the win, while missing gives good the win, regardless of the mission tally. Other players and spectators cannot use the assassin-only action; referees have a separate phase-control action.
+The assassin can also choose **Functions → Start assassination early** during active play. After confirmation, unfinished votes, mission cards, and any pending Lady inspection are abandoned; completed history is preserved. Without a referee rollback, quests do not resume: hitting Merlin gives the red team the win, while missing gives the blue team the win, regardless of the mission tally. Other players and spectators cannot use the assassin-only action; referees have a separate phase-control action.
 
 The referee panel also provides **Start Merlin identification** and **Return to previous phase**. Returning restores the prior leader, proposal, round and completed results; votes or mission cards in the restored phase must be submitted again. Repeated returns walk back through the phase history without redealing identities or changing seat ownership. Already-revealed information cannot be withdrawn. Referee phase actions are recorded in the public log, survive reconnection, and are reflected in the final replay.
 
-After a game, the host can choose **Play again → Return to lobby** to bring everyone back to preparation in the same room. Room code, seat identities, reconnect tokens, configuration and voice meeting are preserved. The completed replay is archived before reset; the next deal gets a new game ID and fresh roles. Referees can also return from GameOver to correct the last phase; finishing again updates that game's replay.
+After a game, identities stay revealed on the table. The host can choose **Play again** to bring everyone back to preparation in the same room, while **View Replay** opens the completed game in a new tab. Room code, seat identities, reconnect tokens and configuration are preserved. The completed replay is archived before reset; the next deal gets a new game ID and fresh roles. Referees can also return from GameOver to correct the last phase; finishing again updates that game's replay.
 
 Lobby hosts can remove any unclaimed seat by its stable seat ID. Remaining seats are renumbered without changing their occupants or reconnect tokens. Display names are normalized to at most 10 Unicode characters, for Chinese, Latin and mixed names alike, at both the identity UI and server boundary.
+
+## Full-screen table
+
+The room preparation page keeps its original layout: the roster, role
+configuration and start button are shown directly on the page. Starting a game
+opens the viewport-sized table. Players sit along the two ends, with seat
+numbers on the table edge and each player's cards in front of them. In-game
+identity, rules and history open in scrollable sheets; the table and action rail
+remain on screen. Short landscape screens place the action rail beside the table.
+
+Team votes stay face-down until everybody has voted, then flip simultaneously
+at their original seats. Quest submissions expose only which seats have played,
+never the card values. Once a quest resolves, the client collects the backs,
+shuffles an anonymous pile built solely from the result counts, and reveals it.
+The server continues to synchronize during these brief presentation sequences.
+Refreshing restores submitted-card markers, and referee vote retractions restore
+the voting controls without requiring a refresh.

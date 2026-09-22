@@ -10,7 +10,6 @@ import type {
   Role,
   Team,
   VisibilityInfo,
-  VoicePresenceStatus,
 } from '@/lib/engine';
 import type { Ack, RoomConfig, RoomSnapshot } from '../types';
 
@@ -175,22 +174,12 @@ export const roomActions = {
   removeSeat: (seatId: string) =>
     emitWithAck<'room:removeSeat', { seatId: string }, Ack>('room:removeSeat', { seatId }),
   leave: () => emitWithAck<'room:leave', Record<string, never>, Ack>('room:leave', {}),
-  voiceToken: () =>
-    emitWithAck<'voice:token', Record<string, never>, Ack<{ authToken: string }>>(
-      'voice:token',
-      {},
-    ),
-  voicePresence: (status: VoicePresenceStatus) =>
-    emitWithAck<'voice:presence', { status: VoicePresenceStatus }, Ack>('voice:presence', {
-      status,
-    }),
-  voiceDropped: (playerId: string) =>
-    emitWithAck<'voice:dropped', { playerId: string }, Ack>('voice:dropped', { playerId }),
 };
 
 /** Game-phase action wrappers. */
 export const gameActions = {
-  ackRole: () => emitWithAck<'game:ackRole', Record<string, never>, Ack>('game:ackRole', {}),
+  ackRole: (roleRevision = 0) =>
+    emitWithAck<'game:ackRole', { roleRevision: number }, Ack>('game:ackRole', { roleRevision }),
   proposeTeam: (team: string[]) =>
     emitWithAck<'game:proposeTeam', { team: string[] }, Ack>('game:proposeTeam', { team }),
   vote: (value: 'approve' | 'reject') =>
@@ -213,6 +202,10 @@ export const gameActions = {
 
 /** Referee (admin) action wrappers. */
 export const adminActions = {
+  rerollLeader: () =>
+    emitWithAck<'admin:rerollLeader', Record<string, never>, Ack>('admin:rerollLeader', {}),
+  rerollRoles: () =>
+    emitWithAck<'admin:rerollRoles', Record<string, never>, Ack>('admin:rerollRoles', {}),
   startAssassination: () =>
     emitWithAck<'admin:startAssassination', Record<string, never>, Ack>('admin:startAssassination', {}),
   previousPhase: () =>

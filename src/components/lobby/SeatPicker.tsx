@@ -40,6 +40,8 @@ export function SeatPicker({
   const [draft, setDraft] = useState<string[]>(serverNames);
   const [error, setError] = useState<string | null>(null);
   const [editingRoster, setEditingRoster] = useState(isHost);
+  const [resizing, setResizing] = useState(false);
+  const minimumSeatCount = Math.max(1, ...seats.map((seat, i) => seat.claimed ? i + 1 : 0));
 
   const serverKey = serverNames.join('\u0000');
   const lastKey = useRef(serverKey);
@@ -78,6 +80,16 @@ export function SeatPicker({
     const next = [...draft, ''];
     setDraft(next);
     void pushRoster(next);
+  }
+
+  async function resizeSeats(count: number) {
+    if (resizing || count === seats.length || count < minimumSeatCount || count > 10) return;
+    setResizing(true);
+    try {
+      await pushRoster(Array.from({ length: count }, (_, i) => draft[i] ?? ''));
+    } finally {
+      setResizing(false);
+    }
   }
 
   async function removeSeat(i: number) {
@@ -127,11 +139,33 @@ export function SeatPicker({
         </p>
       )}
 
+      {editingRoster && isHost && (
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="lobby-seat-count" className="text-sm text-parchment/70">
+            {t('home.seatCount')}
+          </label>
+          <select
+            id="lobby-seat-count"
+            value={seats.length}
+            disabled={resizing}
+            onChange={(event) => void resizeSeats(Number(event.target.value))}
+            className="h-10 rounded-md border border-gold/30 bg-ink px-3 text-parchment focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/40"
+          >
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((count) => (
+              <option key={count} value={count} disabled={count < minimumSeatCount}>
+                {count}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="space-y-2">
         {seats.map((seat, i) => {
           const isMine = seat.id === myPlayerId;
           const takenByOther = seat.claimed && !isMine;
           const canAskStand = isHost && takenByOther && seat.id !== hostPlayerId;
+          const connected = seat.claimed && seat.connected;
 
           return (
             <div
@@ -164,18 +198,20 @@ export function SeatPicker({
                 )}
                 <p className="flex items-center gap-2 text-xs text-parchment/45">
                   <span
-                    className={`inline-block h-1.5 w-1.5 rounded-full ${latencyDotClass(seat.connected, seat.latency)}`}
+                    className={`inline-block h-1.5 w-1.5 rounded-full ${latencyDotClass(connected, seat.latency)}`}
                     title={
-                      seat.connected
-                        ? seat.latency !== undefined
-                          ? `${seat.latency} ms`
-                          : t('seat.online')
-                        : t('seat.offline')
+                      !seat.claimed
+                        ? t('seat.empty')
+                        : connected
+                          ? seat.latency !== undefined
+                            ? `${seat.latency} ms`
+                            : t('seat.online')
+                          : t('seat.offline')
                     }
                   />
                   {seat.claimed ? (
                     <>
-                      <span>{seat.connected ? t('seat.online') : t('seat.offline')}</span>
+                      <span>{connected ? t('seat.online') : t('seat.offline')}</span>
                       {seat.id === hostPlayerId && <span>{t('lobby.host')}</span>}
                       {isMine && <span>{t('common.you')}</span>}
                     </>
@@ -191,6 +227,7 @@ export function SeatPicker({
                     <Button
                       variant="ghost"
                       className="h-9 min-w-16 whitespace-nowrap px-3 text-xs text-crimson"
+                      disabled={resizing}
                       onClick={() => void removeSeat(i)}
                     >
                       {t('home.removeSeat')}
@@ -222,7 +259,7 @@ export function SeatPicker({
       </div>
 
       {editingRoster && seats.length < 10 && (
-        <Button variant="secondary" className="w-full text-sm" onClick={addSeat}>
+        <Button variant="secondary" className="w-full text-sm" disabled={resizing} onClick={addSeat}>
           {t('home.addSeat')}
         </Button>
       )}

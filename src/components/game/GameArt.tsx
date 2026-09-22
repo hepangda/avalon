@@ -1,6 +1,6 @@
 import type { ImgHTMLAttributes } from 'react';
 import type { Role } from '@/lib/engine';
-import { ROLE_PORTRAIT } from '@/lib/game/roleMeta';
+import { roleArt } from '@/lib/game/roleMeta';
 import { cn } from '@/lib/utils/cn';
 
 export type GameIconName =
@@ -37,11 +37,11 @@ export function GameIcon({
   );
 }
 
-/** Generated role medallion. Role names remain live localized text beside it. */
-export function RolePortrait({ role, className, alt = '', ...props }: ArtProps & { role: Role }) {
+/** Companion avatar, paired with the same character's full card illustration. */
+export function RolePortrait({ role, variant, className, alt = '', ...props }: ArtProps & { role: Role; variant?: number }) {
   return (
     <img
-      src={ROLE_PORTRAIT[role]}
+      src={roleArt(role, variant).avatar}
       alt={alt}
       aria-hidden={alt ? undefined : true}
       draggable={false}

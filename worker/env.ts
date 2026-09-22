@@ -1,6 +1,5 @@
 import type { RoomDurableObject } from './room-do';
 import type { ReplayDurableObject } from './replay-do';
-
 import type { AccountProfileDurableObject } from './account-profile-do';
 
 /** Worker + Durable Object bindings (see wrangler.jsonc). */
@@ -9,10 +8,6 @@ export interface Env {
   REPLAY: DurableObjectNamespace<ReplayDurableObject>;
   ACCOUNT_PROFILE: DurableObjectNamespace<AccountProfileDurableObject>;
   ASSETS: Fetcher;
-  CLOUDFLARE_ACCOUNT_ID?: string;
-  REALTIMEKIT_APP_ID?: string;
-  REALTIMEKIT_API_TOKEN?: string;
-  REALTIMEKIT_PRESET_NAME?: string;
   OIDC_ISSUER?: string;
   OIDC_CLIENT_ID?: string;
   OIDC_CLIENT_SECRET?: string;

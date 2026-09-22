@@ -6,11 +6,11 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { ReplayTimeline } from '@/components/game/ReplayTimeline';
-import { MvpPanel } from '@/components/game/MvpPanel';
 import { GameIcon, RolePortrait } from '@/components/game/GameArt';
 import { TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { seatLabel } from '@/lib/game/playerLabel';
+import { outcomeReasonKey } from '@/lib/game/outcomeText';
 import { teamOf } from '@/lib/engine';
 import type { ReplayData } from '@/lib/game/replayTypes';
 
@@ -22,47 +22,51 @@ export default function ReplayPage() {
 
   const [data, setData] = useState<ReplayData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
+    setData(null);
+    setError(null);
 
     async function load() {
-      // Persistence of the final game state is asynchronous, so a replay opened
-      // immediately after GameOver may briefly 409 ("not finished"). Retry a
-      // few times before surfacing an error.
+      // A durable archive may still be retrying its transfer from the room.
       const maxAttempts = 6;
       for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const res = await fetch(`/api/games/${gameId}/replay`);
+        if (cancelled) return;
+        const res = await fetch(`/api/games/${gameId}/replay`, {
+          signal: controller.signal, cache: 'no-store',
+        });
         if (res.ok) {
           const d = (await res.json()) as ReplayData;
           if (!cancelled) setData(d);
           return;
         }
-        if (res.status === 404) {
-          if (!cancelled) setError(t('replay.notFound'));
-          return;
-        }
-        if (res.status === 409 && attempt < maxAttempts - 1) {
+        if ((res.status === 404 || res.status === 409) && attempt < maxAttempts - 1) {
           await new Promise((r) => setTimeout(r, 700));
           continue;
         }
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
         if (!cancelled)
-          setError(res.status === 409 ? t('replay.notFinished') : (body.error ?? 'Error'));
+          setError(t(res.status === 404 ? 'replay.notFound' : res.status === 409 ? 'replay.notFinished' : 'replay.loadFailed'));
         return;
       }
     }
 
-    void load();
+    void load().catch(() => {
+      if (!cancelled) setError(t('replay.loadFailed'));
+    });
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [gameId, t]);
+  }, [gameId, t, loadAttempt]);
 
   if (error) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4">
         <p className="text-crimson">{error}</p>
+        <Button onClick={() => setLoadAttempt((attempt) => attempt + 1)}>{t('replay.retry')}</Button>
         <Link href="/">
           <Button variant="secondary">{t('replay.backHome')}</Button>
         </Link>
@@ -98,10 +102,13 @@ export default function ReplayPage() {
             name={goodWon ? 'crest' : 'reject'}
             className="mx-auto h-16 w-16 drop-shadow-[0_0_16px_rgba(201,162,39,0.28)]"
           />
-          <p className={`font-serif text-2xl ${goodWon ? 'text-sky-300' : 'text-crimson'}`}>
+          <p className="outcome-title font-serif text-2xl" data-winner={data.outcome.winner}>
             {t('replay.outcome', {
               winner: goodWon ? t('replay.goodWon') : t('replay.evilWon'),
             })}
+          </p>
+          <p className="mt-2 text-sm text-parchment/70">
+            {t(`gameOver.${outcomeReasonKey(data.outcome)}`)}
           </p>
         </Card>
       )}
@@ -122,18 +129,15 @@ export default function ReplayPage() {
                 key={r.playerId}
                 className="flex items-center gap-1.5 rounded-lg border border-gold/15 bg-ink/30 px-2 py-1.5 text-sm"
               >
-                <RolePortrait role={r.role} className="h-8 w-8 rounded-full" />
+                <RolePortrait role={r.role} variant={r.roleVariant} className="h-8 w-8 rounded-full" />
                 <span className="text-parchment">{nameOf(r.playerId)}</span>
                 <span className={`ml-auto text-xs ${TEAM_COLOR[teamOf(r.role)]}`}>
-                  {roleText.name(r.role)}
+                  {roleText.shortName(r.role)}
                 </span>
               </li>
             ))}
         </ul>
       </Card>
-
-      {/* MVP / stats */}
-      <MvpPanel replay={data} />
 
       {/* Round-by-round timeline */}
       <ReplayTimeline replay={data} />

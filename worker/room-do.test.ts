@@ -58,7 +58,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function roomHarness() {
+function roomHarness(seedRoom = true) {
   const db = new DatabaseSync(':memory:');
   databases.push(db);
   const sockets = [0, 2, 3, 4, 5].map(
@@ -79,6 +79,8 @@ function roomHarness() {
   const ctx = {
     storage: {
       sql,
+      setAlarm: vi.fn(async () => {}),
+      deleteAlarm: vi.fn(async () => {}),
       transactionSync: (fn: () => void) => {
         db.exec('BEGIN');
         try {
@@ -101,31 +103,30 @@ function roomHarness() {
     REPLAY: { idFromName: (id: string) => id, get: () => ({ store }) },
   } as unknown as Env;
   let room = new RoomDurableObject(ctx, env);
-  const config = {
-    ...DEFAULT_ROOM_CONFIG,
-    roster: Array.from({ length: 6 }, (_, i) => `Seat ${i}`),
-  };
-  db.prepare('INSERT INTO room_meta VALUES (1, ?, ?, ?, ?, NULL, NULL, 0)').run(
-    '1234',
-    'host-secret',
-    'lobby',
-    JSON.stringify(config),
-  );
-  for (let seat = 0; seat < 6; seat++) {
-    db.prepare('INSERT INTO player VALUES (?, ?, ?, ?, 0, ?, ?)').run(
-      `p${seat}`,
-      `Player ${seat}`,
-      `https://example.com/${seat}.png`,
-      seat,
-      seat === 1 ? 0 : 1,
-      seat === 1 ? 0 : 1,
+  if (seedRoom) {
+    const config = {
+      ...DEFAULT_ROOM_CONFIG,
+      roster: Array.from({ length: 6 }, (_, i) => `Seat ${i}`),
+    };
+    db.prepare('INSERT INTO room_meta VALUES (1, ?, ?, ?, ?, NULL, NULL, 0)').run(
+      '1234',
+      'host-secret',
+      'lobby',
+      JSON.stringify(config),
     );
-    if (seat !== 1)
-      db.prepare('INSERT INTO player_session VALUES (?, ?)').run(`p${seat}`, `token-${seat}`);
+    for (let seat = 0; seat < 6; seat++) {
+      db.prepare('INSERT INTO player VALUES (?, ?, ?, ?, 0, ?, ?)').run(
+        `p${seat}`,
+        `Player ${seat}`,
+        `https://example.com/${seat}.png`,
+        seat,
+        seat === 1 ? 0 : 1,
+        seat === 1 ? 0 : 1,
+      );
+      if (seat !== 1)
+        db.prepare('INSERT INTO player_session VALUES (?, ?)').run(`p${seat}`, `token-${seat}`);
+    }
   }
-  db.prepare('INSERT INTO voice_meeting VALUES (1, ?)').run('meeting-123');
-  db.prepare('INSERT INTO voice_participant VALUES (?, ?)').run('p0', 'voice-p0');
-  db.prepare('INSERT INTO voice_presence VALUES (?, ?, ?)').run('p0', 'joined', 1);
   let request = 0;
   const action = async (socket: Socket, event: string, payload = {}) => {
     const id = String(++request);
@@ -147,6 +148,7 @@ function roomHarness() {
     ).toBe(true);
   };
   return {
+    get room() { return room; },
     db,
     host,
     sockets,
@@ -154,6 +156,7 @@ function roomHarness() {
     action,
     archives,
     store,
+    storage: ctx.storage,
     finish,
     wake: () => {
       room = new RoomDurableObject(ctx, env);
@@ -162,6 +165,245 @@ function roomHarness() {
 }
 
 describe('room lifecycle and referee handlers (SQLite + WebSocket harness)', () => {
+  it('authorizes and persists opening rerolls, refreshes private roles, and replays them after wake', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+    await h.action(h.host, 'room:start');
+    const gameId = h.host.game.gameId!;
+    for (const event of ['admin:rerollLeader', 'admin:rerollRoles']) {
+      expect((await h.action(h.host, event)).error?.code).toBe('NOT_ADMIN');
+    }
+    await h.action(h.host, 'game:ackRole');
+    await h.action(h.host, 'admin:auth');
+    expect((await h.action(h.host, 'admin:rerollLeader')).ok).toBe(true);
+    const leader = h.host.game.leaderIndex;
+    expect(h.host.game.roleAcks).toEqual(['p0']);
+    expect((await h.action(h.host, 'admin:rerollRoles')).ok).toBe(true);
+    expect(h.host.game).toMatchObject({ gameId, leaderIndex: leader, roleAcks: [], roleRevision: 1, canRerollOpening: true });
+    expect((await h.action(h.host, 'game:ackRole', { roleRevision: 0 })).error?.code).toBe('WRONG_PHASE');
+    expect((await h.action(h.host, 'game:ackRole', { roleRevision: 1 })).ok).toBe(true);
+    const roles = h.sockets.filter((s) => s !== h.spectator).map((s) => ({
+      playerId: s.deserializeAttachment().playerId!, role: s.game.selfRole,
+    }));
+    for (const socket of h.sockets.filter((s) => s !== h.spectator)) {
+      const reveal = socket.messages.filter((m) => m.event === 'private:reveal').at(-1)?.payload;
+      expect(reveal).toEqual({ selfRole: socket.game.selfRole, knownPlayers: socket.game.knownPlayers });
+      expect(socket.game.logs.filter((l) => l.key === 'yourRole')).toHaveLength(1);
+    }
+    expect(h.spectator.game.players.every((p) => p.role === undefined)).toBe(true);
+    expect(h.spectator.game.logs.every((l) => l.channel === 'public')).toBe(true);
+    expect(h.spectator.messages.filter((m) => m.event === 'private:reveal')).toEqual([]);
+    const publicView = h.spectator.game;
+    h.wake();
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.game).toMatchObject({ leaderIndex: leader, roleRevision: 1, roleAcks: ['p0'], canRerollOpening: true });
+    for (const key of ['admin.leaderRerolled', 'admin.rolesRerolled']) {
+      // Existing panel-open notices are transient and can offset log sequence numbers.
+      const { seq: _seq, ...entry } = publicView.logs.find((l) => l.key === key)!;
+      expect(h.spectator.game.logs.find((l) => l.key === key))
+        .toMatchObject(entry);
+    }
+    await h.finish();
+    const archived = h.archives.get(gameId)!;
+    expect(archived.roleAssignments.map(({ playerId, role }) => ({ playerId, role }))).toEqual(roles);
+    expect(archived.outcome?.winner).toBe('evil');
+  });
+
+  it.each(['admin:retractProposal', 'admin:previousPhase'])(
+    'does not reopen opening rerolls after %s or a server wake', async (returnEvent) => {
+      const h = roomHarness();
+      await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+      await h.action(h.host, 'room:start');
+      await h.action(h.host, 'admin:auth');
+      expect((await h.action(h.host, 'admin:propose', { team: ['p0', 'p2'] })).ok).toBe(true);
+      expect((await h.action(h.host, returnEvent)).ok).toBe(true);
+      expect(h.host.game).toMatchObject({ phase: 'TeamBuilding', roundIndex: 0, canRerollOpening: false });
+      h.wake();
+      await h.action(h.spectator, 'room:join');
+      expect(h.spectator.game.canRerollOpening).toBe(false);
+      const before = h.db.prepare('SELECT event_seq FROM room_meta').get()!.event_seq;
+      for (const event of ['admin:rerollLeader', 'admin:rerollRoles']) {
+        expect((await h.action(h.host, event)).error?.code).toBe('WRONG_PHASE');
+      }
+      expect(h.db.prepare('SELECT event_seq FROM room_meta').get()!.event_seq).toBe(before);
+    },
+  );
+
+  it('creates a room without external media credentials or network requests', async () => {
+    const h = roomHarness(false);
+    const fetch = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Unexpected network request'));
+    const created = await h.room.init({
+      code: '1234',
+      roster: ['Seat 1', 'Seat 2'],
+      creator: { name: 'Room owner' },
+    });
+
+    expect(created.ok).toBe(true);
+    if (!created.ok) throw new Error(created.error);
+    expect(created.playerToken).toBeTruthy();
+    expect(h.db.prepare('SELECT name, claimed FROM player WHERE id = ?').get(created.playerId))
+      .toMatchObject({ name: 'Room owner', claimed: 1 });
+    expect(await h.room.preview()).toMatchObject({ code: '1234', playerCount: 2 });
+    expect(await h.room.preview()).not.toHaveProperty('voiceEnabled');
+    expect(fetch).not.toHaveBeenCalled();
+    expect(h.db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'voice_%'").all())
+      .toEqual([]);
+  });
+
+  it('ignores retired presence events when waking and archiving an existing game', async () => {
+    const h = roomHarness();
+    const stored = h.db.prepare('SELECT config FROM room_meta').get()!;
+    h.db.prepare('UPDATE room_meta SET config = ?').run(
+      JSON.stringify({ ...JSON.parse(stored.config as string), voiceEnabled: true }),
+    );
+    await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+    await h.action(h.host, 'room:start');
+    const gameId = h.host.game.gameId!;
+    const seq = Number(h.db.prepare('SELECT event_seq FROM room_meta').get()!.event_seq) + 1;
+    h.db.prepare('INSERT INTO game_event VALUES (?, ?, ?, ?)').run(
+      seq,
+      'SET_VOICE_PRESENCE',
+      JSON.stringify({ type: 'SET_VOICE_PRESENCE', by: 'p0', status: 'joined' }),
+      Date.now(),
+    );
+    h.db.prepare('UPDATE room_meta SET event_seq = ?').run(seq);
+    h.wake();
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.snapshot.config).not.toHaveProperty('voiceEnabled');
+    expect(h.spectator.game.logs.every((log) => !log.key.startsWith('voice.'))).toBe(true);
+
+    await h.finish();
+    h.wake();
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.game.phase).toBe('GameOver');
+    expect(h.archives.get(gameId)?.outcome?.winner).toBe('evil');
+    expect((await h.action(h.host, 'room:restart')).ok).toBe(true);
+  });
+
+  it.each(['voice:token', 'voice:presence', 'voice:dropped'])(
+    'rejects the retired %s endpoint', async (event) => {
+      const h = roomHarness();
+      const response = await h.action(h.host, event, { status: 'joined', playerId: 'p0' });
+      expect(response.ok).toBe(false);
+      expect(response.error?.code).toBe('UNKNOWN_EVENT');
+    },
+  );
+
+  it('starts with empty and disconnected seats offline for players and spectators', async () => {
+    const h = roomHarness();
+    h.sockets.splice(1, 1); // p2 still holds a seat, but has no live connection.
+
+    expect((await h.action(h.host, 'room:start')).ok).toBe(true);
+
+    for (const socket of h.sockets) {
+      expect(socket.game.players.map((p) => [p.id, p.claimed, p.connected])).toEqual([
+        ['p0', true, true],
+        ['p1', false, false],
+        ['p2', true, false],
+        ['p3', true, true],
+        ['p4', true, true],
+        ['p5', true, true],
+      ]);
+    }
+  });
+
+  it('updates presence for every viewer when a player takes and releases an empty seat', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:start');
+
+    expect((await h.action(h.spectator, 'room:claimSeat', { seatId: 'p1' })).ok).toBe(true);
+    for (const socket of h.sockets) {
+      expect(socket.game.players.find((p) => p.id === 'p1')).toMatchObject({
+        claimed: true,
+        connected: true,
+      });
+    }
+
+    expect((await h.action(h.spectator, 'room:releaseSeat')).ok).toBe(true);
+    for (const socket of h.sockets) {
+      expect(socket.game.players.find((p) => p.id === 'p1')).toMatchObject({
+        claimed: false,
+        connected: false,
+      });
+    }
+  });
+
+  it.each(['room:releaseSeat', 'room:leave', 'room:claimSeat', 'admin:unbind'])(
+    'restores the seat identity for all viewers and after wake on %s',
+    async (event) => {
+      const h = roomHarness();
+      expect((await h.action(h.host, 'room:start')).ok).toBe(true);
+      const player = h.sockets[1]!;
+      if (event === 'admin:unbind') {
+        expect((await h.action(h.host, 'admin:auth')).ok).toBe(true);
+      }
+      const response = event === 'admin:unbind'
+        ? await h.action(h.host, event, { targetPlayerId: 'p2' })
+        : await h.action(player, event, event === 'room:claimSeat'
+          ? { seatId: 'p1', name: 'New name' }
+          : {});
+      expect(response.ok).toBe(true);
+      for (const socket of h.sockets) {
+        const seat = socket.game.players.find((p) => p.id === 'p2');
+        expect(seat).toMatchObject({ name: 'Seat 2', claimed: false, connected: false });
+        expect(seat?.avatarUrl).toBeUndefined();
+        expect(socket.snapshot.members.find((p) => p.id === 'p2')?.name).toBe('Seat 2');
+        if (event === 'room:claimSeat') {
+          expect(socket.game.players.find((p) => p.id === 'p1')).toMatchObject({
+            name: 'New name', claimed: true, connected: true,
+          });
+        }
+      }
+      expect(h.db.prepare('SELECT name, avatar_url, claimed FROM player WHERE id = ?').get('p2'))
+        .toMatchObject({ name: 'Seat 2', avatar_url: null, claimed: 0 });
+      h.wake();
+      expect((await h.action(h.spectator, 'room:join')).ok).toBe(true);
+      expect(h.spectator.game.players.find((p) => p.id === 'p2'))
+        .toMatchObject({ name: 'Seat 2', claimed: false, connected: false });
+    },
+  );
+
+  it('keeps the occupant identity when a seated player disconnects mid-game', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:start');
+    const player = h.sockets.splice(1, 1)[0]!;
+    await h.room.webSocketClose(player.ws);
+    expect(h.host.game.players.find((p) => p.id === 'p2')).toMatchObject({
+      name: 'Player 2', avatarUrl: 'https://example.com/2.png', claimed: true, connected: false,
+    });
+  });
+
+  it('uses live room presence after hibernation instead of replayed connection events', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:start');
+    const player = h.sockets[1]!;
+    await h.action(player, 'room:join', { playerId: 'p2', playerToken: 'token-2' });
+    h.sockets.splice(1, 1); // The socket is gone, but its last recorded event was online.
+    h.wake();
+
+    expect((await h.action(h.spectator, 'room:join')).ok).toBe(true);
+    expect(h.spectator.game.players.find((p) => p.id === 'p1')).toMatchObject({
+      claimed: false,
+      connected: false,
+    });
+    expect(h.spectator.game.players.find((p) => p.id === 'p2')).toMatchObject({
+      claimed: true,
+      connected: false,
+    });
+    expect(h.spectator.game.players.find((p) => p.id === 'p0')?.connected).toBe(true);
+
+    h.sockets.push(player);
+    expect(
+      (await h.action(player, 'room:join', { playerId: 'p2', playerToken: 'token-2' })).ok,
+    ).toBe(true);
+    for (const socket of h.sockets) {
+      expect(socket.game.players.find((p) => p.id === 'p2')).toMatchObject({
+        claimed: true,
+        connected: true,
+      });
+    }
+  });
+
   it('deletes a middle empty seat without replacing later occupied identities or sessions', async () => {
     const h = roomHarness();
     expect((await h.action(h.spectator, 'room:removeSeat', { seatId: 'p1' })).error?.code).toBe(
@@ -240,7 +482,7 @@ describe('room lifecycle and referee handlers (SQLite + WebSocket harness)', () 
     expect(h.spectator.game.players.every((p) => !p.role)).toBe(true);
   });
 
-  it('keeps the room, seats, tokens, voice and previous replay across two games', async () => {
+  it('keeps the room, seats, tokens and previous replay across two games', async () => {
     const h = roomHarness();
     await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
     expect((await h.action(h.host, 'room:restart')).error?.code).toBe('WRONG_PHASE');
@@ -255,12 +497,6 @@ describe('room lifecycle and referee handlers (SQLite + WebSocket harness)', () 
     expect(h.spectator.snapshot.status).toBe('lobby');
     expect(h.db.prepare('SELECT * FROM player ORDER BY seat').all()).toEqual(players);
     expect(h.db.prepare('SELECT * FROM player_session').all()).toEqual(sessions);
-    expect(h.db.prepare('SELECT meeting_id FROM voice_meeting').get()?.meeting_id).toBe(
-      'meeting-123',
-    );
-    expect(h.db.prepare('SELECT participant_id FROM voice_participant').get()?.participant_id).toBe(
-      'voice-p0',
-    );
     expect(h.archives.get(firstId)?.outcome?.winner).toBe('evil');
     h.wake();
     await h.action(h.sockets[1]!, 'room:join', {
@@ -282,13 +518,60 @@ describe('room lifecycle and referee handlers (SQLite + WebSocket harness)', () 
     const h = roomHarness();
     await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
     await h.action(h.host, 'room:start');
+    h.store.mockRejectedValueOnce(new Error('Archive unavailable'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     await h.finish();
     const events = h.db.prepare('SELECT * FROM game_event').all();
     h.store.mockRejectedValueOnce(new Error('Archive unavailable'));
-    vi.spyOn(console, 'error').mockImplementation(() => {});
     expect((await h.action(h.host, 'room:restart')).ok).toBe(false);
     expect(h.db.prepare('SELECT status FROM room_meta').get()?.status).toBe('finished');
     expect(h.db.prepare('SELECT * FROM game_event').all()).toEqual(events);
     expect((await h.action(h.host, 'room:restart')).ok).toBe(true);
+  });
+
+  it('retries a failed archive from its disk snapshot after wake, even after players leave', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+    await h.action(h.host, 'room:start');
+    const gameId = h.host.game.gameId!;
+    h.store.mockRejectedValueOnce(new Error('Archive unavailable'));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    await h.finish();
+    expect(h.host.game.phase).toBe('GameOver');
+    expect(h.archives.has(gameId)).toBe(false);
+    const snapshot = h.db.prepare('SELECT * FROM replay_archive').get()!;
+    expect(snapshot.pending).toBe(1);
+    expect(h.storage.setAlarm).toHaveBeenCalled();
+    await h.action(h.host, 'room:leave');
+    h.wake();
+    h.store.mockRejectedValueOnce(new Error('Still unavailable'));
+    await h.room.alarm();
+    expect(h.db.prepare('SELECT pending FROM replay_archive').get()?.pending).toBe(1);
+    await h.room.alarm();
+    expect(h.archives.get(gameId)).toEqual(JSON.parse(snapshot.payload as string));
+    expect(h.db.prepare('SELECT pending FROM replay_archive').get()?.pending).toBe(0);
+    expect(h.storage.deleteAlarm).toHaveBeenCalled();
+    expect((await h.action(h.host, 'room:restart')).ok).toBe(true);
+    expect(h.db.prepare('SELECT * FROM replay_archive').all()).toEqual([]);
+    expect(h.archives.get(gameId)).toEqual(JSON.parse(snapshot.payload as string));
+  });
+
+  it('archives a newer referee correction and retains the completed names when restarting', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+    await h.action(h.host, 'room:start');
+    const gameId = h.host.game.gameId!;
+    await h.finish();
+    const first = h.db.prepare('SELECT revision FROM replay_archive').get()!.revision as number;
+    await h.action(h.host, 'admin:previousPhase');
+    const assassin = h.sockets.find((s) => s !== h.spectator && s.game.selfRole === 'Assassin')!;
+    const target = h.sockets.find((s) => s !== h.spectator && s.game.selfRole === 'LoyalServant')!;
+    expect((await h.action(assassin, 'game:assassinate', { targetPlayerId: target.deserializeAttachment().playerId })).ok).toBe(true);
+    expect(h.archives.get(gameId)?.outcome?.winner).toBe('good');
+    expect(h.db.prepare('SELECT revision FROM replay_archive').get()!.revision).toBeGreaterThan(first);
+    const saved = structuredClone(h.archives.get(gameId));
+    await h.action(h.host, 'room:leave');
+    expect((await h.action(h.host, 'room:restart')).ok).toBe(true);
+    expect(h.archives.get(gameId)).toEqual(saved);
   });
 });

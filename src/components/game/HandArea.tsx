@@ -1,442 +1,109 @@
-'use client';
-
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
-import { cn } from '@/lib/utils/cn';
-import { IdentityCard } from './IdentityCard';
-import { GameIcon, type GameIconName } from './GameArt';
+import type { ClientGameState } from '@/lib/engine';
+import type { Ack } from '@/lib/socket/types';
 import { gameActions } from '@/lib/socket/client';
-import { ROLE_TEAM_UI } from '@/lib/game/roleMeta';
-import type { ClientGameState, ClientPlayer } from '@/lib/engine';
-import { PlayerAvatar } from '@/components/player/PlayerAvatar';
+import { actionAvailability } from '@/lib/game/actionAvailability';
 
-/** A "play cards to pick targets" phase (nomination / assassination). */
 export interface PickConfig {
-  /** Ids that may be picked. */
-  candidateIds: string[];
-  /** How many to pick before the confirm card is dealt (team size / 1). */
   size: number;
   confirmLabel: string;
   tone: 'gold' | 'crimson' | 'sky';
-  /** Commit the pick; resolves to whether it succeeded. */
-  onConfirm: () => Promise<boolean>;
+  onConfirm: () => Promise<Ack>;
 }
 
-/**
- * The viewer's hand, pinned to the bottom of the table. Always holds the
- * identity card. Action phases deal playable cards:
- *  - A "pick" phase (nominate / assassinate): a card per candidate. Tapping one
- *    plays it up to the centre pile; once enough are picked the rest fly away
- *    and a confirm card is dealt. A retract card (and tapping a centre card) undo.
- *  - Voting: an Approve and a Reject card — tap one to play.
- *  - MissionVote (on the team): a Success and a Fail card — tap one to play.
- */
+/** Fixed action rail. Acknowledged submissions are read from the room projection. */
 export function HandArea({
   game,
   myPlayerId,
   selected,
-  onToggleSelect,
   pick,
+  busy,
+  blocked,
+  run,
+  actions = gameActions,
 }: {
+  actions?: Pick<typeof gameActions, 'vote' | 'missionCard'>;
   game: ClientGameState;
   myPlayerId: string | null;
   selected: string[];
-  onToggleSelect: (id: string) => void;
   pick: PickConfig | null;
+  busy: boolean;
+  blocked: boolean;
+  run: (action: () => Promise<Ack<unknown>>) => Promise<boolean>;
 }) {
   const t = useTranslations();
-  const reduce = useReducedMotion();
-  const [cast, setCast] = useState<'approve' | 'reject' | null>(null);
-  const [missionPlayed, setMissionPlayed] = useState<'success' | 'fail' | null>(null);
-  const [confirming, setConfirming] = useState(false);
-
-  const phaseKey = `${game.phase}-${game.roundIndex}-${game.rejectionCount}-${game.phaseRevision}`;
-  useEffect(() => {
-    setCast(null);
-    setMissionPlayed(null);
-    setConfirming(false);
-  }, [phaseKey]);
-
-  if (game.isSpectator) return null;
-
-  const myVote = game.votes?.find((v) => v.playerId === myPlayerId);
-  const alreadyVoted = cast !== null || !!myVote?.hasVoted;
-  const canVote = game.phase === 'Voting' && !!myPlayerId && !alreadyVoted;
-
-  const team = game.proposedTeam ?? [];
-  const onTeam = !!myPlayerId && team.includes(myPlayerId);
-  const isEvil = game.selfRole ? ROLE_TEAM_UI[game.selfRole] === 'evil' : false;
-  const canMission = game.phase === 'MissionVote' && onTeam && missionPlayed === null;
-
-  const full = !!pick && selected.length >= pick.size;
-  const available = pick
-    ? pick.candidateIds
-        .filter((id) => !selected.includes(id))
-        .map((id) => game.players.find((p) => p.id === id))
-        .filter((p): p is ClientPlayer => !!p)
-        .sort((a, b) => a.seat - b.seat)
-    : [];
-
-  async function vote(value: 'approve' | 'reject') {
-    setCast(value);
-    const res = await gameActions.vote(value);
-    if (!res.ok) setCast(null);
-  }
-  async function playMission(card: 'success' | 'fail') {
-    setMissionPlayed(card);
-    const res = await gameActions.missionCard(card);
-    if (!res.ok) setMissionPlayed(null);
-  }
-  async function confirm() {
-    if (!pick) return;
-    setConfirming(true);
-    const ok = await pick.onConfirm();
-    if (!ok) setConfirming(false);
-  }
-
+  const disabled = busy || blocked;
+  const { canVote, canMission, canFail } = actionAvailability(game, myPlayerId);
+  if (game.isSpectator)
+    return (
+      <div className="table-action-placeholder">{t('game.spectating')}</div>
+    );
+  if (pick)
+    return (
+      <button
+        type="button"
+        className={`table-action ${pick.tone === 'crimson' ? 'is-negative' : ''}`}
+        disabled={disabled || selected.length !== pick.size}
+        onClick={() => void run(pick.onConfirm)}
+      >
+        {selected.length === pick.size
+          ? pick.confirmLabel
+          : t('table.pickRemaining', { count: pick.size - selected.length })}
+      </button>
+    );
+  if (canVote)
+    return (
+      <>
+        <button
+          type="button"
+          className="table-action is-positive"
+          disabled={disabled}
+          onClick={() => void run(() => actions.vote('approve'))}
+        >
+          {t('vote.approve')}
+        </button>
+        <button
+          type="button"
+          className="table-action is-negative"
+          disabled={disabled}
+          onClick={() => void run(() => actions.vote('reject'))}
+        >
+          {t('vote.reject')}
+        </button>
+      </>
+    );
+  if (canMission)
+    return (
+      <>
+        <button
+          type="button"
+          className="table-action is-positive"
+          disabled={disabled}
+          onClick={() => void run(() => actions.missionCard('success'))}
+        >
+          {t('missionVote.success')}
+        </button>
+        <button
+          type="button"
+          className="table-action is-negative"
+          disabled={disabled || !canFail}
+          aria-label={
+            !canFail ? t('missionVote.loyalOnlySuccess') : t('missionVote.fail')
+          }
+          onClick={() => void run(() => actions.missionCard('fail'))}
+        >
+          {t('missionVote.fail')}
+          {!canFail && <span aria-hidden="true"> · 🔒</span>}
+        </button>
+      </>
+    );
   return (
-    <div className="flex w-full flex-col items-center gap-2">
-      {pick ? (
-        <div className="flex w-full items-end gap-2">
-          <DragScrollRow innerClassName="min-h-[6.5rem] items-end gap-2 px-2 py-4">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {!full &&
-                available.map((p) => (
-                  <NomineeHandCard
-                    key={p.id}
-                    player={p}
-                    reduce={!!reduce}
-                    onClick={() => onToggleSelect(p.id)}
-                  />
-                ))}
-              {full && (
-                <ConfirmCard
-                  key="confirm"
-                  label={pick.confirmLabel}
-                  tone={pick.tone}
-                  disabled={confirming}
-                  reduce={!!reduce}
-                  onClick={confirm}
-                />
-              )}
-            </AnimatePresence>
-          </DragScrollRow>
-          <IdentityCard game={game} />
-        </div>
-      ) : (
-        <div className="flex min-h-[6.5rem] w-full items-center justify-center gap-4 px-3">
-          <AnimatePresence mode="popLayout">
-            {canVote && (
-              <motion.div
-                key="vote-hand"
-                className="flex items-end gap-3"
-                exit={reduce ? { opacity: 0 } : { y: -180, opacity: 0, scale: 0.85 }}
-                transition={{ duration: 0.35 }}
-              >
-                <ActionCard
-                  tone="approve"
-                  icon="approve"
-                  label={t('vote.approve')}
-                  dealIndex={0}
-                  reduce={!!reduce}
-                  onPlay={() => vote('approve')}
-                />
-                <ActionCard
-                  tone="reject"
-                  icon="reject"
-                  label={t('vote.reject')}
-                  dealIndex={1}
-                  reduce={!!reduce}
-                  onPlay={() => vote('reject')}
-                />
-              </motion.div>
-            )}
-
-            {canMission && (
-              <motion.div
-                key="mission-hand"
-                className="flex items-end gap-3"
-                exit={reduce ? { opacity: 0 } : { y: -180, opacity: 0, scale: 0.85 }}
-                transition={{ duration: 0.35 }}
-              >
-                <ActionCard
-                  tone="approve"
-                  icon="missionSuccess"
-                  label={t('missionVote.success')}
-                  dealIndex={0}
-                  reduce={!!reduce}
-                  onPlay={() => playMission('success')}
-                />
-                <ActionCard
-                  tone="reject"
-                  icon="missionFail"
-                  label={t('missionVote.fail')}
-                  dealIndex={1}
-                  reduce={!!reduce}
-                  disabled={!isEvil}
-                  lockedHint={!isEvil ? t('missionVote.loyalOnlySuccess') : undefined}
-                  onPlay={() => playMission('fail')}
-                />
-              </motion.div>
-            )}
-
-            {game.phase === 'Voting' && alreadyVoted && (
-              <motion.span
-                key="voted"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-xs text-parchment/50"
-              >
-                {t('vote.castWaiting')}
-              </motion.span>
-            )}
-
-            {game.phase === 'MissionVote' && onTeam && missionPlayed && (
-              <motion.span
-                key="sealed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-xs text-parchment/50"
-              >
-                {t('missionVote.sealed')}
-              </motion.span>
-            )}
-          </AnimatePresence>
-
-          <IdentityCard game={game} />
-        </div>
-      )}
-
-      {/* Retract card below the hand. */}
-      <AnimatePresence>
-        {pick && selected.length > 0 && (
-          <RetractCard
-            key="retract"
-            label={t('teamBuilder.retract')}
-            reduce={!!reduce}
-            onClick={() => onToggleSelect(selected[selected.length - 1]!)}
-          />
-        )}
-      </AnimatePresence>
+    <div className="table-action-placeholder" aria-live="polite">
+      {t(game.phase === 'Voting'
+        ? 'table.waitingVotes'
+        : game.phase === 'MissionVote'
+          ? 'table.waitingMissionCards'
+          : 'table.waiting')}
     </div>
-  );
-}
-
-/**
- * A horizontally scrollable row. Touch uses native scroll; mouse can drag to
- * scroll. The inner padding leaves room so lifted cards are not clipped. A drag
- * that moved is swallowed so it doesn't also select a card.
- */
-function DragScrollRow({
-  children,
-  innerClassName,
-}: {
-  children: ReactNode;
-  innerClassName?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const st = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
-
-  return (
-    <div
-      ref={ref}
-      onPointerDown={(e) => {
-        if (e.pointerType !== 'mouse' || !ref.current) return;
-        st.current = {
-          active: true,
-          startX: e.clientX,
-          startScroll: ref.current.scrollLeft,
-          moved: false,
-        };
-      }}
-      onPointerMove={(e) => {
-        if (!st.current.active || !ref.current) return;
-        const dx = e.clientX - st.current.startX;
-        if (Math.abs(dx) > 4) st.current.moved = true;
-        ref.current.scrollLeft = st.current.startScroll - dx;
-      }}
-      onPointerUp={() => {
-        st.current.active = false;
-      }}
-      onPointerLeave={() => {
-        st.current.active = false;
-      }}
-      onClickCapture={(e) => {
-        if (st.current.moved) {
-          e.stopPropagation();
-          st.current.moved = false;
-        }
-      }}
-      className="w-full min-w-0 overflow-x-auto overscroll-x-contain"
-      style={{ scrollbarWidth: 'none', cursor: 'grab' }}
-    >
-      <div className={cn('flex w-max mx-auto', innerClassName)}>{children}</div>
-    </div>
-  );
-}
-
-/** A large play card (vote / mission) that deals in and flies up when played. */
-function ActionCard({
-  tone,
-  icon,
-  label,
-  dealIndex,
-  reduce,
-  disabled,
-  lockedHint,
-  onPlay,
-}: {
-  tone: 'approve' | 'reject';
-  icon: GameIconName;
-  label: string;
-  dealIndex: number;
-  reduce: boolean;
-  disabled?: boolean;
-  lockedHint?: string;
-  onPlay: () => void;
-}) {
-  const approve = tone === 'approve';
-  return (
-    <motion.button
-      type="button"
-      onClick={onPlay}
-      disabled={disabled}
-      title={lockedHint}
-      initial={reduce ? false : { y: -150, opacity: 0, rotate: approve ? -10 : 10, scale: 0.8 }}
-      animate={{ y: 0, opacity: 1, rotate: 0, scale: 1 }}
-      transition={
-        reduce
-          ? { duration: 0 }
-          : {
-              type: 'spring',
-              stiffness: 320,
-              damping: 24,
-              delay: dealIndex * 0.12,
-            }
-      }
-      whileHover={reduce || disabled ? undefined : { y: -10, scale: 1.05 }}
-      whileTap={disabled ? undefined : { scale: 0.96 }}
-      className={cn(
-        'relative flex h-24 w-[4.3rem] flex-col items-center justify-center gap-1.5 rounded-xl border-2 shadow-lg shadow-black/40',
-        disabled
-          ? 'cursor-not-allowed border-gold/20 bg-stone/40 opacity-55'
-          : approve
-            ? 'border-sky-300/60 bg-gradient-to-br from-sky-600 to-royal'
-            : 'border-crimson-bright/70 bg-gradient-to-br from-crimson-bright to-crimson',
-      )}
-    >
-      <GameIcon name={icon} className="h-10 w-10 drop-shadow" />
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-parchment">
-        {label}
-      </span>
-      {disabled && <span className="absolute right-1.5 top-1.5 text-xs">🔒</span>}
-    </motion.button>
-  );
-}
-
-/** One pick candidate (face-up — nomination / assassination are public). Tap to
- *  play it up to the centre; when enough are picked, the rest fly away. */
-function NomineeHandCard({
-  player,
-  reduce,
-  onClick,
-}: {
-  player: ClientPlayer;
-  reduce: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      layout
-      initial={reduce ? false : { y: -120, opacity: 0, scale: 0.8 }}
-      animate={{ y: 0, opacity: 1, scale: 1 }}
-      exit={reduce ? { opacity: 0 } : { y: -90, opacity: 0, scale: 0.6 }}
-      transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 340, damping: 24 }}
-      whileHover={reduce ? undefined : { y: -8, scale: 1.04 }}
-      className="flex h-[4.6rem] w-12 shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-gold/40 bg-ink/60 px-1 shadow-md"
-    >
-      <PlayerAvatar
-        avatarUrl={player.avatarUrl}
-        name={player.name}
-        seat={player.seat}
-        className="h-6 w-6 shrink-0 text-xs"
-      />
-      <span className="max-w-full truncate text-[9px] leading-tight text-parchment">
-        {player.name}
-      </span>
-    </motion.button>
-  );
-}
-
-/** The "confirm" card, dealt once enough picks are made. */
-function ConfirmCard({
-  label,
-  tone,
-  disabled,
-  reduce,
-  onClick,
-}: {
-  label: string;
-  tone: 'gold' | 'crimson' | 'sky';
-  disabled: boolean;
-  reduce: boolean;
-  onClick: () => void;
-}) {
-  const cls =
-    tone === 'crimson'
-      ? 'border-crimson-bright bg-gradient-to-br from-crimson-bright to-crimson text-parchment'
-      : tone === 'sky'
-        ? 'border-sky-300 bg-gradient-to-br from-sky-500 to-royal text-parchment'
-        : 'border-gold-bright bg-gradient-to-br from-gold-bright to-gold text-ink-deep';
-  const icon: GameIconName = tone === 'crimson' ? 'reject' : tone === 'sky' ? 'lady' : 'crest';
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      initial={reduce ? false : { y: -150, opacity: 0, scale: 0.8 }}
-      animate={{ y: 0, opacity: 1, scale: 1 }}
-      exit={reduce ? { opacity: 0 } : { y: -90, opacity: 0, scale: 0.7 }}
-      transition={
-        reduce ? { duration: 0 } : { type: 'spring', stiffness: 320, damping: 22, delay: 0.18 }
-      }
-      whileHover={reduce || disabled ? undefined : { y: -8, scale: 1.05 }}
-      whileTap={disabled ? undefined : { scale: 0.96 }}
-      className={cn(
-        'flex h-24 w-20 flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-1.5 shadow-candle disabled:opacity-60',
-        cls,
-      )}
-    >
-      <GameIcon name={icon} className="h-10 w-10" />
-      <span className="text-center text-[11px] font-semibold leading-tight">{label}</span>
-    </motion.button>
-  );
-}
-
-/** The "retract" card, below the hand — undoes the most recent pick. */
-function RetractCard({
-  label,
-  reduce,
-  onClick,
-}: {
-  label: string;
-  reduce: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      initial={reduce ? false : { opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
-      className="flex items-center gap-1.5 rounded-full border border-gold/40 bg-stone/70 px-4 py-1.5 text-xs text-parchment hover:border-gold/80 hover:shadow-candle"
-    >
-      <span>↩</span>
-      {label}
-    </motion.button>
   );
 }

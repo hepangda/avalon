@@ -11,22 +11,14 @@ import {
   type GameEvent,
   type GameOptions,
   type GameState,
-  type VoicePresenceStatus,
 } from '@/lib/engine';
 import { fallbackSeatName } from '@/lib/game/names';
 import type { Ack, RoomConfig, RoomMember, RoomStatus } from '@/lib/socket/types';
 import type { ClientEvent, WireRequest } from '@/lib/socket/protocol';
 import { buildReplayFromEvents } from './replay-builder';
+import type { ReplayData } from '@/lib/game/replayTypes';
 import { DEFAULT_ATTACHMENT, type Env, type SocketAttachment } from './env';
 import { makePlayerId, makeSessionToken } from './ids';
-import {
-  addRealtimeKitParticipant,
-  createRealtimeKitMeeting,
-  deleteRealtimeKitParticipant,
-  getRealtimeKitCredentials,
-  RealtimeKitApiError,
-  refreshRealtimeKitParticipantToken,
-} from './realtimekit';
 import {
   DDL,
   parseMember,
@@ -40,7 +32,7 @@ import {
   activePlayers,
   isNameTaken,
   mergeConfig,
-  restoreLobbySeatIdentity,
+  restoreSeatIdentity,
   sanitizeAvatarUrl,
   sanitizeConfig,
   sanitizeName,
@@ -52,19 +44,14 @@ import {
 const SPECTATOR_VIEWER = '__spectator__';
 /** Sentinel actor name for an admin operator who holds no seat. */
 const ADMIN_ANON = '__admin_someone__';
+const REPLAY_RETRY_MS = 30_000;
 
-interface VoiceRevocationRow {
+interface ReplayArchiveRow {
   [key: string]: SqlStorageValue;
-  player_id: string;
-  participant_id: string;
-  meeting_id: string;
-  attempts: number;
-}
-
-interface VoicePresenceRow {
-  [key: string]: SqlStorageValue;
-  player_id: string;
-  state: VoicePresenceStatus;
+  game_id: string;
+  revision: number;
+  payload: string;
+  pending: number;
 }
 
 interface TableInfoRow {
@@ -92,7 +79,6 @@ export class RoomDurableObject extends DurableObject<Env> {
   private members = new Map<string, RoomMember>();
   private game: GameState | null = null;
   private eventSeq = 0;
-  private voiceMeetingId: string | null = null;
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
@@ -123,10 +109,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     }
     this.meta = parseMeta(row);
     this.eventSeq = row.event_seq;
-    this.voiceMeetingId =
-      this.sql
-        .exec<{ meeting_id: string }>('SELECT meeting_id FROM voice_meeting WHERE id = 1')
-        .toArray()[0]?.meeting_id ?? null;
     const playerRows = this.sql
       .exec<PlayerRow>('SELECT id, name, avatar_url, seat, is_spectator, claimed, connected FROM player')
       .toArray();
@@ -145,14 +127,16 @@ export class RoomDurableObject extends DurableObject<Env> {
     }
   }
 
-  /** Deterministically rebuild the engine state by replaying the event log. */
+  /** Deterministically rebuild the engine state, skipping retired presence events. */
   private replayEvents(seed: string, options: GameOptions): GameState | null {
     const seated = activePlayers(this.members).map((m) => ({ id: m.id, name: m.name }));
     const created = createGame({ hostId: seated[0]?.id ?? '', players: seated, options, seed });
     if (!created.ok) return null;
     let state = created.state;
     const rows = this.sql
-      .exec<GameEventRow>('SELECT seq, type, payload, created_at FROM game_event ORDER BY seq ASC')
+      .exec<GameEventRow>(
+        "SELECT seq, type, payload, created_at FROM game_event WHERE type != 'SET_VOICE_PRESENCE' ORDER BY seq ASC",
+      )
       .toArray();
     for (const r of rows) {
       const event = JSON.parse(r.payload) as GameEvent;
@@ -177,7 +161,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     creator: { name: string; avatarUrl?: string };
   }): Promise<
     | { ok: true; hostToken: string; playerId: string; playerToken: string }
-    | { ok: false; error: 'ROOM_EXISTS' | 'VOICE_UNAVAILABLE' | 'INVALID_CREATOR' }
+    | { ok: false; error: 'ROOM_EXISTS' | 'INVALID_CREATOR' }
   > {
     return this.ctx.blockConcurrencyWhile(async () => {
       this.ensureLoaded();
@@ -188,20 +172,6 @@ export class RoomDurableObject extends DurableObject<Env> {
       if (!creatorName) return { ok: false, error: 'INVALID_CREATOR' };
       if (roster.length === 0) roster.push(fallbackSeatName(0));
       const config = mergeConfig(input.config, roster);
-      let voiceMeetingId: string | null = null;
-      if (config.voiceEnabled) {
-        const credentials = getRealtimeKitCredentials(this.env);
-        if (!credentials) return { ok: false, error: 'VOICE_UNAVAILABLE' };
-        try {
-          voiceMeetingId = await createRealtimeKitMeeting(
-            credentials,
-            `Avalon ${input.code}`,
-          );
-        } catch (error) {
-          this.logRealtimeKitError('create meeting', error);
-          return { ok: false, error: 'VOICE_UNAVAILABLE' };
-        }
-      }
       const seats: RoomMember[] = roster.map((name, i) => ({
         id: makePlayerId(),
         name,
@@ -224,9 +194,6 @@ export class RoomDurableObject extends DurableObject<Env> {
       );
       for (const s of seats) this.persistPlayer(s);
       this.persistPlayerSession(creatorSeat.id, playerToken);
-      if (voiceMeetingId) {
-        this.sql.exec('INSERT INTO voice_meeting (id, meeting_id) VALUES (1, ?)', voiceMeetingId);
-      }
       this.meta = {
         code: input.code,
         hostToken,
@@ -236,7 +203,6 @@ export class RoomDurableObject extends DurableObject<Env> {
         seed: null,
       };
       this.members = new Map(seats.map((s) => [s.id, s]));
-      this.voiceMeetingId = voiceMeetingId;
       return { ok: true, hostToken, playerId: creatorSeat.id, playerToken };
     });
   }
@@ -249,7 +215,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     maxPlayers: number;
     allowSpectators: boolean;
     allowMidJoin: boolean;
-    voiceEnabled: boolean;
   } | null> {
     this.ensureLoaded();
     if (!this.meta) return null;
@@ -261,7 +226,6 @@ export class RoomDurableObject extends DurableObject<Env> {
       maxPlayers: this.meta.config.maxPlayers,
       allowSpectators: this.meta.config.allowSpectators,
       allowMidJoin: this.meta.config.allowMidJoin,
-      voiceEnabled: this.meta.config.voiceEnabled,
     };
   }
 
@@ -319,15 +283,12 @@ export class RoomDurableObject extends DurableObject<Env> {
   }
 
   override async alarm(): Promise<void> {
-    await this.ctx.blockConcurrencyWhile(async () => {
-      this.ensureLoaded();
-      const pending = this.sql
-        .exec<VoiceRevocationRow>(
-          'SELECT player_id, participant_id, meeting_id, attempts FROM voice_revocation',
-        )
-        .toArray();
-      for (const revocation of pending) await this.retryVoiceRevocation(revocation);
-    });
+    this.ensureLoaded();
+    const pending = this.sql.exec<ReplayArchiveRow>(
+      'SELECT game_id, revision, payload, pending FROM replay_archive WHERE id = 1 AND pending = 1',
+    ).toArray()[0];
+    if (pending) await this.archiveReplay(true);
+    else await this.ctx.storage.deleteAlarm();
   }
 
   private dispatch(
@@ -348,12 +309,6 @@ export class RoomDurableObject extends DurableObject<Env> {
         return this.handleRemoveSeat(ws, payload);
       case 'room:restart':
         return this.handleRestart(ws);
-      case 'voice:token':
-        return this.handleVoiceToken(ws);
-      case 'voice:presence':
-        return this.handleVoicePresence(ws, payload);
-      case 'voice:dropped':
-        return this.handleVoiceDropped(ws, payload);
       case 'room:config':
         return this.handleConfig(ws, payload);
       case 'room:rename':
@@ -367,7 +322,10 @@ export class RoomDurableObject extends DurableObject<Env> {
       case 'room:leave':
         return this.handleLeave(ws);
       case 'game:ackRole':
-        return this.gameAction(ws, (pid) => ({ type: 'ACK_ROLE', by: pid }));
+        return this.gameAction(ws, (pid) => ({
+          type: 'ACK_ROLE', by: pid,
+          roleRevision: (payload as { roleRevision?: number } | null)?.roleRevision,
+        }));
       case 'game:proposeTeam':
         return this.gameAction(ws, (pid) => ({
           type: 'PROPOSE_TEAM',
@@ -420,6 +378,10 @@ export class RoomDurableObject extends DurableObject<Env> {
         return this.handleAdminPhase(ws, 'assassination');
       case 'admin:previousPhase':
         return this.handleAdminPhase(ws, 'previous');
+      case 'admin:rerollLeader':
+        return this.handleAdminReroll(ws, 'REROLL_LEADER');
+      case 'admin:rerollRoles':
+        return this.handleAdminReroll(ws, 'REROLL_ROLES');
       default:
         return fail('UNKNOWN_EVENT', `Unknown event: ${String(event)}`);
     }
@@ -497,7 +459,6 @@ export class RoomDurableObject extends DurableObject<Env> {
       return fail('NAME_TAKEN', 'That name is already taken in this room');
     }
     if (prevId && prevId !== seatId) {
-      await this.revokeVoiceParticipant(prevId);
       this.releaseSeat(prevId);
       if (this.game) await this.applyEvent({ type: 'SET_CONNECTED', by: prevId, connected: false });
     }
@@ -521,7 +482,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     const pid = this.attach(ws).playerId;
     if (!pid) return ok();
-    await this.revokeVoiceParticipant(pid);
     this.releaseSeat(pid);
     if (this.game) {
       await this.applyEvent({ type: 'SET_CONNECTED', by: pid, connected: false });
@@ -551,7 +511,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     this.meta.config = sanitizeConfig(
       config,
       this.meta.config.roster,
-      this.meta.config.voiceEnabled,
     );
     this.persistConfig();
     this.broadcastRoom();
@@ -595,6 +554,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     await this.archiveReplay();
     this.ctx.storage.transactionSync(() => {
       this.sql.exec('DELETE FROM game_event');
+      this.sql.exec('DELETE FROM replay_archive');
       this.sql.exec("UPDATE room_meta SET status = 'lobby', game_id = NULL, seed = NULL, event_seq = 0 WHERE id = 1");
     });
     this.meta.status = 'lobby';
@@ -635,7 +595,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     }
     const targetWs = this.wsForPlayer(targetPlayerId);
     if (targetWs) this.send(targetWs, 'system:notice', { type: 'kicked', message: 'You were removed' });
-    await this.revokeVoiceParticipant(targetPlayerId);
     this.releaseSeat(targetPlayerId);
     this.broadcastRoom();
     return ok();
@@ -681,17 +640,6 @@ export class RoomDurableObject extends DurableObject<Env> {
 
     const res = await this.applyEvent({ type: 'START_GAME', by: seated[0]!.id });
     if (!res.ok) return res;
-    const joinedVoice = this.sql
-      .exec<VoicePresenceRow>("SELECT player_id, state FROM voice_presence WHERE state = 'joined'")
-      .toArray();
-    for (const presence of joinedVoice) {
-      if (!this.game.players.some((player) => player.id === presence.player_id)) continue;
-      await this.applyEvent({
-        type: 'SET_VOICE_PRESENCE',
-        by: presence.player_id,
-        status: 'joined',
-      });
-    }
     for (const m of seated) if (m.claimed) this.sendPrivateReveal(m.id);
     this.broadcastRoom();
     return ok();
@@ -726,97 +674,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     return ok();
   }
 
-  private async handleVoiceToken(
-    ws: WebSocket,
-  ): Promise<Ack<{ authToken: string }>> {
-    if (!this.meta?.config.voiceEnabled || !this.voiceMeetingId) {
-      return fail('VOICE_DISABLED', 'This room does not have voice enabled');
-    }
-    const playerId = this.attach(ws).playerId;
-    const member = playerId ? this.members.get(playerId) : undefined;
-    if (!playerId || !member?.claimed || this.wsForPlayer(playerId) !== ws) {
-      return fail('SEAT_REQUIRED', 'Claim a seat before joining voice');
-    }
-    const credentials = getRealtimeKitCredentials(this.env);
-    if (!credentials) return fail('VOICE_UNAVAILABLE', 'Voice is temporarily unavailable');
-
-    try {
-      const pendingRevocation = this.voiceRevocation(playerId);
-      if (pendingRevocation && !(await this.retryVoiceRevocation(pendingRevocation))) {
-        return fail('VOICE_UNAVAILABLE', 'Voice is temporarily unavailable');
-      }
-      const existingParticipantId = this.voiceParticipantId(playerId);
-      if (existingParticipantId) {
-        try {
-          const authToken = await refreshRealtimeKitParticipantToken(
-            credentials,
-            this.voiceMeetingId,
-            existingParticipantId,
-          );
-          return ok({ authToken });
-        } catch (error) {
-          if (!(error instanceof RealtimeKitApiError) || error.status !== 404) throw error;
-          this.deleteVoiceParticipantRecord(playerId);
-        }
-      }
-
-      const participant = await addRealtimeKitParticipant(
-        credentials,
-        this.voiceMeetingId,
-        playerId,
-        member.name,
-      );
-      this.persistVoiceParticipant(playerId, participant.participantId);
-      return ok({ authToken: participant.authToken });
-    } catch (error) {
-      this.logRealtimeKitError('issue participant token', error);
-      return fail('VOICE_UNAVAILABLE', 'Voice is temporarily unavailable');
-    }
-  }
-
-  private handleVoicePresence(ws: WebSocket, payload: unknown): Promise<Ack> | Ack {
-    if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
-    const playerId = this.attach(ws).playerId;
-    const member = playerId ? this.members.get(playerId) : undefined;
-    if (!playerId || !member?.claimed || this.wsForPlayer(playerId) !== ws) {
-      return fail('SEAT_REQUIRED', 'Claim a seat before reporting voice presence');
-    }
-    const status = (payload as { status?: unknown } | null)?.status;
-    if (status !== 'joined' && status !== 'left' && status !== 'dropped') {
-      return fail('INVALID_VOICE_PRESENCE', 'Unknown voice presence state');
-    }
-    return this.updateVoicePresence(playerId, status);
-  }
-
-  private handleVoiceDropped(ws: WebSocket, payload: unknown): Promise<Ack> | Ack {
-    if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
-    const reporterId = this.attach(ws).playerId;
-    const targetId = (payload as { playerId?: unknown } | null)?.playerId;
-    if (
-      !reporterId ||
-      typeof targetId !== 'string' ||
-      !this.members.get(reporterId)?.claimed ||
-      !this.members.get(targetId)?.claimed ||
-      this.voicePresence(reporterId) !== 'joined'
-    ) {
-      return fail('INVALID_VOICE_REPORT', 'Voice drop report is not permitted');
-    }
-    if (this.voicePresence(targetId) !== 'joined') return ok();
-    return this.updateVoicePresence(targetId, 'dropped');
-  }
-
-  private async updateVoicePresence(
-    playerId: string,
-    status: VoicePresenceStatus,
-  ): Promise<Ack> {
-    if (this.voicePresence(playerId) === status) return ok();
-    this.persistVoicePresence(playerId, status);
-    if (this.game && this.game.players.some((player) => player.id === playerId)) {
-      return this.applyEvent({ type: 'SET_VOICE_PRESENCE', by: playerId, status });
-    }
-    return ok();
-  }
-
   private handleAdminAuth(ws: WebSocket): Ack<{ ok: boolean }> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     this.setAttach(ws, { isAdmin: true });
@@ -842,7 +699,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     const actor = this.adminActorName(ws);
     const targetName = target.name;
     const targetWs = this.wsForPlayer(targetPlayerId);
-    await this.revokeVoiceParticipant(targetPlayerId);
     this.releaseSeat(targetPlayerId);
     if (targetWs) {
       this.send(targetWs, 'system:notice', { type: 'unbound', message: 'You were unbound by a referee' });
@@ -916,6 +772,15 @@ export class RoomDurableObject extends DurableObject<Env> {
     return res;
   }
 
+  private async handleAdminReroll(
+    ws: WebSocket,
+    type: 'REROLL_LEADER' | 'REROLL_ROLES',
+  ): Promise<Ack> {
+    if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
+    if (!this.attach(ws).isAdmin) return fail('NOT_ADMIN', 'Referee panel not enabled');
+    return this.applyEvent({ type, actor: this.adminActorName(ws) });
+  }
+
   // ---------------------------------------------------------------------------
   // Leave / disconnect
   // ---------------------------------------------------------------------------
@@ -927,7 +792,6 @@ export class RoomDurableObject extends DurableObject<Env> {
       this.broadcastRoom();
       return ok();
     }
-    await this.revokeVoiceParticipant(pid);
     this.releaseSeat(pid);
     if (this.game) await this.applyEvent({ type: 'SET_CONNECTED', by: pid, connected: false });
     this.broadcastRoom();
@@ -945,7 +809,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     const member = this.members.get(pid);
     if (this.meta.status === 'lobby') {
       // Lobby drop: free the seat so someone else can claim it.
-      await this.revokeVoiceParticipant(pid);
       this.releaseSeat(pid);
       this.broadcastRoom();
     } else {
@@ -991,23 +854,30 @@ export class RoomDurableObject extends DurableObject<Env> {
         if (effect.checkpoint === 'game_started') this.setStatus('in_game');
         else if (effect.checkpoint === 'game_over') {
           this.setStatus('finished');
-          await this.archiveReplay();
+          this.prepareReplayArchive();
+          await this.archiveReplay(true);
         }
       }
     }
 
     if (event.type === 'PREVIOUS_PHASE') this.setStatus('in_game');
     this.broadcastState();
+    if (event.type === 'REROLL_ROLES') {
+      for (const member of this.members.values()) {
+        if (member.claimed && !member.isSpectator) this.sendPrivateReveal(member.id);
+      }
+    }
     return ok();
   }
 
-  /** On game over, build the immutable ReplayData and ship it to the ReplayDO
-   *  (keyed by gameId), then this room needs no replay tables at all. */
-  private async archiveReplay(): Promise<void> {
-    if (!this.meta?.gameId || !this.meta.seed) return;
+  /** Snapshot the completed record locally before any cross-object request. */
+  private prepareReplayArchive(): void {
+    if (!this.meta?.gameId || !this.meta.seed) throw new Error('No game to archive');
     const seated = activePlayers(this.members).map((m) => ({ id: m.id, name: m.name }));
     const rows = this.sql
-      .exec<GameEventRow>('SELECT seq, type, payload, created_at FROM game_event ORDER BY seq ASC')
+      .exec<GameEventRow>(
+        "SELECT seq, type, payload, created_at FROM game_event WHERE type != 'SET_VOICE_PRESENCE' ORDER BY seq ASC",
+      )
       .toArray();
     const events = rows.map((r) => ({
       seq: r.seq,
@@ -1022,8 +892,43 @@ export class RoomDurableObject extends DurableObject<Env> {
       events,
     );
     if (!replay?.outcome) throw new Error('Cannot archive an incomplete replay');
-    const stub = this.env.REPLAY.get(this.env.REPLAY.idFromName(this.meta.gameId));
-    await stub.store(replay);
+    this.sql.exec(
+      `INSERT INTO replay_archive (id, game_id, revision, payload, pending) VALUES (1, ?, ?, ?, 1)
+       ON CONFLICT(id) DO UPDATE SET game_id = excluded.game_id, revision = excluded.revision,
+       payload = excluded.payload, pending = 1`,
+      replay.gameId, this.eventSeq, JSON.stringify(replay),
+    );
+  }
+
+  /** Retry from the on-disk snapshot; room renames/reconnects cannot rewrite history. */
+  private async archiveReplay(allowPending = false): Promise<void> {
+    let row = this.sql.exec<ReplayArchiveRow>(
+      'SELECT game_id, revision, payload, pending FROM replay_archive WHERE id = 1',
+    ).toArray()[0];
+    if (!row) {
+      // Compatibility with a finished room created before durable retry snapshots.
+      this.prepareReplayArchive();
+      row = this.sql.exec<ReplayArchiveRow>(
+        'SELECT game_id, revision, payload, pending FROM replay_archive WHERE id = 1',
+      ).toArray()[0]!;
+    }
+    if (!row.pending) return;
+    // Persist the retry before sending. A crash or a failed RPC leaves both the
+    // snapshot and a wake-up on disk, even if every player has disconnected.
+    await this.ctx.storage.setAlarm(Date.now() + REPLAY_RETRY_MS);
+    try {
+      const stub = this.env.REPLAY.get(this.env.REPLAY.idFromName(row.game_id));
+      await stub.store(JSON.parse(row.payload) as ReplayData, row.revision);
+      this.sql.exec(
+        'UPDATE replay_archive SET pending = 0 WHERE id = 1 AND game_id = ? AND revision = ?',
+        row.game_id, row.revision,
+      );
+      const pending = this.sql.exec('SELECT id FROM replay_archive WHERE pending = 1').toArray();
+      if (!pending.length) await this.ctx.storage.deleteAlarm();
+    } catch (error) {
+      if (!allowPending) throw error;
+      console.error('[room-do] Replay archive pending; durable retry scheduled', error);
+    }
   }
 
   private project(playerId: string): ClientGameState {
@@ -1031,9 +936,12 @@ export class RoomDurableObject extends DurableObject<Env> {
     view.gameId = this.meta?.gameId ?? null;
     for (const p of view.players) {
       const member = this.members.get(p.id);
+      // Presence comes from the live room, not engine defaults or replayed events.
+      p.claimed = member?.claimed ?? false;
+      p.connected = !!(member?.claimed && member.connected);
       if (!member) continue;
+      p.name = member.name;
       if (member.latency !== undefined) p.latency = member.latency;
-      p.claimed = member.claimed;
       p.avatarUrl = member.avatarUrl;
     }
     return view;
@@ -1130,7 +1038,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     // Drop trailing unclaimed seats.
     for (let i = desired.length; i < seats.length; i++) {
       const seat = seats[i]!;
-      await this.revokeVoiceParticipant(seat.id);
       this.members.delete(seat.id);
       this.deletePlayer(seat.id);
     }
@@ -1166,13 +1073,11 @@ export class RoomDurableObject extends DurableObject<Env> {
     return null;
   }
 
-  /** Release a seat, restoring its lobby roster identity before dropping the binding. */
+  /** Release a seat, restoring its roster identity before dropping the binding. */
   private releaseSeat(playerId: string): void {
     const member = this.members.get(playerId);
     if (member) {
-      if (this.meta?.status === 'lobby') {
-        restoreLobbySeatIdentity(member, this.meta.config.roster);
-      }
+      restoreSeatIdentity(member, this.meta?.config.roster ?? []);
       member.claimed = false;
       member.connected = false;
       this.persistPlayer(member);
@@ -1180,68 +1085,6 @@ export class RoomDurableObject extends DurableObject<Env> {
     this.deletePlayerSession(playerId);
     const holder = this.wsForPlayer(playerId);
     if (holder) this.setAttach(holder, { playerId: undefined });
-  }
-
-  private async revokeVoiceParticipant(playerId: string): Promise<void> {
-    await this.updateVoicePresence(playerId, 'left');
-    const participantId = this.voiceParticipantId(playerId);
-    if (!participantId || !this.voiceMeetingId) return;
-    const revocation: VoiceRevocationRow = {
-      player_id: playerId,
-      participant_id: participantId,
-      meeting_id: this.voiceMeetingId,
-      attempts: 0,
-    };
-    this.persistVoiceRevocation(revocation);
-    await this.scheduleVoiceRevocationRetry(revocation.attempts);
-    await this.retryVoiceRevocation(revocation);
-  }
-
-  private async retryVoiceRevocation(revocation: VoiceRevocationRow): Promise<boolean> {
-    const credentials = getRealtimeKitCredentials(this.env);
-    if (!credentials) {
-      await this.recordVoiceRevocationFailure(revocation);
-      return false;
-    }
-    try {
-      await deleteRealtimeKitParticipant(
-        credentials,
-        revocation.meeting_id,
-        revocation.participant_id,
-      );
-    } catch (error) {
-      if (error instanceof RealtimeKitApiError && error.status === 404) {
-        this.completeVoiceRevocation(revocation);
-        return true;
-      }
-      this.logRealtimeKitError('delete participant', error);
-      await this.recordVoiceRevocationFailure(revocation);
-      return false;
-    }
-    this.completeVoiceRevocation(revocation);
-    return true;
-  }
-
-  private async recordVoiceRevocationFailure(revocation: VoiceRevocationRow): Promise<void> {
-    revocation.attempts += 1;
-    this.persistVoiceRevocation(revocation);
-    await this.scheduleVoiceRevocationRetry(revocation.attempts);
-  }
-
-  private async scheduleVoiceRevocationRetry(attempts: number): Promise<void> {
-    const delay = Math.min(5 * 60_000, 15_000 * 2 ** Math.min(attempts, 4));
-    const now = Date.now();
-    const scheduled = now + delay;
-    const current = await this.ctx.storage.getAlarm();
-    if (current === null || current <= now || current > scheduled) {
-      await this.ctx.storage.setAlarm(scheduled);
-    }
-  }
-
-  private logRealtimeKitError(action: string, error: unknown): void {
-    const detail =
-      error instanceof RealtimeKitApiError ? `HTTP ${error.status}` : 'unexpected error';
-    console.error(`[room-do] RealtimeKit ${action} failed: ${detail}`);
   }
 
   private adminActorName(ws: WebSocket): string {
@@ -1320,95 +1163,9 @@ export class RoomDurableObject extends DurableObject<Env> {
     this.sql.exec('DELETE FROM player_session WHERE player_id = ?', playerId);
   }
 
-  private voiceParticipantId(playerId: string): string | null {
-    return (
-      this.sql
-        .exec<{ participant_id: string }>(
-          'SELECT participant_id FROM voice_participant WHERE player_id = ?',
-          playerId,
-        )
-        .toArray()[0]?.participant_id ?? null
-    );
-  }
-
-  private voicePresence(playerId: string): VoicePresenceStatus | null {
-    return (
-      this.sql
-        .exec<VoicePresenceRow>(
-          'SELECT player_id, state FROM voice_presence WHERE player_id = ?',
-          playerId,
-        )
-        .toArray()[0]?.state ?? null
-    );
-  }
-
-  private persistVoicePresence(playerId: string, status: VoicePresenceStatus): void {
-    this.sql.exec(
-      `INSERT INTO voice_presence (player_id, state, updated_at) VALUES (?, ?, ?)
-       ON CONFLICT(player_id) DO UPDATE SET state=excluded.state, updated_at=excluded.updated_at`,
-      playerId,
-      status,
-      Date.now(),
-    );
-  }
-
-  private voiceRevocation(playerId: string): VoiceRevocationRow | null {
-    return (
-      this.sql
-        .exec<VoiceRevocationRow>(
-          `SELECT player_id, participant_id, meeting_id, attempts
-           FROM voice_revocation WHERE player_id = ?`,
-          playerId,
-        )
-        .toArray()[0] ?? null
-    );
-  }
-
-  private persistVoiceParticipant(playerId: string, participantId: string): void {
-    this.sql.exec(
-      `INSERT INTO voice_participant (player_id, participant_id) VALUES (?, ?)
-       ON CONFLICT(player_id) DO UPDATE SET participant_id=excluded.participant_id`,
-      playerId,
-      participantId,
-    );
-  }
-
-  private deleteVoiceParticipantRecord(playerId: string): void {
-    this.sql.exec('DELETE FROM voice_participant WHERE player_id = ?', playerId);
-  }
-
-  private persistVoiceRevocation(revocation: VoiceRevocationRow): void {
-    this.sql.exec(
-      `INSERT INTO voice_revocation (player_id, participant_id, meeting_id, attempts)
-       VALUES (?, ?, ?, ?)
-       ON CONFLICT(player_id) DO UPDATE SET
-         participant_id=excluded.participant_id,
-         meeting_id=excluded.meeting_id,
-         attempts=excluded.attempts`,
-      revocation.player_id,
-      revocation.participant_id,
-      revocation.meeting_id,
-      revocation.attempts,
-    );
-  }
-
-  private completeVoiceRevocation(revocation: VoiceRevocationRow): void {
-    this.sql.exec(
-      'DELETE FROM voice_revocation WHERE player_id = ? AND participant_id = ?',
-      revocation.player_id,
-      revocation.participant_id,
-    );
-    this.sql.exec(
-      'DELETE FROM voice_participant WHERE player_id = ? AND participant_id = ?',
-      revocation.player_id,
-      revocation.participant_id,
-    );
-  }
-
   private deletePlayer(id: string): void {
     this.sql.exec('DELETE FROM player WHERE id = ?', id);
     this.deletePlayerSession(id);
-    if (!this.voiceRevocation(id)) this.deleteVoiceParticipantRecord(id);
   }
 }
 

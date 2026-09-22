@@ -1,19 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useId, useRef } from 'react';
 import { useTranslations } from 'use-intl';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { seatLabel } from '@/lib/game/playerLabel';
 import { VoteResultPanel } from './VoteResultPanel';
 import { MissionCardReveal } from './MissionCardReveal';
-import { FunctionsPanel } from './FunctionsPanel';
-import {
-  announceBottomDockView,
-  BOTTOM_DOCK_VIEW_EVENT,
-  type BottomDockView,
-} from '@/components/ui/bottomDock';
 import type {
   ClientGameState,
   ClientLogEntry,
@@ -22,8 +14,13 @@ import type {
   Role,
 } from '@/lib/engine';
 
-type Channel = 'public' | 'private';
-type View = null | 'log' | 'functions';
+const CHANNELS = ['public', 'private', 'rules'] as const;
+export type LogChannel = (typeof CHANNELS)[number];
+const CHANNEL_LABELS = {
+  public: 'log.tabPublic',
+  private: 'log.tabPrivate',
+  rules: 'table.rules',
+} as const;
 
 const PLAYER_PARAMS = ['player', 'leader', 'target', 'holder'];
 const VOTE_KEYS = new Set(['voteApproved', 'voteRejected']);
@@ -36,33 +33,21 @@ function clock(at: number): string {
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-/**
- * The bottom strip, split into a wide "war log" button (shows the latest entry)
- * and a compact "functions" button. Tapping either opens a semi-transparent
- * floating sheet that overlays the game rather than taking layout space.
- */
-export function LogPanel({ game, code }: { game: ClientGameState; code: string }) {
+/** Shared war log, displayed as a page on small tables and a sidebar on wide ones. */
+export function LogPanel({
+  game,
+  channel: tab,
+  onChannelChange: setTab,
+}: {
+  game: ClientGameState;
+  channel: LogChannel;
+  onChannelChange: (channel: LogChannel) => void;
+}) {
   const t = useTranslations();
   const roleText = useRoleText();
-  const [view, setView] = useState<View>(null);
-  const [tab, setTab] = useState<Channel>('public');
-  const [mounted, setMounted] = useState(false);
+  const channelId = useId();
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    const closeForVoice = (event: Event) => {
-      if ((event as CustomEvent<BottomDockView>).detail === 'voice') setView(null);
-    };
-    window.addEventListener(BOTTOM_DOCK_VIEW_EVENT, closeForVoice);
-    return () => window.removeEventListener(BOTTOM_DOCK_VIEW_EVENT, closeForVoice);
-  }, []);
-
-  function openView(next: Exclude<View, null>) {
-    announceBottomDockView(next);
-    setView(next);
-  }
+  const following = useRef(true);
 
   const nameOf = (id: string) => {
     const p = game.players.find((x) => x.id === id);
@@ -84,11 +69,19 @@ export function LogPanel({ game, code }: { game: ClientGameState; code: string }
         .join('、');
     if (entry.params) {
       for (const [k, v] of Object.entries(entry.params)) {
-        if (entry.key === 'lineup' && (k === 'good' || k === 'evil') && typeof v === 'string') {
+        if (
+          entry.key === 'lineup' &&
+          (k === 'good' || k === 'evil') &&
+          typeof v === 'string'
+        ) {
           resolved[k] = decodeLineup(v);
         } else if (isAdmin && k === 'actor' && v === '__admin_someone__') {
           resolved[k] = t('admin.someone');
-        } else if (isAdmin && k === 'value' && (v === 'approve' || v === 'reject')) {
+        } else if (
+          isAdmin &&
+          k === 'value' &&
+          (v === 'approve' || v === 'reject')
+        ) {
           resolved[k] = v === 'approve' ? t('vote.approve') : t('vote.reject');
         } else if (isAdmin && k === 'phase') {
           resolved[k] = t(`phase.${v}`);
@@ -110,168 +103,166 @@ export function LogPanel({ game, code }: { game: ClientGameState; code: string }
     if (!VOTE_KEYS.has(entry.key) || !entry.params) return undefined;
     const round = Number(entry.params.round) - 1;
     const proposal = Number(entry.params.proposal) - 1;
-    return game.voteHistory.find((v) => v.roundIndex === round && v.proposalIndex === proposal);
+    return game.voteHistory.find(
+      (v) => v.roundIndex === round && v.proposalIndex === proposal,
+    );
   }
 
-  function missionResultFor(entry: ClientLogEntry): ClientMissionResult | undefined {
+  function missionResultFor(
+    entry: ClientLogEntry,
+  ): ClientMissionResult | undefined {
     if (!MISSION_KEYS.has(entry.key) || !entry.params) return undefined;
     const round = Number(entry.params.round) - 1;
     return game.missionResults.find((m) => m.roundIndex === round);
   }
 
   const entries = game.logs.filter((l) => l.channel === tab);
-  const latest = game.logs.filter((l) => l.channel === 'public').at(-1);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (tab === 'rules') el.scrollTop = 0;
+    else if (following.current) el.scrollTop = el.scrollHeight;
+  }, [tab, entries.length]);
 
   useEffect(() => {
-    if (view === 'log' && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [view, tab, entries.length]);
-
-  const sheet = (
-    <AnimatePresence>
-      {view && (
-        <motion.div
-          key="sheet"
-          className="fixed inset-0 z-40 flex items-end justify-center px-3 pt-3 pb-[4.5rem]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          {/* Light backdrop — the game stays visible; tap to close. */}
-          <div className="absolute inset-0" onClick={() => setView(null)} />
-
-          <motion.div
-            className="relative flex h-[70vh] max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gold/30 bg-ink/85 shadow-2xl shadow-black/60 backdrop-blur-md"
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-          >
-            <div className="flex h-11 shrink-0 items-center gap-2 border-b border-gold/15 px-4">
-              <span className="gilt flex-1 text-sm">
-                {view === 'log' ? t('log.panelTitle') : t('log.tabFunctions')}
-              </span>
-              <button
-                onClick={() => setView(null)}
-                className="px-1 text-parchment/60 hover:text-parchment"
-                aria-label={t('mission.close')}
-              >
-                ✕
-              </button>
-            </div>
-
-            {view === 'functions' ? (
-              <FunctionsPanel
-                code={code}
-                game={game}
-                onAssassinationStarted={() => setView(null)}
-              />
-            ) : (
-              <>
-                <div className="flex shrink-0 gap-1 border-b border-gold/15 px-3 py-2">
-                  {(['public', 'private'] as Channel[]).map((tb) => (
-                    <button
-                      key={tb}
-                      onClick={() => setTab(tb)}
-                      className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                        tab === tb ? 'bg-gold/20 text-gold' : 'text-parchment/50 hover:text-parchment'
-                      }`}
-                    >
-                      {tb === 'public' ? t('log.tabPublic') : t('log.tabPrivate')}
-                    </button>
-                  ))}
-                </div>
-
-                <div ref={scrollRef} className="flex-1 space-y-1.5 overflow-y-auto px-4 py-3">
-                  {entries.length > 0 ? (
-                    entries.map((entry) => {
-                      const voteRec = voteRecordFor(entry);
-                      const missionRec = missionResultFor(entry);
-                      return (
-                        <div key={entry.seq} className="text-sm leading-snug">
-                          <div className="flex items-baseline gap-2">
-                            <span className="shrink-0 font-mono text-[11px] text-parchment/35">
-                              {clock(entry.at)}
-                            </span>
-                            {entry.style === 'voice' && (
-                              <span className="shrink-0 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-200">
-                                {t('log.voiceTag')}
-                              </span>
-                            )}
-                            <span
-                              className={
-                                entry.style === 'admin'
-                                  ? 'font-semibold text-crimson'
-                                  : entry.style === 'voice'
-                                    ? 'text-emerald-100/85'
-                                  : 'text-parchment/85'
-                              }
-                            >
-                              {render(entry)}
-                            </span>
-                          </div>
-                          {voteRec && (
-                            <div className="ml-[3.2rem] mt-1.5 rounded-lg border border-gold/15 bg-ink/40 p-2.5">
-                              <VoteResultPanel record={voteRec} game={game} compact />
-                            </div>
-                          )}
-                          {missionRec && (
-                            <div className="ml-[3.2rem] mt-1.5 rounded-lg border border-gold/15 bg-ink/40 p-2.5">
-                              <MissionCardReveal
-                                teamSize={missionRec.teamSize}
-                                failCount={missionRec.failCount}
-                                instant
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="text-center text-sm text-parchment/40">{t('log.empty')}</p>
-                  )}
-                </div>
-              </>
-            )}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+    const el = scrollRef.current;
+    if (!el || tab === 'rules') return;
+    const observer = new ResizeObserver(() => {
+      if (el.clientHeight > 0 && following.current)
+        el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [tab]);
 
   return (
-    <>
-      <div className="flex items-stretch gap-2">
-        <button
-          onClick={() => openView('log')}
-          className="panel flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left"
-        >
-          <span className="gilt shrink-0 text-sm">{t('log.panelTitle')}</span>
-          {latest?.style === 'voice' && (
-            <span className="shrink-0 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-emerald-200">
-              {t('log.voiceTag')}
-            </span>
-          )}
-          <span className="min-w-0 flex-1 truncate text-xs text-parchment/45">
-            {latest ? render(latest) : ''}
-          </span>
-          <span className="shrink-0 text-parchment/40">▴</span>
-        </button>
-
-        <div id="voice-dock-slot" className="flex shrink-0" />
-
-        <button
-          onClick={() => openView('functions')}
-          className="panel flex w-11 shrink-0 items-center justify-center gap-1.5 px-0 py-2 text-sm text-parchment hover:border-gold/60 sm:w-auto sm:px-4"
-          aria-label={t('log.tabFunctions')}
-        >
-          <span>⚙</span>
-          <span className="hidden sm:inline">{t('log.tabFunctions')}</span>
-        </button>
+    <section className="war-log" aria-label={t('log.panelTitle')}>
+      <h2 className="war-log-title">{t('log.panelTitle')}</h2>
+      <div
+        role="tablist"
+        aria-label={t('log.channels')}
+        className="war-log-channels"
+      >
+        {CHANNELS.map((tb) => (
+          <button
+            key={tb}
+            type="button"
+            role="tab"
+            id={`${channelId}-${tb}`}
+            aria-controls={`${channelId}-entries`}
+            aria-selected={tab === tb}
+            tabIndex={tab === tb ? 0 : -1}
+            onClick={() => {
+              following.current = true;
+              setTab(tb);
+            }}
+            onKeyDown={(event) => {
+              if (
+                !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)
+              )
+                return;
+              event.preventDefault();
+              const next =
+                event.key === 'Home'
+                  ? 'public'
+                  : event.key === 'End'
+                    ? 'rules'
+                    : (CHANNELS[
+                        (CHANNELS.indexOf(tb) +
+                          (event.key === 'ArrowRight' ? 1 : -1) +
+                          CHANNELS.length) %
+                          CHANNELS.length
+                      ] ?? CHANNELS[0]);
+              following.current = true;
+              setTab(next);
+              document.getElementById(`${channelId}-${next}`)?.focus();
+            }}
+            className="war-log-channel"
+          >
+            {t(CHANNEL_LABELS[tb])}
+          </button>
+        ))}
       </div>
 
-      {mounted ? createPortal(sheet, document.body) : null}
-    </>
+      <div
+        ref={scrollRef}
+        role="tabpanel"
+        id={`${channelId}-entries`}
+        aria-labelledby={`${channelId}-${tab}`}
+        tabIndex={0}
+        className="war-log-entries"
+        onScroll={(event) => {
+          const el = event.currentTarget;
+          if (el.clientHeight > 0)
+            following.current =
+              el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+        }}
+      >
+        {tab === 'rules' ? (
+          <div className="space-y-4 pt-3 text-sm">
+            <p>{t('lobby.rolesInPlay', { count: game.players.length })}</p>
+            <div className="flex flex-wrap gap-2">
+              {game.config.rolesInPlay.map((role, i) => (
+                <span className="table-team-chip" key={`${role}-${i}`}>
+                  {roleText.shortName(role)}
+                </span>
+              ))}
+            </div>
+            <div className="space-y-2 text-parchment/70">
+              {game.config.missionSizes.map((size, i) => (
+                <p key={i}>
+                  {t('table.missionRule', {
+                    round: i + 1,
+                    players: size,
+                    fails: game.config.requiredFails[i],
+                  })}
+                </p>
+              ))}
+            </div>
+          </div>
+        ) : entries.length > 0 ? (
+          entries.map((entry) => {
+            const voteRec = voteRecordFor(entry);
+            const missionRec = missionResultFor(entry);
+            return (
+              <div key={entry.seq} className="war-log-entry">
+                <div className="flex items-baseline gap-2">
+                  <span className="shrink-0 font-mono text-[11px] text-parchment/35">
+                    {clock(entry.at)}
+                  </span>
+                  <span
+                    className={
+                      entry.style === 'admin'
+                        ? 'font-semibold text-crimson'
+                        : 'text-parchment/85'
+                    }
+                  >
+                    {render(entry)}
+                  </span>
+                </div>
+                {voteRec && (
+                  <div className="mt-2 rounded-lg border border-gold/15 bg-ink/40 p-2.5">
+                    <VoteResultPanel record={voteRec} game={game} compact />
+                  </div>
+                )}
+                {missionRec && (
+                  <div className="mt-2 rounded-lg border border-gold/15 bg-ink/40 p-2.5">
+                    <MissionCardReveal
+                      teamSize={missionRec.teamSize}
+                      failCount={missionRec.failCount}
+                      instant
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-center text-sm text-parchment/40">
+            {t('log.empty')}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }

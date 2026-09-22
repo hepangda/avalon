@@ -9,6 +9,7 @@ import {
   type GameState,
 } from '@/lib/engine';
 import type { ReplayData, ReplayLadyCheck, ReplayRound } from '@/lib/game/replayTypes';
+import { roleVariants } from '@/lib/engine/roleVariants';
 
 /**
  * Reconstructs the full ReplayData for a finished game by replaying its event
@@ -150,10 +151,15 @@ class ReplayBuilder {
   }
 
   build(gameId: string, finalState: GameState): ReplayData {
+    const variants = roleVariants(finalState);
     return {
       gameId,
       outcome: finalState.outcome,
-      roleAssignments: finalState.players.map((p) => ({ playerId: p.id, role: p.role })),
+      roleAssignments: finalState.players.map((p) => ({
+        playerId: p.id,
+        role: p.role,
+        ...(p.role === 'LoyalServant' ? { roleVariant: variants[p.id] } : {}),
+      })),
       players: finalState.players
         .slice()
         .sort((a, b) => a.seat - b.seat)

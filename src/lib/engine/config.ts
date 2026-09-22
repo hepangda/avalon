@@ -40,6 +40,12 @@ export const MIN_PLAYERS = 5;
 export const MAX_PLAYERS = 10;
 export const MISSION_COUNT = 5;
 
+/** Bound custom rejection limits, retaining the standard rule for legacy data. */
+export function rejectionLimit(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 5;
+  return Math.min(5, Math.max(1, Math.floor(value)));
+}
+
 export function isValidPlayerCount(count: number): boolean {
   return Number.isInteger(count) && count >= MIN_PLAYERS && count <= MAX_PLAYERS;
 }

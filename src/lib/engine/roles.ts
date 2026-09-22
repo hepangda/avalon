@@ -50,7 +50,7 @@ export function buildRoleSet(playerCount: number, options: GameOptions): Role[] 
 
   if (goodRoles.length !== good || evilRoles.length !== evil) {
     throw new Error(
-      `Role set mismatch for ${playerCount}p: built ${goodRoles.length} good / ${evilRoles.length} evil, ` +
+      `Role set mismatch for ${playerCount}p: built ${goodRoles.length} blue / ${evilRoles.length} red, ` +
         `expected ${good}/${evil} (too many special roles enabled?)`,
     );
   }

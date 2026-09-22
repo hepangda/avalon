@@ -1,44 +1,44 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
+import { useRoomStore } from '@/lib/store/room';
 import { adminActions } from '@/lib/socket/client';
 import { seatLabel } from '@/lib/game/playerLabel';
 import type { ClientGameState } from '@/lib/engine';
 
-/**
- * Referee (admin) panel. Anyone may open it mid-game to handle out-of-band
- * situations: unbind a disconnected player so the seat can be re-claimed, cast a
- * vote for someone, or propose the team for a stuck leader. There is no
- * password — opening requires only a confirmation tap.
- *
- * Authorization is per-socket and lives only in this component's local state
- * (a refresh clears it). Every action the server performs is announced in the
- * public war-log in red, so the whole table can audit who did what.
- *
- * Security: the operator never assumes a target's identity — all "act as"
- * actions are performed server-side, so no private role/vision leaks here.
- */
-export function AdminPanel({
-  game,
-  open,
-  onClose,
-}: {
-  game: ClientGameState;
-  open: boolean;
-  onClose: () => void;
-}) {
+type RefereeTool =
+  | 'enable'
+  | 'rerollLeader'
+  | 'rerollRoles'
+  | 'assassination'
+  | 'previous'
+  | 'unbind'
+  | 'vote'
+  | 'retractVotes'
+  | 'retractProposal'
+  | 'propose'
+  | 'disable';
+
+/** Independent referee entries in the functions sheet, each with its own dialog. */
+export function AdminPanel({ game }: { game: ClientGameState }) {
   const t = useTranslations();
-  const [authed, setAuthed] = useState(false);
+  const authed = useRoomStore((state) => state.isReferee);
+  const setAuthed = useRoomStore((state) => state.setIsReferee);
+  const [activeTool, setActiveTool] = useState<RefereeTool | null>(null);
+  const inFlight = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [confirmPhase, setConfirmPhase] = useState<'assassination' | 'previous' | null>(null);
-
   useEffect(() => setMounted(true), []);
-  useEffect(() => setConfirmPhase(null), [game.phase, game.phaseRevision, open]);
+  useEffect(() => {
+    setActiveTool(null);
+    setError(null);
+    setVoteTarget('');
+    setProposeSel([]);
+  }, [game.phase, game.phaseRevision, authed]);
 
   // Act-as-player target selection.
   const [voteTarget, setVoteTarget] = useState('');
@@ -52,30 +52,105 @@ export function AdminPanel({
     (p) => !game.votes?.find((v) => v.playerId === p.id)?.hasVoted,
   );
 
-  async function handleAuth() {
+  const canStartAssassination = !['Assassination', 'GameOver', 'Lobby'].includes(game.phase);
+  const entries: {
+    id: RefereeTool;
+    title: string;
+    icon: string;
+    disabled?: boolean;
+  }[] = authed
+    ? [
+        ...(game.canRerollOpening
+          ? [
+              { id: 'rerollLeader' as const, title: t('admin.rerollLeader'), icon: '♛' },
+              { id: 'rerollRoles' as const, title: t('admin.rerollRoles'), icon: '↻' },
+            ]
+          : []),
+        ...(canStartAssassination
+          ? [
+              {
+                id: 'assassination' as const,
+                title: t('admin.startAssassination'),
+                icon: '⚔',
+              },
+            ]
+          : []),
+        {
+          id: 'previous',
+          title: t('admin.previousPhase'),
+          icon: '↶',
+          disabled: !game.previousPhase,
+        },
+        { id: 'unbind', title: t('admin.unbindTitle'), icon: '♙' },
+        ...(game.phase === 'Voting'
+          ? [
+              { id: 'vote' as const, title: t('admin.voteTitle'), icon: '☑' },
+              {
+                id: 'retractVotes' as const,
+                title: t('admin.retractVotesTitle'),
+                icon: '↶',
+              },
+              {
+                id: 'retractProposal' as const,
+                title: t('admin.retractProposalTitle'),
+                icon: '↶',
+              },
+            ]
+          : []),
+        ...(game.phase === 'TeamBuilding'
+          ? [
+              {
+                id: 'propose' as const,
+                title: t('admin.proposeTitle'),
+                icon: '♛',
+              },
+            ]
+          : []),
+        { id: 'disable', title: t('admin.close'), icon: '✕' },
+      ]
+    : [{ id: 'enable', title: t('admin.open'), icon: '🛠' }];
+  const selectedEntry = entries.find((entry) => entry.id === activeTool && !entry.disabled);
+
+  async function run(
+    fn: () => Promise<{
+      ok: boolean;
+      error?: { code?: string; message: string };
+    }>,
+  ) {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setError(null);
     setBusy(true);
-    const res = await adminActions.auth();
-    setBusy(false);
-    if (res.ok && res.data?.ok) {
-      setAuthed(true);
-    } else {
-      setError(res.error?.message ?? t('admin.enableFailed'));
+    try {
+      const res = await fn();
+      if (res.ok) {
+        setActiveTool(null);
+      } else {
+        if (res.error?.code === 'NOT_ADMIN') setAuthed(false);
+        setError(res.error?.message ?? t('admin.actionFailed'));
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : t('admin.actionFailed'));
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
     }
   }
 
-  async function handleClose() {
-    await adminActions.close();
-    setAuthed(false);
-    onClose();
+  async function handleAuth() {
+    await run(async () => {
+      const res = await adminActions.auth();
+      if (res.ok && res.data?.ok) setAuthed(true);
+      return { ...res, ok: res.ok && !!res.data?.ok };
+    });
   }
 
-  async function run(fn: () => Promise<{ ok: boolean; error?: { message: string } }>) {
-    setError(null);
-    setBusy(true);
-    const res = await fn();
-    setBusy(false);
-    if (!res.ok && res.error) setError(res.error.message);
+  async function handleDisable() {
+    await run(async () => {
+      const res = await adminActions.close();
+      if (res.ok) setAuthed(false);
+      return res;
+    });
   }
 
   function toggleProposeMember(id: string) {
@@ -84,258 +159,311 @@ export function AdminPanel({
     );
   }
 
-  if (!open || !mounted) return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center">
-      <div
-        className="max-h-[calc(100dvh-1.5rem)] w-full max-w-md space-y-4 overflow-y-auto rounded-xl border border-crimson/40 bg-ink-deep p-4 shadow-xl"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('admin.title')}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-lg text-crimson">🛠 {t('admin.title')}</h2>
-          <button
-            onClick={onClose}
-            className="text-parchment/50 hover:text-parchment"
-            aria-label={t('mission.close')}
+  return (
+    <>
+      {entries.map((entry) => (
+        <button
+          key={entry.id}
+          type="button"
+          disabled={busy || entry.disabled}
+          onClick={() => {
+            setError(null);
+            setVoteTarget('');
+            setProposeSel([]);
+            setActiveTool(entry.id);
+          }}
+          className="flex w-full items-center gap-3 rounded-lg border border-crimson/30 bg-ink/30 px-4 py-3 text-left transition-colors hover:border-crimson/60 hover:bg-crimson/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <span
+            aria-hidden="true"
+            className="flex w-8 shrink-0 justify-center text-2xl text-crimson"
           >
-            ✕
-          </button>
-        </div>
-
-        {error && (
-          <div className="rounded-lg border border-crimson/50 bg-crimson/20 px-3 py-2 text-sm text-parchment">
-            {error}
-          </div>
-        )}
-
-        {!authed ? (
-          <div className="space-y-3">
-            <p className="text-sm text-parchment/60">{t('admin.enableHint')}</p>
-            <Button
-              variant="danger"
-              className="w-full"
-              disabled={busy}
-              onClick={() => void handleAuth()}
+            {entry.icon}
+          </span>
+          <span className="min-w-0 flex-1 text-sm font-semibold text-parchment">{entry.title}</span>
+          {authed && entry.id !== 'disable' && (
+            <span className="shrink-0 text-xs text-crimson">{t('admin.badge')}</span>
+          )}
+          <span aria-hidden="true" className="text-parchment/40">
+            ›
+          </span>
+        </button>
+      ))}
+      {selectedEntry &&
+        mounted &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center">
+            <div
+              className="max-h-[calc(100dvh-1.5rem)] w-full max-w-md space-y-4 overflow-y-auto rounded-xl border border-crimson/40 bg-ink-deep p-4 shadow-xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label={selectedEntry.title}
             >
-              {t('admin.open')}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            <section className="space-y-2">
-              <h3 className="text-sm font-semibold text-gold">{t('admin.phaseTitle')}</h3>
-              {game.phase !== 'Assassination' &&
-                game.phase !== 'GameOver' &&
-                game.phase !== 'Lobby' && (
-                  <Button
-                    variant="danger"
-                    className="w-full"
-                    disabled={busy}
-                    onClick={() => setConfirmPhase('assassination')}
-                  >
-                    {t('admin.startAssassination')}
-                  </Button>
-                )}
-              <Button
-                variant="secondary"
-                className="w-full"
-                disabled={busy || !game.previousPhase}
-                onClick={() => setConfirmPhase('previous')}
-              >
-                {t('admin.previousPhase')}
-                {game.previousPhase && ` · ${t(`phase.${game.previousPhase}`)}`}
-              </Button>
-              {confirmPhase && (
-                <div className="space-y-2 rounded-lg border border-crimson/40 p-3">
-                  <p className="text-xs text-parchment/70">
-                    {t(
-                      confirmPhase === 'previous'
-                        ? 'admin.previousPhaseHint'
-                        : 'admin.startAssassinationHint',
-                    )}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" disabled={busy} onClick={() => setConfirmPhase(null)}>
-                      {t('common.cancel')}
-                    </Button>
-                    <Button
-                      variant="danger"
-                      disabled={busy}
-                      onClick={() =>
-                        void run(async () => {
-                          const result = await (confirmPhase === 'previous'
-                            ? adminActions.previousPhase()
-                            : adminActions.startAssassination());
-                          if (result.ok) setConfirmPhase(null);
-                          return result;
-                        })
-                      }
-                    >
-                      {t('common.confirm')}
-                    </Button>
-                  </div>
+              <div className="flex items-center justify-between">
+                <h2 className="font-serif text-lg text-crimson">{selectedEntry.title}</h2>
+                <button
+                  disabled={busy}
+                  onClick={() => setActiveTool(null)}
+                  className="text-parchment/50 hover:text-parchment"
+                  aria-label={t('mission.close')}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {error && (
+                <div className="rounded-lg border border-crimson/50 bg-crimson/20 px-3 py-2 text-sm text-parchment">
+                  {error}
                 </div>
               )}
-            </section>
-            {/* Unbind a player. */}
-            <section className="space-y-2">
-              <h3 className="text-sm font-semibold text-gold">{t('admin.unbindTitle')}</h3>
-              <p className="text-xs text-parchment/50">{t('admin.unbindHint')}</p>
-              <div className="space-y-1.5">
-                {players.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex items-center justify-between rounded-md border border-gold/15 bg-ink/30 px-3 py-1.5 text-sm"
-                  >
-                    <span className="text-parchment/85">
-                      {seatLabel(p.seat, p.name)}
-                      <span className={p.connected ? 'text-emerald-400' : 'text-parchment/40'}>
-                        {' '}
-                        ●
-                      </span>
-                    </span>
-                    <button
-                      disabled={busy}
-                      onClick={() => void run(() => adminActions.unbind(p.id))}
-                      className="rounded px-2 py-0.5 text-xs text-crimson hover:bg-crimson/30 hover:text-parchment disabled:opacity-50"
-                    >
-                      {t('admin.unbindBtn')}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
 
-            {/* Vote for a player (Voting phase only). */}
-            {game.phase === 'Voting' && (
-              <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-gold">{t('admin.voteTitle')}</h3>
-                <select
-                  value={voteTarget}
-                  onChange={(e) => setVoteTarget(e.target.value)}
-                  className="w-full rounded-md border border-gold/30 bg-ink/50 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/70"
-                >
-                  <option value="">{t('admin.selectPlayer')}</option>
-                  {unvotedPlayers.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {seatLabel(p.seat, p.name)}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex gap-2">
-                  <Button
-                    className="flex-1"
-                    disabled={!voteTarget || busy}
-                    onClick={() => void run(() => adminActions.vote(voteTarget, 'approve'))}
-                  >
-                    👍 {t('vote.approve')}
-                  </Button>
+              {activeTool === 'enable' ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-parchment/60">{t('admin.enableHint')}</p>
                   <Button
                     variant="danger"
-                    className="flex-1"
-                    disabled={!voteTarget || busy}
-                    onClick={() => void run(() => adminActions.vote(voteTarget, 'reject'))}
+                    className="w-full"
+                    disabled={busy}
+                    onClick={() => void handleAuth()}
                   >
-                    👎 {t('vote.reject')}
+                    {t('admin.open')}
                   </Button>
                 </div>
-              </section>
-            )}
-
-            {/* Retract votes / proposal (Voting phase only). */}
-            {game.phase === 'Voting' && (
-              <>
-                <section className="space-y-2">
-                  <h3 className="text-sm font-semibold text-gold">
-                    {t('admin.retractVotesTitle')}
-                  </h3>
-                  <p className="text-xs text-parchment/50">{t('admin.retractVotesHint')}</p>
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    disabled={busy}
-                    onClick={() => void run(() => adminActions.retractVotes())}
-                  >
-                    {t('admin.retractVotesBtn')}
-                  </Button>
-                </section>
-
-                <section className="space-y-2">
-                  <h3 className="text-sm font-semibold text-gold">
-                    {t('admin.retractProposalTitle')}
-                  </h3>
-                  <p className="text-xs text-parchment/50">{t('admin.retractProposalHint')}</p>
-                  <Button
-                    variant="danger"
-                    className="w-full"
-                    disabled={busy}
-                    onClick={() => void run(() => adminActions.retractProposal())}
-                  >
-                    {t('admin.retractProposalBtn')}
-                  </Button>
-                </section>
-              </>
-            )}
-
-            {/* Propose the team for the leader (TeamBuilding only). */}
-            {game.phase === 'TeamBuilding' && (
-              <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-gold">{t('admin.proposeTitle')}</h3>
-                <p className="text-xs text-parchment/50">
-                  {t('admin.proposeHint', { size: teamSize })}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {players.map((p) => {
-                    const sel = proposeSel.includes(p.id);
-                    return (
-                      <button
-                        key={p.id}
-                        onClick={() => toggleProposeMember(p.id)}
-                        className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                          sel
-                            ? 'border-gold bg-gold/20 text-gold'
-                            : 'border-gold/20 text-parchment/70 hover:border-gold/50'
-                        }`}
+              ) : (
+                <div className="space-y-5">
+                  {(activeTool === 'rerollLeader' || activeTool === 'rerollRoles') && (
+                    <section className="space-y-3">
+                      <p className="text-sm text-parchment/70">
+                        {t(
+                          activeTool === 'rerollLeader'
+                            ? 'admin.rerollLeaderHint'
+                            : 'admin.rerollRolesHint',
+                        )}
+                      </p>
+                      <p className="text-xs text-parchment/50">{t('admin.openingOnlyHint')}</p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          className="flex-1"
+                          disabled={busy}
+                          onClick={() => setActiveTool(null)}
+                        >
+                          {t('common.cancel')}
+                        </Button>
+                        <Button
+                          variant="danger"
+                          className="flex-1"
+                          disabled={busy || !game.canRerollOpening}
+                          onClick={() =>
+                            void run(() =>
+                              activeTool === 'rerollLeader'
+                                ? adminActions.rerollLeader()
+                                : adminActions.rerollRoles(),
+                            )
+                          }
+                        >
+                          {t('common.confirm')}
+                        </Button>
+                      </div>
+                    </section>
+                  )}
+                  {(activeTool === 'assassination' || activeTool === 'previous') && (
+                    <section className="space-y-3">
+                      <p className="text-sm text-parchment/70">
+                        {t(
+                          activeTool === 'previous'
+                            ? 'admin.previousPhaseHint'
+                            : 'admin.startAssassinationHint',
+                        )}
+                      </p>
+                      {activeTool === 'previous' && game.previousPhase && (
+                        <p className="text-sm text-gold">{t(`phase.${game.previousPhase}`)}</p>
+                      )}
+                      <Button
+                        variant="danger"
+                        className="w-full"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(() =>
+                            activeTool === 'previous'
+                              ? adminActions.previousPhase()
+                              : adminActions.startAssassination(),
+                          )
+                        }
                       >
-                        {seatLabel(p.seat, p.name)}
-                      </button>
-                    );
-                  })}
-                </div>
-                <Button
-                  variant="danger"
-                  className="w-full"
-                  disabled={proposeSel.length !== teamSize || busy}
-                  onClick={() =>
-                    void run(async () => {
-                      const leader = players.find((p) => p.seat === game.leaderIndex);
-                      const res = await adminActions.propose(leader?.id ?? '', proposeSel);
-                      if (res.ok) setProposeSel([]);
-                      return res;
-                    })
-                  }
-                >
-                  {t('admin.proposeBtn', {
-                    picked: proposeSel.length,
-                    size: teamSize,
-                  })}
-                </Button>
-              </section>
-            )}
+                        {t('common.confirm')}
+                      </Button>
+                    </section>
+                  )}
+                  {activeTool === 'unbind' && (
+                    <section className="space-y-2">
+                      <h3 className="text-sm font-semibold text-gold">{t('admin.unbindTitle')}</h3>
+                      <p className="text-xs text-parchment/50">{t('admin.unbindHint')}</p>
+                      <div className="space-y-1.5">
+                        {players.map((p) => (
+                          <div
+                            key={p.id}
+                            className="flex items-center justify-between rounded-md border border-gold/15 bg-ink/30 px-3 py-1.5 text-sm"
+                          >
+                            <span className="text-parchment/85">
+                              {seatLabel(p.seat, p.name)}
+                              <span
+                                className={p.connected ? 'text-emerald-400' : 'text-parchment/40'}
+                              >
+                                {' '}
+                                ●
+                              </span>
+                            </span>
+                            <button
+                              disabled={busy}
+                              onClick={() => void run(() => adminActions.unbind(p.id))}
+                              className="rounded px-2 py-0.5 text-xs text-crimson hover:bg-crimson/30 hover:text-parchment disabled:opacity-50"
+                            >
+                              {t('admin.unbindBtn')}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
 
-            <button
-              onClick={() => void handleClose()}
-              className="w-full rounded-md border border-gold/20 px-3 py-2 text-sm text-parchment/60 hover:text-parchment"
-            >
-              {t('admin.close')}
-            </button>
-          </div>
+                  {/* Vote for a player (Voting phase only). */}
+                  {activeTool === 'vote' && game.phase === 'Voting' && (
+                    <section className="space-y-2">
+                      <h3 className="text-sm font-semibold text-gold">{t('admin.voteTitle')}</h3>
+                      <select
+                        value={voteTarget}
+                        onChange={(e) => setVoteTarget(e.target.value)}
+                        className="w-full rounded-md border border-gold/30 bg-ink/50 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/70"
+                      >
+                        <option value="">{t('admin.selectPlayer')}</option>
+                        {unvotedPlayers.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {seatLabel(p.seat, p.name)}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          disabled={
+                            !unvotedPlayers.some((player) => player.id === voteTarget) || busy
+                          }
+                          onClick={() => void run(() => adminActions.vote(voteTarget, 'approve'))}
+                        >
+                          👍 {t('vote.approve')}
+                        </Button>
+                        <Button
+                          variant="danger"
+                          className="flex-1"
+                          disabled={
+                            !unvotedPlayers.some((player) => player.id === voteTarget) || busy
+                          }
+                          onClick={() => void run(() => adminActions.vote(voteTarget, 'reject'))}
+                        >
+                          👎 {t('vote.reject')}
+                        </Button>
+                      </div>
+                    </section>
+                  )}
+
+                  {activeTool === 'retractVotes' && game.phase === 'Voting' && (
+                    <section className="space-y-2">
+                      <h3 className="text-sm font-semibold text-gold">
+                        {t('admin.retractVotesTitle')}
+                      </h3>
+                      <p className="text-xs text-parchment/50">{t('admin.retractVotesHint')}</p>
+                      <Button
+                        variant="secondary"
+                        className="w-full"
+                        disabled={busy}
+                        onClick={() => void run(() => adminActions.retractVotes())}
+                      >
+                        {t('admin.retractVotesBtn')}
+                      </Button>
+                    </section>
+                  )}
+
+                  {activeTool === 'retractProposal' && game.phase === 'Voting' && (
+                    <section className="space-y-2">
+                      <h3 className="text-sm font-semibold text-gold">
+                        {t('admin.retractProposalTitle')}
+                      </h3>
+                      <p className="text-xs text-parchment/50">{t('admin.retractProposalHint')}</p>
+                      <Button
+                        variant="danger"
+                        className="w-full"
+                        disabled={busy}
+                        onClick={() => void run(() => adminActions.retractProposal())}
+                      >
+                        {t('admin.retractProposalBtn')}
+                      </Button>
+                    </section>
+                  )}
+
+                  {/* Propose the team for the leader (TeamBuilding only). */}
+                  {activeTool === 'propose' && game.phase === 'TeamBuilding' && (
+                    <section className="space-y-2">
+                      <h3 className="text-sm font-semibold text-gold">{t('admin.proposeTitle')}</h3>
+                      <p className="text-xs text-parchment/50">
+                        {t('admin.proposeHint', { size: teamSize })}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {players.map((p) => {
+                          const sel = proposeSel.includes(p.id);
+                          return (
+                            <button
+                              key={p.id}
+                              disabled={busy}
+                              onClick={() => toggleProposeMember(p.id)}
+                              className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                                sel
+                                  ? 'border-gold bg-gold/20 text-gold'
+                                  : 'border-gold/20 text-parchment/70 hover:border-gold/50'
+                              }`}
+                            >
+                              {seatLabel(p.seat, p.name)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <Button
+                        variant="danger"
+                        className="w-full"
+                        disabled={proposeSel.length !== teamSize || busy}
+                        onClick={() =>
+                          void run(async () => {
+                            const leader = players.find((p) => p.seat === game.leaderIndex);
+                            const res = await adminActions.propose(leader?.id ?? '', proposeSel);
+                            if (res.ok) setProposeSel([]);
+                            return res;
+                          })
+                        }
+                      >
+                        {t('admin.proposeBtn', {
+                          picked: proposeSel.length,
+                          size: teamSize,
+                        })}
+                      </Button>
+                    </section>
+                  )}
+
+                  {activeTool === 'disable' && (
+                    <Button
+                      variant="secondary"
+                      className="w-full"
+                      disabled={busy}
+                      onClick={() => void handleDisable()}
+                    >
+                      {t('admin.close')}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body,
         )}
-      </div>
-    </div>,
-    document.body,
+    </>
   );
 }

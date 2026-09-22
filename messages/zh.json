@@ -52,10 +52,15 @@
     "errInvalidCode": "请输入 4 位数字房间码",
     "errCreateFailed": "房间创建失败，请再试一次",
     "errUnreachable": "连不上服务器，请稍后再试",
-    "nameLimit": "ID 最多 10 个字",
-    "errVoiceUnavailable": "语音房暂时不可用，请检查 RealtimeKit 配置或稍后重试"
+    "nameLimit": "ID 最多 10 个字"
   },
   "lobby": {
+    "rejectionCount": "{count} 次",
+    "descRejectionLimit": "同一任务连续 {count} 次提名被否决，红方直接获胜；提名通过后清零。",
+    "rejectionLimit": "讨论轮数上限",
+    "decreaseDiscussionLimit": "减少讨论轮数上限",
+    "increaseDiscussionLimit": "增加讨论轮数上限",
+    "descPairedRoles": "两者同时加入：派西维尔能看到梅林与莫甘娜，但无法分辨",
     "roomCode": "房间码",
     "inviteLink": "邀请链接",
     "copied": "已复制！",
@@ -68,11 +73,11 @@
     "kick": "踢出",
     "spectators": "观战者",
     "configuration": "配置",
-    "goodEvil": "{good} 好人 · {evil} 坏人",
+    "goodEvil": "蓝方 {good} · 红方 {evil}",
     "applyRecommended": "应用推荐配置（{count} 人）",
     "optionalRoles": "可选角色",
     "rolesInPlay": "本局角色（{count} 人）",
-    "tooManyEvil": "坏人特殊角色过多：已选 {used} 个，仅有 {budget} 个坏人位。请关闭一个。",
+    "tooManyEvil": "红方特殊角色过多：已选 {used} 个，仅有 {budget} 个红方名额。请关闭一个。",
     "beginQuest": "开启征程",
     "needPlayers": "需要 5–10 名玩家（当前 {count}）",
     "needSeats": "需要 5–10 个座位（当前 {count}）",
@@ -82,7 +87,7 @@
     "descPercival": "看到梅林与莫甘娜（无法分辨）",
     "descMorgana": "在派西维尔眼中显现为梅林",
     "descMordred": "对梅林隐身",
-    "descOberon": "邪恶，但不为其他坏人所知",
+    "descOberon": "红方，但不与其他红方互认身份",
     "descLady": "在第 2–4 个任务后审视一名玩家的阵营",
     "token": "标记",
     "missionPattern": "任务版型",
@@ -92,42 +97,44 @@
   "roles": {
     "Merlin": {
       "name": "梅林",
-      "blurb": "你知晓所有邪恶的仆从——但若暴露身份，刺客将取你性命。"
+      "blurb": "知道谁是红方，但必须隐藏好自己的身份"
     },
     "Percival": {
       "name": "派西维尔",
-      "blurb": "你能看到梅林与莫甘娜，却无法分辨谁是谁。"
+      "blurb": "知道谁是梅林"
     },
     "LoyalServant": {
       "name": "亚瑟的忠臣",
-      "blurb": "你以纯洁之心侍奉王国，没有任何隐秘的情报。"
+      "shortName": "忠臣",
+      "blurb": ""
     },
     "Morgana": {
       "name": "莫甘娜",
-      "blurb": "在派西维尔眼中你显现为梅林，在好人之间播下疑云。"
+      "blurb": "以梅林的形象出现"
     },
     "Assassin": {
       "name": "刺客",
-      "blurb": "你可以提前终止任务，或在好人赢得三个任务后出手。刺中梅林则坏人获胜，刺错则好人获胜。"
+      "blurb": "莫德雷德的爪牙"
     },
     "Oberon": {
       "name": "奥伯伦",
-      "blurb": "你是邪恶的一员，却不为同伴所知，也不知晓他们。"
+      "blurb": "对红方来说彼此互不了解"
     },
     "Mordred": {
       "name": "莫德雷德",
-      "blurb": "你连梅林都无法看见。邪恶最深的秘密。"
+      "blurb": "梅林不知道他"
     },
     "Minion": {
       "name": "莫德雷德的爪牙",
-      "blurb": "你知晓你的邪恶同伙。破坏每一次征程。"
+      "shortName": "爪牙",
+      "blurb": "知晓邪恶同伴。"
     }
   },
   "team": {
-    "goodLabel": "效忠亚瑟",
-    "evilLabel": "莫德雷德的仆从",
-    "good": "好人",
-    "evil": "坏人"
+    "goodLabel": "蓝方",
+    "evilLabel": "红方",
+    "good": "蓝方",
+    "evil": "红方"
   },
   "seat": {
     "whoAreYou": "你是谁？",
@@ -148,48 +155,16 @@
     "doneEditing": "退出编辑",
     "spectatorSitHint": "旁观中，选择一个空位坐下"
   },
-  "voice": {
-    "title": "语音房",
-    "join": "加入语音",
-    "joining": "正在加入…",
-    "readyToJoin": "点击加入，首次使用时请允许麦克风权限",
-    "claimSeatFirst": "请先选择座位，再加入语音",
-    "waitingForRoom": "房间重连后即可加入语音",
-    "joinFailed": "加入语音失败，请重试",
-    "connected": "语音已连接",
-    "leave": "退出语音",
-    "participants": "语音参与者",
-    "participantCount": "{count} 人在线",
-    "showDetails": "展开语音详情",
-    "hideDetails": "收起语音详情",
-    "speaking": "发言中",
-    "micOn": "麦克风已开启",
-    "micOff": "麦克风已关闭",
-    "chooseMic": "切换麦克风",
-    "defaultMic": "默认麦克风",
-    "microphoneNumber": "麦克风 {number}",
-    "openMic": "常开麦克风",
-    "closeMic": "关闭麦克风",
-    "micIsOpen": "麦克风已常开",
-    "holdToTalk": "按住发言",
-    "releaseToMute": "松开结束发言",
-    "micFailed": "无法开启麦克风，请检查浏览器权限和设备",
-    "deviceFailed": "切换麦克风失败",
-    "micHttpsRequired": "iPhone 和 iPad 仅允许网页通过 HTTPS 使用麦克风，请改用 HTTPS 重新打开。",
-    "micPermissionDenied": "麦克风权限已被拒绝，请在 Safari 的网站设置中允许后重试。",
-    "micUnsupported": "当前浏览器无法请求麦克风权限，请通过 HTTPS 使用最新版 Safari。",
-    "micUnavailable": "未找到可用麦克风，或麦克风正被其他应用占用。",
-    "keyboardHint": "按住空格键发言，松开静音（输入文字时不触发）"
-  },
   "roleReveal": {
     "title": "你的秘密身份",
     "tapToReveal": "点击揭示",
     "tapWhenReady": "准备好后点击卡牌查看。",
     "whatYouPerceive": "你所感知的",
     "seeNothing": "阴影中一无所获。只能依靠你的智慧。",
-    "shownEvil": "邪恶的仆从",
+    "shownEvil": "红方",
     "shownMerlinOrMorgana": "梅林或莫甘娜",
-    "shownAlly": "你的邪恶同伴",
+    "shownAlly": "红方同伴",
+    "perceptionLabel": "{kind}：",
     "understand": "我已知晓我的命运",
     "entering": "正在进入…"
   },
@@ -224,11 +199,11 @@
     "close": "关闭"
   },
   "teamBuilder": {
-    "proposalOf": "第 {n} 次提名 / 共 5 次",
+    "proposalOf": "第 {n} 次提名 / 共 {total} 次",
     "youLead": "由你领导这次征程",
     "leaderChoosing": "{name} 正在选择队伍",
     "selectKnights": "为第 {round} 个任务选择 {size} 名骑士",
-    "rejectionWarning": "⚠ 再被否决 {n} 次，坏人将获胜",
+    "rejectionWarning": "⚠ 再被否决 {n} 次，红方将获胜",
     "proposeTeam": "提名此队伍",
     "chooseMore": "再选 {n} 名",
     "retract": "撤回",
@@ -260,7 +235,7 @@
     "fail": "失败",
     "sealed": "你的卡牌已封存。等待队伍中其他人…",
     "watchAfar": "你远远望着被选中的骑士们出征…",
-    "loyalOnlySuccess": "作为忠臣，你只能给予成功。"
+    "loyalOnlySuccess": "蓝方只能提交成功牌。"
   },
   "missionResult": {
     "resolved": "第 {round} 个任务已结算",
@@ -281,35 +256,46 @@
     "notYours": "湖中仙女的目光不由你指引。"
   },
   "assassin": {
+    "targetLabel": "刺杀目标",
+    "striking": "刺客出手",
+    "revealing": "身份揭晓",
+    "hitTitle": "梅林被刺杀",
+    "missTitle": "刺杀落空",
+    "viewEnding": "查看结局",
+    "skipAnimation": "跳过动画",
     "title": "刺客出手",
-    "goodPrevailed": "好人在任务中获胜——但若梅林倒下，邪恶仍将取胜。",
+    "goodPrevailed": "蓝方已在任务中获胜，但刺中梅林仍可让红方取胜。",
     "nameMerlin": "指认你认为是梅林的那个人。",
     "strikeDown": "刺杀 {name}",
+    "strikeSeat": "刺杀{seat}",
     "strike": "刺杀",
     "chooseTarget": "选择你的目标",
     "contemplating": "刺客正在思忖这命运攸关的抉择…",
-    "identitiesPublic": "所有坏人身份（包括奥伯伦）现已公开，好人身份仍然保密。",
+    "identitiesPublic": "所有红方身份（包括奥伯伦）现已公开，蓝方身份仍然保密。",
     "startEarly": "提前进入刺杀",
-    "earlyConsequences": "立即终止所有任务，并向所有人公开每位坏人的身份（包括奥伯伦）。好人身份仍然保密。",
-    "earlyOutcome": "随后由你选择刺杀目标：刺中梅林则坏人获胜，刺错则好人获胜，不再按任务结果判定胜负。",
-    "irreversible": "已公开的坏人身份无法撤回；若需纠正阶段，请使用裁判功能。",
+    "earlyConsequences": "立即终止所有任务，并向所有人公开每位红方成员的身份（包括奥伯伦）。蓝方身份仍然保密。",
+    "earlyOutcome": "随后由你选择刺杀目标：刺中梅林则红方获胜，刺错则蓝方获胜，不再按任务结果判定胜负。",
+    "irreversible": "已公开的红方身份无法撤回；若需纠正阶段，请使用裁判功能。",
     "confirmStart": "终止任务并进入刺杀",
     "starting": "正在进入刺杀…",
     "startFailed": "无法进入刺杀，请检查网络连接后重试。"
   },
   "gameOver": {
-    "goodTriumphs": "好人胜利",
-    "evilPrevails": "邪恶获胜",
+    "reasonRejectionLimit": "提名连续被否决，达到讨论轮数上限",
+    "reasonThreeFailures": "三个任务失败",
+    "reasonThreeSuccesses": "三个任务成功",
+    "goodTriumphs": "蓝方胜利",
+    "evilPrevails": "红方胜利",
     "reasonThreeMissions": "由任务的结果决定",
-    "reasonFiveRejections": "王国陷入纷争——五次队伍被否决",
-    "reasonAssassinatedMerlin": "刺客找到了梅林",
-    "reasonAssassinMissed": "刺客的一击落空",
-    "questTally": "任务 — 好人 {good} · 坏人 {evil}",
+    "reasonFiveRejections": "连续五次提名被否决",
+    "reasonAssassinatedMerlin": "梅林被刺杀",
+    "reasonAssassinMissed": "刺杀落空，梅林幸存",
+    "questTally": "任务 — 蓝方 {good} · 红方 {evil}",
     "courtRevealed": "宫廷揭晓",
     "targeted": "🎯 被指认",
     "viewReplay": "查看复盘",
     "newGame": "返回首页",
-    "playAgain": "再来一局 · 返回准备页",
+    "playAgain": "再来一局",
     "restarting": "正在返回准备页…",
     "restartFailed": "返回准备页失败，请重试。",
     "waitingRestart": "等待房主开启下一局",
@@ -327,8 +313,8 @@
     "voteRejectedSub": "队长之位易主",
     "missionSuccess": "任务成功",
     "missionFail": "任务失败",
-    "missionSuccessSub": "圣光庇佑此行",
-    "missionFailSub": "黑暗渗入其中",
+    "missionSuccessSub": "蓝方赢下本次任务",
+    "missionFailSub": "红方赢下本次任务",
     "cardSuccess": "成功",
     "cardFail": "失败",
     "revealingCards": "正在揭示任务卡…",
@@ -338,6 +324,8 @@
     "myRole": "我的身份"
   },
   "log": {
+    "channels": "战报频道",
+    "rejectionLimitReached": "连续 {count} 次提名被否决，红方获胜！",
     "panelTitle": "战报",
     "tabPublic": "公开",
     "tabPrivate": "私密",
@@ -345,42 +333,38 @@
     "empty": "暂无记录",
     "details": "详情",
     "gameStarted": "游戏开始，共 {count} 名玩家",
-    "lineup": "本局阵容 — 好人：{good}；坏人：{evil}",
+    "lineup": "本局阵容 — 蓝方：{good}；红方：{evil}",
     "roundBegins": "第 {round} 个任务开始",
     "proposalBegins": "第 {round} 个任务第 {proposal} 次提名开始，{leader} 担任队长",
     "voteApproved": "第 {round} 个任务第 {proposal} 次提名结果",
     "voteRejected": "第 {round} 个任务第 {proposal} 次提名结果",
-    "hammerEvilWins": "连续五次提名被否决，坏人获胜！",
+    "hammerEvilWins": "连续五次提名被否决，红方获胜！",
     "missionSucceeded": "第 {round} 个任务成功",
     "missionFailed": "第 {round} 个任务失败",
     "ladyBegins": "湖中仙女登场，{holder} 持有令牌",
     "ladyInspected": "{holder} 用湖中仙女查验了 {target}",
-    "goodWinsMissions": "好人完成三个任务，正义胜利！",
-    "goodWinsMissionsAssassin": "好人完成三个任务——但刺客仍有最后一击",
-    "evilWinsMissions": "坏人破坏三个任务，黑暗胜利！",
-    "earlyAssassination": "{player} 提前终止任务并进入刺杀——所有坏人身份已公开",
+    "goodWinsMissions": "蓝方完成三个任务并获胜！",
+    "goodWinsMissionsAssassin": "蓝方完成三个任务，但刺客仍有最后一击",
+    "evilWinsMissions": "红方破坏三个任务并获胜！",
+    "earlyAssassination": "{player} 提前终止任务并进入刺杀——所有红方身份已公开",
     "assassinStruck": "刺客对 {target} 出手",
-    "assassinHitMerlin": "刺客刺中了梅林，坏人胜利！",
-    "assassinMissed": "刺客刺杀失败，好人胜利！",
+    "assassinHitMerlin": "刺客刺中了梅林，红方胜利！",
+    "assassinMissed": "刺客刺杀失败，蓝方胜利！",
     "yourRole": "你的身份是 {role}",
     "perceive": {
-      "evil": "你看到 {player} 是邪恶阵营",
+      "evil": "你看到 {player} 属于红方",
       "merlin-or-morgana": "你看到 {player} 是梅林或莫甘娜",
-      "known-ally": "{player} 是你的邪恶同伴"
+      "known-ally": "{player} 是你的红方同伴"
     },
     "youApproved": "第 {round} 个任务第 {proposal} 次提名：你投了赞成",
     "youRejected": "第 {round} 个任务第 {proposal} 次提名：你投了反对",
     "youPlayedSuccess": "第 {round} 个任务：你打出了成功",
     "youPlayedFail": "第 {round} 个任务：你打出了失败",
-    "ladyResultGood": "你查验到 {target} 是好人",
-    "ladyResultEvil": "你查验到 {target} 是坏人",
-    "voiceTag": "语音",
-    "voice": {
-      "joined": "{player} 加入了语音",
-      "left": "{player} 离开了语音",
-      "dropped": "{player} 的语音连接已断开"
-    },
+    "ladyResultGood": "你查验到 {target} 属于蓝方",
+    "ladyResultEvil": "你查验到 {target} 属于红方",
     "admin": {
+      "leaderRerolled": "{actor} 重新随机了起始队长，现由 {seat} 号玩家担任队长",
+      "rolesRerolled": "{actor} 重新随机了所有身份，请所有玩家重新查看并确认身份",
       "panelOpened": "⚠ {actor} 开启了裁判功能，请全场核对",
       "panelClosed": "{actor} 关闭了裁判功能",
       "unbound": "⚠ {actor} 解绑了 {target}（该座位现可重新认领）",
@@ -396,11 +380,18 @@
   },
   "proposal": {
     "label": "提名",
-    "hammer": "第 5 次：连否即坏人胜",
-    "hammerWarnLast": "这是最后一次提名，再被否决坏人将获胜！",
-    "hammerWarn": "再被否决 {n} 次（即第 5 次）坏人将获胜"
+    "hammer": "第 {count} 次：再被否决则红方获胜",
+    "hammerWarnLast": "这是最后一次提名，再被否决红方将获胜！",
+    "hammerWarn": "再被否决 {n} 次，红方将获胜"
   },
   "admin": {
+    "rerollLeader": "重新随机起始队长",
+    "rerollRoles": "重新随机身份",
+    "rerollLeaderHint": "重新随机选择起始队长，并同步调整湖中仙女的初始持有者。玩家身份保持不变。随机结果可能与之前相同。",
+    "rerollRolesHint": "按当前角色配置重新分配所有玩家的身份，清除旧身份提示，所有玩家都需要重新查看并确认身份。已知的信息无法遗忘，请全场确认后操作。",
+    "openingOnlyHint": "仅在开局、首次提名或梅林指认前可用；撤回或回退阶段不会重新开放。",
+    "badge": "裁判",
+    "actionFailed": "操作失败，请重试",
     "title": "裁判功能",
     "enableHint": "开启裁判功能后，你可以解绑玩家、代替投票或提名。所有操作都会在公开战报中红字记录，全场可见。",
     "enableFailed": "开启失败，请重试",
@@ -425,17 +416,19 @@
     "startAssassination": "发起梅林指认",
     "previousPhase": "返回上一阶段",
     "previousPhaseHint": "恢复上一阶段的队长、队伍和任务记录，并清空该阶段待提交的投票或任务牌。已经公开的身份或验人信息无法撤回。",
-    "startAssassinationHint": "立即结束当前讨论或投票，由刺客指认梅林。指认正确则邪恶方获胜，错误则正义方获胜。"
+    "startAssassinationHint": "立即结束当前讨论或投票，由刺客指认梅林。指认正确则红方获胜，错误则蓝方获胜。"
   },
   "replay": {
+    "retry": "重试加载",
+    "loadFailed": "复盘暂时无法加载，请重试。",
     "title": "战局复盘",
     "loading": "正在加载复盘…",
     "notFound": "未找到该对局",
     "notFinished": "对局尚未结束",
     "backHome": "返回首页",
     "outcome": "{winner}胜利",
-    "goodWon": "好人",
-    "evilWon": "坏人",
+    "goodWon": "蓝方",
+    "evilWon": "红方",
     "round": "第 {n} 个任务",
     "leader": "队长",
     "team": "队伍",
@@ -459,14 +452,37 @@
     "roles": "身份揭示",
     "proposalN": "第 {n} 次提名"
   },
-  "mvp": {
-    "title": "数据面板",
-    "mvp": "本局 MVP",
-    "voteAccuracy": "投票准确率",
-    "participation": "任务参与率",
-    "contribution": "阵营贡献度",
-    "na": "—",
-    "good": "好人",
-    "evil": "坏人"
+  "table": {
+    "tabTable": "圆桌",
+    "returnToTable": "返回圆桌",
+    "rules": "规则",
+    "missionRule": "第{round}轮任务：需要{players}人参加，{fails}张失败票可破坏",
+    "identity": "身份",
+    "lineup": "阵容",
+    "more": "更多",
+    "lobby": "房间准备",
+    "gathered": "骑士已集结",
+    "seatedCount": "{count} / {total} 已入座",
+    "roundPhase": "任务 {round} · {phase}",
+    "leader": "队长",
+    "playerCards": "{seat} 号玩家的卡牌区",
+    "selectedSeat": "已选择 {seat} 号",
+    "noCard": "空卡牌区",
+    "awaitingCard": "尚未出牌",
+    "cardSubmitted": "已扣牌，牌面未公开",
+    "pickRemaining": "还需选择 {count} 人",
+    "waiting": "等待其他玩家…",
+    "waitingVotes": "正在等待其他玩家投票",
+    "waitingMissionCards": "正在等待其他玩家提交任务牌",
+    "resolving": "正在结算…",
+    "actionFailed": "操作未完成，请检查连接后重试。",
+    "voteQuestion": "是否同意出征？",
+    "missionPrompt": "提交任务牌",
+    "twoFails": "本任务需要 2 张失败牌才会失败",
+    "voteCount": "{count} / {total} 已投票",
+    "missionCount": "{count} / {total} 已出牌",
+    "collecting": "收齐任务牌",
+    "shuffling": "正在洗混…",
+    "anonymousCards": "匿名任务牌"
   }
 }

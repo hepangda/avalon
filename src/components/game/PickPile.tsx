@@ -84,7 +84,7 @@ export function PickPile({
             </span>
             {revealRoles && p.role && (
               <span className="max-w-full break-words text-[10px] font-semibold leading-tight text-parchment">
-                {roleText.name(p.role)}
+                {roleText.shortName(p.role)}
               </span>
             )}
           </motion.button>

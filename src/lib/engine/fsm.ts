@@ -18,6 +18,21 @@ export function assassinInPlay(s: GameState): boolean {
   return s.players.some((p) => p.role === 'Assassin');
 }
 
+/** Only before the first proposal or assassination; rollback never reopens it. */
+export function canRerollOpening(s: GameState): boolean {
+  return (
+    (s.phase === 'TeamBuilding' || s.phase === 'RoleReveal') &&
+    !s.openingClosed &&
+    s.roundIndex === 0 &&
+    s.rejectionCount === 0 &&
+    s.proposedTeam === null &&
+    s.voteHistory.length === 0 &&
+    s.missionResults.length === 0 &&
+    (s.phaseHistory?.length ?? 0) === 0 &&
+    s.outcome === null
+  );
+}
+
 /** Whether normal play can be ended early by the assigned assassin. */
 export function canStartAssassination(s: GameState): boolean {
   if (s.assassinId === null || !assassinInPlay(s)) return false;

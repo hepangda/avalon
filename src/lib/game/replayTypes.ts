@@ -50,6 +50,7 @@ export interface ReplayAssassination {
 export interface ReplayRoleAssignment {
   playerId: string;
   role: Role;
+  roleVariant?: number;
 }
 
 export interface ReplayData {

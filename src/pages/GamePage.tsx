@@ -1,411 +1,618 @@
-import { useRouter } from '@/i18n/navigation';
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
-import { useRoomConnection, gameActions } from '@/lib/socket/client';
+import { Link, useRouter } from '@/i18n/navigation';
+import {
+  useRoomConnection,
+  gameActions,
+  roomActions,
+} from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
-import { PhaseTransition } from '@/components/animations';
 import { GameTable } from '@/components/game/GameTable';
-import { MissionTrack } from '@/components/game/MissionTrack';
-import { ProposalTracker } from '@/components/game/ProposalTracker';
-import { VotePile, OutcomeBanner } from '@/components/game/VoteTokens';
-import { PickPile } from '@/components/game/PickPile';
-import { MissionCardReveal } from '@/components/game/MissionCardReveal';
+import { TableFrame } from '@/components/game/TableFrame';
+import { TableSheet } from '@/components/game/TableSheet';
+import { TableCard } from '@/components/game/TableCard';
 import { HandArea, type PickConfig } from '@/components/game/HandArea';
+import { IdentityCard } from '@/components/game/IdentityCard';
 import { RoleReveal } from '@/components/game/RoleReveal';
-import { TeamBuilder } from '@/components/game/TeamBuilder';
-import { VotePanel } from '@/components/game/VotePanel';
-import { MissionVote } from '@/components/game/MissionVote';
-import { MissionResult } from '@/components/game/MissionResult';
-import { LadyOfLake } from '@/components/game/LadyOfLake';
 import { LadyResultReveal } from '@/components/game/LadyResultReveal';
-import { AssassinPanel } from '@/components/game/AssassinPanel';
-import { GameOverReveal } from '@/components/game/GameOverReveal';
+import { AssassinationReveal } from '@/components/game/AssassinationReveal';
 import { RoundHistoryModal } from '@/components/game/RoundHistoryModal';
 import { InGameSeatClaim } from '@/components/game/InGameSeatClaim';
-import { LogPanel } from '@/components/game/LogPanel';
-import { GameIcon } from '@/components/game/GameArt';
-import { useResultCue } from '@/lib/game/useResultCue';
-import { formatLatency, latencyTextClass } from '@/lib/utils/latency';
-import type { ClientPlayer } from '@/lib/engine';
-
-/** The table's interaction surface for the current phase. */
-interface TableInteraction {
-  selectable?: boolean;
-  selectedIds?: string[];
-  highlightIds?: string[];
-  candidateIds?: string[];
-  onToggle?: (id: string) => void;
-  seatBadge?: (player: ClientPlayer) => ReactNode;
-}
+import { LogPanel, type LogChannel } from '@/components/game/LogPanel';
+import { GameTools } from '@/components/game/GameTools';
+import { MissionTrack } from '@/components/game/MissionTrack';
+import { ProposalTracker } from '@/components/game/ProposalTracker';
+import { useTablePresentation } from '@/lib/game/useTablePresentation';
+import { useRoomAction } from '@/lib/game/useRoomAction';
+import { actionAvailability } from '@/lib/game/actionAvailability';
+import { useRoleText } from '@/lib/game/useRoleText';
+import { ROLE_TEAM_UI } from '@/lib/game/roleMeta';
+import { outcomeReasonKey } from '@/lib/game/outcomeText';
+import type { ClientPlayer, ClientGameState, Role, VisibilityInfo, Team } from '@/lib/engine';
+import type { Ack } from '@/lib/socket/types';
 
 export default function GamePage() {
-  const t = useTranslations();
-  const params = useParams();
-  const code = params.code ?? '';
+  const code = useParams().code ?? '';
   const router = useRouter();
-  const snapshot = useRoomStore((s) => s.snapshot);
-  const isHost = useRoomStore((s) => s.isHost);
-  useEffect(() => {
-    if (snapshot?.code === code && snapshot.status === 'lobby') router.replace(`/room/${code}`);
-  }, [code, router, snapshot?.code, snapshot?.status]);
-
   useRoomConnection(code);
+  const {
+    snapshot,
+    isHost,
+    conn,
+    game: rawGame,
+    roomCode,
+    reveal,
+    ladyResult,
+    myPlayerId,
+    selfLatency,
+    notice,
+  } = useRoomStore();
+  const game = roomCode === code ? rawGame : null;
+  useEffect(() => {
+    if (snapshot?.code === code && snapshot.status === 'lobby')
+      router.replace(`/room/${code}`);
+  }, [code, router, snapshot?.code, snapshot?.status]);
+  return <GameView code={code} game={game} isHost={isHost} conn={conn}
+    reveal={reveal} ladyResult={ladyResult} myPlayerId={myPlayerId}
+    selfLatency={selfLatency} notice={notice}
+    onDismissNotice={() => useRoomStore.getState().setNotice(null)} />;
+}
 
-  const conn = useRoomStore((s) => s.conn);
-  const rawGame = useRoomStore((s) => s.game);
-  const roomCode = useRoomStore((s) => s.roomCode);
-  // The room store is a global singleton; ignore a game still held over from a
-  // previously-visited room so we never render its (e.g. GameOver) state here.
-  const game = rawGame && roomCode === code ? rawGame : null;
-  const reveal = useRoomStore((s) => s.reveal);
-  const ladyResult = useRoomStore((s) => s.ladyResult);
-  const myPlayerId = useRoomStore((s) => s.myPlayerId);
-  const selfLatency = useRoomStore((s) => s.selfLatency);
-
+/** Shared table: live rooms supply socket actions; the gallery supplies a local engine. */
+export function GameView({
+  code, game, isHost, conn, reveal = null, ladyResult = null, myPlayerId,
+  selfLatency, notice = null, onDismissNotice, actions = gameActions,
+  onRestart = roomActions.restart, functionsContent, seatClaimContent,
+}: {
+  code: string;
+  game: ClientGameState | null;
+  isHost: boolean;
+  conn: 'connected' | 'connecting' | 'disconnected';
+  reveal?: { selfRole: Role; knownPlayers: VisibilityInfo[] } | null;
+  ladyResult?: { targetId: string; loyalty: Team } | null;
+  myPlayerId: string | null;
+  selfLatency: number | null;
+  notice?: { type: string; message?: string } | null;
+  onDismissNotice?: () => void;
+  actions?: typeof gameActions;
+  onRestart?: () => Promise<Ack>;
+  functionsContent?: ReactNode;
+  seatClaimContent?: ReactNode;
+}) {
+  const t = useTranslations();
+  const roleText = useRoleText();
   const [historyRound, setHistoryRound] = useState<number | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [ladySeen, setLadySeen] = useState<string | null>(null);
-  const { cue, dismiss } = useResultCue();
+  const [sheet, setSheet] = useState<string | null>(null);
+  const [logChannel, setLogChannel] = useState<LogChannel>('public');
+  const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}`;
+  const action = useRoomAction(phaseKey, t('table.actionFailed'));
+  const { presentation, finish } = useTablePresentation(game);
+  useEffect(() => setSelected([]), [phaseKey]);
+  useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
 
-  // Clear the table selection whenever the proposal / phase changes.
-  const selKey = `${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}`;
-  useEffect(() => {
-    setSelected([]);
-  }, [selKey]);
-  useEffect(() => {
-    setLadySeen(null);
-  }, [game?.phaseRevision]);
-
-  if (!game) {
+  if (!game)
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="animate-pulse text-parchment/60">
-          {conn === 'disconnected' ? t('common.reconnecting') : t('common.loading')}
+      <main className="table-screen items-center justify-center">
+        <p role={notice?.type === 'join_error' ? 'alert' : 'status'}>
+          {notice?.type === 'join_error'
+            ? notice.message
+            : t(
+                conn === 'disconnected'
+                  ? 'common.reconnecting'
+                  : 'common.loading',
+              )}
         </p>
+        {notice?.type === 'join_error' && (
+          <Link href="/" className="table-tool">
+            {t('gameOver.newGame')}
+          </Link>
+        )}
       </main>
     );
-  }
 
-  // Per-player role-reveal overlay: shown to a seated player who hasn't yet
-  // acked their role. Driven by projected roleAcks, so it survives reconnect.
-  const needsRoleReveal = !!myPlayerId && !game.isSpectator && !game.roleAcks.includes(myPlayerId);
-
-  if (game.phase === 'GameOver') {
-    return (
-      <main className="min-h-screen py-6">
-        <GameOverReveal game={game} gameId={game.gameId} isHost={isHost} />
-      </main>
-    );
-  }
-
-  // --- Cues: votes and missions reveal on the table (central pile). No
-  //     full-screen overlay — a small banner + the central reveal carry it. ---
-  const isVoteCue = !!cue && (cue.kind === 'voteApproved' || cue.kind === 'voteRejected');
-  const isMissionCue = !!cue && (cue.kind === 'missionSuccess' || cue.kind === 'missionFail');
-  const voteCueRecord = isVoteCue
-    ? (game.voteHistory.filter((v) => v.roundIndex === cue.roundIndex).at(-1) ?? null)
-    : null;
-  const missionCueResult = isMissionCue
-    ? (game.missionResults.find((m) => m.roundIndex === cue.roundIndex) ?? null)
-    : null;
-
-  // --- Table interaction for the current phase ------------------------------
-  const teamSize = game.config.missionSizes[game.roundIndex] ?? 0;
+  const blocked = conn !== 'connected' || !!presentation;
+  const { canVote, canMission } = actionAvailability(game, myPlayerId);
   const leader = game.players.find((p) => p.seat === game.leaderIndex);
   const isLeader = leader?.id === myPlayerId;
-  const proposedTeam = game.proposedTeam ?? [];
-
-  const toggleTeam = (id: string) =>
-    setSelected((cur) =>
-      cur.includes(id) ? cur.filter((x) => x !== id) : cur.length < teamSize ? [...cur, id] : cur,
-    );
-  const toggleSingle = (id: string) => setSelected((cur) => (cur[0] === id ? [] : [id]));
-
-  const holderId = game.lady?.holderId ?? null;
-  const isHolder = holderId === myPlayerId;
-  const ladyInspected = game.lady?.inspectedIds ?? [];
-  const ladyCandidates = game.players
-    .filter((p) => p.id !== holderId && !ladyInspected.includes(p.id))
-    .map((p) => p.id);
-  const ladyResolved = !!(isHolder && ladyResult && ladyResult.targetId);
-  // Prefer the authoritative projection (survives reconnect); fall back to the
-  // one-shot private event.
+  const teamSize = game.config.missionSizes[game.roundIndex] ?? 0;
+  const team = game.proposedTeam ?? [];
+  const isHolder = game.lady?.holderId === myPlayerId;
   const ladyReveal = game.privateLadyResult ?? ladyResult;
-
-  const assassinCandidates = game.assassinCandidates;
-  const isAssassin = !!assassinCandidates;
-
-  let table: TableInteraction = {};
-  if (game.phase === 'TeamBuilding' && isLeader) {
-    table = {
-      selectable: true,
-      selectedIds: selected,
-      highlightIds: selected,
-      onToggle: toggleTeam,
-    };
-  } else if (game.phase === 'Voting') {
-    table = { highlightIds: proposedTeam };
-  } else if (game.phase === 'MissionVote') {
-    table = { highlightIds: proposedTeam };
-  } else if (game.phase === 'LadyOfLake' && isHolder && !ladyResolved) {
-    table = {
-      selectable: true,
-      candidateIds: ladyCandidates,
-      selectedIds: selected,
-      onToggle: toggleSingle,
-    };
-  } else if (game.phase === 'Assassination' && isAssassin) {
-    table = {
-      selectable: true,
-      candidateIds: assassinCandidates,
-      selectedIds: selected,
-      onToggle: toggleSingle,
-    };
-  }
-
-  // The central vote pile: collecting during voting, then revealing on the cue.
-  const showVotePile = game.phase === 'Voting' || !!voteCueRecord;
-  // The proposed team stays on the table while it is being voted on / revealed.
-  const voteTeam = voteCueRecord ? voteCueRecord.team : game.phase === 'Voting' ? proposedTeam : [];
-
-  // "Pick" phases — play candidate cards from the hand to the centre pile.
-  const pickToggle =
-    game.phase === 'Assassination' || game.phase === 'LadyOfLake' ? toggleSingle : toggleTeam;
+  const isAssassin = !!game.assassinCandidates;
+  const isOver = game.phase === 'GameOver' && presentation?.kind !== 'assassination';
+  const activePhase =
+    presentation?.kind === 'vote'
+      ? 'Voting'
+      : presentation?.kind === 'mission'
+        ? 'MissionResult'
+        : presentation?.kind === 'assassination'
+          ? 'Assassination'
+          : game.phase;
+  const round =
+    presentation?.kind === 'vote'
+      ? presentation.record.roundIndex
+      : presentation?.kind === 'mission'
+        ? presentation.result.roundIndex
+        : game.roundIndex;
+  const displayGame =
+    presentation?.kind === 'mission'
+      ? {
+          ...game,
+          roundIndex: round,
+          missionResults: game.missionResults.filter(
+            (m) => m.roundIndex < round,
+          ),
+        }
+      : { ...game, roundIndex: round };
+  const needsRoleReveal =
+    game.phase !== 'GameOver' &&
+    !!myPlayerId &&
+    !game.isSpectator &&
+    !game.roleAcks.includes(myPlayerId);
+  let candidateIds: string[] | undefined;
   let pick: PickConfig | null = null;
   if (game.phase === 'TeamBuilding' && isLeader) {
     pick = {
-      candidateIds: game.players.map((p) => p.id),
       size: teamSize,
-      confirmLabel: t('teamBuilder.proposeTeam'),
       tone: 'gold',
-      onConfirm: async () => (await gameActions.proposeTeam(selected)).ok,
+      confirmLabel: t('teamBuilder.proposeTeam'),
+      onConfirm: () => actions.proposeTeam(selected),
     };
-  } else if (game.phase === 'LadyOfLake' && isHolder && !ladyResolved) {
+  } else if (game.phase === 'LadyOfLake' && isHolder) {
+    candidateIds = game.players
+      .filter(
+        (p) => p.id !== myPlayerId && !game.lady?.inspectedIds.includes(p.id),
+      )
+      .map((p) => p.id);
     pick = {
-      candidateIds: ladyCandidates,
       size: 1,
-      confirmLabel: t('lady.examineShort'),
       tone: 'sky',
-      onConfirm: async () => (selected[0] ? (await gameActions.useLady(selected[0])).ok : false),
+      confirmLabel: t('lady.examineShort'),
+      onConfirm: () => actions.useLady(selected[0]!),
     };
-  } else if (game.phase === 'Assassination' && isAssassin && assassinCandidates) {
+  } else if (game.phase === 'Assassination' && isAssassin) {
+    candidateIds = game.assassinCandidates;
+    const target = game.players.find((p) => p.id === selected[0]);
     pick = {
-      candidateIds: assassinCandidates,
       size: 1,
-      confirmLabel: t('assassin.strike'),
       tone: 'crimson',
-      onConfirm: async () =>
-        selected[0] ? (await gameActions.assassinate(selected[0])).ok : false,
+      confirmLabel: target
+        ? t('assassin.strikeSeat', { seat: target.seat + 1 })
+        : t('assassin.strike'),
+      onConfirm: () => actions.assassinate(selected[0]!),
     };
   }
-
-  // --- Active phase controls (rendered inside the table's centre board) -----
-  const controls =
-    game.phase === 'TeamBuilding' ? (
-      <TeamBuilder game={game} myPlayerId={myPlayerId} />
-    ) : game.phase === 'Voting' ? (
-      <VotePanel game={game} myPlayerId={myPlayerId} />
-    ) : game.phase === 'MissionVote' ? (
-      <MissionVote game={game} myPlayerId={myPlayerId} />
-    ) : game.phase === 'MissionResult' ? (
-      <MissionResult game={game} />
-    ) : game.phase === 'LadyOfLake' ? (
-      <LadyOfLake game={game} myPlayerId={myPlayerId} />
-    ) : game.phase === 'Assassination' ? (
-      <AssassinPanel game={game} />
-    ) : null;
-
-  const showProposalRail = game.phase === 'TeamBuilding' || game.phase === 'Voting';
-  const hasPlayArea =
-    showVotePile ||
-    game.phase === 'TeamBuilding' ||
-    game.phase === 'Assassination' ||
-    game.phase === 'MissionVote' ||
-    (game.phase === 'LadyOfLake' && isHolder && !ladyResolved) ||
-    !!missionCueResult;
-
-  const board = (
-    <div className="flex gap-3">
-      {/* Left rail: mission rounds + proposal rounds, side by side, centred. */}
-      <div className="flex shrink-0 items-center gap-2.5">
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-[9px] uppercase tracking-wide text-parchment/40">
-            {t('mission.track')}
-          </span>
-          <MissionTrack game={game} onSelect={setHistoryRound} vertical />
-        </div>
-        {showProposalRail && (
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-[9px] uppercase tracking-wide text-parchment/40">
-              {t('proposal.label')}
-            </span>
-            <ProposalTracker game={game} vertical />
-          </div>
-        )}
+  function toggle(id: string) {
+    if (!pick) return;
+    setSelected((ids) =>
+      ids.includes(id)
+        ? ids.filter((x) => x !== id)
+        : pick.size === 1
+          ? [id]
+          : ids.length < pick.size
+            ? [...ids, id]
+            : ids,
+    );
+  }
+  function chips(ids: string[]) {
+    return (
+      <div className="table-team-chips">
+        {ids.map((id) => {
+          const p = game!.players.find((player) => player.id === id);
+          return (
+            p && (
+              <span key={id} className="table-team-chip">
+                <b className="font-medium">{p.seat + 1}</b>
+                <span>{p.name}</span>
+              </span>
+            )
+          );
+        })}
       </div>
-
-      {/* Right: action description (top) + public play area (centred below). */}
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <PhaseTransition phaseKey={`${game.phase}-${game.roundIndex}-${game.rejectionCount}`}>
-          {controls}
-        </PhaseTransition>
-
-        {hasPlayArea && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 border-t border-gold/10 pt-2">
-            {showVotePile && (
-              <>
-                {voteTeam.length > 0 && (
-                  <PickPile game={game} selected={voteTeam} size={voteTeam.length} tone="gold" />
-                )}
-                <VotePile game={game} reveal={voteCueRecord} />
-              </>
-            )}
-
-            {game.phase === 'TeamBuilding' && (
-              <PickPile
-                game={game}
-                selected={selected}
-                size={teamSize}
-                tone="gold"
-                onRemove={toggleTeam}
-              />
-            )}
-            {game.phase === 'Assassination' && (
-              <PickPile
-                game={game}
-                selected={selected}
-                size={1}
-                tone="crimson"
-                onRemove={toggleSingle}
-              />
-            )}
-            {game.phase === 'LadyOfLake' && isHolder && !ladyResolved && (
-              <PickPile
-                game={game}
-                selected={selected}
-                size={1}
-                tone="sky"
-                onRemove={toggleSingle}
-              />
-            )}
-
-            {game.phase === 'MissionVote' && (
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {Array.from({ length: teamSize }).map((_, i) => (
-                  <span
-                    key={i}
-                    className="flex h-20 w-14 shrink-0 items-center justify-center rounded-lg border-2 border-gold/50 bg-gradient-to-b from-stone to-ink text-2xl opacity-60"
-                  >
-                    <GameIcon name="crest" className="h-9 w-9" />
-                  </span>
-                ))}
+    );
+  }
+  const displayTeam =
+    presentation?.kind === 'vote'
+      ? presentation.record.team
+      : presentation?.kind === 'mission'
+        ? presentation.team
+        : team;
+  const displayLeader =
+    presentation?.kind === 'vote' ? presentation.record.leaderId : leader?.id;
+  const tablePlayers = game.players.map((p) => ({
+    ...p,
+    isLeader: p.id === displayLeader,
+  }));
+  function card(p: ClientPlayer) {
+    if (presentation?.kind === 'mission')
+      return (
+        <TableCard
+          state={presentation.team.includes(p.id) ? 'back' : 'inactive'}
+        />
+      );
+    if (presentation?.kind === 'vote')
+      return (
+        <TableCard
+          revealId={presentation.id}
+          state={
+            presentation.record.votes.find((v) => v.playerId === p.id)?.vote ??
+            'back'
+          }
+        />
+      );
+    if (isOver && p.role) return <TableCard role={p.role} variant={p.roleVariant} />;
+    if (game!.phase === 'Voting')
+      return (
+        <TableCard
+          state={
+            game!.votes?.some((v) => v.playerId === p.id && v.hasVoted)
+              ? 'back'
+              : 'empty'
+          }
+        />
+      );
+    if (game!.phase === 'MissionVote')
+      return (
+        <TableCard
+          state={
+            !team.includes(p.id)
+              ? 'inactive'
+              : game!.missionSubmissions?.includes(p.id)
+                ? 'back'
+                : 'empty'
+          }
+        />
+      );
+    return (
+      <TableCard
+        state={pick ? 'empty' : 'inactive'}
+        nominee={selected.includes(p.id) ? p.seat + 1 : undefined}
+        assassination={game!.phase === 'Assassination'}
+      />
+    );
+  }
+  let board;
+  if (presentation?.kind === 'mission' || presentation?.kind === 'assassination') board = null;
+  else if (presentation?.kind === 'vote')
+    board = (
+      <>
+        <h2 className="table-phase-title">
+          {t(
+            presentation.record.approved
+              ? 'cue.voteApproved'
+              : 'cue.voteRejected',
+          )}
+        </h2>
+        {chips(presentation.record.team)}
+        <p className="table-phase-detail">
+          {t('vote.tally', {
+            approves: presentation.record.votes.filter(
+              (v) => v.vote === 'approve',
+            ).length,
+            rejects: presentation.record.votes.filter(
+              (v) => v.vote === 'reject',
+            ).length,
+          })}
+        </p>
+      </>
+    );
+  else if (isOver)
+    board = (
+      <>
+        <h1 className="table-phase-title outcome-title" data-winner={game.outcome?.winner}>
+          {t(
+            game.outcome?.winner === 'good'
+              ? 'gameOver.goodTriumphs'
+              : 'gameOver.evilPrevails',
+          )}
+        </h1>
+        {game.outcome && (
+          <p className="table-phase-detail">
+            {t(`gameOver.${outcomeReasonKey(game.outcome)}`)}
+          </p>
+        )}
+      </>
+    );
+  else if (game.phase === 'TeamBuilding')
+    board = (
+      <>
+        <h2 className="table-phase-title">
+          {isLeader
+            ? t('teamBuilder.youLead')
+            : t('teamBuilder.leaderChoosing', {
+                name: leader ? `${leader.seat + 1}. ${leader.name}` : '',
+              })}
+        </h2>
+        {selected.length > 0 ? (
+          chips(selected)
+        ) : (
+          <p className="table-phase-detail">
+            {t('teamBuilder.selectKnights', {
+              size: teamSize,
+              round: round + 1,
+            })}
+          </p>
+        )}
+      </>
+    );
+  else if (game.phase === 'Voting')
+    board = (
+      <>
+        <h2 className="table-phase-title" aria-live="polite">
+          {t(canVote ? 'table.voteQuestion' : 'table.waitingVotes')}
+        </h2>
+        {chips(team)}
+      </>
+    );
+  else if (game.phase === 'MissionVote')
+    board = (
+      <>
+        <h2 className="table-phase-title" aria-live="polite">
+          {t(canMission ? 'table.missionPrompt' : 'table.waitingMissionCards')}
+        </h2>
+        <p className="table-phase-detail">
+          {t(
+            game.config.requiredFails[round] === 2
+              ? 'table.twoFails'
+              : 'missionVote.oneFailSpoils',
+          )}
+        </p>
+      </>
+    );
+  else if (game.phase === 'LadyOfLake')
+    board = (
+      <>
+        <h2 className="table-phase-title">{t('lady.title')}</h2>
+        <p className="table-phase-detail">
+          {isHolder
+            ? t('lady.chooseExamine')
+            : t('lady.gazingWaters', {
+                name:
+                  game.players.find((p) => p.id === game.lady?.holderId)
+                    ?.name ?? '',
+              })}
+        </p>
+        {chips(selected)}
+      </>
+    );
+  else if (game.phase === 'Assassination')
+    board = (
+      <>
+        <h2 className="table-phase-title">{t('assassin.title')}</h2>
+        <div
+          className="table-public-roles"
+          aria-label={t('assassin.identitiesPublic')}
+        >
+          {game.players
+            .filter((p) => p.role && ROLE_TEAM_UI[p.role] === 'evil')
+            .map((p) => (
+              <div className="table-public-role" key={p.id}>
+                <TableCard role={p.role} />
+                <span>
+                  {p.seat + 1}. {p.name}
+                </span>
               </div>
-            )}
-
-            {missionCueResult && (
-              <MissionCardReveal
-                key={`mreveal-${cue?.roundIndex}`}
-                teamSize={missionCueResult.teamSize}
-                failCount={missionCueResult.failCount}
-                revealed
-              />
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
+            ))}
+        </div>
+        <p className="table-phase-detail">
+          {t(isAssassin ? 'assassin.nameMerlin' : 'assassin.contemplating')}
+        </p>
+      </>
+    );
+  const inspected = game.players.find((p) => p.id === sheet);
+  const showProposals = activePhase === 'TeamBuilding' || activePhase === 'Voting';
+  const proposalGame = presentation?.kind === 'vote'
+    ? { ...game, rejectionCount: presentation.record.proposalIndex }
+    : game;
+  const voteCount = presentation?.kind === 'vote'
+    ? presentation.record.votes.length
+    : game.votes?.filter((v) => v.hasVoted).length ?? 0;
+  const status = presentation
+    ? ''
+    : game.phase === 'Voting'
+      ? t('table.voteCount', {
+          count: game.votes?.filter((v) => v.hasVoted).length ?? 0,
+          total: game.players.length,
+        })
+      : game.phase === 'MissionVote'
+        ? t('table.missionCount', {
+            count: game.missionSubmissions?.length ?? 0,
+            total: team.length,
+          })
+        : '';
   return (
-    <main className="flex h-[100dvh] flex-col overflow-hidden">
+    <>
+      <TableFrame
+        code={code}
+        onOpenReport={() => setLogChannel('public')}
+        report={
+          <LogPanel game={game} channel={logChannel} onChannelChange={setLogChannel} />
+        }
+        headerAction={(openReport) => (
+          <button
+            type="button"
+            className="table-tool"
+            onClick={() => {
+              setLogChannel('rules');
+              openReport();
+            }}
+          >
+            {t('table.rules')}
+          </button>
+        )}
+        tools={(viewToggle) => (
+          <GameTools
+            game={game}
+            code={code}
+            viewToggle={viewToggle}
+            functionsContent={functionsContent}
+            identity={<IdentityCard game={game} myPlayerId={myPlayerId} compact />}
+          />
+        )}
+        connected={conn === 'connected'}
+        latency={selfLatency}
+        error={
+          action.error ??
+          (notice?.type === 'join_error' ? notice.message : null)
+        }
+        onDismissError={() => {
+          action.clearError();
+          onDismissNotice?.();
+        }}
+        progress={
+          <>
+            <div className="table-status">
+              <span>
+                {t('table.roundPhase', {
+                  round: round + 1,
+                  phase: t(`phase.${activePhase}`),
+                })}
+              </span>
+              <span className="table-status-detail inline-flex items-center gap-2">
+                {showProposals ? <>
+                  {activePhase === 'Voting' && <span className="tabular-nums" aria-label={t('table.voteCount', { count: voteCount, total: game.players.length })}>{voteCount}/{game.players.length}</span>}
+                  <ProposalTracker game={proposalGame} compact />
+                </> : status}
+              </span>
+            </div>
+            <MissionTrack
+              game={displayGame}
+              onSelect={setHistoryRound}
+              compact
+            />
+          </>
+        }
+        footer={
+          <>
+            <div className="table-actions">
+              {presentation ? (
+                <div className="table-action-placeholder" aria-live="polite">
+                  {t('table.resolving')}
+                </div>
+              ) : isOver ? (
+                <>
+                  <button
+                    type="button"
+                    className="table-action"
+                    disabled={!isHost || action.busy || blocked}
+                    title={!isHost ? t('gameOver.waitingRestart') : undefined}
+                    onClick={() => void action.run(onRestart)}
+                  >
+                    {t(action.busy ? 'gameOver.restarting' : 'gameOver.playAgain')}
+                  </button>
+                  {game.gameId ? (
+                    <Link
+                      href={`/replay/${game.gameId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="table-action"
+                    >
+                      {t('gameOver.viewReplay')}
+                    </Link>
+                  ) : (
+                    <button type="button" className="table-action" disabled>
+                      {t('gameOver.viewReplay')}
+                    </button>
+                  )}
+                </>
+              ) : game.isSpectator ? (
+                game.players.some((p) => p.claimed === false) ? (
+                  <button
+                    className="table-action"
+                    onClick={() => setSheet('seats')}
+                  >
+                    {t('seat.claimToJoin')}
+                  </button>
+                ) : (
+                  <div className="table-action-placeholder">
+                    {t('game.spectating')}
+                  </div>
+                )
+              ) : (
+                <HandArea
+                  game={game}
+                  myPlayerId={myPlayerId}
+                  selected={selected}
+                  pick={pick}
+                  busy={action.busy}
+                  blocked={blocked}
+                  run={action.run}
+                  actions={actions}
+                />
+              )}
+            </div>
+          </>
+        }
+      >
+        <GameTable
+          players={tablePlayers}
+          myPlayerId={myPlayerId}
+          board={board}
+          card={card}
+          selectedIds={selected}
+          selectable={!!pick && !blocked && !action.busy}
+          candidateIds={candidateIds}
+          highlightIds={displayTeam}
+          onToggle={toggle}
+          onInspect={presentation ? undefined : setSheet}
+          missionReveal={presentation?.kind === 'mission' ? presentation : null}
+          onRevealComplete={finish}
+        />
+      </TableFrame>
+      {presentation?.kind === 'assassination' && (
+        <AssassinationReveal key={presentation.id} event={presentation} onComplete={finish} />
+      )}
       {needsRoleReveal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-deep py-6">
-          <RoleReveal game={game} reveal={reveal} myPlayerId={myPlayerId} />
+          <RoleReveal key={`${game.gameId}-${myPlayerId}-${game.roleRevision ?? 0}`} game={game} reveal={reveal} myPlayerId={myPlayerId} onAck={actions.ackRole} blocked={conn !== 'connected'} />
         </div>
       )}
-
-      {/* Lady of the Lake: the private loyalty result, shown as a reveal. */}
-      {ladyReveal && ladyReveal.targetId !== ladySeen && (
+      {!presentation && ladyReveal && ladyReveal.targetId !== ladySeen && (
         <LadyResultReveal
           game={game}
           result={ladyReveal}
           onClose={() => setLadySeen(ladyReveal.targetId)}
         />
       )}
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col justify-center gap-3 p-3">
-          {game.isSpectator && (
-            <>
-              <div className="rounded-lg border border-gold/30 bg-gold/10 px-4 py-2 text-center text-sm text-gold">
-                👁 {t('game.spectating')}
-              </div>
-              <InGameSeatClaim code={code} game={game} />
-            </>
-          )}
-
-          {/* Slim status strip (the rest of the old header now lives on the table). */}
-          <div className="flex h-5 items-center justify-end">
-            {conn === 'connected' ? (
-              <span className={`text-xs tabular-nums ${latencyTextClass(selfLatency)}`}>
-                ● {formatLatency(selfLatency)}
-              </span>
-            ) : (
-              <span className="text-xs text-amber-400">● {t('game.reconnecting')}</span>
-            )}
-          </div>
-
-          {/* Non-blocking outcome banner (the central pile carries the reveal). */}
-          {isVoteCue && voteCueRecord && (
-            <OutcomeBanner
-              key={`${cue.kind}-${cue.roundIndex}`}
-              kind={cue.kind}
-              approves={voteCueRecord.votes.filter((v) => v.vote === 'approve').length}
-              rejects={voteCueRecord.votes.filter((v) => v.vote === 'reject').length}
-              onDismiss={dismiss}
-            />
-          )}
-          {isMissionCue && missionCueResult && (
-            <OutcomeBanner
-              key={`${cue.kind}-${cue.roundIndex}`}
-              kind={cue.kind}
-              failCount={missionCueResult.failCount}
-              onDismiss={dismiss}
-            />
-          )}
-
-          {/* The table: seats + centre play area + your cards, all on the felt. */}
-          <GameTable
-            game={game}
-            myPlayerId={myPlayerId}
-            board={board}
-            playZone={
-              game.isSpectator ? undefined : (
-                <HandArea
-                  game={game}
-                  myPlayerId={myPlayerId}
-                  selected={selected}
-                  onToggleSelect={pickToggle}
-                  pick={pick}
-                />
-              )
-            }
-            {...table}
-          />
-        </div>
-      </div>
-
-      {/* War log — minimized by default, expandable. */}
-      <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-        <LogPanel game={game} code={code} />
-      </div>
-
       <RoundHistoryModal
         roundIndex={historyRound}
         game={game}
         onClose={() => setHistoryRound(null)}
       />
-    </main>
+      <TableSheet
+        open={sheet !== null}
+        title={
+          sheet === 'seats'
+            ? t('seat.sitTitle')
+            : inspected
+              ? `${inspected.seat + 1}. ${inspected.name}`
+              : ''
+        }
+        onClose={() => setSheet(null)}
+      >
+        {sheet === 'seats' && (seatClaimContent ?? <InGameSeatClaim code={code} game={game} />)}
+        {inspected && (
+          <div className="space-y-3">
+            <p>
+              {t(
+                inspected.claimed === false
+                  ? 'seat.empty'
+                  : inspected.connected
+                    ? 'seat.online'
+                    : 'seat.offline',
+              )}
+            </p>
+            {(isOver ||
+              (game.phase === 'Assassination' &&
+                inspected.role &&
+                ROLE_TEAM_UI[inspected.role] === 'evil')) &&
+              inspected.role && <p>{roleText.name(inspected.role)}</p>}
+          </div>
+        )}
+      </TableSheet>
+    </>
   );
 }

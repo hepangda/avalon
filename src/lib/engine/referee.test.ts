@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { reduce } from './reducer';
+import { createGame, reduce } from './reducer';
 import { createRng } from './rng';
 import { projectStateForViewer } from './projection';
-import { buildStartedGame, FIVE_P, teamForCurrentMission } from './testkit';
+import { buildStartedGame, DEFAULT_OPTIONS, FIVE_P, teamForCurrentMission } from './testkit';
+import { canRerollOpening } from './fsm';
+import { computeKnownPlayers } from './visibility';
 import type { GameEvent, GameState } from './types';
 
 function step(s: GameState, event: GameEvent): GameState {
@@ -110,5 +112,105 @@ describe('referee phase control', () => {
       })),
     ];
     expect(events.reduce(step, start)).toEqual(events.reduce(step, structuredClone(start)));
+  });
+});
+
+describe('opening-only referee randomization', () => {
+  const rerollLeader: GameEvent = { type: 'REROLL_LEADER', actor: 'Referee' };
+  const rerollRoles: GameEvent = { type: 'REROLL_ROLES', actor: 'Referee' };
+
+  it('randomizes the leader using injected randomness and moves the initial Lady holder', () => {
+    const before = buildStartedGame(FIVE_P, { ladyOfTheLake: true });
+    before.roleAcks = ['p0'];
+    const res = reduce(before, rerollLeader, {
+      now: 123,
+      rng: { next: () => 0.7, shuffle: (xs) => [...xs] },
+    });
+    if (!res.ok) throw new Error(res.error.message);
+    expect(res.state.leaderIndex).toBe(3);
+    expect(res.state.ladyHolderId).toBe('p2');
+    expect(res.state.players).toEqual(before.players);
+    expect(res.state.roleAcks).toEqual(['p0']);
+    expect(res.state.phaseRevision).toBe(1);
+    expect(res.state.logs.at(-1)).toMatchObject({
+      key: 'admin.leaderRerolled', params: { actor: 'Referee', seat: 4 }, style: 'admin', at: 123,
+    });
+    expect(before.leaderIndex).toBe(0);
+    expect(canRerollOpening(res.state)).toBe(true);
+  });
+
+  it('redeals configured roles, refreshes private knowledge and invalidates old acknowledgements', () => {
+    const created = createGame({
+      hostId: 'p0', players: FIVE_P.map((_, i) => ({ id: `p${i}`, name: `P${i}` })),
+      options: { ...DEFAULT_OPTIONS, percival: true, morgana: true }, seed: 'opening',
+    });
+    if (!created.ok) throw new Error(created.error.message);
+    let before = step(created.state, { type: 'START_GAME', by: 'p0' });
+    before = step(before, { type: 'ACK_ROLE', by: 'p0' });
+    before = step(before, { type: 'SET_CONNECTED', by: 'p1', connected: false });
+    const next = step(before, rerollRoles);
+    expect(next.players.map((p) => p.role).sort()).toEqual([...next.config.roles].sort());
+    expect(next.players.map(({ role: _role, ...p }) => p))
+      .toEqual(before.players.map(({ role: _role, ...p }) => p));
+    expect(next.leaderIndex).toBe(before.leaderIndex);
+    expect(next.ladyHolderId).toBe(before.ladyHolderId);
+    expect(next.assassinId).toBe(next.players.find((p) => p.role === 'Assassin')!.id);
+    expect(next.roleAcks).toEqual([]);
+    expect(next.roleRevision).toBe(1);
+    expect(next.logs.filter((l) => l.channel === 'private').every((l) => l.seq > before.logSeq)).toBe(true);
+    expect(next.logs.some((l) => l.key === 'admin.rolesRerolled' && l.style === 'admin')).toBe(true);
+    for (const player of next.players) {
+      const view = projectStateForViewer(next, player.id);
+      expect(view.selfRole).toBe(player.role);
+      expect(view.knownPlayers).toEqual(computeKnownPlayers(player, next.players));
+      expect(view.logs.filter((l) => l.key === 'yourRole')).toHaveLength(1);
+      expect(view.logs.find((l) => l.key === 'yourRole')?.params?.role).toBe(player.role);
+      expect(view.players.filter((p) => p.role !== undefined).map((p) => p.id)).toEqual([player.id]);
+    }
+    const spectator = projectStateForViewer(next, 'spectator');
+    expect(spectator.selfRole).toBeNull();
+    expect(spectator.knownPlayers).toEqual([]);
+    expect(spectator.logs.every((l) => l.channel === 'public')).toBe(true);
+    expect(spectator.players.every((p) => p.role === undefined)).toBe(true);
+    expect(reduce(next, { type: 'ACK_ROLE', by: 'p0' }, { now: 1, rng: createRng('ack') }).ok).toBe(false);
+    expect(step(next, { type: 'ACK_ROLE', by: 'p0', roleRevision: 1 }).roleAcks).toEqual(['p0']);
+    expect(step(next, rerollRoles).roleRevision).toBe(2);
+    expect(before.roleAcks).toEqual(['p0']);
+    expect(step(before, rerollRoles)).toEqual(next);
+  });
+
+  it('rejects both tools after play starts, including after retracting or rewinding', () => {
+    const initial = buildStartedGame(FIVE_P);
+    const voting = step(initial, { type: 'PROPOSE_TEAM', by: 'p0', team: ['p0', 'p1'] });
+    const assassination = step(initial, { type: 'START_ASSASSINATION', by: initial.assassinId! });
+    const states: GameState[] = [
+      { ...initial, phase: 'Lobby' },
+      voting,
+      step(voting, { type: 'RETRACT_PROPOSAL' }),
+      step(voting, back),
+      mission(initial),
+      assassination,
+      step(assassination, back),
+      step(assassination, { type: 'ASSASSINATE', by: initial.assassinId!, target: 'p0' }),
+    ];
+    for (const state of states) {
+      expect(canRerollOpening(state)).toBe(false);
+      expect(projectStateForViewer(state, 'p0').canRerollOpening).toBe(false);
+      for (const event of [rerollLeader, rerollRoles]) {
+        expect(reduce(state, event, { now: 1, rng: createRng('late') })).toMatchObject({
+          ok: false, error: { code: 'WRONG_PHASE' },
+        });
+      }
+    }
+  });
+
+  it('does not close opening tools for viewing roles, presence updates or invalid proposals', () => {
+    let state = step(buildStartedGame(FIVE_P), { type: 'ACK_ROLE', by: 'p0' });
+    state = step(state, { type: 'SET_CONNECTED', by: 'p1', connected: false });
+    expect(reduce(state, { type: 'PROPOSE_TEAM', by: 'p1', team: ['p0', 'p1'] }, {
+      now: 1, rng: createRng('invalid'),
+    }).ok).toBe(false);
+    expect(canRerollOpening(state)).toBe(true);
+    expect(projectStateForViewer(state, 'p0').canRerollOpening).toBe(true);
   });
 });

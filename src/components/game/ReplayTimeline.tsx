@@ -114,7 +114,7 @@ function RoundCard({
           {t('replay.ladyResult', {
             holder: nameOf(lady.holderPlayerId),
             target: nameOf(lady.targetPlayerId),
-            team: lady.revealedTeam === 'evil' ? t('mvp.evil') : t('mvp.good'),
+            team: lady.revealedTeam === 'evil' ? t('team.evil') : t('team.good'),
           })}
         </p>
       )}

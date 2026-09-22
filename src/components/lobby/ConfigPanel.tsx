@@ -1,11 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { GameIcon, RolePortrait } from '@/components/game/GameArt';
-import { cn } from '@/lib/utils/cn';
+import { RoleCard } from '@/components/game/RoleCard';
 import type { GameOptions, Role } from '@/lib/engine';
 import {
   PLAYER_COMPOSITION,
@@ -15,8 +14,8 @@ import {
   evilSpecialsCount,
   missionSizesFor,
   requiredFailsFor,
+  rejectionLimit,
 } from '@/lib/engine';
-import { ROLE_TEAM_UI, TEAM_COLOR } from '@/lib/game/roleMeta';
 import { useRoleText } from '@/lib/game/useRoleText';
 import type { RoomConfig } from '@/lib/socket/types';
 
@@ -27,78 +26,79 @@ interface ConfigPanelProps {
   onChange: (config: RoomConfig) => void;
 }
 
-type OptionCard = {
-  key: keyof GameOptions;
-  role?: Role;
+type RoleOption = {
+  key: 'morgana' | 'oberon' | 'mordred' | 'ladyOfTheLake';
   label: string;
-  description: string;
-  side: 'good' | 'evil' | 'neutral';
 };
 
-export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPanelProps) {
+export function ConfigPanel({
+  config,
+  seatedCount,
+  isHost,
+  onChange,
+}: ConfigPanelProps) {
   const t = useTranslations();
   const roleText = useRoleText();
+  const optionsId = useId();
   const count = Math.max(5, Math.min(10, seatedCount || 5));
   const composition = PLAYER_COMPOSITION[count];
 
-  const preview = useMemo(() => previewRoles(count, config.options), [count, config.options]);
+  const preview = useMemo(
+    () => previewRoles(count, config.options),
+    [count, config.options],
+  );
   const evilUsed = evilSpecialsCount(config.options);
   const evilBudget = maxEvil(count);
   const overBudget = evilUsed > evilBudget;
 
-  const optionCards: OptionCard[] = [
-    {
-      key: 'percival',
-      role: 'Percival',
-      label: roleText.name('Percival'),
-      description: t('lobby.descPercival'),
-      side: 'good',
-    },
+  const roleOptions: RoleOption[] = [
     {
       key: 'morgana',
-      role: 'Morgana',
-      label: roleText.name('Morgana'),
-      description: t('lobby.descMorgana'),
-      side: 'evil',
-    },
-    {
-      key: 'mordred',
-      role: 'Mordred',
-      label: roleText.name('Mordred'),
-      description: t('lobby.descMordred'),
-      side: 'evil',
+      label: `${roleText.name('Morgana')} + ${roleText.name('Percival')}`,
     },
     {
       key: 'oberon',
-      role: 'Oberon',
       label: roleText.name('Oberon'),
-      description: t('lobby.descOberon'),
-      side: 'evil',
+    },
+    {
+      key: 'mordred',
+      label: roleText.name('Mordred'),
     },
     {
       key: 'ladyOfTheLake',
       label: t('phase.LadyOfLake'),
-      description: t('lobby.descLady'),
-      side: 'neutral',
     },
   ];
+  const maxRejections = rejectionLimit(config.options.maxRejections);
 
   const previewRolesList = preview.ok ? sortRoles(preview.roles) : [];
   const missionSizes = missionSizesFor(count);
   const requiredFails = requiredFailsFor(count);
 
-  function setOption<K extends keyof GameOptions>(key: K, value: GameOptions[K]) {
-    onChange({ ...config, options: { ...config.options, [key]: value } });
+  function setOption<K extends keyof GameOptions>(
+    key: K,
+    value: GameOptions[K],
+  ) {
+    const options = { ...config.options, [key]: value };
+    if (key === 'morgana') {
+      options.percival = Boolean(value);
+    }
+    onChange({ ...config, options });
   }
 
   function applyRecommended() {
-    onChange({ ...config, options: recommendedOptions(count) });
+    onChange({
+      ...config,
+      options: { ...recommendedOptions(count), maxRejections },
+    });
   }
 
   return (
     <Card className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <h2 className="font-serif text-xl text-gold">{t('lobby.configuration')}</h2>
+        <h2 className="font-serif text-xl text-gold">
+          {t('lobby.configuration')}
+        </h2>
         {composition && (
           <span className="text-sm text-parchment/50">
             {t('lobby.goodEvil', {
@@ -111,7 +111,11 @@ export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPan
 
       {isHost && (
         <>
-          <Button variant="secondary" className="w-full" onClick={applyRecommended}>
+          <Button
+            variant="secondary"
+            className="w-full"
+            onClick={applyRecommended}
+          >
             {t('lobby.applyRecommended', { count })}
           </Button>
 
@@ -119,30 +123,74 @@ export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPan
             <p className="text-xs uppercase tracking-wide text-parchment/50">
               {t('lobby.optionalRoles')}
             </p>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {optionCards.map((card) => (
-                <label
-                  key={card.key}
-                  className="flex cursor-pointer items-start gap-3 rounded-lg border border-gold/20 bg-ink/30 px-3 py-2.5 transition-colors hover:border-gold/55"
-                >
-                  <input
-                    type="checkbox"
-                    checked={Boolean(config.options[card.key])}
-                    onChange={(e) => setOption(card.key, e.target.checked)}
-                    className="mt-1 h-4 w-4 accent-gold"
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-parchment">{card.label}</span>
-                    <span className="block text-xs leading-relaxed text-parchment/50">
-                      {card.description}
+            <div className="grid grid-cols-2 gap-2">
+              {roleOptions.map((option) => {
+                const checked = option.key === 'morgana'
+                  ? config.options.morgana || config.options.percival
+                  : config.options[option.key];
+                const inputId = `${optionsId}-${option.key}`;
+                return (
+                  <label
+                    key={option.key}
+                    htmlFor={inputId}
+                    className="flex min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-gold/20 bg-ink/30 px-3 py-3 transition-colors hover:border-gold/55"
+                  >
+                    <span className="min-w-0 flex-1 text-sm font-medium text-parchment">
+                      {option.label}
                     </span>
-                  </span>
-                </label>
-              ))}
+                    <input
+                      id={inputId}
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => setOption(option.key, e.target.checked)}
+                      className="h-5 w-5 shrink-0 accent-gold"
+                    />
+                  </label>
+                );
+              })}
             </div>
           </section>
         </>
       )}
+
+      <section className="flex min-h-12 items-center justify-between gap-3 rounded-lg border border-gold/20 bg-ink/30 px-3 py-1.5">
+        <p id={`${optionsId}-discussion-limit`} className="text-sm font-medium text-parchment">
+          {t('lobby.rejectionLimit')}
+        </p>
+        <div
+          role="group"
+          aria-labelledby={`${optionsId}-discussion-limit`}
+          className="flex h-8 shrink-0 items-center rounded-md border border-gold/30 bg-ink"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-full w-9 p-0 text-base leading-none"
+            disabled={!isHost || maxRejections <= 1}
+            onClick={() => setOption('maxRejections', maxRejections - 1)}
+            aria-label={t('lobby.decreaseDiscussionLimit')}
+          >
+            −
+          </Button>
+          <output
+            aria-live="polite"
+            aria-labelledby={`${optionsId}-discussion-limit`}
+            className="flex h-full w-8 items-center justify-center text-sm leading-none tabular-nums text-parchment"
+          >
+            {maxRejections}
+          </output>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-full w-9 p-0 text-base leading-none"
+            disabled={!isHost || maxRejections >= 5}
+            onClick={() => setOption('maxRejections', maxRejections + 1)}
+            aria-label={t('lobby.increaseDiscussionLimit')}
+          >
+            ＋
+          </Button>
+        </div>
+      </section>
 
       <section className="space-y-2 rounded-lg border border-gold/15 bg-ink/30 p-3">
         <p className="text-xs uppercase tracking-wide text-parchment/50">
@@ -181,14 +229,15 @@ export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPan
         ) : preview.ok ? (
           <div className="grid grid-cols-2 justify-items-center gap-3 sm:grid-cols-4">
             {previewRolesList.map((role, i) => (
-              <IdentityStyleCard
+              <RoleCard
                 key={`${role}-${i}`}
                 role={role}
-                label={roleText.name(role)}
-                description={roleText.blurb(role)}
-                side={roleSide(role)}
-                selected
-                compact
+                variant={
+                  previewRolesList.slice(0, i).filter((item) => item === role)
+                    .length
+                }
+                size="compact"
+                className="w-full"
               />
             ))}
           </div>
@@ -198,64 +247,6 @@ export function ConfigPanel({ config, seatedCount, isHost, onChange }: ConfigPan
       </section>
     </Card>
   );
-}
-
-function IdentityStyleCard({
-  role,
-  label,
-  description,
-  side,
-  selected,
-  compact = false,
-}: {
-  role?: Role;
-  label: string;
-  description: string;
-  side: 'good' | 'evil' | 'neutral';
-  selected: boolean;
-  compact?: boolean;
-}) {
-  const t = useTranslations();
-  const team = role ? ROLE_TEAM_UI[role] : side === 'neutral' ? null : side;
-  const teamLabel = team ? (role ? t(`team.${team}`) : t(`team.${team}`)) : t('lobby.token');
-  return (
-    <div
-      className={cn(
-        'flex flex-col items-center justify-center gap-2 rounded-2xl border-2 p-3 text-center shadow-2xl transition',
-        compact ? 'h-48 w-32' : 'h-56 w-36',
-        team === 'evil'
-          ? 'border-crimson/60 bg-gradient-to-b from-crimson/30 to-ink'
-          : team === 'good'
-            ? 'border-sky-400/50 bg-gradient-to-b from-sky-900/40 to-ink'
-            : 'border-gold/50 bg-gradient-to-b from-stone to-ink',
-        selected ? 'opacity-100 ring-2 ring-gold/40' : 'opacity-45 grayscale',
-      )}
-    >
-      {role ? (
-        <RolePortrait
-          role={role}
-          alt={label}
-          className={cn(
-            'rounded-full shadow-lg shadow-black/40',
-            compact ? 'h-16 w-16' : 'h-20 w-20',
-          )}
-        />
-      ) : (
-        <GameIcon name="lady" className={compact ? 'h-16 w-16' : 'h-20 w-20'} />
-      )}
-      <span className={cn('font-serif text-gold', compact ? 'text-base' : 'text-xl')}>{label}</span>
-      <span
-        className={cn('text-xs uppercase tracking-wide', team ? TEAM_COLOR[team] : 'text-gold')}
-      >
-        {teamLabel}
-      </span>
-      {!compact && <p className="mt-1 text-[11px] leading-snug text-parchment/55">{description}</p>}
-    </div>
-  );
-}
-
-function roleSide(role: Role): 'good' | 'evil' {
-  return role === 'Merlin' || role === 'Percival' || role === 'LoyalServant' ? 'good' : 'evil';
 }
 
 function sortRoles(roles: Role[]): Role[] {

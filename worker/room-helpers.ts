@@ -1,5 +1,6 @@
 import { fallbackSeatName } from '@/lib/game/names';
 import { sanitizeName } from '@/lib/game/displayName';
+import { rejectionLimit, type GameOptions } from '@/lib/engine';
 export { sanitizeName } from '@/lib/game/displayName';
 import type { RoomConfig, RoomMember, RoomSnapshot } from '@/lib/socket/types';
 import type { RoomMeta } from './schema';
@@ -11,13 +12,13 @@ export const DEFAULT_ROOM_CONFIG: RoomConfig = {
   maxPlayers: 10,
   allowSpectators: true,
   allowMidJoin: true,
-  voiceEnabled: true,
   options: {
     oberon: false,
     mordred: false,
     morgana: true,
     percival: true,
     ladyOfTheLake: false,
+    maxRejections: 5,
   },
   roster: [],
 };
@@ -84,24 +85,28 @@ export function isNameTaken(members: Members, name: string, exceptPlayerId?: str
   return false;
 }
 
+function sanitizeOptions(options: GameOptions): GameOptions {
+  const pairedRoles = Boolean(options?.morgana || options?.percival);
+  return {
+    oberon: Boolean(options?.oberon),
+    mordred: Boolean(options?.mordred),
+    morgana: pairedRoles,
+    percival: pairedRoles,
+    ladyOfTheLake: Boolean(options?.ladyOfTheLake),
+    maxRejections: rejectionLimit(options?.maxRejections),
+  };
+}
+
 export function sanitizeConfig(
   config: RoomConfig,
   roster: string[],
-  voiceEnabled = Boolean(config.voiceEnabled),
 ): RoomConfig {
   return {
     maxPlayers: clampInt(config.maxPlayers, 5, 10),
     // Spectators and mid-join are always allowed (no longer host-configurable).
     allowSpectators: true,
     allowMidJoin: true,
-    voiceEnabled,
-    options: {
-      oberon: Boolean(config.options?.oberon),
-      mordred: Boolean(config.options?.mordred),
-      morgana: Boolean(config.options?.morgana),
-      percival: Boolean(config.options?.percival),
-      ladyOfTheLake: Boolean(config.options?.ladyOfTheLake),
-    },
+    options: sanitizeOptions(config.options),
     roster,
   };
 }
@@ -111,8 +116,8 @@ export function sanitizeRoster(raw: string[]): string[] {
   return raw.slice(0, 10).map((n, i) => sanitizeName(n) || fallbackSeatName(i));
 }
 
-/** Restore the host-defined identity of a lobby seat after its occupant stands. */
-export function restoreLobbySeatIdentity(member: RoomMember, roster: string[]): void {
+/** Restore the host-defined seat identity after its occupant stands. */
+export function restoreSeatIdentity(member: RoomMember, roster: string[]): void {
   member.name = sanitizeName(roster[member.seat] ?? '') || fallbackSeatName(member.seat);
   delete member.avatarUrl;
 }
@@ -127,9 +132,7 @@ export function mergeConfig(partial: Partial<RoomConfig> | undefined, roster: st
     ),
     allowSpectators: base.allowSpectators ?? DEFAULT_ROOM_CONFIG.allowSpectators,
     allowMidJoin: base.allowMidJoin ?? DEFAULT_ROOM_CONFIG.allowMidJoin,
-    // Every newly-created room is a voice room. The client cannot opt out.
-    voiceEnabled: true,
-    options: { ...DEFAULT_ROOM_CONFIG.options, ...(base.options ?? {}) },
+    options: sanitizeOptions({ ...DEFAULT_ROOM_CONFIG.options, ...(base.options ?? {}) }),
     roster,
   };
 }

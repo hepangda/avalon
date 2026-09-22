@@ -52,6 +52,8 @@ export interface GameOptions {
   morgana: boolean;
   percival: boolean;
   ladyOfTheLake: boolean;
+  /** Consecutive rejected proposals before evil wins (1–5); omitted in legacy games = 5. */
+  maxRejections?: number;
 }
 
 export interface GameConfig {
@@ -87,6 +89,7 @@ export interface MissionOutcome {
 export type WinReason =
   | 'three_missions'
   | 'five_rejections'
+  | 'rejection_limit'
   | 'assassinated_merlin'
   | 'assassin_missed';
 
@@ -136,9 +139,8 @@ export interface LogEntry {
   key: string;
   /** Params interpolated into the message (names resolved client-side). */
   params?: Record<string, string | number>;
-  /** Visual style hint. Referee actions are red; voice-presence events carry
-   *  their own compact label in the public war log. */
-  style?: 'admin' | 'voice';
+  /** Visual style hint. Referee actions are red. */
+  style?: 'admin';
 }
 
 /**
@@ -176,19 +178,39 @@ export interface GameState {
   ladyInspectedIds: PlayerId[];
   pendingLady: boolean;
   /** Last inspection result, surfaced privately to the holder only. */
-  lastLadyResult: { holderId: PlayerId; targetId: PlayerId; loyalty: Team } | null;
+  lastLadyResult: {
+    holderId: PlayerId;
+    targetId: PlayerId;
+    loyalty: Team;
+  } | null;
 
   assassinId: PlayerId | null;
   outcome: GameOutcome | null;
   /** Server-only checkpoints for referee rollback; never sent to viewers. */
   phaseHistory?: PhaseCheckpoint[];
   phaseRevision?: number;
+  /** Once play begins, opening-only referee actions stay closed even after rollback. */
+  openingClosed?: boolean;
+  /** Increments on a redeal so acknowledgements of old identities are rejected. */
+  roleRevision?: number;
 }
 
-export type PhaseCheckpoint = Pick<GameState,
-  | 'phase' | 'roundIndex' | 'leaderIndex' | 'rejectionCount' | 'proposedTeam'
-  | 'votes' | 'missionCards' | 'missionResults' | 'voteHistory' | 'ladyHolderId'
-  | 'ladyInspectedIds' | 'pendingLady' | 'lastLadyResult' | 'outcome'
+export type PhaseCheckpoint = Pick<
+  GameState,
+  | 'phase'
+  | 'roundIndex'
+  | 'leaderIndex'
+  | 'rejectionCount'
+  | 'proposedTeam'
+  | 'votes'
+  | 'missionCards'
+  | 'missionResults'
+  | 'voteHistory'
+  | 'ladyHolderId'
+  | 'ladyInspectedIds'
+  | 'pendingLady'
+  | 'lastLadyResult'
+  | 'outcome'
 >;
 
 // ---------------------------------------------------------------------------
@@ -209,35 +231,40 @@ export interface VisibilityInfo {
 
 export type GameEvent =
   | { type: 'START_GAME'; by: PlayerId }
-  | { type: 'ACK_ROLE'; by: PlayerId }
+  | { type: 'ACK_ROLE'; by: PlayerId; roleRevision?: number }
+  | { type: 'REROLL_LEADER'; actor: string }
+  | { type: 'REROLL_ROLES'; actor: string }
   | { type: 'PROPOSE_TEAM'; by: PlayerId; team: PlayerId[]; admin?: boolean }
   | { type: 'CAST_VOTE'; by: PlayerId; value: VoteValue; admin?: boolean }
   | { type: 'RETRACT_VOTES' }
   | { type: 'RETRACT_PROPOSAL' }
   | { type: 'CAST_MISSION_CARD'; by: PlayerId; card: MissionCard }
   | { type: 'USE_LADY'; by: PlayerId; target: PlayerId }
-  | { type: 'START_ASSASSINATION'; by: PlayerId; admin?: boolean; actor?: string }
+  | {
+      type: 'START_ASSASSINATION';
+      by: PlayerId;
+      admin?: boolean;
+      actor?: string;
+    }
   | { type: 'PREVIOUS_PHASE'; actor: string }
   | { type: 'ASSASSINATE'; by: PlayerId; target: PlayerId }
-  | { type: 'SET_CONNECTED'; by: PlayerId; connected: boolean }
-  | { type: 'SET_VOICE_PRESENCE'; by: PlayerId; status: VoicePresenceStatus };
-
-export type VoicePresenceStatus = 'joined' | 'left' | 'dropped';
+  | { type: 'SET_CONNECTED'; by: PlayerId; connected: boolean };
 
 // ---------------------------------------------------------------------------
 // Effects (declarative; interpreted by the Socket layer, never by the engine)
 // ---------------------------------------------------------------------------
 
 export type CheckpointKind =
-  | 'game_started'
-  | 'vote'
-  | 'mission_result'
-  | 'lady'
-  | 'game_over';
+  'game_started' | 'vote' | 'mission_result' | 'lady' | 'game_over';
 
 export type Effect =
   | { kind: 'PERSIST_CHECKPOINT'; checkpoint: CheckpointKind }
-  | { kind: 'PRIVATE_LADY'; holderId: PlayerId; targetId: PlayerId; loyalty: Team };
+  | {
+      kind: 'PRIVATE_LADY';
+      holderId: PlayerId;
+      targetId: PlayerId;
+      loyalty: Team;
+    };
 
 // ---------------------------------------------------------------------------
 // Engine context & results
@@ -302,6 +329,8 @@ export interface ClientPlayer {
   claimed?: boolean;
   /** Self's role, all evil roles during Assassination, or everyone's at GameOver. */
   role?: Role;
+  /** Cosmetic variant; projected only when this player's role is visible. */
+  roleVariant?: number;
   isLeader: boolean;
   isLadyHolder: boolean;
 }
@@ -337,13 +366,16 @@ export interface ClientLogEntry {
   channel: 'public' | 'private';
   key: string;
   params?: Record<string, string | number>;
-  style?: 'admin' | 'voice';
+  style?: 'admin';
 }
 
 export interface ClientGameState {
   phase: GamePhase;
   previousPhase?: GamePhase;
   phaseRevision?: number;
+  roleRevision: number;
+  /** Availability only; the room layer separately enforces referee authorization. */
+  canRerollOpening: boolean;
   roundIndex: number;
   leaderIndex: number;
   rejectionCount: number;
@@ -355,6 +387,8 @@ export interface ClientGameState {
   roleAcks: PlayerId[];
   proposedTeam: PlayerId[] | null;
   votes: ClientVote[] | null;
+  /** Public submission markers only. Never includes the value of a mission card. */
+  missionSubmissions: PlayerId[];
   missionResults: ClientMissionResult[];
   voteHistory: ClientVoteRecord[];
   logs: ClientLogEntry[];
@@ -363,6 +397,7 @@ export interface ClientGameState {
     missionSizes: number[];
     requiredFails: number[];
     rolesInPlay: Role[];
+    maxRejections?: number;
   };
   lady: {
     holderId: PlayerId | null;

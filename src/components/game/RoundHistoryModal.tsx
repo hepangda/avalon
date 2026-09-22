@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { VoteResultPanel } from './VoteResultPanel';
@@ -22,6 +22,7 @@ export function RoundHistoryModal({
   onClose: () => void;
 }) {
   const t = useTranslations();
+  const reduceMotion = useReducedMotion();
   const open = roundIndex !== null;
   const votes = open ? game.voteHistory.filter((v) => v.roundIndex === roundIndex) : [];
   const result = open ? game.missionResults.find((m) => m.roundIndex === roundIndex) : undefined;
@@ -30,18 +31,30 @@ export function RoundHistoryModal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center"
           onClick={onClose}
         >
+          {/* Fade the scrim separately so the panel is not faded twice. */}
           <motion.div
-            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-xl border border-gold/40 bg-stone/95 p-4 shadow-2xl"
-            initial={{ y: 40, opacity: 0 }}
+            aria-hidden="true"
+            className="absolute inset-0 bg-black/60"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('mission.roundDetail', { n: (roundIndex ?? 0) + 1 })}
+            className="relative max-h-[80vh] w-full max-w-md overflow-y-auto rounded-xl border border-gold/40 bg-stone/95 p-4 shadow-2xl"
+            initial={{ y: reduceMotion ? 0 : 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+            exit={{ y: reduceMotion ? 0 : 40, opacity: 0 }}
+            transition={{
+              y: { type: 'spring', stiffness: 300, damping: 35 },
+              opacity: { duration: 0.18, ease: 'easeOut' },
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">

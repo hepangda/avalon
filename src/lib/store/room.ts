@@ -29,6 +29,8 @@ interface RoomState {
   myPlayerId: string | null;
   /** True if this client authenticated as the room host (owner token). */
   isHost: boolean;
+  /** Referee authorization belongs to the current socket, not the tools sheet. */
+  isReferee: boolean;
   snapshot: RoomSnapshot | null;
   game: ClientGameState | null;
   reveal: PrivateReveal | null;
@@ -41,6 +43,7 @@ interface RoomState {
   setRoomCode: (code: string | null) => void;
   setMyPlayerId: (id: string | null) => void;
   setIsHost: (v: boolean) => void;
+  setIsReferee: (v: boolean) => void;
   setSnapshot: (s: RoomSnapshot) => void;
   setGame: (g: ClientGameState) => void;
   setReveal: (r: PrivateReveal) => void;
@@ -55,6 +58,7 @@ export const useRoomStore = create<RoomState>((set) => ({
   roomCode: null,
   myPlayerId: null,
   isHost: false,
+  isReferee: false,
   snapshot: null,
   game: null,
   reveal: null,
@@ -62,14 +66,28 @@ export const useRoomStore = create<RoomState>((set) => ({
   notice: null,
   selfLatency: null,
 
-  setConn: (conn) => set({ conn }),
+  setConn: (conn) => set(conn === 'connected' ? { conn } : { conn, isReferee: false }),
   setRoomCode: (roomCode) => set({ roomCode }),
   setMyPlayerId: (myPlayerId) => set({ myPlayerId }),
   setIsHost: (isHost) => set({ isHost }),
-  setSnapshot: (snapshot) => set(snapshot.status === 'lobby'
-    ? { snapshot, game: null, reveal: null, ladyResult: null }
-    : { snapshot }),
-  setGame: (game) => set({ game, ladyResult: game.privateLadyResult ?? null }),
+  setIsReferee: (isReferee) => set({ isReferee }),
+  setSnapshot: (snapshot) =>
+    set(
+      snapshot.status === 'lobby'
+        ? {
+            snapshot,
+            game: null,
+            reveal: null,
+            ladyResult: null,
+            isReferee: false,
+          }
+        : { snapshot },
+    ),
+  setGame: (game) => set({
+    game,
+    reveal: game.selfRole ? { selfRole: game.selfRole, knownPlayers: game.knownPlayers } : null,
+    ladyResult: game.privateLadyResult ?? null,
+  }),
   setReveal: (reveal) => set({ reveal }),
   setLadyResult: (ladyResult) => set({ ladyResult }),
   setNotice: (notice) => set({ notice }),
@@ -79,6 +97,7 @@ export const useRoomStore = create<RoomState>((set) => ({
       roomCode: null,
       myPlayerId: null,
       isHost: false,
+      isReferee: false,
       snapshot: null,
       game: null,
       reveal: null,

@@ -22,7 +22,7 @@ export function VoteResultPanel({
 
   return (
     <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
-      <div className="flex items-center justify-between gap-2">
+      <div className={`flex items-center justify-between gap-2 ${compact ? 'flex-wrap' : ''}`}>
         <span className="min-w-0 truncate text-xs text-parchment/70">
           {showProposalLabel && (
             <span className="text-parchment/50">
@@ -57,7 +57,7 @@ export function VoteResultPanel({
 
       <div>
         <p className="mb-1 text-xs text-parchment/50">{t('vote.votesDetail')}</p>
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+        <div className={compact ? 'grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-1' : 'grid grid-cols-2 gap-1 sm:grid-cols-3'}>
           {record.votes
             .slice()
             .sort((a, b) => {

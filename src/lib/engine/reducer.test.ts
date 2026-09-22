@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import type { EngineContext, GameState, Role } from './types';
 import { createGame, reduce } from './reducer';
 import { createRng } from './rng';
+import { projectStateForViewer } from './projection';
 import { teamOf } from './roles';
 import { canStartAssassination } from './fsm';
 import { buildStartedGame, firstK, FIVE_P, evilIds, DEFAULT_OPTIONS } from './testkit';
@@ -25,6 +26,41 @@ function leader(s: GameState): string {
 }
 
 describe('Voting resolution', () => {
+  it.each([1, 2, 3, 4, 5])('ends on rejection %i, and publishes the configured limit', (limit) => {
+    let s = buildStartedGame(FIVE_P, { maxRejections: limit });
+    expect(projectStateForViewer(s, 'p0').config.maxRejections).toBe(limit);
+    expect(projectStateForViewer(s, 'spectator').config.maxRejections).toBe(limit);
+    for (let n = 1; n <= limit; n++) {
+      expect(s.phase).toBe('TeamBuilding');
+      s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+      for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
+      expect(s.phase).toBe(n === limit ? 'GameOver' : 'TeamBuilding');
+    }
+    expect(s.outcome?.winner).toBe('evil');
+    expect(s.outcome?.reason).toBe(limit === 5 ? 'five_rejections' : 'rejection_limit');
+    expect(s.voteHistory).toHaveLength(limit);
+    expect(s.logs.at(-1)).toMatchObject({
+      key: limit === 5 ? 'hammerEvilWins' : 'rejectionLimitReached',
+      params: { count: limit },
+    });
+  });
+
+  it('resets a custom rejection limit after approval and starts the next quest at zero', () => {
+    let s = buildStartedGame(FIVE_P, { maxRejections: 2 });
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
+    expect(s.rejectionCount).toBe(0);
+    for (const by of firstK(s, 2)) s = apply(s, { type: 'CAST_MISSION_CARD', by, card: 'success' });
+    expect(s.roundIndex).toBe(1);
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 3) });
+    for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
+    expect(s.phase).toBe('TeamBuilding');
+    expect(s.rejectionCount).toBe(1);
+    expect(s.outcome).toBeNull();
+  });
+
   it('strict-majority approval moves to MissionVote and resets rejections', () => {
     let s = buildStartedGame(FIVE_P);
     s.rejectionCount = 2;
@@ -460,20 +496,6 @@ describe('Role reveal is per-player (no global RoleReveal gate)', () => {
     expect(keys).toContain('roundBegins');
     expect(keys).toContain('proposalBegins');
   });
-
-  it.each(['joined', 'left', 'dropped'] as const)(
-    'records a tagged voice %s event without changing game phase',
-    (status) => {
-      const started = apply(freshGame(), { type: 'START_GAME', by: 'p0' });
-      const next = apply(started, { type: 'SET_VOICE_PRESENCE', by: 'p2', status });
-      expect(next.phase).toBe(started.phase);
-      expect(next.logs.at(-1)).toMatchObject({
-        key: `voice.${status}`,
-        params: { player: 'p2' },
-        style: 'voice',
-      });
-    },
-  );
 
   it('ACK_ROLE records the player without changing phase, and is idempotent', () => {
     let s = apply(freshGame(), { type: 'START_GAME', by: 'p0' });

@@ -52,10 +52,15 @@
     "errInvalidCode": "Enter a 4-digit room code",
     "errCreateFailed": "Failed to create room",
     "errUnreachable": "Could not reach the server",
-    "nameLimit": "ID: up to 10 characters",
-    "errVoiceUnavailable": "Voice rooms are unavailable. Check RealtimeKit configuration or try again later."
+    "nameLimit": "ID: up to 10 characters"
   },
   "lobby": {
+    "rejectionCount": "{count, plural, one {# rejection} other {# rejections}}",
+    "descRejectionLimit": "The red team wins after {count} consecutive rejected proposals in one quest. Approval resets the count.",
+    "rejectionLimit": "Discussion round limit",
+    "decreaseDiscussionLimit": "Decrease discussion round limit",
+    "increaseDiscussionLimit": "Increase discussion round limit",
+    "descPairedRoles": "Added together: Percival sees Merlin and Morgana but cannot tell them apart",
     "roomCode": "Room code",
     "inviteLink": "Invite Link",
     "copied": "Copied!",
@@ -68,11 +73,11 @@
     "kick": "Kick",
     "spectators": "Spectators",
     "configuration": "Configuration",
-    "goodEvil": "{good} good · {evil} evil",
+    "goodEvil": "Blue {good} · Red {evil}",
     "applyRecommended": "Apply Recommended Setup ({count}p)",
     "optionalRoles": "Optional roles",
     "rolesInPlay": "Roles in play ({count}p)",
-    "tooManyEvil": "Too many evil special roles: {used} selected, only {budget} evil slots. Disable one.",
+    "tooManyEvil": "Too many special red team roles: {used} selected, only {budget} red team slots. Disable one.",
     "beginQuest": "Begin the Quest",
     "needPlayers": "Need 5–10 players ({count})",
     "needSeats": "Need 5–10 seats ({count})",
@@ -82,7 +87,7 @@
     "descPercival": "Sees Merlin & Morgana (cannot tell apart)",
     "descMorgana": "Appears as Merlin to Percival",
     "descMordred": "Hidden from Merlin",
-    "descOberon": "Evil, but unknown to other evil players",
+    "descOberon": "Red team, but neither knows nor is known by red teammates",
     "descLady": "Inspect a player's alignment after missions 2–4",
     "token": "Token",
     "missionPattern": "Mission pattern",
@@ -92,42 +97,44 @@
   "roles": {
     "Merlin": {
       "name": "Merlin",
-      "blurb": "You know the servants of evil — but reveal yourself and the Assassin will strike."
+      "blurb": "Sees evil. Must stay hidden."
     },
     "Percival": {
       "name": "Percival",
-      "blurb": "You see Merlin and Morgana, but cannot tell which is which."
+      "blurb": "Sees Merlin and Morgana, but cannot tell them apart."
     },
     "LoyalServant": {
       "name": "Loyal Servant of Arthur",
-      "blurb": "You serve the realm with a pure heart and no secret knowledge."
+      "shortName": "Loyal Servant",
+      "blurb": ""
     },
     "Morgana": {
       "name": "Morgana",
-      "blurb": "You appear as Merlin to Percival, sowing doubt among the good."
+      "blurb": "Looks like Merlin to Percival."
     },
     "Assassin": {
       "name": "Assassin",
-      "blurb": "End the quests early or strike after good wins three quests. Slay Merlin and evil wins; miss and good wins."
+      "blurb": "Assassinates Merlin."
     },
     "Oberon": {
       "name": "Oberon",
-      "blurb": "You are evil, but unknown to your allies — and they to you."
+      "blurb": "Neither knows nor is known by evil allies."
     },
     "Mordred": {
       "name": "Mordred",
-      "blurb": "You are hidden from Merlin himself. Evil's greatest secret."
+      "blurb": "Hidden from Merlin."
     },
     "Minion": {
       "name": "Minion of Mordred",
-      "blurb": "You know your fellow servants of evil. Undermine every quest."
+      "shortName": "Minion",
+      "blurb": "Knows evil allies."
     }
   },
   "team": {
-    "goodLabel": "Loyal to Arthur",
-    "evilLabel": "Servant of Mordred",
-    "good": "Good",
-    "evil": "Evil"
+    "goodLabel": "Blue Team",
+    "evilLabel": "Red Team",
+    "good": "Blue Team",
+    "evil": "Red Team"
   },
   "seat": {
     "whoAreYou": "Who are you?",
@@ -148,48 +155,16 @@
     "doneEditing": "Exit edit",
     "spectatorSitHint": "Spectating. Choose an empty seat to sit down."
   },
-  "voice": {
-    "title": "Voice room",
-    "join": "Join voice",
-    "joining": "Joining…",
-    "readyToJoin": "Join when ready; your browser may ask for microphone access",
-    "claimSeatFirst": "Take a seat before joining voice",
-    "waitingForRoom": "Voice will be available after the room reconnects",
-    "joinFailed": "Could not join voice. Try again.",
-    "connected": "Voice connected",
-    "leave": "Leave voice",
-    "participants": "Voice participants",
-    "participantCount": "{count} online",
-    "showDetails": "Show voice details",
-    "hideDetails": "Hide voice details",
-    "speaking": "speaking",
-    "micOn": "Microphone on",
-    "micOff": "Microphone off",
-    "chooseMic": "Switch microphone",
-    "defaultMic": "Default microphone",
-    "microphoneNumber": "Microphone {number}",
-    "openMic": "Keep mic on",
-    "closeMic": "Turn mic off",
-    "micIsOpen": "Microphone is open",
-    "holdToTalk": "Hold to talk",
-    "releaseToMute": "Release to stop",
-    "micFailed": "Could not open the microphone. Check browser permission and your device.",
-    "deviceFailed": "Could not switch microphones",
-    "micHttpsRequired": "Microphone access on iPhone and iPad requires HTTPS. Reopen this page over HTTPS.",
-    "micPermissionDenied": "Microphone access was denied. Allow it in Safari's website settings, then try again.",
-    "micUnsupported": "This browser cannot request microphone access. Use the latest Safari over HTTPS.",
-    "micUnavailable": "No microphone is available, or another app is using it.",
-    "keyboardHint": "Hold Space to talk, release to mute (disabled while typing)"
-  },
   "roleReveal": {
     "title": "Your Secret Role",
     "tapToReveal": "Tap to reveal",
     "tapWhenReady": "Tap the card when you are ready to look.",
     "whatYouPerceive": "What you perceive",
     "seeNothing": "The shadows reveal nothing. Trust your wits alone.",
-    "shownEvil": "a servant of evil",
+    "shownEvil": "Red Team",
     "shownMerlinOrMorgana": "Merlin or Morgana",
-    "shownAlly": "your ally in evil",
+    "shownAlly": "Red teammates",
+    "perceptionLabel": "{kind}:",
     "understand": "I understand my fate",
     "entering": "Entering…"
   },
@@ -224,11 +199,11 @@
     "close": "Close"
   },
   "teamBuilder": {
-    "proposalOf": "Proposal {n} of 5",
+    "proposalOf": "Proposal {n} of {total}",
     "youLead": "You lead this quest",
     "leaderChoosing": "{name} is choosing a team",
     "selectKnights": "Select {size} for mission {round}",
-    "rejectionWarning": "⚠ {n} rejection(s) until evil wins",
+    "rejectionWarning": "⚠ {n} rejection(s) until the red team wins",
     "proposeTeam": "Propose this team",
     "chooseMore": "Choose {n} more",
     "retract": "Retract",
@@ -260,7 +235,7 @@
     "fail": "Fail",
     "sealed": "Your card is sealed. Awaiting the rest of the party…",
     "watchAfar": "You watch from afar as the chosen knights embark…",
-    "loyalOnlySuccess": "As a loyal servant, you may only grant success."
+    "loyalOnlySuccess": "Blue team players can only play Success."
   },
   "missionResult": {
     "resolved": "Mission {round} Resolved",
@@ -281,35 +256,46 @@
     "notYours": "The Lady's gaze is not yours to direct."
   },
   "assassin": {
+    "targetLabel": "Assassination target",
+    "striking": "The assassin strikes",
+    "revealing": "Revealing the target",
+    "hitTitle": "Merlin was assassinated",
+    "missTitle": "The assassin missed",
+    "viewEnding": "View the ending",
+    "skipAnimation": "Skip animation",
     "title": "The Assassin Strikes",
-    "goodPrevailed": "Good has prevailed on the quests — but if Merlin falls, evil yet triumphs.",
+    "goodPrevailed": "The blue team has won the quests, but hitting Merlin can still give the red team victory.",
     "nameMerlin": "Name the one you believe to be Merlin.",
     "strikeDown": "Strike down {name}",
+    "strikeSeat": "Strike {seat}",
     "strike": "Strike",
     "chooseTarget": "Choose your target",
     "contemplating": "The Assassin contemplates their fateful choice…",
-    "identitiesPublic": "All evil roles, including Oberon, are now public. Good roles stay hidden.",
+    "identitiesPublic": "All red team roles, including Oberon, are now public. Blue team roles stay hidden.",
     "startEarly": "Start assassination early",
-    "earlyConsequences": "Stop all quests now and reveal every evil role, including Oberon, to everyone. Good roles will stay hidden.",
-    "earlyOutcome": "You will then choose a target: hit Merlin and evil wins; miss Merlin and good wins, regardless of the quest results.",
-    "irreversible": "Revealed evil roles cannot be hidden again. A referee can restore the previous phase.",
+    "earlyConsequences": "Stop all quests now and reveal every red team role, including Oberon, to everyone. Blue team roles will stay hidden.",
+    "earlyOutcome": "You will then choose a target: hit Merlin and the red team wins; miss Merlin and the blue team wins, regardless of the quest results.",
+    "irreversible": "Revealed red team roles cannot be hidden again. A referee can restore the previous phase.",
     "confirmStart": "Stop quests & start assassination",
     "starting": "Starting assassination…",
     "startFailed": "Could not start assassination. Check your connection and try again."
   },
   "gameOver": {
-    "goodTriumphs": "Good Triumphs",
-    "evilPrevails": "Evil Prevails",
+    "reasonRejectionLimit": "Consecutive rejections reached the discussion round limit",
+    "reasonThreeFailures": "Three quests failed",
+    "reasonThreeSuccesses": "Three quests succeeded",
+    "goodTriumphs": "Blue Team Wins",
+    "evilPrevails": "Red Team Wins",
     "reasonThreeMissions": "by the outcome of the quests",
-    "reasonFiveRejections": "the realm fell into discord — five teams rejected",
-    "reasonAssassinatedMerlin": "the Assassin found Merlin",
-    "reasonAssassinMissed": "the Assassin struck in vain",
-    "questTally": "Quests — Good {good} · Evil {evil}",
+    "reasonFiveRejections": "Five consecutive proposals were rejected",
+    "reasonAssassinatedMerlin": "Merlin was assassinated",
+    "reasonAssassinMissed": "The assassin missed. Merlin survived.",
+    "questTally": "Quests — Blue {good} · Red {evil}",
     "courtRevealed": "The court revealed",
     "targeted": "🎯 targeted",
     "viewReplay": "View Replay",
     "newGame": "Back to home",
-    "playAgain": "Play again · Return to lobby",
+    "playAgain": "Play again",
     "restarting": "Returning to lobby…",
     "restartFailed": "Could not return to the lobby. Please retry.",
     "waitingRestart": "Waiting for the host to start another game",
@@ -327,8 +313,8 @@
     "voteRejectedSub": "Leadership passes on",
     "missionSuccess": "Quest Succeeded",
     "missionFail": "Quest Failed",
-    "missionSuccessSub": "The light prevails",
-    "missionFailSub": "Darkness creeps in",
+    "missionSuccessSub": "The blue team wins this quest",
+    "missionFailSub": "The red team wins this quest",
     "cardSuccess": "Success",
     "cardFail": "Fail",
     "revealingCards": "Revealing the quest cards…",
@@ -338,6 +324,8 @@
     "myRole": "My Role"
   },
   "log": {
+    "channels": "Log channels",
+    "rejectionLimitReached": "{count} teams rejected in a row — the red team wins!",
     "panelTitle": "War Log",
     "tabPublic": "Public",
     "tabPrivate": "Private",
@@ -345,42 +333,38 @@
     "empty": "No entries yet",
     "details": "Details",
     "gameStarted": "The game begins with {count} players",
-    "lineup": "Lineup — Good: {good}; Evil: {evil}",
+    "lineup": "Lineup — Blue Team: {good}; Red Team: {evil}",
     "roundBegins": "Mission {round} begins",
     "proposalBegins": "Mission {round}, proposal {proposal} begins — {leader} leads",
     "voteApproved": "Mission {round}, proposal {proposal} — result",
     "voteRejected": "Mission {round}, proposal {proposal} — result",
-    "hammerEvilWins": "Five teams rejected in a row — evil wins!",
+    "hammerEvilWins": "Five teams rejected in a row — the red team wins!",
     "missionSucceeded": "Mission {round} succeeded",
     "missionFailed": "Mission {round} failed",
     "ladyBegins": "The Lady of the Lake awakens — {holder} holds the token",
     "ladyInspected": "{holder} examined {target} with the Lady of the Lake",
-    "goodWinsMissions": "Good completes three missions — the realm is saved!",
-    "goodWinsMissionsAssassin": "Good completes three missions — but the Assassin has one strike left",
-    "evilWinsMissions": "Evil sabotages three missions — darkness wins!",
-    "earlyAssassination": "{player} ends the quests early and starts assassination — all evil roles are revealed",
+    "goodWinsMissions": "The blue team completes three quests and wins!",
+    "goodWinsMissionsAssassin": "The blue team completes three quests, but the Assassin has one strike left",
+    "evilWinsMissions": "The red team sabotages three quests and wins!",
+    "earlyAssassination": "{player} ends the quests early and starts assassination — all red team roles are revealed",
     "assassinStruck": "The Assassin strikes at {target}",
-    "assassinHitMerlin": "The Assassin found Merlin — evil wins!",
-    "assassinMissed": "The Assassin struck in vain — good wins!",
+    "assassinHitMerlin": "The Assassin found Merlin — the red team wins!",
+    "assassinMissed": "The Assassin missed Merlin — the blue team wins!",
     "yourRole": "Your role is {role}",
     "perceive": {
-      "evil": "You see {player} as a servant of evil",
+      "evil": "You see {player} on the red team",
       "merlin-or-morgana": "You see {player} as Merlin or Morgana",
-      "known-ally": "{player} is your ally in evil"
+      "known-ally": "{player} is your red teammate"
     },
     "youApproved": "Mission {round}, proposal {proposal}: you voted to approve",
     "youRejected": "Mission {round}, proposal {proposal}: you voted to reject",
     "youPlayedSuccess": "Mission {round}: you played Success",
     "youPlayedFail": "Mission {round}: you played Fail",
-    "ladyResultGood": "You learned {target} is Good",
-    "ladyResultEvil": "You learned {target} is Evil",
-    "voiceTag": "Voice",
-    "voice": {
-      "joined": "{player} joined voice",
-      "left": "{player} left voice",
-      "dropped": "{player}'s voice connection dropped"
-    },
+    "ladyResultGood": "You learned that {target} is on the blue team",
+    "ladyResultEvil": "You learned that {target} is on the red team",
     "admin": {
+      "leaderRerolled": "{actor} randomized the starting leader; seat {seat} now leads",
+      "rolesRerolled": "{actor} reassigned all roles. Everyone must view and confirm their new identity",
       "panelOpened": "⚠ {actor} enabled referee mode — everyone please verify",
       "panelClosed": "{actor} disabled referee mode",
       "unbound": "⚠ {actor} unbound {target} (the seat can now be re-claimed)",
@@ -396,11 +380,18 @@
   },
   "proposal": {
     "label": "Proposal",
-    "hammer": "5th: rejection means evil wins",
-    "hammerWarnLast": "Final proposal — one more rejection and evil wins!",
-    "hammerWarn": "{n} more rejection(s) (the 5th) and evil wins"
+    "hammer": "Proposal {count}: rejection means the red team wins",
+    "hammerWarnLast": "Final proposal — one more rejection and the red team wins!",
+    "hammerWarn": "{n} more rejection(s) and the red team wins"
   },
   "admin": {
+    "rerollLeader": "Randomize starting leader",
+    "rerollRoles": "Reassign roles",
+    "rerollLeaderHint": "Randomly choose the starting leader and update the initial Lady of the Lake holder. Roles stay the same. The same leader may be selected again.",
+    "rerollRolesHint": "Shuffle the configured roles among all players, replace old identity hints, and ask everyone to view and confirm their new identity. Previously seen information cannot be forgotten; check with the table before proceeding.",
+    "openingOnlyHint": "Available only at the opening, before the first proposal or Merlin identification. Retracting or rewinding does not reopen these tools.",
+    "badge": "Referee",
+    "actionFailed": "Action failed. Please try again.",
     "title": "Referee Tools",
     "enableHint": "Enabling referee tools lets you unbind players, vote, or propose on their behalf. Every action is logged publicly in red for the whole table to see.",
     "enableFailed": "Could not enable, please retry",
@@ -425,17 +416,19 @@
     "startAssassination": "Start Merlin identification",
     "previousPhase": "Return to previous phase",
     "previousPhaseHint": "Restore the previous phase, leader, team and results. Votes or mission cards for that phase must be submitted again. Revealed identities and inspections cannot be forgotten.",
-    "startAssassinationHint": "End the current discussion or voting and let the assassin identify Merlin. Hitting Merlin wins for evil; missing wins for good."
+    "startAssassinationHint": "End the current discussion or voting and let the Assassin identify Merlin. Hitting Merlin wins for the red team; missing wins for the blue team."
   },
   "replay": {
+    "retry": "Retry loading",
+    "loadFailed": "Could not load the replay. Please try again.",
     "title": "Battle Replay",
     "loading": "Loading replay…",
     "notFound": "Game not found",
     "notFinished": "Game not finished yet",
     "backHome": "Back to home",
     "outcome": "{winner} Won",
-    "goodWon": "Good",
-    "evilWon": "Evil",
+    "goodWon": "Blue Team",
+    "evilWon": "Red Team",
     "round": "Mission {n}",
     "leader": "Leader",
     "team": "Team",
@@ -459,14 +452,37 @@
     "roles": "Roles revealed",
     "proposalN": "Proposal {n}"
   },
-  "mvp": {
-    "title": "Stats Panel",
-    "mvp": "Match MVP",
-    "voteAccuracy": "Vote accuracy",
-    "participation": "Mission participation",
-    "contribution": "Faction contribution",
-    "na": "—",
-    "good": "Good",
-    "evil": "Evil"
+  "table": {
+    "tabTable": "Table",
+    "returnToTable": "Return to table",
+    "rules": "Rules",
+    "missionRule": "Mission {round}: requires {players} players; {fails, plural, one {# Fail card} other {# Fail cards}} will sabotage it.",
+    "identity": "Identity",
+    "lineup": "Lineup",
+    "more": "More",
+    "lobby": "Room setup",
+    "gathered": "The knights are gathered",
+    "seatedCount": "{count} / {total} seated",
+    "roundPhase": "Quest {round} · {phase}",
+    "leader": "Leader",
+    "playerCards": "Seat {seat} card area",
+    "selectedSeat": "Seat {seat} selected",
+    "noCard": "Empty card area",
+    "awaitingCard": "No card submitted",
+    "cardSubmitted": "Card submitted, face down",
+    "pickRemaining": "Choose {count} more",
+    "waiting": "Waiting for other players…",
+    "waitingVotes": "Waiting for other players to vote",
+    "waitingMissionCards": "Waiting for other players to play their quest cards",
+    "resolving": "Resolving…",
+    "actionFailed": "The action could not be completed. Check your connection and try again.",
+    "voteQuestion": "Approve this team?",
+    "missionPrompt": "Play your quest card",
+    "twoFails": "This quest needs 2 fail cards to fail",
+    "voteCount": "{count} / {total} voted",
+    "missionCount": "{count} / {total} played",
+    "collecting": "Collecting quest cards",
+    "shuffling": "Shuffling…",
+    "anonymousCards": "Anonymous quest cards"
   }
 }

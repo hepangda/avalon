@@ -18,7 +18,7 @@ import type {
   Team,
   VoteValue,
 } from './types';
-import { isValidPlayerCount } from './config';
+import { isValidPlayerCount, rejectionLimit } from './config';
 import { buildRoleSet, isGood, teamOf, validateRoleSet } from './roles';
 import { computeKnownPlayers } from './visibility';
 import { createRng } from './rng';
@@ -27,6 +27,7 @@ import {
   allVotesIn,
   assassinInPlay,
   canStartAssassination,
+  canRerollOpening,
   currentMissionSize,
   currentRequiredFails,
   evilWins,
@@ -60,7 +61,7 @@ function pushPublic(
   s: GameState,
   key: string,
   params?: Record<string, string | number>,
-  style?: 'admin' | 'voice',
+  style?: 'admin',
 ): void {
   s.logSeq += 1;
   s.logs.push({
@@ -193,6 +194,8 @@ export function createGame(input: CreateGameInput): EngineResult {
     logs: [],
     logSeq: 0,
     roleAcks: [],
+    roleRevision: 0,
+    openingClosed: false,
     ladyEnabled: options.ladyOfTheLake,
     ladyHolderId: null,
     ladyInspectedIds: [],
@@ -247,13 +250,7 @@ function startGame(s: GameState, by: PlayerId): EngineResult {
     good: encodeLineup(next.config.roles, 'good'),
     evil: encodeLineup(next.config.roles, 'evil'),
   });
-  for (const p of next.players) {
-    pushPrivate(next, p.id, 'yourRole', { role: p.role });
-    const known = computeKnownPlayers({ id: p.id, role: p.role }, next.players);
-    for (const k of known) {
-      pushPrivate(next, p.id, `perceive.${k.shownAs}`, { player: k.playerId });
-    }
-  }
+  logRoleKnowledge(next);
   // Role-viewing is now a per-player client overlay (gated on roleAcks), not a
   // global phase. The game opens directly in TeamBuilding so players who have
   // already acked can act without waiting for the rest. Log the first round here.
@@ -266,9 +263,12 @@ function startGame(s: GameState, by: PlayerId): EngineResult {
 // ACK_ROLE → (all acked) TeamBuilding
 // ---------------------------------------------------------------------------
 
-function ackRole(s: GameState, by: PlayerId): EngineResult {
+function ackRole(s: GameState, by: PlayerId, roleRevision = 0): EngineResult {
   if (s.phase === 'Lobby') return err('WRONG_PHASE', 'Game has not started');
   if (!playerById(s, by)) return err('UNKNOWN_PLAYER', `Unknown player ${by}`);
+  if (roleRevision !== (s.roleRevision ?? 0)) {
+    return err('WRONG_PHASE', 'Roles were reassigned. View and confirm your new identity.');
+  }
 
   // Acking only records that this player has seen their role. It no longer
   // gates a phase transition — role-viewing is a per-player client overlay, so
@@ -277,6 +277,52 @@ function ackRole(s: GameState, by: PlayerId): EngineResult {
 
   const next = clone(s);
   next.roleAcks.push(by);
+  return ok(next);
+}
+
+function logRoleKnowledge(s: GameState): void {
+  for (const p of s.players) {
+    pushPrivate(s, p.id, 'yourRole', { role: p.role });
+    for (const k of computeKnownPlayers({ id: p.id, role: p.role }, s.players)) {
+      pushPrivate(s, p.id, `perceive.${k.shownAs}`, { player: k.playerId });
+    }
+  }
+}
+
+function rerollOpening(
+  s: GameState,
+  event: Extract<GameEvent, { type: 'REROLL_LEADER' | 'REROLL_ROLES' }>,
+  ctx: EngineContext,
+): EngineResult {
+  if (!canRerollOpening(s)) {
+    return err('WRONG_PHASE', 'Only available before the first proposal or assassination.');
+  }
+  const next = clone(s);
+  // Invalidate local selections and dialogs even though the phase has not changed.
+  next.phaseRevision = (s.phaseRevision ?? 0) + 1;
+  if (event.type === 'REROLL_LEADER') {
+    next.leaderIndex = next.players[Math.floor(ctx.rng.next() * next.players.length)]!.seat;
+    if (next.ladyEnabled) {
+      const holderSeat = (next.leaderIndex - 1 + next.players.length) % next.players.length;
+      next.ladyHolderId = next.players.find((p) => p.seat === holderSeat)!.id;
+    }
+    pushPublic(next, 'admin.leaderRerolled', {
+      actor: event.actor,
+      seat: next.leaderIndex + 1,
+    }, 'admin');
+  } else {
+    const roles = ctx.rng.shuffle(next.config.roles);
+    next.players = next.players.map((p, i) => ({ ...p, role: roles[i]! }));
+    next.assassinId = next.players.find((p) => p.role === 'Assassin')?.id ?? null;
+    next.roleAcks = [];
+    next.roleRevision = (s.roleRevision ?? 0) + 1;
+    // Old private knowledge is obsolete; retain public history and its monotonic sequence.
+    next.logs = next.logs.filter((log) =>
+      log.channel !== 'private' || (log.key !== 'yourRole' && !log.key.startsWith('perceive.')),
+    );
+    pushPublic(next, 'admin.rolesRerolled', { actor: event.actor }, 'admin');
+    logRoleKnowledge(next);
+  }
   return ok(next);
 }
 
@@ -300,6 +346,7 @@ function proposeTeam(s: GameState, by: PlayerId, team: PlayerId[], admin = false
 
   const next = clone(s);
   next.proposedTeam = [...team];
+  next.openingClosed = true;
   next.votes = {};
   next.phase = 'Voting';
   return ok(next);
@@ -354,11 +401,12 @@ function castVote(s: GameState, by: PlayerId, value: VoteValue, admin = false): 
   }
 
   // Rejected.
-  if (next.rejectionCount >= 4) {
-    // This was the 5th consecutive rejection → evil wins (hammer).
+  const limit = rejectionLimit(next.config.options.maxRejections);
+  if (next.rejectionCount + 1 >= limit) {
+    // The configured consecutive rejection limit ends the game (hammer).
     next.phase = 'GameOver';
-    pushPublic(next, 'hammerEvilWins');
-    next.outcome = buildOutcome(next, 'evil', 'five_rejections');
+    pushPublic(next, limit === 5 ? 'hammerEvilWins' : 'rejectionLimitReached', { count: limit });
+    next.outcome = buildOutcome(next, 'evil', limit === 5 ? 'five_rejections' : 'rejection_limit');
     return ok(next, [
       ...effects,
       { kind: 'PERSIST_CHECKPOINT', checkpoint: 'game_over' },
@@ -415,7 +463,7 @@ function castMissionCard(s: GameState, by: PlayerId, card: MissionCard): EngineR
 
   const player = playerById(s, by)!;
   if (card === 'fail' && isGood(player.role)) {
-    return err('GOOD_CANNOT_FAIL', 'Good players must play success');
+    return err('GOOD_CANNOT_FAIL', 'Blue team players must play success');
   }
 
   const next = clone(s);
@@ -545,6 +593,7 @@ function startAssassination(s: GameState, by: PlayerId, admin = false, actor?: s
 
   const next = clone(s);
   next.phase = 'Assassination';
+  next.openingClosed = true;
   next.proposedTeam = null;
   next.votes = {};
   next.missionCards = {};
@@ -601,7 +650,7 @@ function assassinate(s: GameState, by: PlayerId, target: PlayerId): EngineResult
   if (!targetPlayer) return err('ASSASSIN_TARGET_INVALID', `Unknown target ${target}`);
   if (target === by) return err('ASSASSIN_TARGET_INVALID', 'Cannot target self');
   if (teamOf(targetPlayer.role) !== 'good') {
-    return err('ASSASSIN_TARGET_INVALID', 'Target must be on the good team');
+    return err('ASSASSIN_TARGET_INVALID', 'Target must be on the blue team');
   }
 
   const next = clone(s);
@@ -655,23 +704,12 @@ function setConnected(s: GameState, by: PlayerId, connected: boolean): EngineRes
   return ok(next);
 }
 
-function setVoicePresence(
-  s: GameState,
-  by: PlayerId,
-  status: 'joined' | 'left' | 'dropped',
-): EngineResult {
-  if (!playerById(s, by)) return err('UNKNOWN_PLAYER', `Unknown player ${by}`);
-  const next = clone(s);
-  pushPublic(next, `voice.${status}`, { player: by }, 'voice');
-  return ok(next);
-}
-
 // ---------------------------------------------------------------------------
 // Public reducer
 // ---------------------------------------------------------------------------
 
 export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): EngineResult {
-  const result = dispatch(state, event);
+  const result = dispatch(state, event, ctx);
   // Stamp the wall-clock time on any log entries created during this reduce
   // (push helpers leave `at: 0`). Keeps the engine pure — time is injected.
   if (result.ok) {
@@ -685,12 +723,15 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
   return result;
 }
 
-function dispatch(state: GameState, event: GameEvent): EngineResult {
+function dispatch(state: GameState, event: GameEvent, ctx: EngineContext): EngineResult {
   switch (event.type) {
     case 'START_GAME':
       return startGame(state, event.by);
     case 'ACK_ROLE':
-      return ackRole(state, event.by);
+      return ackRole(state, event.by, event.roleRevision);
+    case 'REROLL_LEADER':
+    case 'REROLL_ROLES':
+      return rerollOpening(state, event, ctx);
     case 'PROPOSE_TEAM':
       return proposeTeam(state, event.by, event.team, event.admin ?? false);
     case 'CAST_VOTE':
@@ -711,8 +752,6 @@ function dispatch(state: GameState, event: GameEvent): EngineResult {
       return assassinate(state, event.by, event.target);
     case 'SET_CONNECTED':
       return setConnected(state, event.by, event.connected);
-    case 'SET_VOICE_PRESENCE':
-      return setVoicePresence(state, event.by, event.status);
     default: {
       const _exhaustive: never = event;
       return err('WRONG_PHASE', `Unhandled event ${JSON.stringify(_exhaustive)}`);

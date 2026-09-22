@@ -4,6 +4,7 @@ import {
   createRng,
   currentMissionSize,
   leaderId,
+  projectStateForViewer,
   reduce,
   type GameEvent,
 } from '@/lib/engine';
@@ -68,6 +69,12 @@ describe('replays with referee rollback', () => {
     });
     const replay = buildReplayFromEvents('game-id', seed, options, players, events)!;
     expect(replay.outcome).toEqual(state.outcome);
+    const finalPlayers = projectStateForViewer(state, 'spectator').players;
+    for (const assignment of replay.roleAssignments) {
+      expect(assignment.roleVariant).toBe(
+        finalPlayers.find((player) => player.id === assignment.playerId)?.roleVariant,
+      );
+    }
     expect(replay.ladyChecks).toEqual([]);
     expect(replay.rounds[0]!.votes).toHaveLength(5); // includes the last deciding vote
     expect(replay.rounds[0]!.votes.every((v) => v.value === 'approve')).toBe(true);

@@ -6,7 +6,6 @@ import type {
   Role,
   Team,
   VisibilityInfo,
-  VoicePresenceStatus,
 } from '@/lib/engine';
 
 /**
@@ -17,8 +16,6 @@ export interface RoomConfig {
   maxPlayers: number;
   allowSpectators: boolean;
   allowMidJoin: boolean;
-  /** Whether this room has an associated Cloudflare RealtimeKit voice meeting. */
-  voiceEnabled: boolean;
   options: GameOptions;
   /** Host-defined roster: the name of each seat, seat 0..roster.length-1. */
   roster: string[];
@@ -119,17 +116,7 @@ export interface ClientToServerEvents {
   'room:releaseSeat': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   /** Host edits the roster (lobby only): the full ordered list of seat names. */
   'room:setRoster': (p: { names: string[] }, ack: (r: Ack) => void) => void;
-  /** Obtain a short-lived RealtimeKit participant token for the claimed seat. */
-  'voice:token': (
-    p: Record<string, never>,
-    ack: (r: Ack<{ authToken: string }>) => void,
-  ) => void;
-  /** Report this seat's own RealtimeKit presence transition. */
-  'voice:presence': (p: { status: VoicePresenceStatus }, ack: (r: Ack) => void) => void;
-  /** A connected voice peer observed another participant disappear. The server
-   *  only accepts the first report while that target is still marked joined. */
-  'voice:dropped': (p: { playerId: PlayerId }, ack: (r: Ack) => void) => void;
-  'game:ackRole': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'game:ackRole': (p: { roleRevision?: number }, ack: (r: Ack) => void) => void;
   'game:proposeTeam': (p: { team: PlayerId[] }, ack: (r: Ack) => void) => void;
   'game:vote': (p: { value: VoteValue }, ack: (r: Ack) => void) => void;
   'game:missionCard': (p: { card: MissionCard }, ack: (r: Ack) => void) => void;
@@ -165,6 +152,8 @@ export interface ClientToServerEvents {
   'admin:retractProposal': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'admin:startAssassination': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'admin:previousPhase': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'admin:rerollLeader': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'admin:rerollRoles': (p: Record<string, never>, ack: (r: Ack) => void) => void;
 }
 
 /** Events the server emits. */

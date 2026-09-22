@@ -7,10 +7,11 @@ import type {
   PlayerId,
   Role,
 } from './types';
-import { missionSizesFor, requiredFailsFor } from './config';
-import { canStartAssassination } from './fsm';
+import { missionSizesFor, requiredFailsFor, rejectionLimit } from './config';
+import { canRerollOpening, canStartAssassination } from './fsm';
 import { teamOf } from './roles';
 import { computeKnownPlayers } from './visibility';
+import { roleVariants } from './roleVariants';
 
 /**
  * Project full authoritative state into the per-viewer client view.
@@ -20,16 +21,22 @@ import { computeKnownPlayers } from './visibility';
  *
  * `viewerId` may be a seated player or a spectator (not in players → spectator).
  */
-export function projectStateForViewer(state: GameState, viewerId: PlayerId): ClientGameState {
+export function projectStateForViewer(
+  state: GameState,
+  viewerId: PlayerId,
+): ClientGameState {
   const self = state.players.find((p) => p.id === viewerId) ?? null;
   const isSpectator = self === null;
   const isGameOver = state.phase === 'GameOver';
   const isAssassination = state.phase === 'Assassination';
 
-  const leaderSeatPlayer = state.players.find((p) => p.seat === state.leaderIndex);
+  const leaderSeatPlayer = state.players.find(
+    (p) => p.seat === state.leaderIndex,
+  );
   const leaderPlayerId = leaderSeatPlayer?.id ?? null;
 
-  // Own role is private; evil roles become public at Assassination, all at GameOver.
+  const variants = roleVariants(state);
+  // Own role and art are private; evil roles become public at Assassination, all at GameOver.
   const players: ClientPlayer[] = state.players.map((p) => {
     const showRole =
       isGameOver ||
@@ -41,20 +48,26 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
       seat: p.seat,
       connected: p.connected,
       ...(showRole ? { role: p.role } : {}),
+      ...(showRole && p.role === 'LoyalServant' ? { roleVariant: variants[p.id] } : {}),
       isLeader: p.id === leaderPlayerId,
       isLadyHolder: state.ladyEnabled && p.id === state.ladyHolderId,
     };
   });
 
-  // Known players (curated visibility) — never raw roles. Spectators get none.
+  // Keep each player's original perception available even after the game ends.
+  // This remains curated visibility, never raw roles; spectators get none.
   const knownPlayers =
-    self !== null && !isGameOver
+    self !== null
       ? computeKnownPlayers({ id: self.id, role: self.role }, state.players)
       : [];
 
   // Votes: reveal individual votes only once all are in; otherwise just who voted.
   let votes: ClientVote[] | null = null;
-  if (state.phase === 'Voting' || state.phase === 'MissionVote' || state.proposedTeam) {
+  if (
+    state.phase === 'Voting' ||
+    state.phase === 'MissionVote' ||
+    state.proposedTeam
+  ) {
     const allIn = Object.keys(state.votes).length === state.players.length;
     votes = state.players.map((p) => {
       const hasVoted = state.votes[p.id] !== undefined;
@@ -68,12 +81,14 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
   }
 
   // Mission results: counts only; never per-player cards.
-  const missionResults: ClientMissionResult[] = state.missionResults.map((m) => ({
-    roundIndex: m.roundIndex,
-    success: m.success,
-    failCount: m.failCount,
-    teamSize: m.teamSize,
-  }));
+  const missionResults: ClientMissionResult[] = state.missionResults.map(
+    (m) => ({
+      roundIndex: m.roundIndex,
+      success: m.success,
+      failCount: m.failCount,
+      teamSize: m.teamSize,
+    }),
+  );
 
   // Vote history: every completed proposal (approved or rejected). Public —
   // Avalon votes are open once cast — so all viewers (incl. spectators) get it.
@@ -83,7 +98,10 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
     leaderId: v.leaderId,
     team: [...v.team],
     approved: v.approved,
-    votes: Object.entries(v.votes).map(([playerId, vote]) => ({ playerId, vote })),
+    votes: Object.entries(v.votes).map(([playerId, vote]) => ({
+      playerId,
+      vote,
+    })),
   }));
 
   // Logs: public entries to everyone; private entries only to their audience.
@@ -136,6 +154,8 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
     phase: state.phase,
     previousPhase: state.phaseHistory?.at(-1)?.phase,
     phaseRevision: state.phaseRevision ?? 0,
+    roleRevision: state.roleRevision ?? 0,
+    canRerollOpening: canRerollOpening(state),
     roundIndex: state.roundIndex,
     leaderIndex: state.leaderIndex,
     rejectionCount: state.rejectionCount,
@@ -145,6 +165,12 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
     roleAcks: [...state.roleAcks],
     proposedTeam: state.proposedTeam ? [...state.proposedTeam] : null,
     votes,
+    missionSubmissions:
+      state.phase === 'MissionVote'
+        ? (state.proposedTeam ?? []).filter(
+            (id) => state.missionCards[id] !== undefined,
+          )
+        : [],
     missionResults,
     voteHistory,
     logs,
@@ -153,11 +179,14 @@ export function projectStateForViewer(state: GameState, viewerId: PlayerId): Cli
       missionSizes: missionSizesFor(state.config.playerCount),
       requiredFails: requiredFailsFor(state.config.playerCount),
       rolesInPlay: [...state.config.roles],
+      maxRejections: rejectionLimit(state.config.options.maxRejections),
     },
     lady,
     ...(privateLadyResult ? { privateLadyResult } : {}),
     canStartAssassination:
-      self !== null && state.assassinId === self.id && canStartAssassination(state),
+      self !== null &&
+      state.assassinId === self.id &&
+      canStartAssassination(state),
     ...(assassinCandidates ? { assassinCandidates } : {}),
     outcome: isGameOver ? state.outcome : null,
     isSpectator,

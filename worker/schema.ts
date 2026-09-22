@@ -38,24 +38,12 @@ CREATE TABLE IF NOT EXISTS player_session (
   player_id TEXT PRIMARY KEY,
   token     TEXT NOT NULL
 );
-CREATE TABLE IF NOT EXISTS voice_meeting (
-  id         INTEGER PRIMARY KEY CHECK (id = 1),
-  meeting_id TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS voice_participant (
-  player_id      TEXT PRIMARY KEY,
-  participant_id TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS voice_presence (
-  player_id  TEXT PRIMARY KEY,
-  state      TEXT    NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-CREATE TABLE IF NOT EXISTS voice_revocation (
-  player_id      TEXT PRIMARY KEY,
-  participant_id TEXT NOT NULL,
-  meeting_id     TEXT NOT NULL,
-  attempts       INTEGER NOT NULL DEFAULT 0
+CREATE TABLE IF NOT EXISTS replay_archive (
+  id       INTEGER PRIMARY KEY CHECK (id = 1),
+  game_id  TEXT NOT NULL,
+  revision INTEGER NOT NULL,
+  payload  TEXT NOT NULL,
+  pending  INTEGER NOT NULL DEFAULT 1
 );
 `;
 
@@ -105,7 +93,14 @@ export function parseMeta(row: RoomMetaRow): RoomMeta {
     code: row.code,
     hostToken: row.host_token,
     status: row.status as RoomStatus,
-    config: { ...config, voiceEnabled: Boolean(config.voiceEnabled) },
+    // Pick current fields so retired settings in stored rooms stay private.
+    config: {
+      maxPlayers: config.maxPlayers,
+      allowSpectators: config.allowSpectators,
+      allowMidJoin: config.allowMidJoin,
+      options: config.options,
+      roster: config.roster,
+    },
     gameId: row.game_id,
     seed: row.seed,
   };
