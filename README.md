@@ -61,7 +61,9 @@ Never expose this token through a `VITE_*` variable. Because voice is now part o
 
 ## Room-creator OAuth (Pangda Auth / KeyForge)
 
-Creating a room uses an OIDC Authorization Code flow with S256 PKCE. The Worker keeps the tokens in an encrypted HttpOnly cookie and accepts creation only after verifying an access token whose audience is exactly `https://avalon.pangda.app/createRoom`. Room preview and WebSocket join routes stay public. The creator's `preferred_username` becomes the first seat name, and the OIDC `picture` claim becomes its avatar.
+Creating a room uses an OIDC Authorization Code flow with S256 PKCE. The Worker keeps the tokens in an encrypted HttpOnly cookie and accepts creation only after verifying an access token whose audience is exactly `https://avalon.pangda.app/createRoom`. Room preview and WebSocket join routes stay public. The creator's saved game alias (or `preferred_username` when no alias is set) becomes the first seat name, and the OIDC `picture` claim becomes its avatar.
+
+Signed-in players can save a game alias of up to 10 characters on the home page. `POST /api/auth/alias` saves it in an `AccountProfileDurableObject` keyed by the verified OIDC issuer and subject. Profiles have no expiry and are independent of cookies, browsers and rooms. Session reads and token refreshes load the saved alias, so future sign-ins and room creation use it without changing the upstream account name.
 
 Register this API resource in Pangda Auth:
 
@@ -120,8 +122,8 @@ Configuration lives in `wrangler.jsonc`:
 
 - `main` → the Hono Worker entry (`worker/index.ts`)
 - `assets` → the built client SPA with `not_found_handling: "single-page-application"`; `run_worker_first` routes `/api/*` and `/rooms/*` to the Worker, everything else to static assets
-- `durable_objects` → the `ROOM` and `REPLAY` bindings
-- `migrations` → registers both classes as `new_sqlite_classes` (SQLite-backed Durable Objects)
+- `durable_objects` → the `ROOM`, `REPLAY` and `ACCOUNT_PROFILE` bindings
+- `migrations` → registers the room/replay classes in `v1` and the account profile class in `v2` as `new_sqlite_classes` (SQLite-backed Durable Objects)
 
 Durable Object storage is created automatically on first use; there is no migration step or connection string to configure.
 

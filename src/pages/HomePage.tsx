@@ -9,6 +9,7 @@ import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { GameIcon } from '@/components/game/GameArt';
 import { IdentityPanel } from '@/components/home/IdentityPanel';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
+import { accountDisplayName } from '@/lib/auth/types';
 import { useSessionStore } from '@/lib/store/session';
 
 const DEFAULT_SEAT_COUNT = 5;
@@ -17,9 +18,12 @@ export default function HomePage() {
   const t = useTranslations();
   const router = useRouter();
   const location = useLocation();
-  const { user: authUser, loading: authLoading, login, logout } = useAuthIdentity();
+  const { user: authUser, loading: authLoading, login, logout, saveAlias } = useAuthIdentity();
+  const identityName = useSessionStore((state) => state.lastName);
+  const canJoin = !authLoading && Boolean(authUser || identityName.trim());
 
   const [joinCode, setJoinCode] = useState('');
+  const [joinExpanded, setJoinExpanded] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -76,9 +80,7 @@ export default function HomePage() {
           setError(t('home.signInRequiredToCreate'));
           return;
         }
-        throw new Error(
-          body.code === 'VOICE_UNAVAILABLE' ? t('home.errVoiceUnavailable') : (body.error ?? t('home.errCreateFailed')),
-        );
+        throw new Error(body.error ?? t('home.errCreateFailed'));
       }
       const { code, hostToken, playerId, playerToken } = (await res.json()) as {
         code: string;
@@ -90,7 +92,7 @@ export default function HomePage() {
         hostToken,
         playerId,
         playerToken,
-        name: authUser.username,
+        name: accountDisplayName(authUser),
       });
       router.push(`/room/${code}`);
     } catch (e) {
@@ -101,6 +103,7 @@ export default function HomePage() {
   }, [authUser, logout, router, t]);
 
   function handleJoin() {
+    if (!canJoin) return setError(t('home.identityRequiredToJoin'));
     const code = joinCode.trim();
     if (!/^[0-9]{4}$/.test(code)) return setError(t('home.errInvalidCode'));
     router.push(`/room/${code}`);
@@ -123,6 +126,7 @@ export default function HomePage() {
         </header>
 
         <IdentityPanel
+          key={authUser?.id ?? 'anonymous'}
           user={authUser}
           loading={authLoading}
           authError={authError}
@@ -131,35 +135,65 @@ export default function HomePage() {
             login(location.pathname);
           }}
           onLogout={logout}
+          onSaveAlias={saveAlias}
         />
 
         <Card className="space-y-4 p-4 sm:p-5">
           <p className="font-serif text-sm font-semibold text-gold">{t('home.roomActionsTitle')}</p>
 
-          <Button className="h-14 w-full text-base sm:text-lg" onClick={handleCreate} disabled={busy || authLoading}>
-            {busy ? t('home.creating') : t('home.createRoom')}
-          </Button>
+          <form
+            className="space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleCreate();
+            }}
+          >
+            <Button type="submit" className="h-14 w-full text-base sm:text-lg" disabled={busy || authLoading || !authUser}>
+              {busy ? t('home.creating') : t('home.createRoom')}
+            </Button>
+            {!authUser && <p className="text-xs text-parchment/45">{t('home.signInRequiredToCreate')}</p>}
+          </form>
 
           <div className="divider text-xs">{t('home.or')}</div>
 
-          <div className="flex gap-2">
-            <Input
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ''))}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleJoin();
-              }}
-              placeholder={t('home.roomCode')}
-              maxLength={4}
-              inputMode="numeric"
-              pattern="[0-9]{4}"
-              className="h-11 min-w-0 tracking-widest"
-              autoComplete="off"
-            />
-            <Button variant="secondary" className="h-11 min-w-20 shrink-0 whitespace-nowrap px-5" onClick={handleJoin}>
-              {t('home.join')}
-            </Button>
-          </div>
+          <button
+            type="button"
+            className="flex w-full items-center justify-between text-sm text-gold disabled:cursor-not-allowed disabled:text-parchment/45"
+            aria-expanded={canJoin && joinExpanded}
+            aria-controls="join-room-form"
+            disabled={!canJoin}
+            onClick={() => setJoinExpanded((expanded) => !expanded)}
+          >
+            {t('home.joinRoom')}
+            <span aria-hidden="true">{canJoin && joinExpanded ? '−' : '+'}</span>
+          </button>
+          {!canJoin && <p className="text-xs text-parchment/45">{t('home.identityRequiredToJoin')}</p>}
+          <form
+            id="join-room-form"
+            hidden={!canJoin || !joinExpanded}
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleJoin();
+            }}
+          >
+            <div className="flex gap-2">
+              <Input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.replace(/\D/g, ''))}
+                disabled={!canJoin}
+                aria-label={t('home.roomCode')}
+                placeholder={t('home.roomCode')}
+                maxLength={4}
+                inputMode="numeric"
+                pattern="[0-9]{4}"
+                className="h-11 min-w-0 tracking-widest"
+                autoComplete="off"
+              />
+              <Button type="submit" disabled={!canJoin} variant="secondary" className="h-11 min-w-20 shrink-0 whitespace-nowrap px-5">
+                {t('home.join')}
+              </Button>
+            </div>
+          </form>
 
           {error && <p className="text-center text-sm text-crimson">{error}</p>}
         </Card>

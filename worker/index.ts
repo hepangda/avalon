@@ -4,6 +4,10 @@ import type { Env } from './env';
 import { makeCode } from './ids';
 import { RoomDurableObject } from './room-do';
 import { ReplayDurableObject } from './replay-do';
+import { AccountProfileDurableObject } from './account-profile-do';
+import { accountProfile } from './account-profile';
+import { accountDisplayName } from '@/lib/auth/types';
+import { sanitizeName } from '@/lib/game/displayName';
 import {
   AuthError,
   OidcCallbackFailure,
@@ -103,6 +107,28 @@ app.post('/api/auth/logout', (c) => {
   return c.json({ ok: true });
 });
 
+app.post('/api/auth/alias', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  // A cookie authenticates the account; require a same-origin JSON request for writes.
+  if (c.req.header('Origin') !== new URL(c.req.url).origin) {
+    return c.json({ code: 'INVALID_ORIGIN', error: 'Same-origin request required' }, 403);
+  }
+  if (c.req.header('Content-Type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json') {
+    return c.json({ code: 'INVALID_ALIAS', error: 'JSON body required' }, 400);
+  }
+  try {
+    const user = await getCurrentAuthUser(c);
+    if (!user) return c.json({ code: 'AUTH_REQUIRED', error: 'Sign in to save an alias' }, 401);
+    const body = await c.req.json<{ alias?: unknown }>().catch(() => null);
+    const alias = typeof body?.alias === 'string' ? sanitizeName(body.alias) : '';
+    if (!alias) return c.json({ code: 'INVALID_ALIAS', error: 'Alias cannot be empty' }, 400);
+    const saved = await accountProfile(c.env, user.id).setAlias(alias);
+    return c.json({ user: { ...user, alias: saved } });
+  } catch (error) {
+    return authErrorResponse(c, error);
+  }
+});
+
 // Create a room: generate a code, initialize a fresh Durable Object, retry on
 // code collisions.
 app.post('/api/rooms', async (c) => {
@@ -132,7 +158,7 @@ app.post('/api/rooms', async (c) => {
       code,
       roster,
       config: { ...config, voiceEnabled: true },
-      creator: { name: creator.username, avatarUrl: creator.picture },
+      creator: { name: accountDisplayName(creator), avatarUrl: creator.picture },
     });
     if (res.ok) {
       return c.json(
@@ -194,7 +220,7 @@ app.get('/rooms/:code/ws', (c) => {
 });
 
 export default app;
-export { RoomDurableObject, ReplayDurableObject };
+export { RoomDurableObject, ReplayDurableObject, AccountProfileDurableObject };
 
 function authErrorResponse(c: Context<{ Bindings: Env }>, error: unknown) {
   if (error instanceof AuthError) {

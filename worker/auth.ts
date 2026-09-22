@@ -2,6 +2,10 @@ import type { Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { Env } from "./env";
+import type { AuthUser } from '@/lib/auth/types';
+import { accountProfile } from './account-profile';
+
+export type { AuthUser } from '@/lib/auth/types';
 
 const FLOW_COOKIE = "avalon_oidc_flow";
 const SESSION_COOKIE = "avalon_oidc_session";
@@ -73,12 +77,6 @@ export type AuthCallbackUiError =
   | "unavailable"
   | "invalid_flow"
   | "failed";
-
-export interface AuthUser {
-  id: string;
-  username: string;
-  picture?: string;
-}
 
 export class AuthError extends Error {
   constructor(
@@ -318,7 +316,10 @@ export async function getCurrentAuthUser(
       return null;
     }
   }
-  return session.user;
+  // Read persistent preferences each time; token refresh and future logins must
+  // not overwrite the alias with the identity provider's original username.
+  const alias = await accountProfile(c.env, session.user.id).getAlias();
+  return { ...session.user, ...(alias ? { alias } : {}) };
 }
 
 export function clearAuthSession(c: AppContext): void {

@@ -31,13 +31,18 @@
   "durable_objects": {
     "bindings": [
       { "name": "ROOM", "class_name": "RoomDurableObject" },
-      { "name": "REPLAY", "class_name": "ReplayDurableObject" }
+      { "name": "REPLAY", "class_name": "ReplayDurableObject" },
+      { "name": "ACCOUNT_PROFILE", "class_name": "AccountProfileDurableObject" }
     ]
   },
   "migrations": [
     {
       "tag": "v1",
       "new_sqlite_classes": ["RoomDurableObject", "ReplayDurableObject"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["AccountProfileDurableObject"]
     }
   ]
 }

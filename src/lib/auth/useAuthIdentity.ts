@@ -1,18 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSessionStore } from '@/lib/store/session';
+import { accountDisplayName, type AuthUser } from './types';
+
+export type { AuthUser } from './types';
 
 const SILENT_AUTH_TIMEOUT_MS = 6_000;
 let silentAuthDisabled =
-  typeof window !== 'undefined' &&
-  new URLSearchParams(window.location.search).has('authError');
+  typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('authError');
 let silentAuthPromise: Promise<AuthUser | null> | null = null;
 let cancelSilentAuthAttempt: (() => void) | null = null;
-
-export interface AuthUser {
-  id: string;
-  username: string;
-  picture?: string;
-}
 
 async function readAuthUser(): Promise<AuthUser | null> {
   const response = await fetch('/api/auth/session', {
@@ -24,7 +20,7 @@ async function readAuthUser(): Promise<AuthUser | null> {
 }
 
 function rememberIdentity(user: AuthUser | null): void {
-  if (user) useSessionStore.getState().setAccountIdentity(user.username, user.picture);
+  if (user) useSessionStore.getState().setAccountIdentity(accountDisplayName(user), user.picture);
 }
 
 function attemptSilentAuth(): Promise<AuthUser | null> {
@@ -75,9 +71,12 @@ function disableSilentAuth(): void {
 export function useAuthIdentity() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const identityVersion = useRef(0);
 
   const refresh = useCallback(async () => {
+    const version = ++identityVersion.current;
     const next = await readAuthUser().catch(() => null);
+    if (version !== identityVersion.current) return next;
     rememberIdentity(next);
     setUser(next);
     return next;
@@ -85,17 +84,18 @@ export function useAuthIdentity() {
 
   useEffect(() => {
     let active = true;
+    const version = identityVersion.current;
 
     void readAuthUser()
       .catch(() => null)
       .then((existing) => {
-        if (!active) return;
+        if (!active || version !== identityVersion.current) return;
         rememberIdentity(existing);
         setUser(existing);
         setLoading(false);
         if (existing) return;
         void attemptSilentAuth().then((discovered) => {
-          if (!active || !discovered) return;
+          if (!active || !discovered || version !== identityVersion.current) return;
           rememberIdentity(discovered);
           setUser(discovered);
         });
@@ -110,16 +110,38 @@ export function useAuthIdentity() {
     // A user-initiated sign-in is interactive. Stop any background
     // prompt=none request before navigating to the regular login endpoint.
     disableSilentAuth();
+    identityVersion.current += 1;
     window.location.assign(`/api/auth/login?next=${encodeURIComponent(nextPath)}`);
   }, []);
 
   const logout = useCallback(async () => {
     // Explicit logout must not immediately sign the same IdP session back in.
     disableSilentAuth();
+    identityVersion.current += 1;
     await fetch('/api/auth/logout', { method: 'POST' });
     useSessionStore.getState().clearAccountAvatar();
     setUser(null);
   }, []);
 
-  return { user, loading, login, logout, refresh };
+  const saveAlias = useCallback(
+    async (alias: string) => {
+      if (!user) throw new Error('AUTH_REQUIRED');
+      const version = ++identityVersion.current;
+      const response = await fetch('/api/auth/alias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alias }),
+      });
+      if (!response.ok)
+        throw new Error(response.status === 401 ? 'AUTH_REQUIRED' : 'ALIAS_SAVE_FAILED');
+      const { user: next } = (await response.json()) as { user: AuthUser };
+      if (version !== identityVersion.current) return;
+      if (next.id !== user.id) throw new Error('AUTH_REQUIRED');
+      rememberIdentity(next);
+      setUser(next);
+    },
+    [user],
+  );
+
+  return { user, loading, login, logout, refresh, saveAlias };
 }
