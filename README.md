@@ -143,3 +143,15 @@ shuffles an anonymous pile built solely from the result counts, and reveals it.
 The server continues to synchronize during these brief presentation sequences.
 Refreshing restores submitted-card markers, and referee vote retractions restore
 the voting controls without requiring a refresh.
+
+### Debug gallery
+
+打开 `/zh/debug/gallery`（英文为 `/en/debug/gallery`），或点击首页底部的调试画廊入口。
+无需登录或创建房间，所有模拟都在浏览器本地运行，复用实际游戏引擎、玩家视角投影和牌桌组件。
+
+- 26 个预设涵盖身份揭示、组队与投票、任务结果动画、湖中仙女、刺杀、胜负结局、旁观入座与断线。
+- 支持 5–10 人及任意玩家／旁观者视角；第四轮双失败门槛场景至少需要 7 人。
+- 直接操作牌桌，或补齐其他玩家的投票与任务牌；可以撤销、重置并重播结果动画。
+- 连接设置可切换断线、显示延迟、玩家在线状态，以及模拟下一次牌桌操作失败。显示延迟不会延缓操作。
+- “复制入口”保存预设、人数和视角，不保存继续操作后的整局状态。例如 `/zh/debug/gallery?scene=twoFails&players=7&view=p0`。
+- “查看当前视角数据”显示实际投影；本地预设中的所有角色可从视角选择器查看。模拟不写入房间、账号或战绩。

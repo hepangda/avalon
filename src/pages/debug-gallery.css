@@ -1,0 +1,264 @@
+/* A compact control desk around the same live Avalon table. */
+.debug-gallery {
+  --debug-border: rgb(201 162 39 / 22%);
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  height: 100dvh;
+  background: #16100a;
+  color: #e8dcc0;
+}
+.debug-controls {
+  overflow-y: auto;
+  border-right: 1px solid var(--debug-border);
+  background: #221a12;
+  padding: 20px 18px;
+}
+.debug-heading > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.debug-heading a {
+  color: #c9a227;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+}
+.debug-heading h1 {
+  font-family: var(--font-cinzel), Georgia, serif;
+  font-size: 25px;
+  margin-top: 18px;
+}
+.debug-heading p,
+.debug-section p,
+.debug-local-functions > p {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #c8bca0;
+  margin: 6px 0 12px;
+}
+.debug-settings {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+.debug-controls label,
+.debug-local-functions label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  color: #c8bca0;
+}
+.debug-gallery select,
+.debug-gallery input[type="search"],
+.debug-local-functions select {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--debug-border, rgb(201 162 39 / 22%));
+  border-radius: 5px;
+  background: #16100a;
+  color: #e8dcc0;
+}
+.debug-gallery :is(button, a, select, input, summary):focus-visible {
+  outline: 2px solid #c9a227;
+  outline-offset: 3px;
+}
+.debug-toolbar {
+  display: flex;
+  gap: 6px;
+}
+.debug-toolbar button,
+.debug-actions button {
+  border: 1px solid rgb(201 162 39 / 30%);
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 12px;
+  min-height: 36px;
+}
+.debug-toolbar button {
+  flex: 1;
+}
+.debug-toolbar button:hover,
+.debug-actions button:hover {
+  background: rgb(201 162 39 / 12%);
+}
+.debug-gallery button:disabled,
+.debug-local-functions button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.debug-section {
+  border-top: 1px solid var(--debug-border);
+  margin-top: 18px;
+  padding-top: 14px;
+}
+.debug-section summary {
+  cursor: pointer;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.debug-section summary span {
+  float: right;
+  font-family: monospace;
+  color: #c9a227;
+}
+.debug-section > h2 {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.debug-scenarios {
+  max-height: 36dvh;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-top: 12px;
+}
+.debug-scenarios h2 {
+  color: #c8bca0;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  margin: 16px 0 6px;
+}
+.debug-scenarios > div:first-child h2 {
+  margin-top: 0;
+}
+.debug-scenarios button {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  width: 100%;
+  padding: 9px 10px;
+  font-size: 12px;
+  border-left: 2px solid transparent;
+  border-radius: 0 4px 4px 0;
+}
+.debug-scenarios button:hover {
+  background: rgb(201 162 39 / 6%);
+}
+.debug-scenarios button[aria-current="true"] {
+  border-color: #c9a227;
+  background: rgb(201 162 39 / 12%);
+  color: #e6c14a;
+}
+.debug-scenarios button > span:last-child {
+  color: #c9a227;
+}
+.debug-actions {
+  display: grid;
+  gap: 8px;
+}
+.debug-actions p {
+  font-size: 11px;
+  color: #c8bca0;
+  line-height: 1.6;
+}
+.debug-controls .debug-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+.debug-check input {
+  accent-color: #c9a227;
+}
+.debug-section pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+  line-height: 1.6;
+  max-height: 350px;
+  overflow-y: auto;
+}
+.debug-error {
+  color: #fca5a5;
+  padding: 10px 0;
+  font-size: 12px;
+}
+.debug-preview {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.debug-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--debug-border);
+}
+.debug-caption strong {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e6c14a;
+}
+.debug-caption p {
+  font-size: 12px;
+  color: #c8bca0;
+  margin-top: 4px;
+}
+.debug-caption > span {
+  flex-shrink: 0;
+  font-size: 10px;
+  padding: 4px 7px;
+  border: 1px solid var(--debug-border);
+  border-radius: 4px;
+}
+.debug-table {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  transform: translateZ(0);
+}
+.debug-table .table-screen {
+  height: 100%;
+}
+.debug-local-functions {
+  padding: 16px;
+}
+@media (max-width: 1000px) {
+  .debug-gallery {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  .debug-controls {
+    padding: 14px;
+  }
+  .debug-table .table-footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+@media (max-width: 760px) {
+  .debug-gallery {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .debug-controls {
+    border-right: 0;
+    border-bottom: 1px solid var(--debug-border);
+    max-height: 42dvh;
+  }
+  .debug-heading h1 {
+    margin-top: 8px;
+    font-size: 21px;
+  }
+  .debug-heading p {
+    margin-bottom: 0;
+  }
+  .debug-settings {
+    grid-template-columns: 70px minmax(0, 1fr);
+    margin-top: 10px;
+  }
+  .debug-preview {
+    min-height: 700px;
+    height: 90dvh;
+  }
+  .debug-caption {
+    padding: 12px;
+  }
+  .debug-scenarios {
+    max-height: 220px;
+  }
+}

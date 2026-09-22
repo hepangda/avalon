@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslations } from 'use-intl';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -21,6 +21,8 @@ export default function HomePage() {
   const { user: authUser, loading: authLoading, login, logout, saveAlias } = useAuthIdentity();
   const identityName = useSessionStore((state) => state.lastName);
   const canJoin = !authLoading && Boolean(authUser || identityName.trim());
+  const isLocalhost = typeof window !== 'undefined'
+    && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
 
   const [joinCode, setJoinCode] = useState('');
   const [joinExpanded, setJoinExpanded] = useState(true);
@@ -197,6 +199,13 @@ export default function HomePage() {
 
           {error && <p className="text-center text-sm text-crimson">{error}</p>}
         </Card>
+        {isLocalhost && (
+          <p className="text-center">
+            <Link href="/debug/gallery" className="text-xs text-parchment/45 underline decoration-gold/30 underline-offset-4 hover:text-gold">
+              {t('debug.entry')}
+            </Link>
+          </p>
+        )}
       </section>
     </main>
   );
