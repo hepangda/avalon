@@ -1,9 +1,11 @@
+/// <reference path="./bindings.d.ts" />
+
 import type { RoomDurableObject } from './room-do';
 import type { ReplayDurableObject } from './replay-do';
 import type { AccountProfileDurableObject } from './account-profile-do';
 
 /** Worker + Durable Object bindings (see wrangler.jsonc). */
-export interface Env {
+export interface Env extends Pick<Cloudflare.Env, 'FLAGS'> {
   ROOM: DurableObjectNamespace<RoomDurableObject>;
   REPLAY: DurableObjectNamespace<ReplayDurableObject>;
   ACCOUNT_PROFILE: DurableObjectNamespace<AccountProfileDurableObject>;

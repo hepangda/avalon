@@ -6,6 +6,8 @@ import HomePage from './pages/HomePage';
 import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
 import ReplayPage from './pages/ReplayPage';
+import { AuthIdentityProvider } from '@/lib/auth/useAuthIdentity';
+import { CardResourceSync } from '@/components/CardResourceSync';
 
 const DebugGalleryPage = lazy(() => import('./pages/DebugGalleryPage'));
 
@@ -26,16 +28,19 @@ function LocaleLayout() {
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to={`/${routing.defaultLocale}`} replace />} />
-      <Route path="/:locale" element={<LocaleLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="debug/gallery" element={<Suspense fallback={<div className="p-6">Debug gallery…</div>}><DebugGalleryPage /></Suspense>} />
-        <Route path="room/:code" element={<LobbyPage />} />
-        <Route path="game/:code" element={<GamePage />} />
-        <Route path="replay/:gameId" element={<ReplayPage />} />
-      </Route>
-      <Route path="*" element={<Navigate to={`/${routing.defaultLocale}`} replace />} />
-    </Routes>
+    <AuthIdentityProvider>
+      <CardResourceSync />
+      <Routes>
+        <Route path="/" element={<Navigate to={`/${routing.defaultLocale}`} replace />} />
+        <Route path="/:locale" element={<LocaleLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="debug/gallery" element={<Suspense fallback={<div className="p-6">Debug gallery…</div>}><DebugGalleryPage /></Suspense>} />
+          <Route path="room/:code" element={<LobbyPage />} />
+          <Route path="game/:code" element={<GamePage />} />
+          <Route path="replay/:gameId" element={<ReplayPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to={`/${routing.defaultLocale}`} replace />} />
+      </Routes>
+    </AuthIdentityProvider>
   );
 }

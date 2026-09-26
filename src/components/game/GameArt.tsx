@@ -1,6 +1,7 @@
 import type { ImgHTMLAttributes } from 'react';
 import type { Role } from '@/lib/engine';
 import { roleArt } from '@/lib/game/roleMeta';
+import { useCardArtStore } from '@/lib/store/cardArt';
 import { cn } from '@/lib/utils/cn';
 
 export type GameIconName =
@@ -39,9 +40,10 @@ export function GameIcon({
 
 /** Companion avatar, paired with the same character's full card illustration. */
 export function RolePortrait({ role, variant, className, alt = '', ...props }: ArtProps & { role: Role; variant?: number }) {
+  const style = useCardArtStore((state) => state.style);
   return (
     <img
-      src={roleArt(role, variant).avatar}
+      src={roleArt(role, variant, style).avatar}
       alt={alt}
       aria-hidden={alt ? undefined : true}
       draggable={false}

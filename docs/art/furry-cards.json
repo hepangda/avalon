@@ -1,0 +1,20 @@
+{
+  "source": "User-provided furry illustrations archived in docs/art/furry-source/",
+  "cardSize": [1024, 1536],
+  "avatarSize": [512, 512],
+  "webpQuality": 88,
+  "cropFormat": "[left, top, square side] in EXIF-oriented source pixels",
+  "images": [
+    { "slug": "assassin", "source": "assassin.PNG", "avatarCrop": [330, 80, 900] },
+    { "slug": "loyal-servant-1", "source": "loyal-servant-1.jpg", "avatarCrop": [180, 0, 1000] },
+    { "slug": "loyal-servant-2", "source": "loyal-servant-2.jpg", "avatarCrop": [80, 90, 1020] },
+    { "slug": "loyal-servant-3", "source": "loyal-servant-3.PNG", "avatarCrop": [220, 0, 950] },
+    { "slug": "loyal-servant-4", "source": "loyal-servant-4.jpg", "avatarCrop": [110, 0, 1120] },
+    { "slug": "merlin", "source": "merlin.jpg", "avatarCrop": [150, 190, 1100] },
+    { "slug": "minion", "source": "minion.PNG", "avatarCrop": [300, 70, 1000] },
+    { "slug": "mordred", "source": "mordred.PNG", "avatarCrop": [190, 0, 1000] },
+    { "slug": "morgana", "source": "morgana.PNG", "avatarCrop": [140, 200, 800] },
+    { "slug": "oberon", "source": "oberon.PNG", "avatarCrop": [320, 220, 960] },
+    { "slug": "percival", "source": "percival.jpg", "avatarCrop": [200, 20, 1000] }
+  ]
+}

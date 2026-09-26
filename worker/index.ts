@@ -8,6 +8,7 @@ import { AccountProfileDurableObject } from './account-profile-do';
 import { accountProfile } from './account-profile';
 import { accountDisplayName } from '@/lib/auth/types';
 import { sanitizeName } from '@/lib/game/displayName';
+import { cardResourceApi } from './card-resource';
 import {
   AuthError,
   OidcCallbackFailure,
@@ -30,6 +31,8 @@ import {
 const app = new Hono<{ Bindings: Env }>();
 
 app.get('/api/health', (c) => c.json({ ok: true, status: 'healthy' }));
+
+app.route('/api/card-resource', cardResourceApi);
 
 app.get('/api/auth/session', async (c) => {
   c.header('Cache-Control', 'no-store');

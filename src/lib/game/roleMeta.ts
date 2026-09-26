@@ -27,12 +27,15 @@ const ROLE_ART_SLUG: Record<Role, string> = {
   Minion: 'minion',
 };
 
-export function roleArt(role: Role, variant = 0) {
+export type CardArtStyle = 'classic' | 'furry';
+
+export function roleArt(role: Role, variant = 0, style: CardArtStyle = 'classic') {
   const index = Number.isInteger(variant) && variant >= 0 ? variant % 4 : 0;
   const slug = role === 'LoyalServant' ? `loyal-servant-${index + 1}` : ROLE_ART_SLUG[role];
+  const root = style === 'furry' ? '/assets/game/roles/furry' : '/assets/game/roles';
   return {
-    card: `/assets/game/roles/cards/${slug}.webp`,
-    avatar: `/assets/game/roles/avatars/${slug}.webp`,
+    card: `${root}/cards/${slug}.webp`,
+    avatar: `${root}/avatars/${slug}.webp`,
   };
 }
 

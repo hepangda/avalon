@@ -28,3 +28,64 @@ cached replays without a variant use the first portrait.
 under the localized text. Identity reveal and the private identity dialog use the
 full version; lobby previews and public table cards use smaller versions. Replay
 and MVP lists use the companion avatars.
+
+## Alternate furry deck
+
+Cloudflare Flagship selects the artwork using the `card-resource` string flag in
+the `avalon` project (App ID `134aa4be-47b7-435f-a9b8-2d6b7d8f5922`). `default`
+uses the classic illustrations; `furry` uses the alternate deck. Missing flags,
+invalid values, or evaluation failures fall back to `default`.
+
+The Worker evaluates through the native `FLAGS` binding at
+`POST /api/card-resource`. Authenticated account details come from the server
+session. The browser only sends `{ anonymousId, anonymousName }`. Responses are
+private and uncached. The Flagship context is:
+
+| Attribute | Authenticated viewer | Anonymous viewer |
+| --- | --- | --- |
+| `targetingKey` | Account ID | `anonymous:<anonymousId>` |
+| `userId` | Account ID | `anonymous:<anonymousId>` |
+| `name` | Game alias, or original username | Anonymous nickname (may be empty) |
+| `username` | Original identity-provider username | Empty string |
+| `anonymous` | `false` | `true` |
+| `anonymousId` | Empty string | Stable browser UUID |
+| `anonymousName` | Empty string | Anonymous nickname (may be empty) |
+
+The UUID is stored in `avalon-anonymous-id`; the card decision is never persisted.
+The previous `avalon-card-art` preference and crest gesture no longer select a
+deck. The shared auth provider and `CardResourceSync` cover every route, including
+direct game and replay links. Identity changes trigger reevaluation, as do tab
+focus/visibility and a 60-second interval while visible. Stale requests cannot
+overwrite the current identity's result. Local development uses the live
+Flagship project through Wrangler's remote binding and requires Cloudflare login.
+
+`src/lib/game/roleMeta.ts` resolves both decks using the same role and servant
+variant. `RoleCard` and `RolePortrait` subscribe to the evaluated resource, covering lobby
+previews, identity reveals, table cards, final results and replays.
+
+Furry assets use matching filenames under
+`public/assets/game/roles/furry/cards/` and `furry/avatars/`:
+
+| Filename | Illustration |
+| --- | --- |
+| `merlin.webp` | Blue-robed wolf mage |
+| `percival.webp` | Lion in silver armor and blue cloak |
+| `morgana.webp` | Red-robed wolf mage |
+| `mordred.webp` | Wolf with crossed arms and red cloak |
+| `oberon.webp` | Antlered woodland beast with green magic |
+| `assassin.webp` | Hooded wolf with a red blade |
+| `minion.webp` | Hyena warrior |
+| `loyal-servant-1.webp` | White tiger |
+| `loyal-servant-2.webp` | Black panther with a spear |
+| `loyal-servant-3.webp` | Rhino with a hammer |
+| `loyal-servant-4.webp` | Moose knight |
+
+Cards are optimized to 1024 × 1536 WebP; companion portraits are individually
+cropped to 512 × 512. Source filenames and face-focused crop coordinates are
+recorded in `docs/art/furry-cards.json`.
+
+Original uploads can be staged in `public/assets/game/roles/furry-source/`, which
+is ignored by Git. After conversion, archive originals in
+`docs/art/furry-source/` (also ignored) so Vite does not copy large source files
+into the public build. Only optimized card illustrations and companion portraits
+should be committed.

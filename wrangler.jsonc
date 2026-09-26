@@ -24,6 +24,13 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*", "/rooms/*"]
   },
+  "flagship": [
+    {
+      "binding": "FLAGS",
+      "app_id": "134aa4be-47b7-435f-a9b8-2d6b7d8f5922",
+      "remote": true
+    }
+  ],
   "durable_objects": {
     "bindings": [
       { "name": "ROOM", "class_name": "RoomDurableObject" },

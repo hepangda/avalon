@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSessionStore } from '@/lib/store/session';
 import { accountDisplayName, type AuthUser } from './types';
 
@@ -66,9 +66,9 @@ function disableSilentAuth(): void {
 /**
  * Read the local Avalon session, then make one best-effort `prompt=none` OIDC
  * attempt in a hidden iframe. Failure remains anonymous and never navigates the
- * visible page away from the home screen.
+ * visible page away from the current route.
  */
-export function useAuthIdentity() {
+function useAuthIdentityState() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const identityVersion = useRef(0);
@@ -144,4 +144,18 @@ export function useAuthIdentity() {
   );
 
   return { user, loading, login, logout, refresh, saveAlias };
+}
+
+const AuthIdentityContext = createContext<ReturnType<typeof useAuthIdentityState> | null>(null);
+
+/** A single identity lifecycle shared by the home UI and flag evaluation. */
+export function AuthIdentityProvider({ children }: { children: ReactNode }) {
+  const identity = useAuthIdentityState();
+  return createElement(AuthIdentityContext.Provider, { value: identity }, children);
+}
+
+export function useAuthIdentity() {
+  const identity = useContext(AuthIdentityContext);
+  if (!identity) throw new Error('AuthIdentityProvider is required');
+  return identity;
 }

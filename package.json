@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",
-    "cf-types": "wrangler types",
+    "cf-types": "wrangler types worker/bindings.d.ts --include-runtime=false",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
