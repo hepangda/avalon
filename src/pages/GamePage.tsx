@@ -104,7 +104,7 @@ export function GameView({
   const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.discussion?.speakerIndex}`;
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
-  const { presentation, finish } = useTablePresentation(game);
+  const { presentation, reportGame, finish } = useTablePresentation(game);
   const draftKey = game?.proposedTeam?.join(',') ?? '';
   useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
   useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
@@ -485,7 +485,7 @@ export function GameView({
         code={code}
         onOpenReport={() => setLogChannel('public')}
         report={
-          <LogPanel game={game} channel={logChannel} onChannelChange={setLogChannel} />
+          <LogPanel game={reportGame ?? game} channel={logChannel} onChannelChange={setLogChannel} />
         }
         headerAction={(openReport) => (
           <button

@@ -11,8 +11,11 @@ import {
   anonymousMissionCards,
   arrangeSeats,
   newTablePresentations,
+  tablePresentationReducer,
+  type TablePresentationState,
 } from './tablePresentation';
 import { actionAvailability } from './actionAvailability';
+import { completeMission, completeVotes, propose } from '@/lib/debug/scenarios';
 
 const apply = (s: GameState, event: GameEvent) => {
   const result = reduce(s, event, { now: 1, rng: createRng('table') });
@@ -116,6 +119,101 @@ describe('table presentation across server transitions', () => {
       'success',
       'success',
     ]);
+  });
+});
+
+describe('war report reveal timing', () => {
+  const start = (game: GameState) => tablePresentationReducer(
+    { game: null, queue: [] },
+    { type: 'sync', game: project(game) },
+  );
+  const report = (state: TablePresentationState) =>
+    state.queue[0]?.reportGame ?? state.game!;
+  const finish = (state: TablePresentationState) => tablePresentationReducer(
+    state,
+    { type: 'finish', id: state.queue[0]!.presentation.id },
+  );
+
+  it.each([0, 1])('holds mission results and follow-up logs until the reveal finishes (%i fails)', (fails) => {
+    const before = approved();
+    const after = project(completeMission(before, fails));
+    const pending = tablePresentationReducer(start(before), { type: 'sync', game: after });
+    expect(pending.queue[0]?.presentation.kind).toBe('mission');
+    expect(after.logs.some((l) => l.key === (fails ? 'missionFailed' : 'missionSucceeded'))).toBe(true);
+    expect(report(pending).logs).toEqual(project(before).logs);
+    expect(report(pending).missionResults).toHaveLength(0);
+    // Presence updates during gathering/shuffling must not release the report.
+    const updated = tablePresentationReducer(pending, {
+      type: 'sync', game: { ...after, players: after.players.map((p) => ({ ...p, latency: 42 })) },
+    });
+    expect(report(updated)).toBe(report(pending));
+    expect(report(finish(updated))).toBe(updated.game);
+    expect(report(finish(updated)).missionResults).toHaveLength(1);
+  });
+
+  it('also holds the winning log and revealed identities on the third failed mission', () => {
+    let before = approved();
+    for (let round = 0; round < 2; round++)
+      before = completeVotes(propose(completeMission(before, 1)), 'approve');
+    const after = project(completeMission(before, 1));
+    expect(after.phase).toBe('GameOver');
+    expect(after.logs.some((l) => l.key === 'evilWinsMissions')).toBe(true);
+    const pending = tablePresentationReducer(start(before), { type: 'sync', game: after });
+    expect(report(pending).logs).toEqual(project(before).logs);
+    expect(report(pending).outcome).toBeNull();
+    expect(report(pending).players).toEqual(project(before).players);
+    expect(report(finish(pending))).toBe(after);
+  });
+
+  it.each([false, true])('keeps a mission hidden behind a queued vote (batched: %s)', (batched) => {
+    const before = voting();
+    const mission = approved();
+    const after = project(completeMission(mission, 1));
+    let pending = start(before);
+    if (!batched)
+      pending = tablePresentationReducer(pending, { type: 'sync', game: project(mission) });
+    pending = tablePresentationReducer(pending, { type: 'sync', game: after });
+    expect(pending.queue.map((item) => item.presentation.kind)).toEqual(['vote', 'mission']);
+    expect(report(pending).logs).toEqual(project(before).logs);
+    // A stale or out-of-order callback must not unlock results.
+    expect(tablePresentationReducer(pending, {
+      type: 'finish', id: pending.queue[1]!.presentation.id,
+    })).toBe(pending);
+    pending = finish(pending);
+    expect(pending.queue[0]?.presentation.kind).toBe('mission');
+    expect(report(pending).logs.some((l) => l.key === 'missionFailed')).toBe(false);
+    expect(report(pending).missionResults).toHaveLength(0);
+    expect(report(finish(pending))).toBe(after);
+  });
+
+  it('shows synced history immediately on refresh and clears held reports on rollback/reset', () => {
+    const before = approved();
+    const after = completeMission(before, 1);
+    const refreshed = start(after);
+    expect(refreshed.queue).toEqual([]);
+    expect(report(refreshed).missionResults).toHaveLength(1);
+    const pending = tablePresentationReducer(start(before), { type: 'sync', game: project(after) });
+    for (const game of [
+      { ...project(before), phaseRevision: 1 },
+      { ...project(after), gameId: 'new-game' },
+      null,
+    ]) {
+      const reset = tablePresentationReducer(pending, { type: 'sync', game });
+      expect(reset.queue).toEqual([]);
+      expect(reset.game).toBe(game);
+      expect(tablePresentationReducer(reset, {
+        type: 'finish', id: pending.queue[0]!.presentation.id,
+      })).toBe(reset);
+    }
+  });
+
+  it('holds assassination outcome logs until its reveal completes', () => {
+    const before = apply(buildStartedGame(FIVE_P), { type: 'START_ASSASSINATION', by: 'p4' });
+    const after = project(apply(before, { type: 'ASSASSINATE', by: 'p4', target: 'p0' }));
+    const pending = tablePresentationReducer(start(before), { type: 'sync', game: after });
+    expect(pending.queue[0]?.presentation.kind).toBe('assassination');
+    expect(report(pending).logs.some((l) => l.key === 'assassinHitMerlin')).toBe(false);
+    expect(report(finish(pending)).logs.some((l) => l.key === 'assassinHitMerlin')).toBe(true);
   });
 });
 

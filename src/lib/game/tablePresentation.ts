@@ -21,6 +21,42 @@ export type TablePresentation =
       hitMerlin: boolean;
     };
 
+export interface TablePresentationState {
+  game: ClientGameState | null;
+  queue: Array<{
+    presentation: TablePresentation;
+    reportGame: ClientGameState;
+  }>;
+}
+
+/** Hold the entire report before a reveal, including logs caused by its outcome. */
+export function tablePresentationReducer(
+  state: TablePresentationState,
+  action:
+    | { type: 'sync'; game: ClientGameState | null }
+    | { type: 'finish'; id: string },
+): TablePresentationState {
+  if (action.type === 'finish') {
+    return state.queue[0]?.presentation.id === action.id
+      ? { ...state, queue: state.queue.slice(1) }
+      : state;
+  }
+  const previous = state.game;
+  const game = action.game;
+  if (!game || !previous || !sameTimeline(previous, game))
+    return { game, queue: [] };
+  return {
+    game,
+    queue: [
+      ...state.queue,
+      ...newTablePresentations(previous, game).map((presentation) => ({
+        presentation,
+        reportGame: previous,
+      })),
+    ],
+  };
+}
+
 /** A room reset/rollback starts a new presentation timeline. */
 export function sameTimeline(a: ClientGameState, b: ClientGameState): boolean {
   return (
