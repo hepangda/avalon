@@ -55,7 +55,7 @@ export function projectStateForViewer(
   });
 
   // Keep each player's original perception available even after the game ends.
-  // This remains curated visibility, never raw roles; spectators get none.
+  // Only red teammates receive exact ally roles; spectators get no perception.
   const knownPlayers =
     self !== null
       ? computeKnownPlayers({ id: self.id, role: self.role }, state.players)

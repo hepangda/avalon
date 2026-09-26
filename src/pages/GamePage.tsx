@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import {
@@ -9,6 +9,10 @@ import {
 } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
 import { GameTable } from '@/components/game/GameTable';
+import { RoleNotePopover } from '@/components/game/RoleNotePopover';
+import { useRoleNotes } from '@/lib/game/useRoleNotes';
+import { displayedRoleNotes, knownRoleNotes, roleNoteOptions, roleNotesKey } from '@/lib/game/roleNotes';
+import { ShowKnownNotes } from '@/components/game/ShowKnownNotes';
 import { TableFrame } from '@/components/game/TableFrame';
 import { TableSheet } from '@/components/game/TableSheet';
 import { TableCard } from '@/components/game/TableCard';
@@ -26,7 +30,6 @@ import { ProposalTracker } from '@/components/game/ProposalTracker';
 import { useTablePresentation } from '@/lib/game/useTablePresentation';
 import { useRoomAction } from '@/lib/game/useRoomAction';
 import { actionAvailability } from '@/lib/game/actionAvailability';
-import { useRoleText } from '@/lib/game/useRoleText';
 import { ActionTimerBadge } from '@/components/game/ActionTimerBadge';
 import { ActionTimerBar } from '@/components/game/ActionTimerBar';
 import { useGameClock } from '@/lib/game/useGameClock';
@@ -84,12 +87,20 @@ export function GameView({
   seatClaimContent?: ReactNode;
 }) {
   const t = useTranslations();
-  const roleText = useRoleText();
   const [historyRound, setHistoryRound] = useState<number | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [ladySeen, setLadySeen] = useState<string | null>(null);
-  const [sheet, setSheet] = useState<string | null>(null);
+  const [seatClaimOpen, setSeatClaimOpen] = useState(false);
   const [logChannel, setLogChannel] = useState<LogChannel>('public');
+  const [noteTarget, setNoteTarget] = useState<{ id: string; anchor: HTMLButtonElement } | null>(null);
+  const notePopoverId = useId();
+  const notesKey = game?.gameId ? roleNotesKey(code, game.gameId, myPlayerId, game.roleRevision) : null;
+  const { notes, setNote, clearNotes, enabled: notesEnabled, setEnabled: setNotesEnabled, saveFailed } = useRoleNotes(notesKey,
+    game?.gameId && myPlayerId && !game.isSpectator && actions === gameActions
+      ? { code, connected: conn === 'connected', gameId: game.gameId, roleRevision: game.roleRevision, playerId: myPlayerId }
+      : undefined,
+  );
+  useEffect(() => setNoteTarget(null), [notesKey, notesEnabled]);
   const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.discussion?.speakerIndex}`;
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
@@ -119,6 +130,13 @@ export function GameView({
     );
 
   const blocked = conn !== 'connected' || !!presentation;
+  const notePlayer = game.players.find((p) => p.id === noteTarget?.id);
+  const noteOptions = notePlayer ? roleNoteOptions(game, myPlayerId, notePlayer.id) : [];
+  const editableNoteIds = game.players.filter((p) => roleNoteOptions(game, myPlayerId, p.id).length > 0).map((p) => p.id);
+  const displayedNotes = displayedRoleNotes(game, myPlayerId, notes, notesEnabled);
+  const knownNotes = knownRoleNotes(game, myPlayerId);
+  const automaticNotes = notesEnabled ? knownNotes : {};
+  const notesControl = <ShowKnownNotes checked={notesEnabled} onChange={setNotesEnabled} saveFailed={saveFailed} />;
   const { canVote, canMission } = actionAvailability(game, myPlayerId);
   const leader = game.players.find((p) => p.seat === game.leaderIndex);
   const isLeader = leader?.id === myPlayerId;
@@ -438,7 +456,6 @@ export function GameView({
         </p>
       </>
     );
-  const inspected = game.players.find((p) => p.id === sheet);
   const proposalPhases = game.phase === 'TeamAnnouncement'
     ? ['TeamBuilding', 'TeamAnnouncement', 'Discussion', 'TeamFinalizing', 'Voting'] as const
     : ['TeamBuilding', 'Discussion', 'TeamFinalizing', 'Voting'] as const;
@@ -488,6 +505,9 @@ export function GameView({
             code={code}
             viewToggle={viewToggle}
             functionsContent={functionsContent}
+            notesControl={notesControl}
+            onClearNotes={() => { clearNotes(); setNoteTarget(null); }}
+            hasManualNotes={Object.keys(notes).length > 0}
             identity={<IdentityCard game={game} myPlayerId={myPlayerId} compact />}
           />
         )}
@@ -573,7 +593,7 @@ export function GameView({
                 game.players.some((p) => p.claimed === false) ? (
                   <button
                     className="table-action"
-                    onClick={() => setSheet('seats')}
+                    onClick={() => setSeatClaimOpen(true)}
                   >
                     {t('seat.claimToJoin')}
                   </button>
@@ -614,11 +634,34 @@ export function GameView({
           candidateIds={candidateIds}
           highlightIds={displayTeam}
           onToggle={toggle}
-          onInspect={presentation ? undefined : setSheet}
           missionReveal={presentation?.kind === 'mission' ? presentation : null}
           onRevealComplete={finish}
+          roleNotes={displayedNotes}
+          knownNotes={knownNotes}
+          editableNoteIds={editableNoteIds}
+          onEditRoleNote={notesEnabled ? (id, anchor) => {
+            if (editableNoteIds.includes(id)) setNoteTarget((current) => current?.id === id ? null : { id, anchor });
+          } : undefined}
+          notePlayerId={noteTarget?.id}
+          notePopoverId={notePopoverId}
         />
       </TableFrame>
+      {notesEnabled && noteTarget && notePlayer && noteOptions.length > 0 && <RoleNotePopover
+        key={noteTarget.id}
+        id={notePopoverId}
+        anchor={noteTarget.anchor}
+        player={notePlayer}
+        options={noteOptions}
+        defaultNote={automaticNotes[noteTarget.id]}
+        hasManualNote={notes[noteTarget.id] !== undefined}
+        note={displayedNotes[noteTarget.id]}
+        onChange={(note) => {
+          if (note !== null && !noteOptions.includes(note)) return;
+          if (setNote(noteTarget.id, note)) setNoteTarget(null);
+        }}
+        onClose={() => setNoteTarget(null)}
+        saveFailed={saveFailed}
+      />}
       {presentation?.kind === 'assassination' && (
         <AssassinationReveal key={presentation.id} event={presentation} onComplete={finish} />
       )}
@@ -641,35 +684,11 @@ export function GameView({
         onClose={() => setHistoryRound(null)}
       />
       <TableSheet
-        open={sheet !== null}
-        title={
-          sheet === 'seats'
-            ? t('seat.sitTitle')
-            : inspected
-              ? `${inspected.seat + 1}. ${inspected.name}`
-              : ''
-        }
-        onClose={() => setSheet(null)}
+        open={seatClaimOpen}
+        title={t('seat.sitTitle')}
+        onClose={() => setSeatClaimOpen(false)}
       >
-        {sheet === 'seats' && (seatClaimContent ?? <InGameSeatClaim code={code} game={game} />)}
-        {inspected && (
-          <div className="space-y-3">
-            <p>
-              {t(
-                inspected.claimed === false
-                  ? 'seat.empty'
-                  : inspected.connected
-                    ? 'seat.online'
-                    : 'seat.offline',
-              )}
-            </p>
-            {(isOver ||
-              (game.phase === 'Assassination' &&
-                inspected.role &&
-                ROLE_TEAM_UI[inspected.role] === 'evil')) &&
-              inspected.role && <p>{roleText.name(inspected.role)}</p>}
-          </div>
-        )}
+        {seatClaimOpen && (seatClaimContent ?? <InGameSeatClaim code={code} game={game} />)}
       </TableSheet>
     </>
   );

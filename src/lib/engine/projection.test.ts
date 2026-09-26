@@ -34,13 +34,20 @@ describe('projectStateForViewer — security boundary', () => {
       for (const [i, player] of state.players.entries()) {
         const view = projectStateForViewer(state, player.id);
         expect(view.knownPlayers.map((known) => known.playerId)).toEqual(expected[i]);
-        expect(view.knownPlayers.every((known) => !('role' in known))).toBe(true);
+        for (const known of view.knownPlayers) {
+          if (known.shownAs === 'known-ally') {
+            expect(known.role).toBe(state.players.find((p) => p.id === known.playerId)?.role);
+            expect(known.role).not.toBe('Oberon');
+          } else {
+            expect(known).not.toHaveProperty('role');
+          }
+        }
       }
       expect(projectStateForViewer(state, 'spectator').knownPlayers).toEqual([]);
     },
   );
 
-  it('a player sees only their own role before Assassination', () => {
+  it('the player list exposes only the viewer’s own role before Assassination', () => {
     const s = buildStartedGame(FIVE_P);
     const view = projectStateForViewer(s, 'p0');
     const self = view.players.find((p) => p.id === 'p0')!;

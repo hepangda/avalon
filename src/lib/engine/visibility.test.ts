@@ -14,6 +14,7 @@ describe('computeKnownPlayers — role visibility matrix', () => {
     // p1 = Mordred excluded; p2 Oberon and p3 Assassin included.
     expect(seenIds).toEqual(['p2', 'p3']);
     expect(known.every((k) => k.shownAs === 'evil' && k.certain)).toBe(true);
+    expect(known.every((k) => !('role' in k))).toBe(true);
   });
 
   it('Merlin cannot see Mordred', () => {
@@ -29,6 +30,7 @@ describe('computeKnownPlayers — role visibility matrix', () => {
     const seen = known.map((k) => k.playerId).sort();
     expect(seen).toEqual(['p1', 'p2']);
     expect(known.every((k) => k.shownAs === 'merlin-or-morgana' && k.certain === false)).toBe(true);
+    expect(known.every((k) => !('role' in k))).toBe(true);
   });
 
   it('Percival with no Morgana sees only Merlin, still ambiguous', () => {
@@ -45,6 +47,7 @@ describe('computeKnownPlayers — role visibility matrix', () => {
     const seen = known.map((k) => k.playerId).sort();
     expect(seen).toEqual(['p1', 'p2']); // Assassin, Mordred — not Oberon(p3)
     expect(known.every((k) => k.shownAs === 'known-ally' && k.certain)).toBe(true);
+    expect(known.map((k) => k.role)).toEqual(['Assassin', 'Mordred']);
   });
 
   it('Oberon sees no one', () => {

@@ -1,4 +1,23 @@
 {
+  "roleNotes": {
+    "percivalClaim": "对跳",
+    "resetShort": "还原",
+    "unknown": "未知",
+    "showKnown": "开启身份信息标注",
+    "clearAll": "一键清除标记",
+    "merlinOrMorgana": "梅林 / 莫甘娜",
+    "merlinOrMorganaShort": "梅 / 莫",
+    "resetKnown": "恢复已知标注",
+    "shortHint": "私人标记 · 仅自己可见",
+    "close": "关闭",
+    "title": "身份标记",
+    "add": "标记身份",
+    "privateHint": "记录你对身份的推测，不会改变真实身份。标记随当前座位保存，重连后恢复；重新开局或重新分配身份后重置。",
+    "clear": "清除标记",
+    "editPlayer": "标记 {seat} 号 {name} 的身份：{note}",
+    "privateLabel": "私人备注：{note}",
+    "saveFailed": "浏览器无法保存备注。本次仍可使用，但刷新后可能丢失。"
+  },
   "common": {
     "appName": "阿瓦隆",
     "tagline": "开个房间，拉朋友来一局",

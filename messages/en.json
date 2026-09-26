@@ -1,4 +1,23 @@
 {
+  "roleNotes": {
+    "percivalClaim": "Counterclaim",
+    "resetShort": "Reset",
+    "unknown": "Unknown",
+    "showKnown": "Enable identity notes",
+    "clearAll": "Clear all notes",
+    "merlinOrMorgana": "Merlin / Morgana",
+    "merlinOrMorganaShort": "M / M",
+    "resetKnown": "Reset to known information",
+    "shortHint": "Private note · Only you can see this",
+    "close": "Close",
+    "title": "Identity notes",
+    "add": "Add note",
+    "privateHint": "Record guesses without changing actual roles. Notes are saved privately for your seat and restored on reconnect. They reset for a new game or when roles are reassigned.",
+    "clear": "Clear note",
+    "editPlayer": "Edit identity note for seat {seat}, {name}: {note}",
+    "privateLabel": "Private note: {note}",
+    "saveFailed": "Your browser could not save this note. You can still use it, but it may be lost after refreshing."
+  },
   "common": {
     "appName": "Avalon",
     "tagline": "The Resistance · gather your court and uncover the traitors",

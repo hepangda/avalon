@@ -53,11 +53,16 @@ export function PlayerList({
               >
               <span className="flex items-center gap-2">
                 <PlayerAvatar
+                  playerId={m.id}
                   avatarUrl={m.avatarUrl}
                   name={m.name}
-                  seat={m.seat}
+                  empty={!m.claimed}
                   className="h-7 w-7 shrink-0 border border-gold/20 text-xs"
-                />
+                >
+                  <span className={`player-connection-dot ${latencyDotClass(m.claimed && m.connected, m.latency)}`}
+                    title={!m.claimed ? t('seat.empty') : m.connected ? m.latency !== undefined ? `${m.latency} ms` : t('seat.online') : t('seat.offline')} />
+                </PlayerAvatar>
+                <span className="seat-number-tag">{m.seat + 1}</span>
                 <span className="text-parchment">{m.name}</span>
                 {isRoomHost && (
                   <span className="rounded bg-gold/20 px-1.5 py-0.5 text-[10px] uppercase text-gold">
@@ -65,16 +70,6 @@ export function PlayerList({
                   </span>
                 )}
                 {isYou && <span className="text-xs text-parchment/40">({t('common.you')})</span>}
-                <span
-                  className={`inline-block h-1.5 w-1.5 rounded-full ${latencyDotClass(m.connected, m.latency)}`}
-                  title={
-                    m.connected
-                      ? m.latency !== undefined
-                        ? `${m.latency} ms`
-                        : 'Online'
-                      : 'Offline'
-                  }
-                />
               </span>
 
               {isHost && !isRoomHost && (

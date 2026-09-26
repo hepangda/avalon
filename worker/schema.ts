@@ -38,6 +38,14 @@ CREATE TABLE IF NOT EXISTS player_session (
   player_id TEXT PRIMARY KEY,
   token     TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS private_role_notes (
+  player_id     TEXT PRIMARY KEY,
+  game_id       TEXT NOT NULL,
+  role_revision INTEGER NOT NULL,
+  revision      INTEGER NOT NULL,
+  notes         TEXT NOT NULL,
+  enabled       INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS replay_archive (
   id       INTEGER PRIMARY KEY CHECK (id = 1),
   game_id  TEXT NOT NULL,

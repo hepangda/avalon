@@ -82,7 +82,10 @@
 .debug-actions button:hover {
   background: rgb(201 162 39 / 12%);
 }
-.debug-gallery button:disabled,
+/* Scope disabled styling to debug controls; table seats also use disabled
+   whenever player selection is unavailable. */
+.debug-controls button:disabled,
+.debug-actions button:disabled,
 .debug-local-functions button:disabled {
   opacity: 0.35;
   cursor: not-allowed;

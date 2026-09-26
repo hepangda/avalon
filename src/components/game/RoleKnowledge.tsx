@@ -2,6 +2,7 @@ import { useTranslations } from 'use-intl';
 import type { ClientGameState, VisibilityInfo } from '@/lib/engine';
 import { labelById } from '@/lib/game/playerLabel';
 import { cn } from '@/lib/utils/cn';
+import { useRoleText } from '@/lib/game/useRoleText';
 
 /** One concise line per kind of information visible to this player. */
 export function RoleKnowledge({
@@ -14,12 +15,14 @@ export function RoleKnowledge({
   className?: string;
 }) {
   const t = useTranslations('roleReveal');
+  const roleText = useRoleText();
   if (knownPlayers.length === 0) return null;
 
   const groups = new Map<VisibilityInfo['shownAs'], string[]>();
   for (const known of knownPlayers) {
     const names = groups.get(known.shownAs) ?? [];
-    names.push(labelById(game, known.playerId));
+    const label = labelById(game, known.playerId);
+    names.push(known.shownAs === 'known-ally' && known.role ? `${label} · ${roleText.name(known.role)}` : label);
     groups.set(known.shownAs, names);
   }
   const labels = {

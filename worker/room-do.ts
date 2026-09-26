@@ -13,6 +13,7 @@ import {
   type GameState,
 } from '@/lib/engine';
 import { fallbackSeatName } from '@/lib/game/names';
+import { isRoleNote, type RoleNotes, type RoleNotesDocument } from '@/lib/game/roleNotes';
 import type { Ack, RoomConfig, RoomMember, RoomStatus } from '@/lib/socket/types';
 import type { ClientEvent, WireRequest } from '@/lib/socket/protocol';
 import { buildReplayFromEvents } from './replay-builder';
@@ -57,6 +58,13 @@ interface ReplayArchiveRow {
 interface TableInfoRow {
   [key: string]: SqlStorageValue;
   name: string;
+}
+
+interface RoleNotesRow {
+  [key: string]: SqlStorageValue;
+  revision: number;
+  notes: string;
+  enabled: number;
 }
 
 const ok = <T>(data?: T): Ack<T> => ({ ok: true, data });
@@ -299,6 +307,8 @@ export class RoomDurableObject extends DurableObject<Env> {
     payload: unknown,
   ): Promise<Ack<unknown>> | Ack<unknown> {
     switch (event) {
+      case 'notes:sync':
+        return this.handleNotesSync(ws, payload);
       case 'room:join':
         return this.handleJoin(ws, payload);
       case 'room:claimSeat':
@@ -405,6 +415,54 @@ export class RoomDurableObject extends DurableObject<Env> {
   // ---------------------------------------------------------------------------
   // Room handlers (ported from handlers.ts)
   // ---------------------------------------------------------------------------
+
+  private handleNotesSync(ws: WebSocket, payload: unknown): Ack<RoleNotesDocument> {
+    const playerId = this.attach(ws).playerId;
+    if (!playerId || !this.members.get(playerId)?.claimed || this.wsForPlayer(playerId) !== ws) {
+      return fail('NOT_SEATED', 'A current seat connection is required');
+    }
+    if (!this.game || !this.meta?.gameId) return fail('NO_GAME', 'No game in progress');
+    if (!payload || typeof payload !== 'object') return fail('INVALID', 'Invalid notes request');
+    const p = payload as Record<string, unknown>;
+    const roleRevision = this.game.roleRevision ?? 0;
+    if (p.gameId !== this.meta.gameId || p.roleRevision !== roleRevision || p.playerId !== playerId) {
+      return fail('STALE_NOTES_SCOPE', 'The game, role assignment or seat has changed');
+    }
+    const row = this.sql.exec<RoleNotesRow>(
+      'SELECT revision, notes, enabled FROM private_role_notes WHERE player_id = ? AND game_id = ? AND role_revision = ?',
+      playerId, this.meta.gameId, roleRevision,
+    ).toArray()[0];
+    const current: RoleNotesDocument = {
+      gameId: this.meta.gameId, roleRevision, playerId,
+      revision: row?.revision ?? 0,
+      notes: row ? JSON.parse(row.notes) as RoleNotes : {},
+      enabled: row ? row.enabled === 1 : true,
+    };
+    if (p.update === undefined) return ok(current);
+    if (!p.update || typeof p.update !== 'object') return fail('INVALID', 'Invalid notes update');
+    const update = p.update as Record<string, unknown>;
+    if (!Number.isSafeInteger(update.baseRevision) || typeof update.enabled !== 'boolean' ||
+      !update.notes || typeof update.notes !== 'object' || Array.isArray(update.notes)) {
+      return fail('INVALID', 'Invalid notes update');
+    }
+    const entries = Object.entries(update.notes);
+    if (entries.length > this.game.players.length || entries.some(([id, note]) =>
+      !this.game!.players.some((player) => player.id === id) || !isRoleNote(note),
+    )) return fail('INVALID', 'Invalid player or note');
+    if (update.baseRevision !== current.revision) {
+      return { ok: false, error: { code: 'NOTES_CONFLICT', message: 'Notes changed; merge and retry' }, data: current };
+    }
+    const notes = Object.fromEntries(entries) as RoleNotes;
+    // Synchronous SQLite write is durable before its private acknowledgement.
+    this.sql.exec(
+      `INSERT INTO private_role_notes (player_id, game_id, role_revision, revision, notes, enabled)
+       VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(player_id) DO UPDATE SET
+       game_id = excluded.game_id, role_revision = excluded.role_revision,
+       revision = excluded.revision, notes = excluded.notes, enabled = excluded.enabled`,
+      playerId, current.gameId, roleRevision, current.revision + 1, JSON.stringify(notes), update.enabled ? 1 : 0,
+    );
+    return ok({ ...current, revision: current.revision + 1, notes, enabled: update.enabled });
+  }
 
   private async handleJoin(
     ws: WebSocket,
@@ -569,6 +627,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     await this.archiveReplay();
     this.ctx.storage.transactionSync(() => {
       this.sql.exec('DELETE FROM game_event');
+      this.sql.exec('DELETE FROM private_role_notes');
       this.sql.exec('DELETE FROM replay_archive');
       this.sql.exec("UPDATE room_meta SET status = 'lobby', game_id = NULL, seed = NULL, event_seq = 0 WHERE id = 1");
     });
@@ -641,6 +700,7 @@ export class RoomDurableObject extends DurableObject<Env> {
 
     const gameId = makePlayerId();
     this.sql.exec('DELETE FROM game_event'); // fresh log for the new game
+    this.sql.exec('DELETE FROM private_role_notes');
     this.game = created.state;
     this.meta.gameId = gameId;
     this.meta.seed = seed;
@@ -868,6 +928,7 @@ export class RoomDurableObject extends DurableObject<Env> {
     const result = reduce(prevState, event, ctx);
     if (!result.ok) return fail(result.error.code, result.error.message);
 
+    if (result.state.roleRevision !== prevState.roleRevision) this.sql.exec('DELETE FROM private_role_notes');
     this.game = result.state;
     this.eventSeq = seq;
     // Single-threaded DO → persist synchronously (no persistChain needed).

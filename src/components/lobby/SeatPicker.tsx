@@ -173,11 +173,17 @@ export function SeatPicker({
               className="flex items-start gap-2 rounded-lg border border-gold/15 bg-ink/30 p-2"
             >
               <PlayerAvatar
+                playerId={seat.id}
                 avatarUrl={seat.avatarUrl}
                 name={seat.name}
-                seat={seat.seat}
+                empty={!seat.claimed}
                 className="mt-0.5 h-8 w-8 shrink-0 border border-gold/20 text-xs"
-              />
+              >
+                <span className={`player-connection-dot ${latencyDotClass(connected, seat.latency)}`}
+                  title={!seat.claimed ? t('seat.empty') : connected
+                    ? seat.latency !== undefined ? `${seat.latency} ms` : t('seat.online')
+                    : t('seat.offline')} />
+              </PlayerAvatar>
 
               <div className="min-w-0 flex-1 space-y-1">
                 {editingRoster ? (
@@ -197,18 +203,7 @@ export function SeatPicker({
                   <p className="truncate text-sm text-parchment">{seat.name}</p>
                 )}
                 <p className="flex items-center gap-2 text-xs text-parchment/45">
-                  <span
-                    className={`inline-block h-1.5 w-1.5 rounded-full ${latencyDotClass(connected, seat.latency)}`}
-                    title={
-                      !seat.claimed
-                        ? t('seat.empty')
-                        : connected
-                          ? seat.latency !== undefined
-                            ? `${seat.latency} ms`
-                            : t('seat.online')
-                          : t('seat.offline')
-                    }
-                  />
+                  <span className="seat-number-tag">{seat.seat + 1}</span>
                   {seat.claimed ? (
                     <>
                       <span>{connected ? t('seat.online') : t('seat.offline')}</span>

@@ -11,6 +11,24 @@ text; the paintings contain no baked-in labels.
   (swordsman), `loyal-servant-2` (red-haired knight), `loyal-servant-3`
   (East Asian wuxia swordsman), and `loyal-servant-4` (ranger).
 
+Player avatars use a separate, newly generated cosmetic pool in
+`public/assets/game/player-avatars/`. These ten original characters have no game
+roles. Profile pictures take priority; unavailable profile pictures fall back to
+this pool. Unclaimed seats use an empty-seat silhouette.
+
+The registry is `src/lib/game/player-avatars.json`. To expand the pool, add a
+square WebP portrait to `public/assets/game/player-avatars/` and append its filename
+without `.webp` to that registry. No component changes are needed. Keep existing
+IDs and filenames stable. Rendezvous hashing selects by player ID and portrait
+ID, so reordering the registry does not change assignments, and adding a portrait
+only moves players selected for that new portrait.
+
+The original generation prompts and output paths are saved in
+`docs/art/player-avatars.json`. The ten portraits were generated individually with
+the built-in `image_gen` tool, then optimized as 512 × 512 WebP assets. Future
+portraits should use the same centered face-and-shoulders framing and readable
+storybook illustration style, with important features inside a circular crop.
+
 The third servant is an East Asian swordsman with a relaxed three-quarter stance
 and a diagonally sheathed sword in an Avalon castle cloister. Its wardrobe and
 pose are original; the oil-painting finish, warm light, blue-and-gold palette and

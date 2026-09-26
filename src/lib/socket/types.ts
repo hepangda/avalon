@@ -7,6 +7,7 @@ import type {
   Team,
   VisibilityInfo,
 } from '@/lib/engine';
+import type { RoleNotesDocument, RoleNotesSyncRequest } from '@/lib/game/roleNotes';
 
 /**
  * Room-level configuration the host sets in the lobby. Superset of engine
@@ -99,6 +100,8 @@ export interface Ack<T = undefined> {
 
 /** Events the client emits. The third arg is always an ack callback. */
 export interface ClientToServerEvents {
+  /** Private, seat-authenticated notes; never broadcast or included in replay. */
+  'notes:sync': (p: RoleNotesSyncRequest, ack: (r: Ack<RoleNotesDocument>) => void) => void;
   'room:join': (
     p: { code: string; playerId?: PlayerId; playerToken?: string; hostToken?: string },
     ack: (r: Ack<{ playerId?: PlayerId; isHost: boolean }>) => void,

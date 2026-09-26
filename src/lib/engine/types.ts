@@ -233,6 +233,8 @@ export interface VisibilityInfo {
   playerId: PlayerId;
   shownAs: ShownAs;
   certain: boolean;
+  /** Exact identity is sent only to known red teammates (never to Merlin or Percival). */
+  role?: Role;
 }
 
 // ---------------------------------------------------------------------------

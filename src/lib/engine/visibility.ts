@@ -8,7 +8,7 @@ import { isEvil } from './roles';
  *  - Merlin sees all evil EXCEPT Mordred (but DOES see Oberon).
  *  - Percival sees Merlin and Morgana as one indistinguishable category.
  *  - Evil players (Morgana/Assassin/Mordred/Minion) see each other EXCEPT
- *    Oberon (mutual: Oberon sees no allies, allies don't see Oberon).
+ *    Oberon, with exact teammate roles (mutual: Oberon sees no allies, allies don't see Oberon).
  *  - Oberon and LoyalServant see no one.
  *
  * Pure & server-only. Output order follows seat order of `all` for stability.
@@ -36,7 +36,7 @@ export function computeKnownPlayers(
     case 'Minion':
       return others
         .filter((p) => isEvil(p.role) && p.role !== 'Oberon')
-        .map((p) => ({ playerId: p.id, shownAs: 'known-ally', certain: true }));
+        .map((p) => ({ playerId: p.id, shownAs: 'known-ally', certain: true, role: p.role }));
 
     case 'Oberon':
     case 'LoyalServant':
