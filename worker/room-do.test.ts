@@ -165,6 +165,28 @@ function roomHarness(seedRoom = true) {
 }
 
 describe('room lifecycle and referee handlers (SQLite + WebSocket harness)', () => {
+  it('broadcasts only a small latency delta during a game and includes it in later snapshots', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+    expect((await h.action(h.host, 'room:start')).ok).toBe(true);
+    for (const socket of h.sockets) socket.messages = [];
+
+    expect((await h.action(h.host, 'net:ping', { rtt: 230.4 })).ok).toBe(true);
+    for (const socket of h.sockets) {
+      expect(socket.messages.filter((m) => m.t === 'push')).toEqual([
+        { t: 'push', event: 'net:latency', payload: { playerId: 'p0', latency: 230 } },
+      ]);
+      socket.messages = [];
+    }
+    await h.action(h.host, 'net:ping', { rtt: 230 });
+    await h.action(h.spectator, 'net:ping', { rtt: 999 });
+    expect(h.sockets.flatMap((s) => s.messages).filter((m) => m.t === 'push')).toEqual([]);
+
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.snapshot.members.find((m) => m.id === 'p0')?.latency).toBe(230);
+    expect(h.spectator.game.players.find((p) => p.id === 'p0')?.latency).toBe(230);
+  });
+
   it('authorizes and persists opening rerolls, refreshes private roles, and replays them after wake', async () => {
     const h = roomHarness();
     await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });

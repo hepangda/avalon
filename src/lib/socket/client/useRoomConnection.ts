@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { connectRoom, emitWithAck, getConnection, type ConnState } from './socket';
+import { createLatencyHeartbeat } from './heartbeat';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
 import type {
@@ -11,7 +12,7 @@ import type {
   Team,
   VisibilityInfo,
 } from '@/lib/engine';
-import type { Ack, RoomConfig, RoomSnapshot } from '../types';
+import type { Ack, PlayerLatency, RoomConfig, RoomSnapshot } from '../types';
 
 /**
  * Connect to a room and keep the room store in sync. Handles initial join and
@@ -72,14 +73,15 @@ export function useRoomConnection(code: string | null) {
 
     // Latency heartbeat: time the ack round-trip, store it locally, and report
     // the previous measurement so the server can share it with the room.
-    let lastRtt: number | undefined;
-    async function ping() {
-      const conn = getConnection();
-      if (!conn?.connected) return;
-      const sent = performance.now();
-      await conn.emit('net:ping', { rtt: lastRtt });
-      lastRtt = Math.round(performance.now() - sent);
-      useRoomStore.getState().setSelfLatency(lastRtt);
+    const heartbeat = createLatencyHeartbeat(
+      async (rtt) => {
+        const conn = getConnection();
+        return conn?.connected ? conn.emit('net:ping', { rtt }) : { ok: false };
+      },
+      store.setSelfLatency,
+    );
+    function ping() {
+      if (getConnection()?.connected) void heartbeat.ping();
     }
 
     function onNotice(n: { type: string; message?: string }) {
@@ -97,6 +99,9 @@ export function useRoomConnection(code: string | null) {
 
     function onPush(event: string, payload: unknown) {
       switch (event) {
+        case 'net:latency':
+          store.setPlayerLatency(payload as PlayerLatency);
+          break;
         case 'room:snapshot':
           store.setSnapshot(payload as RoomSnapshot);
           break;
@@ -123,8 +128,11 @@ export function useRoomConnection(code: string | null) {
         void doJoin(); // (re)join on every (re)connect
         void ping();
       } else if (s === 'connecting') {
+        heartbeat.reset();
         store.setConn('connecting');
+        store.setSelfLatency(null);
       } else {
+        heartbeat.reset();
         store.setConn('disconnected');
         useRoomStore.getState().setSelfLatency(null);
       }
@@ -135,6 +143,7 @@ export function useRoomConnection(code: string | null) {
 
     return () => {
       clearInterval(pingTimer);
+      heartbeat.dispose();
       // Detach this effect's handlers so its closures can't write to the store
       // after unmount. The connection itself persists across navigation (e.g.
       // lobby → game reuse it); the next consumer re-attaches via connectRoom.

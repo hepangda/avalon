@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import type { ClientGameState, Role, Team, VisibilityInfo } from '@/lib/engine';
 import type { PlayerId } from '@/lib/engine';
-import type { RoomSnapshot } from '../socket/types';
+import type { PlayerLatency, RoomSnapshot } from '../socket/types';
 
 export type ConnStatus = 'connecting' | 'connected' | 'disconnected';
 
@@ -50,6 +50,7 @@ interface RoomState {
   setLadyResult: (r: LadyResult) => void;
   setNotice: (n: { type: string; message?: string } | null) => void;
   setSelfLatency: (ms: number | null) => void;
+  setPlayerLatency: (update: PlayerLatency) => void;
   reset: () => void;
 }
 
@@ -92,6 +93,21 @@ export const useRoomStore = create<RoomState>((set) => ({
   setLadyResult: (ladyResult) => set({ ladyResult }),
   setNotice: (notice) => set({ notice }),
   setSelfLatency: (selfLatency) => set({ selfLatency }),
+  setPlayerLatency: ({ playerId, latency }) => set((state) => {
+    const snapshot = state.snapshot?.members.some((m) => m.id === playerId && m.latency !== latency)
+      ? {
+          ...state.snapshot,
+          members: state.snapshot.members.map((m) => m.id === playerId ? { ...m, latency } : m),
+        }
+      : state.snapshot;
+    const game = state.game?.players.some((p) => p.id === playerId && p.latency !== latency)
+      ? {
+          ...state.game,
+          players: state.game.players.map((p) => p.id === playerId ? { ...p, latency } : p),
+        }
+      : state.game;
+    return snapshot === state.snapshot && game === state.game ? state : { snapshot, game };
+  }),
   reset: () =>
     set({
       roomCode: null,

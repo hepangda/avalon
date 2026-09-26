@@ -86,6 +86,11 @@ export interface RoomRuntime {
 export type VoteValue = 'approve' | 'reject';
 export type MissionCard = 'success' | 'fail';
 
+export interface PlayerLatency {
+  playerId: PlayerId;
+  latency: number;
+}
+
 export interface Ack<T = undefined> {
   ok: boolean;
   error?: { code: string; message: string };
@@ -158,6 +163,7 @@ export interface ClientToServerEvents {
 
 /** Events the server emits. */
 export interface ServerToClientEvents {
+  'net:latency': (update: PlayerLatency) => void;
   'state:sync': (state: ClientGameState) => void;
   'room:snapshot': (snapshot: RoomSnapshot) => void;
   'private:reveal': (p: { selfRole: Role; knownPlayers: VisibilityInfo[] }) => void;

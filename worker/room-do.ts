@@ -666,8 +666,10 @@ export class RoomDurableObject extends DurableObject<Env> {
         const clamped = Math.max(0, Math.min(9999, Math.round(rtt)));
         if (member.latency !== clamped) {
           member.latency = clamped; // transient; not persisted
-          this.broadcastRoom();
-          if (this.game) this.broadcastState();
+          // Presence telemetry must not resend the game, history, and private projections.
+          for (const socket of this.ctx.getWebSockets()) {
+            this.send(socket, 'net:latency', { playerId: pid, latency: clamped });
+          }
         }
       }
     }

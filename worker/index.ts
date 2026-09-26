@@ -30,6 +30,11 @@ import {
  */
 const app = new Hono<{ Bindings: Env }>();
 
+function roomObject(env: Env, code: string) {
+  // Best-effort placement for new rooms only; existing objects keep their location.
+  return env.ROOM.get(env.ROOM.idFromName(code), { locationHint: 'apac-ne' });
+}
+
 app.get('/api/health', (c) => c.json({ ok: true, status: 'healthy' }));
 
 app.route('/api/card-resource', cardResourceApi);
@@ -156,7 +161,7 @@ app.post('/api/rooms', async (c) => {
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = makeCode();
-    const stub = c.env.ROOM.get(c.env.ROOM.idFromName(code));
+    const stub = roomObject(c.env, code);
     const res = await stub.init({
       code,
       roster,
@@ -185,7 +190,7 @@ app.post('/api/rooms', async (c) => {
 app.get('/api/rooms/:code', async (c) => {
   const code = c.req.param('code');
   if (!/^[0-9]{4}$/.test(code)) return c.json({ error: 'Invalid room code' }, 400);
-  const stub = c.env.ROOM.get(c.env.ROOM.idFromName(code));
+  const stub = roomObject(c.env, code);
   const preview = await stub.preview();
   if (!preview) return c.json({ error: 'Room not found' }, 404);
   return c.json(preview);
@@ -211,7 +216,7 @@ app.get('/rooms/:code/ws', (c) => {
   if (c.req.header('Upgrade') !== 'websocket') {
     return c.json({ error: 'Expected websocket' }, 426);
   }
-  const stub = c.env.ROOM.get(c.env.ROOM.idFromName(code));
+  const stub = roomObject(c.env, code);
   return stub.fetch(c.req.raw);
 });
 

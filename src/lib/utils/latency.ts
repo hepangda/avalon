@@ -4,8 +4,8 @@
  * hollow gray ring = disconnected.
  */
 
-const LAG_MS = 150;
-const HEAVY_LAG_MS = 400;
+const LAG_MS = 250;
+const HEAVY_LAG_MS = 500;
 
 /** Tailwind classes for a connection-status dot, given connection + latency. */
 export function latencyDotClass(connected: boolean, latency?: number): string {

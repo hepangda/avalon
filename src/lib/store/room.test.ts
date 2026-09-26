@@ -6,6 +6,31 @@ import { projectStateForViewer } from '@/lib/engine';
 afterEach(() => useRoomStore.getState().reset());
 
 describe('room store lifecycle', () => {
+  it('applies latency deltas without replacing game history or private reveals', () => {
+    const store = useRoomStore.getState();
+    const view = projectStateForViewer(buildStartedGame(FIVE_P), 'p0');
+    store.setSnapshot({
+      code: '1234', status: 'in_game', hostPlayerId: 'p0',
+      members: view.players.map(({ id, name, seat }) => ({ id, name, seat, connected: true, claimed: true, isSpectator: false })),
+      config: {
+        maxPlayers: 5, allowSpectators: true, allowMidJoin: true,
+        options: buildStartedGame(FIVE_P).config.options, roster: [],
+      },
+    });
+    store.setGame(view);
+    const reveal = useRoomStore.getState().reveal;
+    store.setPlayerLatency({ playerId: 'p0', latency: 250 });
+    const updated = useRoomStore.getState();
+    expect(updated.snapshot?.members.find((p) => p.id === 'p0')?.latency).toBe(250);
+    expect(updated.game?.players.find((p) => p.id === 'p0')?.latency).toBe(250);
+    expect(updated.game?.logs).toBe(view.logs);
+    expect(updated.game?.players.find((p) => p.id === 'p1')).toBe(view.players.find((p) => p.id === 'p1'));
+    expect(updated.reveal).toBe(reveal);
+    store.setPlayerLatency({ playerId: 'p0', latency: 250 });
+    store.setPlayerLatency({ playerId: 'unknown', latency: 100 });
+    expect(useRoomStore.getState()).toBe(updated);
+  });
+
   it('clears the completed game and private data while retaining room identity on restart', () => {
     const store = useRoomStore.getState();
     store.setRoomCode('1234');
