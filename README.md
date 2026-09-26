@@ -26,7 +26,7 @@ Room codes are exactly four ASCII digits (`0000`–`9999`), kept as strings to p
 
 - A pure deterministic engine in `src/lib/engine/` drives the rules (unchanged, runtime-agnostic).
 - Clients connect over **native WebSockets** (`/rooms/:code/ws`) which the Worker forwards to the room's Durable Object. The DO uses the **Hibernation API** so idle rooms cost nothing while keeping connections alive. Per-viewer state projection ensures clients never see hidden roles or mission cards.
-- The append-only **event log** is persisted in the DO's own **SQLite** and is the single source of truth: on wake the DO deterministically replays it to rebuild state, and on game over it reconstructs the full `ReplayData` and ships it to a per-game `ReplayDurableObject` (keyed by game id). **There is no external database** — Postgres/Prisma were removed entirely.
+- The append-only **event log** is persisted in the DO's own **SQLite** and is the single source of truth: on wake the DO deterministically replays it to rebuild state. Game over first writes a complete replay snapshot into room SQLite, then archives it in a per-game `ReplayDurableObject` (keyed by game id). Durable alarms retry failed transfers every 30 seconds, even after players leave. A room cannot discard its event log or snapshot until the archive acknowledges storage. **There is no external database** — Postgres/Prisma were removed entirely.
 - The React SPA is served as static assets by the Worker, with SPA fallback for client routes. Locale routing (`/zh`, `/en`) is handled client-side by React Router.
 
 ## Local development
@@ -128,6 +128,8 @@ The assassin can also choose **Functions → Start assassination early** during 
 The referee panel also provides **Start Merlin identification** and **Return to previous phase**. Returning restores the prior leader, proposal, round and completed results; votes or mission cards in the restored phase must be submitted again. Repeated returns walk back through the phase history without redealing identities or changing seat ownership. Already-revealed information cannot be withdrawn. Referee phase actions are recorded in the public log, survive reconnection, and are reflected in the final replay.
 
 After a game, identities stay revealed on the table. The host can choose **Play again** to bring everyone back to preparation in the same room, while **View Replay** opens the completed game in a new tab. Room code, seat identities, reconnect tokens and configuration are preserved. The completed replay is archived before reset; the next deal gets a new game ID and fresh roles. Referees can also return from GameOver to correct the last phase; finishing again updates that game's replay.
+
+Replays contain factual match records only: identities, outcomes, votes, mission cards, Lady inspections and assassination. There is no performance scoring or MVP selection. Archives are stored in independent SQLite-backed Durable Objects without a TTL or automatic deletion; the replay URL remains usable after room reuse, logout and server restarts. Existing durable KV archives remain readable. Event revisions prevent a delayed retry from overwriting a newer referee correction.
 
 Lobby hosts can remove any unclaimed seat by its stable seat ID. Remaining seats are renumbered without changing their occupants or reconnect tokens. Display names are normalized to at most 10 Unicode characters, for Chinese, Latin and mixed names alike, at both the identity UI and server boundary.
 
