@@ -4,6 +4,8 @@ A production-grade online implementation of Avalon for 5-10 friends. Joining sta
 
 - Mobile-first, real-time, medieval-fantasy themed.
 - i18n: Simplified Chinese (default) + English.
+- Each proposal follows draft team → automatic public announcement and one speaking turn per player in seat order, starting with the next seat after the leader and ending with the leader → leader revises/confirms the final team → vote. Players end their own speaking turns; submitting the draft starts discussion immediately, and the leader confirms the final team after everyone has spoken. Referees can skip the current speaker; each skip is recorded in the public log.
+- Speaking reminders are configurable in the room lobby before starting the game (30–600 seconds, default 120). The assassination discussion lasts 1.5 times the speaking time (default 180 seconds). Identity confirmation, team actions, votes, mission cards, and Lady inspections use 20 seconds. Timers continue into overtime without submitting or advancing anything; pending timers survive refresh, reconnect, and Durable Object hibernation. Referees can pause/resume the current phase’s clocks (including overtime); a new speaking turn or phase starts fresh, running timers. Games started before this change retain their original proposal flow for recovery/replay compatibility.
 - Roles: Merlin, Percival, Loyal Servant, Morgana, Assassin, Oberon, Mordred, and Minion of Mordred. Lady of the Lake is optional.
 
 ## Tech stack

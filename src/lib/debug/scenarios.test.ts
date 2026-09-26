@@ -17,6 +17,10 @@ import { newTablePresentations } from "@/lib/game/tablePresentation";
 const expectedPhases: Record<string, string> = {
   role: "TeamBuilding",
   team: "TeamBuilding",
+  announcement: "Discussion",
+  discussion: "Discussion",
+  finalizing: "TeamFinalizing",
+  overdue: "Discussion",
   lastProposal: "TeamBuilding",
   voting: "Voting",
   voted: "Voting",

@@ -58,7 +58,7 @@ export function TableFrame({
         >
           <span>AVALON</span>
           <span className="text-parchment/35">·</span>
-          <span>{copied ? t('lobby.copied') : code}</span>
+          <span className="room-code">{copied ? t('lobby.copied') : code}</span>
         </button>
         <div className="flex min-w-0 items-center gap-2">
           <span

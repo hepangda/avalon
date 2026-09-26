@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
@@ -17,9 +17,10 @@ interface RoleRevealProps {
   game: ClientGameState;
   reveal: { selfRole: Role; knownPlayers: VisibilityInfo[] } | null;
   myPlayerId: string | null;
+  timer?: ReactNode;
 }
 
-export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRole, blocked = false }: RoleRevealProps) {
+export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRole, blocked = false, timer }: RoleRevealProps) {
   const t = useTranslations();
   const reduceMotion = useReducedMotion();
   const [flipped, setFlipped] = useState(false);
@@ -52,6 +53,7 @@ export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRo
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-4 p-4">
       <h1 className="font-serif text-2xl text-gold">{t('roleReveal.title')}</h1>
+      {timer}
 
       <FlipCard
         revealed={flipped}

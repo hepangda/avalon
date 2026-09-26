@@ -70,6 +70,10 @@ export function RoundHistoryModal({
               </button>
             </div>
 
+            {roundIndex !== null && game.config.requiredFails[roundIndex] === 2 && (
+              <p className="mb-3 text-sm text-gold">{t('table.twoFails')}</p>
+            )}
+
             {/* Mission outcome — title + revealed cards, matching the cue. */}
             <div className="mb-3 rounded-lg border border-gold/15 bg-ink/30 p-3">
               {result ? (

@@ -1,3 +1,4 @@
+import { proposeForVote } from './testkit';
 import { describe, it, expect } from 'vitest';
 import type { EngineContext, GameState, Role } from './types';
 import { createGame, reduce } from './reducer';
@@ -32,7 +33,7 @@ describe('Voting resolution', () => {
     expect(projectStateForViewer(s, 'spectator').config.maxRejections).toBe(limit);
     for (let n = 1; n <= limit; n++) {
       expect(s.phase).toBe('TeamBuilding');
-      s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+      s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
       for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
       expect(s.phase).toBe(n === limit ? 'GameOver' : 'TeamBuilding');
     }
@@ -47,14 +48,14 @@ describe('Voting resolution', () => {
 
   it('resets a custom rejection limit after approval and starts the next quest at zero', () => {
     let s = buildStartedGame(FIVE_P, { maxRejections: 2 });
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     expect(s.rejectionCount).toBe(0);
     for (const by of firstK(s, 2)) s = apply(s, { type: 'CAST_MISSION_CARD', by, card: 'success' });
     expect(s.roundIndex).toBe(1);
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 3) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 3) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
     expect(s.phase).toBe('TeamBuilding');
     expect(s.rejectionCount).toBe(1);
@@ -64,7 +65,7 @@ describe('Voting resolution', () => {
   it('strict-majority approval moves to MissionVote and resets rejections', () => {
     let s = buildStartedGame(FIVE_P);
     s.rejectionCount = 2;
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     // 3 approve, 2 reject → approved.
     s = apply(s, { type: 'CAST_VOTE', by: 'p0', value: 'approve' });
     s = apply(s, { type: 'CAST_VOTE', by: 'p1', value: 'approve' });
@@ -79,7 +80,7 @@ describe('Voting resolution', () => {
     // 6 players, 3-3 tie → reject.
     const roles: Role[] = ['Merlin', 'Percival', 'LoyalServant', 'LoyalServant', 'Morgana', 'Assassin'];
     let s = buildStartedGame(roles);
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     s = apply(s, { type: 'CAST_VOTE', by: 'p0', value: 'approve' });
     s = apply(s, { type: 'CAST_VOTE', by: 'p1', value: 'approve' });
     s = apply(s, { type: 'CAST_VOTE', by: 'p2', value: 'approve' });
@@ -93,7 +94,7 @@ describe('Voting resolution', () => {
   it('leader rotates on rejection', () => {
     let s = buildStartedGame(FIVE_P);
     const firstLeaderSeat = s.leaderIndex;
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
     expect(s.leaderIndex).toBe((firstLeaderSeat + 1) % 5);
   });
@@ -102,7 +103,7 @@ describe('Voting resolution', () => {
     let s = buildStartedGame(FIVE_P);
     for (let i = 0; i < 5; i++) {
       expect(s.phase).toBe('TeamBuilding');
-      s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+      s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
       for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
     }
     expect(s.phase).toBe('GameOver');
@@ -114,12 +115,12 @@ describe('Voting resolution', () => {
     let s = buildStartedGame(FIVE_P);
     // 2 rejects
     for (let i = 0; i < 2; i++) {
-      s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+      s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
       for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
     }
     expect(s.rejectionCount).toBe(2);
     // 1 approve
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     expect(s.rejectionCount).toBe(0);
     expect(s.phase).toBe('MissionVote');
@@ -128,10 +129,10 @@ describe('Voting resolution', () => {
   it('records every completed proposal in voteHistory (approved & rejected)', () => {
     let s = buildStartedGame(FIVE_P);
     // First proposal: rejected.
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
     // Second proposal: approved.
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
 
     expect(s.voteHistory).toHaveLength(2);
@@ -150,7 +151,7 @@ describe('Mission resolution', () => {
     const evil = evilIds(s)[0]!; // Morgana p3
     const good = s.players.find((p) => teamOf(p.role) === 'good')!.id; // p0
     const team = [good, evil];
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     s = apply(s, { type: 'CAST_MISSION_CARD', by: good, card: 'success' });
     s = apply(s, { type: 'CAST_MISSION_CARD', by: evil, card: 'fail' });
@@ -168,7 +169,7 @@ describe('Mission resolution', () => {
     s.roundIndex = 3; // mission 4
     // mission 4 size for 7p = 4. Put 1 evil on the team.
     const team = ['p0', 'p1', 'p4', 'p2']; // p4 = Morgana (evil)
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     s = apply(s, { type: 'CAST_MISSION_CARD', by: 'p0', card: 'success' });
     s = apply(s, { type: 'CAST_MISSION_CARD', by: 'p1', card: 'success' });
@@ -187,7 +188,7 @@ describe('Mission resolution', () => {
     let s = buildStartedGame(roles);
     s.roundIndex = 3;
     const team = ['p0', 'p4', 'p5', 'p2']; // p4 Morgana, p5 Mordred
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     s = apply(s, { type: 'CAST_MISSION_CARD', by: 'p0', card: 'success' });
     s = apply(s, { type: 'CAST_MISSION_CARD', by: 'p4', card: 'fail' });
@@ -207,7 +208,7 @@ describe('Mission resolution', () => {
     ];
     s.roundIndex = 2;
     // Run mission 3 as success (all-good team).
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     const team = s.proposedTeam!;
     for (const id of team) s = apply(s, { type: 'CAST_MISSION_CARD', by: id, card: 'success' });
@@ -223,7 +224,7 @@ describe('Mission resolution', () => {
     s.roundIndex = 2; // mission 3; Lady would trigger after if game continued
     const evil = evilIds(s)[0]!;
     const realTeam = [evil, s.players.find((p) => p.id !== evil)!.id];
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: realTeam });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: realTeam });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     for (const id of s.proposedTeam!) {
       const pl = s.players.find((p) => p.id === id)!;
@@ -327,9 +328,9 @@ describe('Early assassination', () => {
 
   it('discards an unfinished proposal without inventing a completed vote or allowing retraction', () => {
     let s = buildStartedGame(FIVE_P);
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'reject' });
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players.slice(0, -1)) {
       s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     }
@@ -356,10 +357,10 @@ describe('Early assassination', () => {
 
   it('interrupts an in-flight mission and a Merlin hit preserves the completed mission tally', () => {
     let s = buildStartedGame(FIVE_P);
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     for (const id of s.proposedTeam!) s = apply(s, { type: 'CAST_MISSION_CARD', by: id, card: 'success' });
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: ['p0', 'p1', 'p3'] });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: ['p0', 'p1', 'p3'] });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     s = apply(s, { type: 'CAST_MISSION_CARD', by: 'p3', card: 'fail' });
 
@@ -388,7 +389,7 @@ describe('Early assassination', () => {
   it('cancels a pending Lady inspection without changing earlier inspections or mission history', () => {
     let s = buildStartedGame(FIVE_P, { ladyOfTheLake: true });
     for (const team of [['p0', 'p3'], ['p0', 'p1', 'p2'], ['p0', 'p1']]) {
-      s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
+      s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
       for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
       for (const id of team) {
         s = apply(s, { type: 'CAST_MISSION_CARD', by: id, card: id === 'p3' ? 'fail' : 'success' });
@@ -442,14 +443,14 @@ describe('Illegal moves are refused without mutation', () => {
 
   it('voting twice refused', () => {
     let s = buildStartedGame(FIVE_P);
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     s = apply(s, { type: 'CAST_VOTE', by: 'p0', value: 'approve' });
     expectRefusal(s, { type: 'CAST_VOTE', by: 'p0', value: 'reject' }, 'ALREADY_VOTED');
   });
 
   it('mission card from non-team member refused', () => {
     let s = buildStartedGame(FIVE_P);
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     expectRefusal(s, { type: 'CAST_MISSION_CARD', by: 'p4', card: 'success' }, 'NOT_ON_TEAM');
   });
@@ -457,7 +458,7 @@ describe('Illegal moves are refused without mutation', () => {
   it('good player playing fail refused', () => {
     let s = buildStartedGame(FIVE_P);
     // Build a team of two good players (Merlin p0, Percival p1).
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: ['p0', 'p1'] });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: ['p0', 'p1'] });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     expectRefusal(s, { type: 'CAST_MISSION_CARD', by: 'p0', card: 'fail' }, 'GOOD_CANNOT_FAIL');
   });
@@ -526,6 +527,6 @@ describe('Role reveal is per-player (no global RoleReveal gate)', () => {
     // Only the leader acks, then immediately proposes — no waiting on others.
     s = apply(s, { type: 'ACK_ROLE', by: leader(s) });
     s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
-    expect(s.phase).toBe('Voting');
+    expect(s.phase).toBe('Discussion');
   });
 });

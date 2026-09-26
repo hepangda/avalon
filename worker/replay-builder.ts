@@ -193,7 +193,8 @@ export function buildReplayFromEvents(
   const history: ReplayBuilder[] = [];
   for (const { seq, event, createdAt } of events) {
     const ctx = { now: createdAt, rng: createRng(`${seed}:${seq}`) };
-    const result = reduce(state, event, ctx);
+    const replayEvent = event.type === 'START_GAME' ? { ...event, flowVersion: event.flowVersion ?? 1 as const } : event;
+    const result = reduce(state, replayEvent, ctx);
     if (!result.ok) return null;
     if (event.type === 'PREVIOUS_PHASE') {
       const previous = history.pop();

@@ -165,6 +165,100 @@ function roomHarness(seedRoom = true) {
 }
 
 describe('room lifecycle and referee handlers (SQLite + WebSocket harness)', () => {
+  it('requires referee authorization to pause and resume timers and preserves pauses after hibernation', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+    await h.action(h.host, 'room:start');
+    expect((await h.action(h.host, 'admin:setTimersPaused', { paused: true })).error?.code).toBe('NOT_ADMIN');
+    expect((await h.action(h.spectator, 'admin:setTimersPaused', { paused: false })).error?.code).toBe('NOT_ADMIN');
+    await h.action(h.host, 'admin:auth');
+    expect((await h.action(h.host, 'admin:setTimersPaused', { paused: 'yes' })).error?.code).toBe('INVALID');
+    expect((await h.action(h.host, 'admin:setTimersPaused', { paused: true })).ok).toBe(true);
+    const timers = structuredClone(h.host.game.actionTimers);
+    expect(timers?.length).toBeGreaterThan(0);
+    expect(timers?.every((timer) => typeof timer.pausedAt === 'number')).toBe(true);
+    expect(h.spectator.game.actionTimers).toEqual(timers);
+    expect(h.host.game.logs.at(-1)?.key).toBe('admin.timersPaused');
+    h.wake();
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.game.actionTimers).toEqual(timers);
+    expect((await h.action(h.host, 'admin:setTimersPaused', { paused: true })).ok).toBe(true);
+    expect(h.host.game.actionTimers).toEqual(timers);
+    expect((await h.action(h.host, 'admin:setTimersPaused', { paused: false })).ok).toBe(true);
+    expect(h.host.game.actionTimers?.every((timer) => timer.pausedAt === undefined)).toBe(true);
+    expect(h.host.game.logs.at(-1)?.key).toBe('admin.timersResumed');
+    const resumed = structuredClone(h.host.game.actionTimers);
+    h.wake();
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.game.actionTimers).toEqual(resumed);
+  });
+
+  it('restricts speech skipping to referees and persists skips without affecting the next speaker twice', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+    await h.action(h.host, 'room:start');
+    await h.action(h.host, 'admin:auth');
+    await h.action(h.host, 'admin:propose', { team: ['p0', 'p2'] });
+    const order = h.host.game.discussion!.order;
+    const targetPlayerId = order[0]!;
+    expect((await h.action(h.spectator, 'admin:skipSpeech', { targetPlayerId })).error?.code).toBe('NOT_ADMIN');
+    expect((await h.action(h.host, 'admin:skipSpeech', { targetPlayerId: order[1] })).error?.code).toBe('NOT_SPEAKER');
+    expect((await h.action(h.host, 'admin:skipSpeech', {})).error?.code).toBe('INVALID');
+    expect((await h.action(h.host, 'admin:skipSpeech', { targetPlayerId })).ok).toBe(true);
+    expect(h.host.game.discussion?.speakerIndex).toBe(1);
+    expect(h.spectator.game.logs).toContainEqual(expect.objectContaining({
+      key: 'admin.speechSkipped', style: 'admin', params: expect.objectContaining({ player: targetPlayerId }),
+    }));
+    expect((await h.action(h.host, 'admin:skipSpeech', { targetPlayerId })).error?.code).toBe('NOT_SPEAKER');
+    h.wake();
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.game.discussion?.speakerIndex).toBe(1);
+    for (const id of order.slice(1))
+      expect((await h.action(h.host, 'admin:skipSpeech', { targetPlayerId: id })).ok).toBe(true);
+    expect(h.host.game.phase).toBe('TeamFinalizing');
+    expect((await h.action(h.host, 'admin:skipSpeech', { targetPlayerId })).error?.code).toBe('WRONG_PHASE');
+  });
+
+  it('enforces speaking turns and recovers their timers after hibernation', async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });
+    await h.action(h.host, 'room:start');
+    const players = h.sockets.filter((socket) => socket !== h.spectator);
+    for (const socket of players) await h.action(socket, 'game:ackRole');
+    const leader = players.find((socket) => socket.game.players.some((p) => p.id === socket.deserializeAttachment().playerId && p.isLeader))!;
+    const byId = (id: string) => players.find((socket) => socket.deserializeAttachment().playerId === id)!;
+    const other = players.find((socket) => socket !== leader)!;
+    const team = ['p0', 'p2'];
+    expect((await h.action(leader, 'game:proposeTeam', { team })).ok).toBe(true);
+    expect(h.spectator.game.phase).toBe('Discussion');
+    expect(h.spectator.game.proposedTeam).toEqual(team);
+    expect((await h.action(other, 'game:startDiscussion')).error?.code).toBe('WRONG_PHASE');
+    expect((await h.action(other, 'game:vote', { value: 'approve' })).error?.code).toBe('WRONG_PHASE');
+    expect((await h.action(leader, 'game:finalizeTeam', { team })).error?.code).toBe('WRONG_PHASE');
+    expect(leader.game.discussion?.order.at(-1)).toBe(leader.deserializeAttachment().playerId);
+    expect((await h.action(leader, 'game:endSpeech')).error?.code).toBe('NOT_SPEAKER');
+    const timers = structuredClone(leader.game.actionTimers);
+    expect(timers?.[0]?.durationMs).toBe(120_000);
+    expect(timers?.[0]?.playerId).toBe(leader.game.discussion?.order[0]);
+    h.wake();
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.game.actionTimers).toEqual(timers);
+    expect(h.spectator.game.serverTime).toEqual(expect.any(Number));
+    for (const id of leader.game.discussion!.order)
+      expect((await h.action(byId(id), 'game:endSpeech')).ok).toBe(true);
+    expect(leader.game.phase).toBe('TeamFinalizing');
+    expect((await h.action(other, 'game:finalizeTeam', { team })).error?.code).toBe('NOT_LEADER');
+    expect((await h.action(leader, 'game:finalizeTeam', { team: ['p3', 'p4'] })).ok).toBe(true);
+    expect(leader.game.phase).toBe('Voting');
+    expect(leader.game.actionTimers).toHaveLength(5);
+    expect(leader.game.actionTimers?.every((timer) => timer.durationMs === 20_000)).toBe(true);
+    const pending = structuredClone(leader.game.actionTimers);
+    await h.action(leader, 'game:vote', { value: 'approve' });
+    h.wake();
+    await h.action(h.spectator, 'room:join');
+    expect(h.spectator.game.actionTimers).toEqual(pending?.filter((timer) => timer.playerId !== leader.deserializeAttachment().playerId));
+  });
+
   it('broadcasts only a small latency delta during a game and includes it in later snapshots', async () => {
     const h = roomHarness();
     await h.action(h.host, 'room:removeSeat', { seatId: 'p1' });

@@ -6,7 +6,7 @@ import {
   type GameEvent,
   type GameState,
 } from '@/lib/engine';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
+import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
 import {
   anonymousMissionCards,
   arrangeSeats,
@@ -21,7 +21,7 @@ const apply = (s: GameState, event: GameEvent) => {
 };
 const project = (s: GameState) => projectStateForViewer(s, 'p0');
 function voting() {
-  return apply(buildStartedGame(FIVE_P), {
+  return proposeForVote(buildStartedGame(FIVE_P), {
     type: 'PROPOSE_TEAM',
     by: 'p0',
     team: ['p0', 'p3'],

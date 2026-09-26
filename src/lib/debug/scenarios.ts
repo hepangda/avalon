@@ -14,6 +14,10 @@ import {
 export const SCENARIOS = [
   { id: "role", group: "identity" },
   { id: "team", group: "proposal" },
+  { id: "announcement", group: "proposal" },
+  { id: "discussion", group: "proposal" },
+  { id: "finalizing", group: "proposal" },
+  { id: "overdue", group: "proposal" },
   { id: "lastProposal", group: "proposal" },
   { id: "voting", group: "proposal" },
   { id: "voted", group: "proposal" },
@@ -59,7 +63,7 @@ export function applyEvent(state: GameState, event: GameEvent): GameState {
   return result.state;
 }
 
-export function propose(state: GameState): GameState {
+export function propose(state: GameState, discuss = true): GameState {
   // Include evil seats so both valid mission card choices can be exercised.
   const good = state.players.find((p) => teamOf(p.role) === "good")!;
   const team = [
@@ -73,11 +77,14 @@ export function propose(state: GameState): GameState {
   ]
     .slice(0, missionSize(state.players.length, state.roundIndex))
     .map((p) => p.id);
-  return applyEvent(state, {
+  let next = applyEvent(state, {
     type: "PROPOSE_TEAM",
     by: state.players[state.leaderIndex]!.id,
     team,
   });
+  if (!discuss) return next;
+  for (const by of next.discussion!.order) next = applyEvent(next, { type: 'END_SPEECH', by });
+  return applyEvent(next, { type: 'FINALIZE_TEAM', by: state.players[state.leaderIndex]!.id, team });
 }
 
 export function completeVotes(state: GameState, value: VoteValue): GameState {
@@ -165,6 +172,17 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
   if (id === "role") return { state, viewerId: leader() };
   for (const p of state.players)
     state = applyEvent(state, { type: "ACK_ROLE", by: p.id });
+
+  if (['announcement', 'discussion', 'finalizing', 'overdue'].includes(id)) {
+    state = propose(state, false);
+    if (id === 'announcement') return { state, viewerId: leader() };
+    if (id === 'finalizing') {
+      for (const by of state.discussion!.order) state = applyEvent(state, { type: 'END_SPEECH', by });
+    } else if (id === 'overdue') {
+      state.actionTimers = state.actionTimers?.map((timer) => ({ ...timer, startedAt: timer.startedAt - timer.durationMs - 10_000 }));
+    }
+    return { state, viewerId: id === 'finalizing' ? leader() : state.discussion!.order[0]! };
+  }
 
   if (id === "lastProposal" || id === "fiveRejections") {
     for (let i = 0; i < (id === "fiveRejections" ? 5 : 4); i++)

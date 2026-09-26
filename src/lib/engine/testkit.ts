@@ -5,10 +5,14 @@ import type {
   PlayerSlot,
   Role,
   VoteValue,
+  EngineContext,
+  GameEvent,
 } from './types';
 import { teamOf } from './roles';
 import { buildRoleSet } from './roles';
 import { missionSize } from './config';
+import { reduce } from './reducer';
+import { createRng } from './rng';
 
 export const DEFAULT_OPTIONS: GameOptions = {
   oberon: false,
@@ -101,3 +105,17 @@ export const FIVE_P: Role[] = [
 ];
 
 export { buildRoleSet };
+
+/** Complete a real discussion when a test needs to exercise the vote/mission rules. */
+export function proposeForVote(state: GameState, event: Extract<GameEvent, { type: 'PROPOSE_TEAM' }>,
+  ctx: EngineContext = { now: 1, rng: createRng('discussion-test') }): GameState {
+  const step = (event: GameEvent) => {
+    const result = reduce(state, event, ctx);
+    if (!result.ok) throw new Error(result.error.message);
+    state = result.state;
+  };
+  step(event);
+  for (const by of state.discussion!.order) step({ type: 'END_SPEECH', by });
+  step({ type: 'FINALIZE_TEAM', by: event.by, team: event.team });
+  return state;
+}

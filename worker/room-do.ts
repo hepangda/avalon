@@ -140,6 +140,8 @@ export class RoomDurableObject extends DurableObject<Env> {
       .toArray();
     for (const r of rows) {
       const event = JSON.parse(r.payload) as GameEvent;
+      // Old logs did not contain the discussion phases. Preserve their rules on recovery.
+      if (event.type === 'START_GAME') event.flowVersion ??= 1;
       const ctx: EngineContext = { now: r.created_at, rng: createRng(`${seed}:${r.seq}`) };
       const result = reduce(state, event, ctx);
       if (!result.ok) break;
@@ -332,6 +334,15 @@ export class RoomDurableObject extends DurableObject<Env> {
           by: pid,
           team: asStrArray((payload as { team?: unknown }).team),
         }));
+      case 'game:finalizeTeam':
+        return this.gameAction(ws, (pid) => ({
+          type: 'FINALIZE_TEAM', by: pid,
+          team: asStrArray((payload as { team?: unknown } | null)?.team),
+        }));
+      case 'game:startDiscussion':
+        return this.gameAction(ws, (pid) => ({ type: 'START_DISCUSSION', by: pid }));
+      case 'game:endSpeech':
+        return this.gameAction(ws, (pid) => ({ type: 'END_SPEECH', by: pid }));
       case 'game:vote':
         return this.gameAction(ws, (pid) => ({
           type: 'CAST_VOTE',
@@ -378,6 +389,10 @@ export class RoomDurableObject extends DurableObject<Env> {
         return this.handleAdminPhase(ws, 'assassination');
       case 'admin:previousPhase':
         return this.handleAdminPhase(ws, 'previous');
+      case 'admin:skipSpeech':
+        return this.handleAdminSkipSpeech(ws, payload);
+      case 'admin:setTimersPaused':
+        return this.handleAdminSetTimersPaused(ws, payload);
       case 'admin:rerollLeader':
         return this.handleAdminReroll(ws, 'REROLL_LEADER');
       case 'admin:rerollRoles':
@@ -638,7 +653,7 @@ export class RoomDurableObject extends DurableObject<Env> {
       'in_game',
     );
 
-    const res = await this.applyEvent({ type: 'START_GAME', by: seated[0]!.id });
+    const res = await this.applyEvent({ type: 'START_GAME', by: seated[0]!.id, flowVersion: 4 });
     if (!res.ok) return res;
     for (const m of seated) if (m.claimed) this.sendPrivateReveal(m.id);
     this.broadcastRoom();
@@ -732,11 +747,12 @@ export class RoomDurableObject extends DurableObject<Env> {
     if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
     if (!this.attach(ws).isAdmin) return fail('NOT_ADMIN', 'Referee panel not enabled');
     if (!this.game) return fail('NO_GAME', 'No game in progress');
-    if (this.game.phase !== 'TeamBuilding') return fail('WRONG_PHASE', 'Not in TeamBuilding');
+    if (this.game.phase !== 'TeamBuilding' && this.game.phase !== 'TeamFinalizing')
+      return fail('WRONG_PHASE', 'Not choosing a team');
     const { team } = (payload ?? {}) as { team?: unknown };
     const leader = leaderId(this.game);
     const res = await this.applyEvent({
-      type: 'PROPOSE_TEAM',
+      type: this.game.phase === 'TeamFinalizing' ? 'FINALIZE_TEAM' : 'PROPOSE_TEAM',
       by: leader,
       team: asStrArray(team),
       admin: true,
@@ -772,6 +788,22 @@ export class RoomDurableObject extends DurableObject<Env> {
       : { type: 'START_ASSASSINATION', by: this.game.assassinId ?? '', admin: true, actor });
     if (res.ok) this.broadcastRoom();
     return res;
+  }
+
+  private async handleAdminSetTimersPaused(ws: WebSocket, payload: unknown): Promise<Ack> {
+    if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
+    if (!this.attach(ws).isAdmin) return fail('NOT_ADMIN', 'Referee panel not enabled');
+    const { paused } = (payload ?? {}) as { paused?: unknown };
+    if (typeof paused !== 'boolean') return fail('INVALID', 'Invalid timer state');
+    return this.applyEvent({ type: 'SET_TIMERS_PAUSED', paused, actor: this.adminActorName(ws) });
+  }
+
+  private async handleAdminSkipSpeech(ws: WebSocket, payload: unknown): Promise<Ack> {
+    if (!this.meta) return fail('NOT_IN_ROOM', 'Not in a room');
+    if (!this.attach(ws).isAdmin) return fail('NOT_ADMIN', 'Referee panel not enabled');
+    const { targetPlayerId } = (payload ?? {}) as { targetPlayerId?: unknown };
+    if (typeof targetPlayerId !== 'string' || !targetPlayerId) return fail('INVALID', 'Missing speaker');
+    return this.applyEvent({ type: 'SKIP_SPEECH', target: targetPlayerId, actor: this.adminActorName(ws) });
   }
 
   private async handleAdminReroll(
@@ -935,6 +967,7 @@ export class RoomDurableObject extends DurableObject<Env> {
 
   private project(playerId: string): ClientGameState {
     const view = projectStateForViewer(this.game!, playerId);
+    view.serverTime = Date.now();
     view.gameId = this.meta?.gameId ?? null;
     for (const p of view.players) {
       const member = this.members.get(p.id);

@@ -92,7 +92,9 @@
     "token": "标记",
     "missionPattern": "任务版型",
     "missionNumber": "任务 {n}",
-    "failCardsRequired": "{count} 失败"
+    "failCardsRequired": "{count} 失败",
+    "speechDuration": "每人发言时长",
+    "seconds": "{seconds} 秒"
   },
   "roles": {
     "Merlin": {
@@ -170,13 +172,16 @@
   },
   "phase": {
     "RoleReveal": "身份揭示",
-    "TeamBuilding": "组建队伍",
+    "TeamBuilding": "拟定队形",
     "Voting": "投票",
     "MissionVote": "执行任务",
     "MissionResult": "任务结果",
     "LadyOfLake": "湖中仙女",
     "Assassination": "刺杀",
-    "GameOver": "游戏结束"
+    "GameOver": "游戏结束",
+    "TeamAnnouncement": "队形公示",
+    "Discussion": "顺次发言",
+    "TeamFinalizing": "队长定稿"
   },
   "game": {
     "missionOf": "第 {round} 个任务 / 共 5 个",
@@ -204,7 +209,7 @@
     "leaderChoosing": "{name} 正在选择队伍",
     "selectKnights": "为第 {round} 个任务选择 {size} 名骑士",
     "rejectionWarning": "⚠ 再被否决 {n} 次，红方将获胜",
-    "proposeTeam": "提名此队伍",
+    "proposeTeam": "公示拟定队形",
     "chooseMore": "再选 {n} 名",
     "retract": "撤回",
     "awaitingLeader": "等待队长的决定…"
@@ -373,10 +378,17 @@
       "votesRetracted": "⚠ {actor} 撤回了本次提名的所有投票",
       "proposalRetracted": "⚠ {actor} 撤回了本次提名，重新进入组队阶段",
       "assassinationStarted": "{actor} 通过裁判功能发起了梅林指认",
-      "phaseReturned": "{actor} 通过裁判功能返回了「{phase}」，该阶段重新进行"
+      "phaseReturned": "{actor} 通过裁判功能返回了「{phase}」，该阶段重新进行",
+      "speechSkipped": "{actor} 跳过了 {player} 的发言。",
+      "timersPaused": "{actor} 暂停了当前计时。",
+      "timersResumed": "{actor} 恢复了当前计时。"
     },
     "tall": "占满高度",
-    "exitTall": "退出占满"
+    "exitTall": "退出占满",
+    "teamAnnounced": "{leader} 公示拟定队形：{team}。",
+    "teamFinalized": "{leader} 确认最终队形：{team}，开始投票。",
+    "speechBegins": "轮到 {player} 发言。",
+    "discussionFinished": "全员发言完毕，由 {leader} 调整最终队形。"
   },
   "proposal": {
     "label": "提名",
@@ -416,7 +428,10 @@
     "startAssassination": "发起梅林指认",
     "previousPhase": "返回上一阶段",
     "previousPhaseHint": "恢复上一阶段的队长、队伍和任务记录，并清空该阶段待提交的投票或任务牌。已经公开的身份或验人信息无法撤回。",
-    "startAssassinationHint": "立即结束当前讨论或投票，由刺客指认梅林。指认正确则红方获胜，错误则蓝方获胜。"
+    "startAssassinationHint": "立即结束当前讨论或投票，由刺客指认梅林。指认正确则红方获胜，错误则蓝方获胜。",
+    "skipSpeech": "跳过 {name} 的发言",
+    "pauseTimer": "暂停当前计时",
+    "resumeTimer": "继续当前计时"
   },
   "replay": {
     "retry": "重试加载",
@@ -642,7 +657,58 @@
       "reconnecting": {
         "title": "断线重连",
         "description": "牌桌操作暂停；在连接设置中恢复连接后继续。"
+      },
+      "announcement": {
+        "title": "队形公示",
+        "description": "拟定队形已自动公示，从队长下一座开始发言，队长最后发言。"
+      },
+      "discussion": {
+        "title": "顺次发言",
+        "description": "按座位轮流发言，每人自行结束。"
+      },
+      "finalizing": {
+        "title": "队长定稿",
+        "description": "保留或修改队形，确认后进入投票。"
+      },
+      "overdue": {
+        "title": "发言超时",
+        "description": "计时超时后仍可手动结束发言。"
       }
     }
+  },
+  "discussion": {
+    "flow": "本轮流程",
+    "start": "公示完毕，开始发言",
+    "finishSpeech": "结束我的发言",
+    "finalize": "确认最终队形，开始投票",
+    "announced": "拟定队形公示",
+    "speaking": "{name} 正在发言",
+    "speechProgress": "第 {current} / {total} 位发言",
+    "order": "从队长下一座开始，按座位顺序发言，队长最后发言",
+    "finalizing": "队长调整最终队形",
+    "finalizingHint": "可保留或修改拟定队形，确认后全员投票。",
+    "rules": "每次组队固定为：队长提交拟定队形并自动公示 → 从队长下一座开始按座位顺次发言，队长最后发言 → 队长修改队形 → 投票。每位玩家自行结束发言，裁判可跳过当前玩家。",
+    "timeRules": "每人发言 {seconds} 秒，刺杀讨论时长为发言的 1.5 倍，其他操作 20 秒。超时仅提示，不自动结束发言、提交操作或跳过阶段。",
+    "steps": {
+      "TeamBuilding": "拟定",
+      "TeamAnnouncement": "公示",
+      "Discussion": "公示与发言",
+      "TeamFinalizing": "定稿",
+      "Voting": "投票"
+    }
+  },
+  "timing": {
+    "role": "确认身份",
+    "propose": "拟定队形",
+    "announce": "队形公示",
+    "speak": "发言",
+    "finalize": "修改队形",
+    "vote": "投票",
+    "mission": "出任务牌",
+    "lady": "查验",
+    "assassinate": "刺杀",
+    "seconds": "{time} 秒",
+    "overdue": "超时 {time} 秒",
+    "paused": "已暂停"
   }
 }

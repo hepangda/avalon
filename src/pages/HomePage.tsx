@@ -188,7 +188,7 @@ export default function HomePage() {
                 maxLength={4}
                 inputMode="numeric"
                 pattern="[0-9]{4}"
-                className="h-11 min-w-0 tracking-widest"
+                className="room-code h-11 min-w-0 tracking-widest"
                 autoComplete="off"
               />
               <Button type="submit" disabled={!canJoin} variant="secondary" className="h-11 min-w-20 shrink-0 whitespace-nowrap px-5">

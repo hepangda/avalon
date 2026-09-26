@@ -35,7 +35,7 @@ export function RoomHeader({
     <Card className="flex items-center justify-between gap-4">
       <div>
         <p className="text-xs uppercase tracking-wide text-parchment/50">{t('lobby.roomCode')}</p>
-        <p className="font-serif text-3xl tracking-[0.3em] text-gold">{code}</p>
+        <p className="room-code text-3xl tracking-[0.3em] text-gold">{code}</p>
         <p className="mt-1 flex items-center gap-2 text-xs text-parchment/50">
           <span
             className={`inline-block h-2 w-2 rounded-full ${latencyDotClass(connected, latency ?? undefined)}`}

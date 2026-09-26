@@ -12,6 +12,25 @@ import { DEFAULT_OPTIONS } from '@/lib/engine/testkit';
 import { buildReplayFromEvents } from './replay-builder';
 
 describe('replays with referee rollback', () => {
+  it('can still replay pre-discussion event logs without a flow version', () => {
+    const players = Array.from({ length: 5 }, (_, i) => ({ id: `p${i}`, name: `P${i}` }));
+    const created = createGame({ hostId: 'p0', players, options: DEFAULT_OPTIONS, seed: 'legacy' });
+    if (!created.ok) throw new Error(created.error.message);
+    let state = created.state;
+    const events: Array<{ seq: number; event: GameEvent; createdAt: number }> = [];
+    const apply = (event: GameEvent) => {
+      const result = reduce(state, event, { now: events.length + 1, rng: createRng('legacy') });
+      if (!result.ok) throw new Error(result.error.message);
+      state = result.state;
+      events.push({ seq: events.length + 1, event: event.type === 'START_GAME' ? { type: 'START_GAME', by: event.by } : event, createdAt: events.length + 1 });
+    };
+    apply({ type: 'START_GAME', by: 'p0', flowVersion: 1 });
+    for (let i = 0; i < 5; i++) {
+      apply({ type: 'PROPOSE_TEAM', by: leaderId(state), team: ['p0', 'p1'] });
+      for (const p of players) apply({ type: 'CAST_VOTE', by: p.id, value: 'reject' });
+    }
+    expect(buildReplayFromEvents('legacy-game', 'legacy', DEFAULT_OPTIONS, players, events)?.outcome).toEqual(state.outcome);
+  });
   it('excludes abandoned votes, mission results and Lady checks from the final replay', () => {
     const players = Array.from({ length: 5 }, (_, i) => ({
       id: `p${i}`,
@@ -33,18 +52,24 @@ describe('replays with referee rollback', () => {
       events.push({ seq, event, createdAt: seq });
       state = result.state;
     };
+    const propose = (team: string[]) => {
+      const by = leaderId(state);
+      apply({ type: 'PROPOSE_TEAM', by, team });
+      for (const speaker of state.discussion!.order) apply({ type: 'END_SPEECH', by: speaker });
+      apply({ type: 'FINALIZE_TEAM', by, team });
+    };
     const vote = (value: 'approve' | 'reject') => {
       for (const p of players) apply({ type: 'CAST_VOTE', by: p.id, value });
     };
     const mission = () => {
       const team = players.slice(0, currentMissionSize(state)).map((p) => p.id);
-      apply({ type: 'PROPOSE_TEAM', by: leaderId(state), team });
+      propose(team);
       vote('approve');
       for (const by of team) apply({ type: 'CAST_MISSION_CARD', by, card: 'success' });
     };
     const back: GameEvent = { type: 'PREVIOUS_PHASE', actor: 'Referee' };
-    apply({ type: 'START_GAME', by: 'p0' });
-    apply({ type: 'PROPOSE_TEAM', by: leaderId(state), team: ['p0', 'p1'] });
+    apply({ type: 'START_GAME', by: 'p0', flowVersion: 4 });
+    propose(['p0', 'p1']);
     vote('reject');
     apply(back);
     vote('approve');

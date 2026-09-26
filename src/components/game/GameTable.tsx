@@ -23,6 +23,9 @@ interface GameTableProps {
   highlightIds?: string[];
   board: ReactNode;
   card?: (player: ClientPlayer) => ReactNode;
+  playerStatus?: (player: ClientPlayer) => ReactNode;
+  speakerId?: string;
+  proposalLayout?: boolean;
   hostId?: string | null;
   missionReveal?: Extract<TablePresentation, { kind: 'mission' }> | null;
   onRevealComplete?: (id: string) => void;
@@ -41,6 +44,9 @@ export function GameTable({
   highlightIds = [],
   board,
   card,
+  playerStatus,
+  speakerId,
+  proposalLayout = false,
   hostId,
   missionReveal,
   onRevealComplete,
@@ -55,7 +61,7 @@ export function GameTable({
     const isMe = p.id === myPlayerId;
     const connected = p.claimed !== false && p.connected;
     return (
-      <div key={p.id} className="table-player">
+      <div key={p.id} className="table-player" data-speaking={speakerId === p.id}>
         <button
           type="button"
           className={cn(
@@ -124,13 +130,13 @@ export function GameTable({
           }
           aria-label={t('table.playerCards', { seat: p.seat + 1 })}
         >
-          {card?.(p) ?? <TableCard state="inactive" />}
+          {playerStatus?.(p) ?? card?.(p) ?? <TableCard state="inactive" />}
         </div>
       </div>
     );
   };
   return (
-    <div ref={root} className="game-table">
+    <div ref={root} className={cn('game-table', proposalLayout && 'is-proposal')}>
       <div className="table-felt" aria-hidden="true" />
       <div
         className="table-end table-end-top"

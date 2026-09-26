@@ -172,6 +172,9 @@ function GallerySession({
     ackRole: (roleRevision = 0) => dispatch({ type: "ACK_ROLE", by: viewerId, roleRevision }),
     proposeTeam: (team) =>
       dispatch({ type: "PROPOSE_TEAM", by: viewerId, team }),
+    finalizeTeam: (team) => dispatch({ type: 'FINALIZE_TEAM', by: viewerId, team }),
+    startDiscussion: () => dispatch({ type: 'START_DISCUSSION', by: viewerId }),
+    endSpeech: () => dispatch({ type: 'END_SPEECH', by: viewerId }),
     vote: (value) => dispatch({ type: "CAST_VOTE", by: viewerId, value }),
     missionCard: (card) =>
       dispatch({ type: "CAST_MISSION_CARD", by: viewerId, card }),
@@ -185,6 +188,7 @@ function GallerySession({
     const projected = projectStateForViewer(state, viewerId);
     return {
       ...projected,
+      serverTime: 1_800_000_000_000 + state.logSeq * 1000,
       players: projected.players.map((p) => ({
         ...p,
         claimed: p.id !== openSeat,
@@ -196,7 +200,7 @@ function GallerySession({
   const quickActions = (
     <div className="debug-actions">
       {state.phase === "TeamBuilding" && (
-        <button disabled={!connected} onClick={() => run(propose)}>
+        <button disabled={!connected} onClick={() => run((s) => propose(s, false))}>
           {t("debug.autoTeam")}
         </button>
       )}

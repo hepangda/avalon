@@ -1,3 +1,4 @@
+import { proposeForVote } from './testkit';
 import { describe, it, expect } from 'vitest';
 import type { EngineContext, GameState, Role } from './types';
 import { reduce } from './reducer';
@@ -50,7 +51,7 @@ function reachLadyAfterMission(roundIndex: number): GameState {
   // Run this mission as a success with an all-good team of the right size.
   const size = s.config.roles.length === 7 ? [2, 3, 3, 4, 4][roundIndex]! : 3;
   const team = ['p0', 'p1', 'p2', 'p3'].slice(0, size);
-  s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
+  s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team });
   for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
   for (const id of s.proposedTeam!) s = apply(s, { type: 'CAST_MISSION_CARD', by: id, card: 'success' });
   return s;
@@ -130,7 +131,7 @@ describe('Lady of the Lake', () => {
     let s = buildStartedGame(LADY_ROLES, { ladyOfTheLake: false });
     s.missionResults = [{ roundIndex: 0, teamSize: 2, team: [], success: true, failCount: 0, cards: {} }];
     s.roundIndex = 1;
-    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: ['p0', 'p1', 'p2'] });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader(s), team: ['p0', 'p1', 'p2'] });
     for (const p of s.players) s = apply(s, { type: 'CAST_VOTE', by: p.id, value: 'approve' });
     for (const id of s.proposedTeam!) s = apply(s, { type: 'CAST_MISSION_CARD', by: id, card: 'success' });
     expect(s.phase).toBe('TeamBuilding');

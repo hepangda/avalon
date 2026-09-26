@@ -27,6 +27,9 @@ import { useTablePresentation } from '@/lib/game/useTablePresentation';
 import { useRoomAction } from '@/lib/game/useRoomAction';
 import { actionAvailability } from '@/lib/game/actionAvailability';
 import { useRoleText } from '@/lib/game/useRoleText';
+import { ActionTimerBadge } from '@/components/game/ActionTimerBadge';
+import { ActionTimerBar } from '@/components/game/ActionTimerBar';
+import { useGameClock } from '@/lib/game/useGameClock';
 import { ROLE_TEAM_UI } from '@/lib/game/roleMeta';
 import { outcomeReasonKey } from '@/lib/game/outcomeText';
 import type { ClientPlayer, ClientGameState, Role, VisibilityInfo, Team } from '@/lib/engine';
@@ -87,10 +90,12 @@ export function GameView({
   const [ladySeen, setLadySeen] = useState<string | null>(null);
   const [sheet, setSheet] = useState<string | null>(null);
   const [logChannel, setLogChannel] = useState<LogChannel>('public');
-  const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}`;
+  const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.discussion?.speakerIndex}`;
+  const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
   const { presentation, finish } = useTablePresentation(game);
-  useEffect(() => setSelected([]), [phaseKey]);
+  const draftKey = game?.proposedTeam?.join(',') ?? '';
+  useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
   useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
 
   if (!game)
@@ -119,6 +124,9 @@ export function GameView({
   const isLeader = leader?.id === myPlayerId;
   const teamSize = game.config.missionSizes[game.roundIndex] ?? 0;
   const team = game.proposedTeam ?? [];
+  const speakerId = game.phase === 'Discussion' ? game.discussion?.order[game.discussion.speakerIndex] : undefined;
+  const speaker = game.players.find((p) => p.id === speakerId);
+  const selfTimer = game.actionTimers?.find((timer) => timer.playerId === myPlayerId);
   const isHolder = game.lady?.holderId === myPlayerId;
   const ladyReveal = game.privateLadyResult ?? ladyResult;
   const isAssassin = !!game.assassinCandidates;
@@ -154,12 +162,12 @@ export function GameView({
     !game.roleAcks.includes(myPlayerId);
   let candidateIds: string[] | undefined;
   let pick: PickConfig | null = null;
-  if (game.phase === 'TeamBuilding' && isLeader) {
+  if ((game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing') && isLeader) {
     pick = {
       size: teamSize,
       tone: 'gold',
-      confirmLabel: t('teamBuilder.proposeTeam'),
-      onConfirm: () => actions.proposeTeam(selected),
+      confirmLabel: t(game.phase === 'TeamFinalizing' ? 'discussion.finalize' : 'teamBuilder.proposeTeam'),
+      onConfirm: () => game.phase === 'TeamFinalizing' ? actions.finalizeTeam(selected) : actions.proposeTeam(selected),
     };
   } else if (game.phase === 'LadyOfLake' && isHolder) {
     candidateIds = game.players
@@ -316,17 +324,45 @@ export function GameView({
         )}
       </>
     );
-  else if (game.phase === 'TeamBuilding')
+  else if (game.phase === 'TeamAnnouncement' || game.phase === 'Discussion')
+    board = (
+      <>
+        <h2 className="table-phase-title" aria-live="polite">
+          {game.phase === 'TeamAnnouncement' ? t('discussion.announced') : t('discussion.speaking', {
+            name: speaker ? `${speaker.seat + 1}. ${speaker.name}` : '',
+          })}
+        </h2>
+        {chips(team)}
+        {game.phase === 'Discussion' && (
+          <div className="discussion-turn">
+            <p className="table-phase-detail">{t('discussion.speechProgress', {
+              current: (game.discussion?.speakerIndex ?? 0) + 1, total: game.players.length,
+            })}</p>
+            <ol className="discussion-order" aria-label={t('discussion.order')}>
+              {game.discussion?.order.map((id, index) => {
+                const player = game.players.find((p) => p.id === id)!;
+                return <li key={id} aria-current={id === speakerId ? 'step' : undefined}
+                  data-done={index < game.discussion!.speakerIndex} title={player.name}>
+                  {player.seat + 1}
+                </li>;
+              })}
+            </ol>
+          </div>
+        )}
+      </>
+    );
+  else if (game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing')
     board = (
       <>
         <h2 className="table-phase-title">
-          {isLeader
+          {game.phase === 'TeamFinalizing' ? t('discussion.finalizing') : isLeader
             ? t('teamBuilder.youLead')
             : t('teamBuilder.leaderChoosing', {
                 name: leader ? `${leader.seat + 1}. ${leader.name}` : '',
               })}
         </h2>
-        {selected.length > 0 ? (
+        {game.phase === 'TeamFinalizing' && <p className="table-phase-detail">{t('discussion.finalizingHint')}</p>}
+        {game.phase === 'TeamFinalizing' && !isLeader ? chips(team) : selected.length > 0 ? (
           chips(selected)
         ) : (
           <p className="table-phase-detail">
@@ -403,7 +439,10 @@ export function GameView({
       </>
     );
   const inspected = game.players.find((p) => p.id === sheet);
-  const showProposals = activePhase === 'TeamBuilding' || activePhase === 'Voting';
+  const proposalPhases = game.phase === 'TeamAnnouncement'
+    ? ['TeamBuilding', 'TeamAnnouncement', 'Discussion', 'TeamFinalizing', 'Voting'] as const
+    : ['TeamBuilding', 'Discussion', 'TeamFinalizing', 'Voting'] as const;
+  const showProposals = proposalPhases.some((phase) => phase === activePhase);
   const proposalGame = presentation?.kind === 'vote'
     ? { ...game, rejectionCount: presentation.record.proposalIndex }
     : game;
@@ -464,13 +503,22 @@ export function GameView({
         }}
         progress={
           <>
-            <div className="table-status">
-              <span>
+            <div className={`table-status${showProposals && !presentation ? ' has-discussion' : ''}`}>
+              <span className="table-status-label">
+                <span className="table-status-full">
                 {t('table.roundPhase', {
                   round: round + 1,
                   phase: t(`phase.${activePhase}`),
                 })}
+                </span>
+                <span className="table-status-round">{t('lobby.missionNumber', { n: round + 1 })}</span>
               </span>
+              {showProposals && !presentation && <ol className="discussion-steps" aria-label={t('discussion.flow')}>
+                {proposalPhases.map((phase) => <li key={phase} aria-current={game.phase === phase ? 'step' : undefined}>
+                  <span className="discussion-step-full">{t(`discussion.steps.${phase}`)}</span>
+                  <span className="discussion-step-short">{t(phase === 'Discussion' ? 'phase.Discussion' : `discussion.steps.${phase}`)}</span>
+                </li>)}
+              </ol>}
               <span className="table-status-detail inline-flex items-center gap-2">
                 {showProposals ? <>
                   {activePhase === 'Voting' && <span className="tabular-nums" aria-label={t('table.voteCount', { count: voteCount, total: game.players.length })}>{voteCount}/{game.players.length}</span>}
@@ -487,6 +535,9 @@ export function GameView({
         }
         footer={
           <>
+            {!presentation && !isOver && selfTimer && <div className="table-timing-status">
+              <ActionTimerBadge timer={selfTimer} now={now} />
+            </div>}
             <div className="table-actions">
               {presentation ? (
                 <div className="table-action-placeholder" aria-live="polite">
@@ -552,6 +603,12 @@ export function GameView({
           myPlayerId={myPlayerId}
           board={board}
           card={card}
+          speakerId={!presentation ? speakerId : undefined}
+          proposalLayout={!presentation && showProposals && activePhase !== 'Voting'}
+          playerStatus={(p) => {
+            const timer = !presentation && game.actionTimers?.find((item) => item.playerId === p.id);
+            return timer ? <ActionTimerBar timer={timer} now={now} /> : null;
+          }}
           selectedIds={selected}
           selectable={!!pick && !blocked && !action.busy}
           candidateIds={candidateIds}
@@ -567,7 +624,8 @@ export function GameView({
       )}
       {needsRoleReveal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-deep py-6">
-          <RoleReveal key={`${game.gameId}-${myPlayerId}-${game.roleRevision ?? 0}`} game={game} reveal={reveal} myPlayerId={myPlayerId} onAck={actions.ackRole} blocked={conn !== 'connected'} />
+          <RoleReveal key={`${game.gameId}-${myPlayerId}-${game.roleRevision ?? 0}`} game={game} reveal={reveal} myPlayerId={myPlayerId} onAck={actions.ackRole} blocked={conn !== 'connected'}
+            timer={selfTimer && <ActionTimerBadge timer={selfTimer} now={now} />} />
         </div>
       )}
       {!presentation && ladyReveal && ladyReveal.targetId !== ladySeen && (

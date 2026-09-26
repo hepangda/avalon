@@ -11,6 +11,7 @@ export {
   MAX_PLAYERS,
   MISSION_COUNT,
   rejectionLimit,
+  speechDuration,
   isValidPlayerCount,
   missionSize,
   requiredFails,

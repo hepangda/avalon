@@ -1,3 +1,4 @@
+import { proposeForVote } from './testkit';
 import { describe, expect, it } from 'vitest';
 import { createGame, reduce } from './reducer';
 import { createRng } from './rng';
@@ -19,7 +20,7 @@ function approve(s: GameState) {
 }
 function mission(s: GameState) {
   const team = teamForCurrentMission(s);
-  s = step(s, { type: 'PROPOSE_TEAM', by: s.players[s.leaderIndex]!.id, team });
+  s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: s.players[s.leaderIndex]!.id, team });
   s = approve(s);
   for (const by of team) s = step(s, { type: 'CAST_MISSION_CARD', by, card: 'success' });
   return s;
@@ -28,7 +29,7 @@ function mission(s: GameState) {
 describe('referee phase control', () => {
   it('rewinds resolved votes, then proposals, without changing identities or connectivity', () => {
     let s = buildStartedGame(FIVE_P);
-    s = step(s, { type: 'PROPOSE_TEAM', by: 'p0', team: ['p0', 'p1'] });
+    s = proposeForVote(s, { type: 'PROPOSE_TEAM', by: 'p0', team: ['p0', 'p1'] });
     s = approve(s);
     s = step(s, { type: 'SET_CONNECTED', by: 'p1', connected: false });
     s = step(s, { type: 'ACK_ROLE', by: 'p0' });
@@ -41,6 +42,10 @@ describe('referee phase control', () => {
     expect(s.players[1]!.connected).toBe(false);
     expect(s.roleAcks).toEqual(['p0']);
     expect(s.players.map((p) => p.role)).toEqual(roles);
+    s = step(s, back);
+    expect(s.phase).toBe('TeamFinalizing');
+    s = step(s, back);
+    expect(s.phase).toBe('Discussion');
     s = step(s, back);
     expect(s.phase).toBe('TeamBuilding');
     expect(s.leaderIndex).toBe(0);
@@ -99,6 +104,8 @@ describe('referee phase control', () => {
     const start = buildStartedGame(FIVE_P);
     const events: GameEvent[] = [
       { type: 'PROPOSE_TEAM', by: 'p0', team: ['p0', 'p1'] },
+      ...[...start.players.slice(1), start.players[0]!].map((p): GameEvent => ({ type: 'END_SPEECH', by: p.id })),
+      { type: 'FINALIZE_TEAM', by: 'p0', team: ['p0', 'p1'] },
       ...start.players.map((p): GameEvent => ({
         type: 'CAST_VOTE',
         by: p.id,
@@ -181,7 +188,7 @@ describe('opening-only referee randomization', () => {
 
   it('rejects both tools after play starts, including after retracting or rewinding', () => {
     const initial = buildStartedGame(FIVE_P);
-    const voting = step(initial, { type: 'PROPOSE_TEAM', by: 'p0', team: ['p0', 'p1'] });
+    const voting = proposeForVote(initial, { type: 'PROPOSE_TEAM', by: 'p0', team: ['p0', 'p1'] });
     const assassination = step(initial, { type: 'START_ASSASSINATION', by: initial.assassinId! });
     const states: GameState[] = [
       { ...initial, phase: 'Lobby' },

@@ -5,6 +5,7 @@ import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { RoleCard } from '@/components/game/RoleCard';
+import { SpeechDurationSetting } from './SpeechDurationSetting';
 import type { GameOptions, Role } from '@/lib/engine';
 import {
   PLAYER_COMPOSITION,
@@ -89,7 +90,7 @@ export function ConfigPanel({
   function applyRecommended() {
     onChange({
       ...config,
-      options: { ...recommendedOptions(count), maxRejections },
+      options: { ...recommendedOptions(count), maxRejections, speechSeconds: config.options.speechSeconds ?? 120 },
     });
   }
 
@@ -191,6 +192,9 @@ export function ConfigPanel({
           </Button>
         </div>
       </section>
+
+      <SpeechDurationSetting value={config.options.speechSeconds} disabled={!isHost}
+        onChange={(value) => setOption('speechSeconds', value)} />
 
       <section className="space-y-2 rounded-lg border border-gold/15 bg-ink/30 p-3">
         <p className="text-xs uppercase tracking-wide text-parchment/50">

@@ -34,6 +34,9 @@ export type GamePhase =
   | 'Lobby'
   | 'RoleReveal'
   | 'TeamBuilding'
+  | 'TeamAnnouncement'
+  | 'Discussion'
+  | 'TeamFinalizing'
   | 'Voting'
   | 'MissionVote'
   | 'MissionResult'
@@ -54,6 +57,8 @@ export interface GameOptions {
   ladyOfTheLake: boolean;
   /** Consecutive rejected proposals before evil wins (1–5); omitted in legacy games = 5. */
   maxRejections?: number;
+  /** Per-player speaking time in seconds; defaults to 120. Reminder only. */
+  speechSeconds?: number;
 }
 
 export interface GameConfig {
@@ -149,6 +154,10 @@ export interface LogEntry {
  */
 export interface GameState {
   phase: GamePhase;
+  /** Replay rules: v1 has no discussion, v2 confirms announcements, v2–3 speak leader-first. */
+  flowVersion?: 1 | 2 | 3 | 4;
+  discussion?: DiscussionState | null;
+  actionTimers?: ActionTimer[];
   config: GameConfig;
   seed: string;
   players: PlayerSlot[];
@@ -202,6 +211,7 @@ export type PhaseCheckpoint = Pick<
   | 'leaderIndex'
   | 'rejectionCount'
   | 'proposedTeam'
+  | 'discussion'
   | 'votes'
   | 'missionCards'
   | 'missionResults'
@@ -230,11 +240,16 @@ export interface VisibilityInfo {
 // ---------------------------------------------------------------------------
 
 export type GameEvent =
-  | { type: 'START_GAME'; by: PlayerId }
+  | { type: 'START_GAME'; by: PlayerId; flowVersion?: 1 | 2 | 3 | 4 }
   | { type: 'ACK_ROLE'; by: PlayerId; roleRevision?: number }
   | { type: 'REROLL_LEADER'; actor: string }
   | { type: 'REROLL_ROLES'; actor: string }
   | { type: 'PROPOSE_TEAM'; by: PlayerId; team: PlayerId[]; admin?: boolean }
+  | { type: 'START_DISCUSSION'; by: PlayerId }
+  | { type: 'END_SPEECH'; by: PlayerId }
+  | { type: 'SKIP_SPEECH'; target: PlayerId; actor: string }
+  | { type: 'SET_TIMERS_PAUSED'; paused: boolean; actor: string }
+  | { type: 'FINALIZE_TEAM'; by: PlayerId; team: PlayerId[]; admin?: boolean }
   | { type: 'CAST_VOTE'; by: PlayerId; value: VoteValue; admin?: boolean }
   | { type: 'RETRACT_VOTES' }
   | { type: 'RETRACT_PROPOSAL' }
@@ -284,6 +299,7 @@ export type EngineErrorCode =
   | 'WRONG_PHASE'
   | 'NOT_HOST'
   | 'NOT_LEADER'
+  | 'NOT_SPEAKER'
   | 'NOT_ASSASSIN'
   | 'NOT_LADY_HOLDER'
   | 'UNKNOWN_PLAYER'
@@ -369,8 +385,29 @@ export interface ClientLogEntry {
   style?: 'admin';
 }
 
+export interface DiscussionState {
+  order: PlayerId[];
+  speakerIndex: number;
+}
+
+export type TimedAction = 'role' | 'propose' | 'announce' | 'speak' | 'finalize' | 'vote' | 'mission' | 'lady' | 'assassinate';
+
+/** Public pending-action metadata; never contains votes, cards, or private identities. */
+export interface ActionTimer {
+  playerId: PlayerId;
+  action: TimedAction;
+  startedAt: number;
+  durationMs: number;
+  /** Freeze at this server timestamp until resumed; omitted while running. */
+  pausedAt?: number;
+}
+
 export interface ClientGameState {
   phase: GamePhase;
+  discussion?: DiscussionState | null;
+  actionTimers?: ActionTimer[];
+  /** Stamped by the room, used to compensate for the client's wall-clock offset. */
+  serverTime?: number;
   previousPhase?: GamePhase;
   phaseRevision?: number;
   roleRevision: number;
@@ -398,6 +435,7 @@ export interface ClientGameState {
     requiredFails: number[];
     rolesInPlay: Role[];
     maxRejections?: number;
+    speechSeconds?: number;
   };
   lady: {
     holderId: PlayerId | null;

@@ -1,6 +1,6 @@
 import { fallbackSeatName } from '@/lib/game/names';
 import { sanitizeName } from '@/lib/game/displayName';
-import { rejectionLimit, type GameOptions } from '@/lib/engine';
+import { rejectionLimit, speechDuration, type GameOptions } from '@/lib/engine';
 export { sanitizeName } from '@/lib/game/displayName';
 import type { RoomConfig, RoomMember, RoomSnapshot } from '@/lib/socket/types';
 import type { RoomMeta } from './schema';
@@ -19,6 +19,7 @@ export const DEFAULT_ROOM_CONFIG: RoomConfig = {
     percival: true,
     ladyOfTheLake: false,
     maxRejections: 5,
+    speechSeconds: 120,
   },
   roster: [],
 };
@@ -94,6 +95,7 @@ function sanitizeOptions(options: GameOptions): GameOptions {
     percival: pairedRoles,
     ladyOfTheLake: Boolean(options?.ladyOfTheLake),
     maxRejections: rejectionLimit(options?.maxRejections),
+    speechSeconds: speechDuration(options?.speechSeconds),
   };
 }
 

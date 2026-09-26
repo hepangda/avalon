@@ -15,6 +15,9 @@ type RefereeTool =
   | 'rerollRoles'
   | 'assassination'
   | 'previous'
+  | 'skipSpeech'
+  | 'pauseTimer'
+  | 'resumeTimer'
   | 'unbind'
   | 'vote'
   | 'retractVotes'
@@ -28,6 +31,10 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
   const authed = useRoomStore((state) => state.isReferee);
   const setAuthed = useRoomStore((state) => state.setIsReferee);
   const [activeTool, setActiveTool] = useState<RefereeTool | null>(null);
+  const [skipTarget, setSkipTarget] = useState<string | null>(null);
+  const speakerId = game.phase === 'Discussion' ? game.discussion?.order[game.discussion.speakerIndex] : undefined;
+  const speaker = game.players.find((p) => p.id === speakerId);
+  const timersPaused = game.actionTimers?.some((timer) => timer.pausedAt !== undefined) ?? false;
   const inFlight = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -38,7 +45,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
     setError(null);
     setVoteTarget('');
     setProposeSel([]);
-  }, [game.phase, game.phaseRevision, authed]);
+  }, [game.phase, game.phaseRevision, speakerId, authed]);
 
   // Act-as-player target selection.
   const [voteTarget, setVoteTarget] = useState('');
@@ -60,6 +67,12 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
     disabled?: boolean;
   }[] = authed
     ? [
+        ...(game.actionTimers?.length ? [{
+          id: timersPaused ? 'resumeTimer' as const : 'pauseTimer' as const,
+          title: t(timersPaused ? 'admin.resumeTimer' : 'admin.pauseTimer'),
+          icon: timersPaused ? '▶' : 'Ⅱ',
+        }] : []),
+        ...(speaker ? [{ id: 'skipSpeech' as const, title: t('admin.skipSpeech', { name: seatLabel(speaker.seat, speaker.name) }), icon: '↪' }] : []),
         ...(game.canRerollOpening
           ? [
               { id: 'rerollLeader' as const, title: t('admin.rerollLeader'), icon: '♛' },
@@ -97,7 +110,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
               },
             ]
           : []),
-        ...(game.phase === 'TeamBuilding'
+        ...((game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing')
           ? [
               {
                 id: 'propose' as const,
@@ -109,7 +122,8 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
         { id: 'disable', title: t('admin.close'), icon: '✕' },
       ]
     : [{ id: 'enable', title: t('admin.open'), icon: '🛠' }];
-  const selectedEntry = entries.find((entry) => entry.id === activeTool && !entry.disabled);
+  const selectedEntry = entries.find((entry) => entry.id === activeTool && !entry.disabled &&
+    (entry.id !== 'skipSpeech' || skipTarget === speakerId));
 
   async function run(
     fn: () => Promise<{
@@ -167,9 +181,14 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
           type="button"
           disabled={busy || entry.disabled}
           onClick={() => {
+            if (entry.id === 'pauseTimer' || entry.id === 'resumeTimer') {
+              void run(() => adminActions.setTimersPaused(entry.id === 'pauseTimer'));
+              return;
+            }
             setError(null);
             setVoteTarget('');
             setProposeSel([]);
+            setSkipTarget(speakerId ?? null);
             setActiveTool(entry.id);
           }}
           className="flex w-full items-center gap-3 rounded-lg border border-crimson/30 bg-ink/30 px-4 py-3 text-left transition-colors hover:border-crimson/60 hover:bg-crimson/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 disabled:cursor-not-allowed disabled:opacity-40"
@@ -189,6 +208,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
           </span>
         </button>
       ))}
+      {error && !selectedEntry && <p role="alert" className="rounded-lg border border-crimson/50 bg-crimson/20 px-3 py-2 text-sm text-parchment">{error}</p>}
       {selectedEntry &&
         mounted &&
         createPortal(
@@ -231,6 +251,12 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
                 </div>
               ) : (
                 <div className="space-y-5">
+                  {activeTool === 'skipSpeech' && skipTarget && (
+                    <Button variant="danger" className="w-full" disabled={busy || skipTarget !== speakerId}
+                      onClick={() => void run(() => adminActions.skipSpeech(skipTarget))}>
+                      {t('common.confirm')}
+                    </Button>
+                  )}
                   {(activeTool === 'rerollLeader' || activeTool === 'rerollRoles') && (
                     <section className="space-y-3">
                       <p className="text-sm text-parchment/70">
@@ -402,7 +428,7 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
                   )}
 
                   {/* Propose the team for the leader (TeamBuilding only). */}
-                  {activeTool === 'propose' && game.phase === 'TeamBuilding' && (
+                  {activeTool === 'propose' && (game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing') && (
                     <section className="space-y-2">
                       <h3 className="text-sm font-semibold text-gold">{t('admin.proposeTitle')}</h3>
                       <p className="text-xs text-parchment/50">

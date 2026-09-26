@@ -85,10 +85,14 @@ export function LogPanel({
           resolved[k] = v === 'approve' ? t('vote.approve') : t('vote.reject');
         } else if (isAdmin && k === 'phase') {
           resolved[k] = t(`phase.${v}`);
+        } else if (entry.key === 'admin.speechSkipped' && k === 'player' && typeof v === 'string') {
+          resolved[k] = nameOf(v);
         } else if (isAdmin) {
           resolved[k] = v;
         } else if (PLAYER_PARAMS.includes(k) && typeof v === 'string') {
           resolved[k] = nameOf(v);
+        } else if (k === 'team' && typeof v === 'string') {
+          resolved[k] = v.split(',').map(nameOf).join('、');
         } else if (k === 'role' && typeof v === 'string') {
           resolved[k] = roleText.name(v as Role);
         } else {

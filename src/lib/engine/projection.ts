@@ -152,6 +152,8 @@ export function projectStateForViewer(
 
   return {
     phase: state.phase,
+    discussion: state.discussion ? { ...state.discussion, order: [...state.discussion.order] } : null,
+    actionTimers: (state.actionTimers ?? []).map((timer) => ({ ...timer })),
     previousPhase: state.phaseHistory?.at(-1)?.phase,
     phaseRevision: state.phaseRevision ?? 0,
     roleRevision: state.roleRevision ?? 0,
@@ -180,6 +182,7 @@ export function projectStateForViewer(
       requiredFails: requiredFailsFor(state.config.playerCount),
       rolesInPlay: [...state.config.roles],
       maxRejections: rejectionLimit(state.config.options.maxRejections),
+      speechSeconds: state.config.options.speechSeconds ?? 120,
     },
     lady,
     ...(privateLadyResult ? { privateLadyResult } : {}),

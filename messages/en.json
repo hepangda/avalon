@@ -92,7 +92,9 @@
     "token": "Token",
     "missionPattern": "Mission pattern",
     "missionNumber": "Mission {n}",
-    "failCardsRequired": "{count} fails"
+    "failCardsRequired": "{count} fails",
+    "speechDuration": "Speaking time per player",
+    "seconds": "{seconds} seconds"
   },
   "roles": {
     "Merlin": {
@@ -170,13 +172,16 @@
   },
   "phase": {
     "RoleReveal": "Role Reveal",
-    "TeamBuilding": "Assemble the Party",
+    "TeamBuilding": "Draft team",
     "Voting": "The Vote",
     "MissionVote": "On the Quest",
     "MissionResult": "Quest Result",
     "LadyOfLake": "Lady of the Lake",
     "Assassination": "The Assassination",
-    "GameOver": "Game Over"
+    "GameOver": "Game Over",
+    "TeamAnnouncement": "Team announcement",
+    "Discussion": "Discussion",
+    "TeamFinalizing": "Finalize team"
   },
   "game": {
     "missionOf": "Mission {round} of 5",
@@ -204,7 +209,7 @@
     "leaderChoosing": "{name} is choosing a team",
     "selectKnights": "Select {size} for mission {round}",
     "rejectionWarning": "⚠ {n} rejection(s) until the red team wins",
-    "proposeTeam": "Propose this team",
+    "proposeTeam": "Announce draft team",
     "chooseMore": "Choose {n} more",
     "retract": "Retract",
     "awaitingLeader": "Awaiting the leader's decision…"
@@ -373,10 +378,17 @@
       "votesRetracted": "⚠ {actor} retracted all votes for this proposal",
       "proposalRetracted": "⚠ {actor} retracted the proposal — back to team building",
       "assassinationStarted": "{actor} started Merlin identification as referee",
-      "phaseReturned": "{actor} returned to {phase} as referee; that phase will be played again"
+      "phaseReturned": "{actor} returned to {phase} as referee; that phase will be played again",
+      "speechSkipped": "{actor} skipped {player}’s speaking turn.",
+      "timersPaused": "{actor} paused the current timers.",
+      "timersResumed": "{actor} resumed the current timers."
     },
     "tall": "Fill height",
-    "exitTall": "Exit fill"
+    "exitTall": "Exit fill",
+    "teamAnnounced": "{leader} announced a draft team: {team}.",
+    "teamFinalized": "{leader} finalized the team: {team}. Voting begins.",
+    "speechBegins": "It is {player}’s turn to speak.",
+    "discussionFinished": "Everyone has spoken. {leader} may now revise the team."
   },
   "proposal": {
     "label": "Proposal",
@@ -416,7 +428,10 @@
     "startAssassination": "Start Merlin identification",
     "previousPhase": "Return to previous phase",
     "previousPhaseHint": "Restore the previous phase, leader, team and results. Votes or mission cards for that phase must be submitted again. Revealed identities and inspections cannot be forgotten.",
-    "startAssassinationHint": "End the current discussion or voting and let the Assassin identify Merlin. Hitting Merlin wins for the red team; missing wins for the blue team."
+    "startAssassinationHint": "End the current discussion or voting and let the Assassin identify Merlin. Hitting Merlin wins for the red team; missing wins for the blue team.",
+    "skipSpeech": "Skip {name}’s turn",
+    "pauseTimer": "Pause current timers",
+    "resumeTimer": "Resume current timers"
   },
   "replay": {
     "retry": "Retry loading",
@@ -642,7 +657,58 @@
       "reconnecting": {
         "title": "Reconnecting",
         "description": "Table actions pause. Restore the connection in the controls to continue."
+      },
+      "announcement": {
+        "title": "Team announcement",
+        "description": "The draft is announced automatically. Speaking begins at the next seat after the leader and ends with the leader."
+      },
+      "discussion": {
+        "title": "Speaking turns",
+        "description": "Each player ends their own turn in seat order."
+      },
+      "finalizing": {
+        "title": "Finalize team",
+        "description": "Keep or revise the team, then open voting."
+      },
+      "overdue": {
+        "title": "Overdue speech",
+        "description": "The speaker can still finish after the reminder expires."
       }
     }
+  },
+  "discussion": {
+    "flow": "Proposal flow",
+    "start": "Start discussion",
+    "finishSpeech": "Finish my turn",
+    "finalize": "Confirm final team and vote",
+    "announced": "Draft team announced",
+    "speaking": "{name} is speaking",
+    "speechProgress": "Speaker {current} of {total}",
+    "order": "Seat order from the next seat after the leader; the leader speaks last",
+    "finalizing": "Leader finalizes the team",
+    "finalizingHint": "Keep or change the draft team, then confirm to begin voting.",
+    "rules": "Submitting the draft announces the team and starts speaking turns in seat order, beginning with the next seat after the leader. The leader speaks last, then revises the team and opens voting. Players end their own turn; referees may skip the current speaker.",
+    "timeRules": "Each speech has {seconds} seconds and the assassination discussion gets 1.5 times as long; other actions have 20 seconds. Timeouts only remind players and never submit actions or advance play.",
+    "steps": {
+      "TeamBuilding": "Draft",
+      "TeamAnnouncement": "Announce",
+      "Discussion": "Announce & discuss",
+      "TeamFinalizing": "Finalize",
+      "Voting": "Vote"
+    }
+  },
+  "timing": {
+    "role": "View role",
+    "propose": "Draft",
+    "announce": "Announce",
+    "speak": "Speak",
+    "finalize": "Finalize",
+    "vote": "Vote",
+    "mission": "Mission card",
+    "lady": "Inspect",
+    "assassinate": "Assassinate",
+    "seconds": "{time}s",
+    "overdue": "+{time}s overdue",
+    "paused": "Paused"
   }
 }

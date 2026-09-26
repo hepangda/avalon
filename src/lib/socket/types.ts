@@ -123,6 +123,9 @@ export interface ClientToServerEvents {
   'room:setRoster': (p: { names: string[] }, ack: (r: Ack) => void) => void;
   'game:ackRole': (p: { roleRevision?: number }, ack: (r: Ack) => void) => void;
   'game:proposeTeam': (p: { team: PlayerId[] }, ack: (r: Ack) => void) => void;
+  'game:finalizeTeam': (p: { team: PlayerId[] }, ack: (r: Ack) => void) => void;
+  'game:startDiscussion': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'game:endSpeech': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'game:vote': (p: { value: VoteValue }, ack: (r: Ack) => void) => void;
   'game:missionCard': (p: { card: MissionCard }, ack: (r: Ack) => void) => void;
   'game:useLady': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
@@ -157,6 +160,9 @@ export interface ClientToServerEvents {
   'admin:retractProposal': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'admin:startAssassination': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'admin:previousPhase': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  /** Skip the specified current speaker; stale targets must never skip the next player. */
+  'admin:skipSpeech': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
+  'admin:setTimersPaused': (p: { paused: boolean }, ack: (r: Ack) => void) => void;
   'admin:rerollLeader': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'admin:rerollRoles': (p: Record<string, never>, ack: (r: Ack) => void) => void;
 }

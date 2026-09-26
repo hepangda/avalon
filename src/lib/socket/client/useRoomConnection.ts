@@ -191,6 +191,12 @@ export const gameActions = {
     emitWithAck<'game:ackRole', { roleRevision: number }, Ack>('game:ackRole', { roleRevision }),
   proposeTeam: (team: string[]) =>
     emitWithAck<'game:proposeTeam', { team: string[] }, Ack>('game:proposeTeam', { team }),
+  finalizeTeam: (team: string[]) =>
+    emitWithAck<'game:finalizeTeam', { team: string[] }, Ack>('game:finalizeTeam', { team }),
+  startDiscussion: () =>
+    emitWithAck<'game:startDiscussion', Record<string, never>, Ack>('game:startDiscussion', {}),
+  endSpeech: () =>
+    emitWithAck<'game:endSpeech', Record<string, never>, Ack>('game:endSpeech', {}),
   vote: (value: 'approve' | 'reject') =>
     emitWithAck<'game:vote', { value: 'approve' | 'reject' }, Ack>('game:vote', { value }),
   missionCard: (card: 'success' | 'fail') =>
@@ -211,6 +217,10 @@ export const gameActions = {
 
 /** Referee (admin) action wrappers. */
 export const adminActions = {
+  setTimersPaused: (paused: boolean) =>
+    emitWithAck<'admin:setTimersPaused', { paused: boolean }, Ack>('admin:setTimersPaused', { paused }),
+  skipSpeech: (targetPlayerId: string) =>
+    emitWithAck<'admin:skipSpeech', { targetPlayerId: string }, Ack>('admin:skipSpeech', { targetPlayerId }),
   rerollLeader: () =>
     emitWithAck<'admin:rerollLeader', Record<string, never>, Ack>('admin:rerollLeader', {}),
   rerollRoles: () =>

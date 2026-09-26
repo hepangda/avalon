@@ -11,6 +11,13 @@ import {
 } from './room-helpers';
 
 describe('game rule configuration', () => {
+  it.each([[undefined, 120], [90, 90], [0, 30], [900, 600], [NaN, 120], [Infinity, 120]])(
+    'normalizes speaking time %s to %i for creation and updates', (raw, expected) => {
+      const config = { ...DEFAULT_ROOM_CONFIG, options: { ...DEFAULT_ROOM_CONFIG.options, speechSeconds: raw } };
+      expect(mergeConfig(config, []).options.speechSeconds).toBe(expected);
+      expect(sanitizeConfig(config, []).options.speechSeconds).toBe(expected);
+    },
+  );
   it.each([
     [undefined, 5], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5],
     [0, 1], [6, 5], [2.9, 2], [NaN, 5], [Infinity, 5],

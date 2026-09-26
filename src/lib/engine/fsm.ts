@@ -39,6 +39,9 @@ export function canStartAssassination(s: GameState): boolean {
   switch (s.phase) {
     case 'RoleReveal':
     case 'TeamBuilding':
+    case 'TeamAnnouncement':
+    case 'Discussion':
+    case 'TeamFinalizing':
     case 'Voting':
     case 'MissionVote':
     case 'MissionResult':

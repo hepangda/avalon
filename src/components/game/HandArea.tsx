@@ -22,7 +22,7 @@ export function HandArea({
   run,
   actions = gameActions,
 }: {
-  actions?: Pick<typeof gameActions, 'vote' | 'missionCard'>;
+  actions?: Pick<typeof gameActions, 'vote' | 'missionCard' | 'startDiscussion' | 'endSpeech'>;
   game: ClientGameState;
   myPlayerId: string | null;
   selected: string[];
@@ -49,6 +49,15 @@ export function HandArea({
         {selected.length === pick.size
           ? pick.confirmLabel
           : t('table.pickRemaining', { count: pick.size - selected.length })}
+      </button>
+    );
+  const canStartDiscussion = game.phase === 'TeamAnnouncement' && game.players.some((p) => p.id === myPlayerId && p.isLeader);
+  const canEndSpeech = game.phase === 'Discussion' && game.discussion?.order[game.discussion.speakerIndex] === myPlayerId;
+  if (canStartDiscussion || canEndSpeech)
+    return (
+      <button type="button" className="table-action" disabled={disabled}
+        onClick={() => void run(canStartDiscussion ? actions.startDiscussion : actions.endSpeech)}>
+        {t(canStartDiscussion ? 'discussion.start' : 'discussion.finishSpeech')}
       </button>
     );
   if (canVote)

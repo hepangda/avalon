@@ -22,6 +22,7 @@ import { isValidPlayerCount, rejectionLimit } from './config';
 import { buildRoleSet, isGood, teamOf, validateRoleSet } from './roles';
 import { computeKnownPlayers } from './visibility';
 import { createRng } from './rng';
+import { syncActionTimers } from './timing';
 import {
   allCardsIn,
   allVotesIn,
@@ -180,6 +181,9 @@ export function createGame(input: CreateGameInput): EngineResult {
 
   const state: GameState = {
     phase: 'Lobby',
+    flowVersion: 4,
+    discussion: null,
+    actionTimers: [],
     config,
     seed,
     players: slots,
@@ -212,7 +216,7 @@ export function createGame(input: CreateGameInput): EngineResult {
 // START_GAME → assign roles (seeded) → RoleReveal
 // ---------------------------------------------------------------------------
 
-function startGame(s: GameState, by: PlayerId): EngineResult {
+function startGame(s: GameState, by: PlayerId, flowVersion: 1 | 2 | 3 | 4 = 4): EngineResult {
   if (s.phase !== 'Lobby') return err('WRONG_PHASE', 'Game already started');
   // Host = seat 0 by convention (room layer enforces host identity too).
   if (s.players[0]?.id !== by) return err('NOT_HOST', 'Only the host can start');
@@ -224,6 +228,7 @@ function startGame(s: GameState, by: PlayerId): EngineResult {
   }
 
   const next = clone(s);
+  next.flowVersion = flowVersion;
   next.players = next.players.map((p, i) => ({ ...p, role: shuffledRoles[i]! }));
 
   // Seeded first leader.
@@ -327,11 +332,12 @@ function rerollOpening(
 }
 
 // ---------------------------------------------------------------------------
-// PROPOSE_TEAM → Voting
+// PROPOSE_TEAM → public announcement; FINALIZE_TEAM → Voting
 // ---------------------------------------------------------------------------
 
-function proposeTeam(s: GameState, by: PlayerId, team: PlayerId[], admin = false): EngineResult {
-  if (s.phase !== 'TeamBuilding') return err('WRONG_PHASE', 'Not in TeamBuilding');
+function proposeTeam(s: GameState, by: PlayerId, team: PlayerId[], admin = false, final = false): EngineResult {
+  const expected = final ? 'TeamFinalizing' : 'TeamBuilding';
+  if (s.phase !== expected) return err('WRONG_PHASE', `Not in ${expected}`);
   if (!admin && by !== leaderId(s)) return err('NOT_LEADER', 'Only the leader may propose');
 
   const size = currentMissionSize(s);
@@ -348,7 +354,54 @@ function proposeTeam(s: GameState, by: PlayerId, team: PlayerId[], admin = false
   next.proposedTeam = [...team];
   next.openingClosed = true;
   next.votes = {};
-  next.phase = 'Voting';
+  next.discussion = null;
+  next.phase = final || s.flowVersion === 1 ? 'Voting' : 'TeamAnnouncement';
+  if (s.flowVersion !== 1) pushPublic(next, final ? 'teamFinalized' : 'teamAnnounced', {
+    leader: by, team: team.join(','),
+  });
+  // Publish the draft and start the first speaking turn in the same state update.
+  if (!final && s.flowVersion !== 1 && s.flowVersion !== 2)
+    return startDiscussion(next, leaderId(next));
+  return ok(next);
+}
+
+function startDiscussion(s: GameState, by: PlayerId): EngineResult {
+  if (s.phase !== 'TeamAnnouncement') return err('WRONG_PHASE', 'Not in TeamAnnouncement');
+  if (by !== leaderId(s)) return err('NOT_LEADER', 'Only the leader may start discussion');
+  const next = clone(s);
+  const seats = [...s.players].sort((a, b) => a.seat - b.seat);
+  // Start with the next seat so the leader closes the discussion. Older logs
+  // retain their original order when restored or replayed.
+  const offset = s.flowVersion === 2 || s.flowVersion === 3 ? 0 : 1;
+  const start = seats.findIndex((p) => p.id === by) + offset;
+  next.discussion = { order: seats.map((_, i) => seats[(start + i) % seats.length]!.id), speakerIndex: 0 };
+  next.phase = 'Discussion';
+  pushPublic(next, 'speechBegins', { player: next.discussion.order[0]! });
+  return ok(next);
+}
+
+function endSpeech(s: GameState, by: PlayerId, referee?: string): EngineResult {
+  if (s.phase !== 'Discussion' || !s.discussion) return err('WRONG_PHASE', 'Not in Discussion');
+  if (s.discussion.order[s.discussion.speakerIndex] !== by) return err('NOT_SPEAKER', 'Only the current speaker may finish');
+  const next = clone(s);
+  if (referee !== undefined) pushPublic(next, 'admin.speechSkipped', { actor: referee, player: by }, 'admin');
+  next.discussion!.speakerIndex += 1;
+  if (next.discussion!.speakerIndex >= next.discussion!.order.length) {
+    next.phase = 'TeamFinalizing';
+    pushPublic(next, 'discussionFinished', { leader: leaderId(next) });
+  } else {
+    pushPublic(next, 'speechBegins', { player: next.discussion!.order[next.discussion!.speakerIndex]! });
+  }
+  return ok(next);
+}
+
+function setTimersPaused(s: GameState, paused: boolean, actor: string): EngineResult {
+  if (s.phase === 'Lobby' || s.phase === 'GameOver' || !s.actionTimers?.length)
+    return err('WRONG_PHASE', 'No current timer');
+  // Explicit pause/resume is idempotent, so retries never flip the clock back.
+  if (s.actionTimers.every((timer) => (timer.pausedAt !== undefined) === paused)) return ok(s);
+  const next = clone(s);
+  pushPublic(next, paused ? 'admin.timersPaused' : 'admin.timersResumed', { actor }, 'admin');
   return ok(next);
 }
 
@@ -442,7 +495,8 @@ function retractVotes(s: GameState): EngineResult {
 // ---------------------------------------------------------------------------
 
 function retractProposal(s: GameState): EngineResult {
-  if (s.phase !== 'Voting') return err('WRONG_PHASE', 'Not in Voting');
+  if (!['Voting', 'TeamAnnouncement', 'Discussion', 'TeamFinalizing'].includes(s.phase))
+    return err('WRONG_PHASE', 'No active proposal');
   const next = clone(s);
   next.proposedTeam = null;
   next.votes = {};
@@ -612,6 +666,7 @@ function phaseCheckpoint(s: GameState): PhaseCheckpoint {
     leaderIndex: s.leaderIndex,
     rejectionCount: s.rejectionCount,
     proposedTeam: s.proposedTeam,
+    discussion: s.discussion ?? null,
     votes: s.votes,
     missionCards: s.missionCards,
     missionResults: s.missionResults,
@@ -713,9 +768,14 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
   // Stamp the wall-clock time on any log entries created during this reduce
   // (push helpers leave `at: 0`). Keeps the engine pure — time is injected.
   if (result.ok) {
+    // ACK_ROLE may be idempotent; avoid modifying the input state in that case.
+    if (result.state === state) result.state = clone(state);
     if (event.type !== 'PREVIOUS_PHASE' && state.phase !== 'Lobby' && result.state.phase !== state.phase) {
       result.state.phaseHistory = [...(state.phaseHistory ?? []), phaseCheckpoint(state)];
     }
+    if (result.state.phase === 'TeamBuilding' || result.state.phase === 'Assassination' || result.state.phase === 'GameOver')
+      result.state.discussion = null;
+    syncActionTimers(state, result.state, event, ctx.now);
     for (const log of result.state.logs) {
       if (log.at === 0) log.at = ctx.now;
     }
@@ -726,7 +786,7 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
 function dispatch(state: GameState, event: GameEvent, ctx: EngineContext): EngineResult {
   switch (event.type) {
     case 'START_GAME':
-      return startGame(state, event.by);
+      return startGame(state, event.by, event.flowVersion);
     case 'ACK_ROLE':
       return ackRole(state, event.by, event.roleRevision);
     case 'REROLL_LEADER':
@@ -734,6 +794,16 @@ function dispatch(state: GameState, event: GameEvent, ctx: EngineContext): Engin
       return rerollOpening(state, event, ctx);
     case 'PROPOSE_TEAM':
       return proposeTeam(state, event.by, event.team, event.admin ?? false);
+    case 'FINALIZE_TEAM':
+      return proposeTeam(state, event.by, event.team, event.admin ?? false, true);
+    case 'START_DISCUSSION':
+      return startDiscussion(state, event.by);
+    case 'END_SPEECH':
+      return endSpeech(state, event.by);
+    case 'SKIP_SPEECH':
+      return endSpeech(state, event.target, event.actor);
+    case 'SET_TIMERS_PAUSED':
+      return setTimersPaused(state, event.paused, event.actor);
     case 'CAST_VOTE':
       return castVote(state, event.by, event.value, event.admin ?? false);
     case 'RETRACT_VOTES':

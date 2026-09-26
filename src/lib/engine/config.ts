@@ -40,6 +40,12 @@ export const MIN_PLAYERS = 5;
 export const MAX_PLAYERS = 10;
 export const MISSION_COUNT = 5;
 
+/** Speaking reminders can be set from 30 seconds to 10 minutes. */
+export function speechDuration(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 120;
+  return Math.min(600, Math.max(30, Math.floor(value)));
+}
+
 /** Bound custom rejection limits, retaining the standard rule for legacy data. */
 export function rejectionLimit(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 5;
