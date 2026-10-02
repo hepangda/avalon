@@ -1,7 +1,7 @@
 # Game flow
 
 
-Lobby -> role reveal -> team building -> vote -> mission -> result, repeated up to 5 missions. If enabled, Lady of the Lake runs after missions 2-4. If the blue team wins 3 missions, assassination runs before game over. Finished games include full reveal and replay.
+Lobby -> deal and individual role confirmation -> team proposal -> leader explanation -> each player speaks -> leader finalizes the team -> vote -> mission -> result, repeated up to 5 missions. If enabled, Lady of the Lake runs after missions 2-4. If the blue team wins 3 missions, assassination runs before game over. Finished games include full reveal and replay.
 
 During assassination, every red team identity—including Oberon and Mordred—is revealed on a face-up player card in the center of the table, visible to players and spectators. Each card shows the seat number, player name, and role. Table seats keep their original presentation, and target selection is unchanged. Blue team identities remain private until game over.
 
@@ -11,9 +11,9 @@ The referee panel also provides **Start Merlin identification** and **Return to 
 
 After a game, identities stay revealed on the table. The host can choose **Play again** to bring everyone back to preparation in the same room, while **View Replay** opens the completed game in a new tab. Room code, seat identities, reconnect tokens and configuration are preserved. The completed replay is archived before reset; the next deal gets a new game ID and fresh roles. Referees can also return from GameOver to correct the last phase; finishing again updates that game's replay.
 
-Replays contain factual match records only: identities, outcomes, votes, mission cards, Lady inspections and assassination. There is no performance scoring or MVP selection. Archives are stored in PostgreSQL without a TTL or automatic deletion; the replay URL remains usable after room reuse, logout and server restarts. Event revisions prevent a delayed retry from overwriting a newer referee correction.
+Replays contain factual match records only: identities, outcomes, votes, mission cards, Lady inspections and assassination. There is no performance scoring or MVP selection. Archives are stored in PostgreSQL without a TTL or automatic deletion; the replay URL remains valid after room reuse and server restarts; signed-out viewers must sign in again. Event revisions prevent a delayed retry from overwriting a newer referee correction.
 
-Lobby seats are allocated automatically when an account sits down. Starting a game drops unused placeholders and renumbers occupied seats without changing their occupants or reconnect tokens. Display names are normalized to at most 10 Unicode characters, for Chinese, Latin and mixed names alike, at both the identity UI and server boundary.
+Lobby seats are allocated automatically when an account sits down. Starting a game drops unused placeholders and randomly seats the participants while minimizing repeated positions from their previous game, preserving their IDs and reconnect tokens. Display names are normalized to at most 10 Unicode characters, for Chinese, Latin and mixed names alike, at both the identity UI and server boundary.
 
 ## Full-screen table
 
@@ -39,3 +39,11 @@ the voting controls without requiring a refresh.
 - 从发牌时入座到对局结算、期间未释放或更换账号的玩家，每累计完成 5 局获得 1 张；临时断线保留资格，旁观及中途加入不计入。同一账号同一局只计一次，裁判回退后再次结算不重复计数，满额奖励不储存。
 - 发牌后，本人确认身份前且首个组队提案提交前，可以消耗 1 张重随卡。全桌身份按原角色配置重新随机，使用者的新角色必定与上次不同，所有玩家重新确认身份。
 - 重随扣卡、身份变更，以及结算奖励均由服务端校验并与房间状态一起写入数据库；重连或请求重试不会重复扣卡。
+
+## Role variety across games
+
+Accounts start with a weight of 100 for each role. At settlement, the final role
+loses 25 points down to a minimum of 50; other roles gain 25. New deals sample
+legal complete assignments using these weights while preserving the configured
+role counts. Settlement is deduplicated per account and game. If optional
+preference storage is unavailable, ordinary seeded dealing still works.

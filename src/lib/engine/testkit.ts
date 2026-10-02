@@ -4,7 +4,6 @@ import type {
   PlayerId,
   PlayerSlot,
   Role,
-  VoteValue,
   EngineContext,
   GameEvent,
 } from './types';
@@ -78,17 +77,6 @@ export function firstK(state: GameState, k: number): PlayerId[] {
 export function teamForCurrentMission(state: GameState): PlayerId[] {
   const size = missionSize(state.config.playerCount, state.roundIndex);
   return firstK(state, size);
-}
-
-/** A unanimous vote map. */
-export function unanimous(state: GameState, value: VoteValue): Record<PlayerId, VoteValue> {
-  const out: Record<PlayerId, VoteValue> = {};
-  for (const p of state.players) out[p.id] = value;
-  return out;
-}
-
-export function goodIds(state: GameState): PlayerId[] {
-  return state.players.filter((p) => teamOf(p.role) === 'good').map((p) => p.id);
 }
 
 export function evilIds(state: GameState): PlayerId[] {

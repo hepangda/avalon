@@ -1,5 +1,4 @@
-import type { GameState, PlayerId, Team } from './types';
-import { isEvil } from './roles';
+import type { GameState, PlayerId } from './types';
 import { missionSize, requiredFails } from './config';
 
 /**
@@ -89,13 +88,6 @@ export function allCardsIn(s: GameState): boolean {
 
 export function nextLeaderIndex(s: GameState): number {
   return (s.leaderIndex + 1) % s.players.length;
-}
-
-/** Seat index that becomes the next round's leader, advancing rotation. */
-export function loyaltyOf(s: GameState, id: PlayerId): Team {
-  const p = playerById(s, id);
-  if (!p) throw new Error(`Unknown player ${id}`);
-  return isEvil(p.role) ? 'evil' : 'good';
 }
 
 /**

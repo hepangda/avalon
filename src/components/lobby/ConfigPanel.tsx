@@ -1,5 +1,4 @@
-"use client";
-
+import { ROLE_ORDER } from '@/lib/engine/roles';
 import { useId, useMemo } from "react";
 import { useTranslations } from "use-intl";
 import { Card } from "@/components/ui/Card";
@@ -306,15 +305,5 @@ export function ConfigPanel({
 }
 
 function sortRoles(roles: Role[]): Role[] {
-  const order: Role[] = [
-    "Merlin",
-    "Percival",
-    "LoyalServant",
-    "Morgana",
-    "Mordred",
-    "Oberon",
-    "Assassin",
-    "Minion",
-  ];
-  return [...roles].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  return [...roles].sort((a, b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b));
 }

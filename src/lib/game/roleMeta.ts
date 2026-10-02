@@ -9,16 +9,7 @@ export { CARD_ART_STYLES, isCardArtStyle, type CardArtStyle } from '@/lib/prefer
  * message files (roles.*); use useRoleText() to read them. Here we keep only
  * locale-independent data: team and paired card / avatar assets.
  */
-export const ROLE_TEAM_UI: Record<Role, Team> = {
-  Merlin: 'good',
-  Percival: 'good',
-  LoyalServant: 'good',
-  Morgana: 'evil',
-  Assassin: 'evil',
-  Oberon: 'evil',
-  Mordred: 'evil',
-  Minion: 'evil',
-};
+export { ROLE_TEAM as ROLE_TEAM_UI } from '@/lib/engine/roles';
 
 const ROLE_ART_SLUG: Record<Role, string> = {
   Merlin: 'merlin',

@@ -1,6 +1,9 @@
 import type { Role, Team, GameOptions } from './types';
 import { PLAYER_COMPOSITION, isValidPlayerCount } from './config';
 
+/** Stable display order, independent of the shuffled deal. */
+export const ROLE_ORDER: readonly Role[] = ['Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Mordred', 'Oberon', 'Assassin', 'Minion'];
+
 export const ROLE_TEAM: Record<Role, Team> = {
   Merlin: 'good',
   Percival: 'good',

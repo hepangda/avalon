@@ -1,7 +1,7 @@
 /**
  * Avalon game engine — core types.
  *
- * This module is pure: it imports nothing from Next/Socket.IO/Prisma/Node.
+ * These serializable types are independent of the browser and server runtimes.
  * The engine is a synchronous, deterministic reducer over plain serializable
  * state. Randomness and time are injected via EngineContext so that replays
  * are reproducible.
