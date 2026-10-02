@@ -44,7 +44,7 @@ or generating human conversation. Its likelihoods are design assumptions, not a
 model calibrated on recorded human games.
 
 ```bash
-npx vitest run server/bots.test.ts server/bot-beliefs.test.ts server/bot-assassin.test.ts server/bots-simulation.test.ts
+npx vitest run server/bots.test.ts server/bot-beliefs.test.ts server/bot-assassin.test.ts server/bots-simulation
 npm run benchmark:bots -- 50
 ```
 

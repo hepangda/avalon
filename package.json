@@ -12,8 +12,9 @@
     "static:verify": "node scripts/verify-static.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run && node --test scripts/*.test.mjs",
-    "test:watch": "vitest",
+    "test": "vitest run --project unit && node --test scripts/*.test.mjs",
+    "test:watch": "vitest --project unit",
+    "test:slow": "vitest run --project slow",
     "dev:server": "node scripts/dev.mjs --server-only",
     "start": "node dist/server/index.js",
     "test:postgres": "vitest run server/database.integration.test.ts",
@@ -52,7 +53,6 @@
     "eslint": "^9.18.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "postcss": "^8.5.1",
-    "prettier": "^3.4.2",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.23.15",
     "typescript": "^5.7.3",
@@ -62,5 +62,6 @@
   },
   "engines": {
     "node": ">=22"
-  }
+  },
+  "packageManager": "npm@11.19.0"
 }

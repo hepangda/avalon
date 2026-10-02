@@ -10,8 +10,8 @@ currently integrates with Pangda Auth; it is not a provider-independent OIDC cli
 
 ## Local development
 
-Requires Node.js 22 or newer and Docker Compose. Use either npm with
-`package-lock.json` or pnpm with `pnpm-lock.yaml`; Docker builds use npm.
+Requires Node.js 22 or newer, npm and Docker Compose. Local development and
+Docker builds use `npm ci` with the single `package-lock.json`.
 
 ```sh
 npm ci
@@ -26,9 +26,9 @@ and WebSocket requests. The local database uses `avalon` / `avalon_dev` and data
 `avalon_development`; these credentials are only for the loopback development service.
 Tables are initialized automatically.
 
-Use `.env.local` for development configuration. The launcher still reads legacy
-`.dev.vars` first for compatibility; `.env.local` takes precedence. It does not read production
-configuration and always overrides `DATABASE_URL` with the dedicated local database.
+Use `.env.local` for development configuration; copy any existing `.dev.vars`
+development values there once. The launcher reads only `.env.local`, never
+production configuration, and overrides `DATABASE_URL` with the dedicated local database.
 Set `AVALON_DEV_DB_PORT` in `.env.local` if port 55432 is occupied. Ctrl+C stops the
 servers while preserving the database container and volume.
 
@@ -98,6 +98,13 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+```
+
+`npm test` skips the long bot self-play regressions (about 20 seconds). Run them
+after changing bot or game-engine logic:
+
+```sh
+npm run test:slow
 ```
 
 Database integration tests are opt-in and clear the application tables in the

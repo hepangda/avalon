@@ -18,8 +18,6 @@ worker-configuration.d.ts
 .env
 .env.*
 !.env.example
-.env.local
-.env*.local
 .dev.vars
 .dev.vars.*
 

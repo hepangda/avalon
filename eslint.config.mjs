@@ -3,7 +3,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 const eslintConfig = tseslint.config(
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['**/*.{ts,tsx,mjs}'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: { ecmaFeatures: { jsx: true } },
@@ -17,6 +17,7 @@ const eslintConfig = tseslint.config(
       ],
     },
   },
+  { files: ['src/components/**/*.{ts,tsx}', 'src/pages/**/*.tsx', 'src/lib/**/use*.ts', 'src/i18n/*.tsx'], rules: { 'react-hooks/rules-of-hooks': 'error' } },
   {
     // The pure engine must never use Math.random — randomness is injected via
     // the seeded RNG so games are deterministic & replayable.

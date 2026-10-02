@@ -9,7 +9,7 @@ import { createDevEnv } from './dev-env.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const local = {};
-for (const filename of ['.dev.vars', '.env.local']) {
+for (const filename of ['.env.local']) {
   const path = join(root, filename);
   if (existsSync(path)) Object.assign(local, parse(readFileSync(path)));
 }
@@ -30,7 +30,7 @@ function docker(args) {
       process.removeListener('SIGINT', stop);
       process.removeListener('SIGTERM', stop);
     };
-    child.once('error', () => { cleanup(); reject(new Error('Docker is unavailable. Start Docker Desktop, then run pnpm dev again.')); });
+    child.once('error', () => { cleanup(); reject(new Error('Docker is unavailable. Start Docker Desktop, then run npm run dev again.')); });
     child.once('exit', code => {
       cleanup();
       if (code === 0) resolve();
