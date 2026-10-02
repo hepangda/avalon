@@ -5,19 +5,8 @@ import { roleArt } from '@/lib/game/roleMeta';
 import { useCardArtStore } from '@/lib/store/cardArt';
 import { cn } from '@/lib/utils/cn';
 
-export type GameIconName =
-  'crest' | 'approve' | 'reject' | 'missionSuccess' | 'missionFail' | 'lady' | 'leader' | 'assassinate';
-
-const GAME_ICON_SRC: Record<GameIconName, string> = {
-  crest: '/assets/game/icons/crest.webp',
-  approve: '/assets/game/icons/approve.webp',
-  reject: '/assets/game/icons/reject.webp',
-  assassinate: '/assets/game/icons/assassinate.webp',
-  missionSuccess: '/assets/game/icons/mission-success.webp',
-  missionFail: '/assets/game/icons/mission-fail.webp',
-  lady: '/assets/game/icons/lady.webp',
-  leader: '/assets/game/icons/leader.webp',
-};
+import { GAME_ICON_SRC, type GameIconName } from '@/lib/game/gameIcons';
+export type { GameIconName } from '@/lib/game/gameIcons';
 
 type ArtProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'>;
 

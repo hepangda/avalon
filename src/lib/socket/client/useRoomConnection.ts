@@ -4,6 +4,8 @@ import { ViewSynchronizer } from './viewSync';
 import type { HeartbeatState, ViewSnapshot } from '../stateIntegrity';
 
 import { useEffect } from 'react';
+import { gameImageUrls, preloadImages } from '@/lib/game/preloadImages';
+import { useCardArtStore } from '@/lib/store/cardArt';
 import { connectRoom, emitWithAck, getConnection, type ConnState } from './socket';
 import { createLatencyHeartbeat } from './heartbeat';
 import { useRoomStore } from '@/lib/store/room';
@@ -19,6 +21,14 @@ import type { Ack, PlayerLatency, RoomConfig } from '../types';
  */
 export function useRoomConnection(code: string | null) {
   const { user, loading, refresh } = useAuthIdentity();
+  const cardArtStyle = useCardArtStore((state) => state.style);
+  useEffect(() => {
+    if (!code) return;
+    const preload = () => preloadImages(gameImageUrls(cardArtStyle));
+    preload();
+    window.addEventListener('online', preload);
+    return () => window.removeEventListener('online', preload);
+  }, [code, cardArtStyle]);
   useEffect(() => {
     if (!code || loading || !user) return;
     const roomCode = code;
