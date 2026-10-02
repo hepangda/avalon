@@ -1,64 +1,25 @@
-import { documentHash, replayJournalAsync, type JournalEntry, type RoomChange } from "./room-journal";
-import { rewardDay, type RerollCards } from "./reroll-cards";
-import { randomUUID } from "node:crypto";
-import { Pool, type PoolClient } from "pg";
+import { ALL_ROLES,settledRoleWeights,type RoleWeights } from '@/lib/engine/roleWeights';
 import type { ReplayData } from "@/lib/game/replayTypes";
-import { ALL_ROLES, normalizeRoleWeights, settledRoleWeights, type RoleWeights } from '@/lib/engine/roleWeights';
+import { randomUUID } from "node:crypto";
+import { Pool,type PoolClient } from "pg";
+import { AccountRepository } from './account-repository';
+import { DDL } from './database-schema';
 import {
-  RoomConflict,
-  type Persistence,
-  type RoomDocument,
-  type RoomRecord,
+RoomConflict,
+type Persistence,
+type RoomDocument,
+type RoomRecord,
 } from "./persistence";
+import { type RerollCards } from "./reroll-cards";
+import { documentHash,replayJournalAsync,type JournalEntry,type RoomChange } from "./room-journal";
 
 import type { DisplayPreferences } from '@/lib/preferences';
 
-const DDL = `
-CREATE TABLE IF NOT EXISTS avalon_role_weights (
-  account text PRIMARY KEY, weights jsonb NOT NULL DEFAULT '{}'
-);
-CREATE TABLE IF NOT EXISTS avalon_role_weight_games (
-  game_id text NOT NULL, account text NOT NULL, PRIMARY KEY (game_id, account)
-);
-CREATE TABLE IF NOT EXISTS avalon_cards (
-  account text PRIMARY KEY, cards integer NOT NULL DEFAULT 0 CHECK (cards BETWEEN 0 AND 2),
-  completed_games integer NOT NULL DEFAULT 0, last_daily_day text
-);
-CREATE TABLE IF NOT EXISTS avalon_game_rewards (
-  game_id text NOT NULL, account text NOT NULL, PRIMARY KEY (game_id, account)
-);
-CREATE TABLE IF NOT EXISTS avalon_runtime (
-  id integer PRIMARY KEY CHECK (id = 1), token text NOT NULL
-);
-CREATE TABLE IF NOT EXISTS avalon_rooms (
-  code text PRIMARY KEY CHECK (code ~ '^[0-9]{4}$'),
-  version integer NOT NULL,
-  document jsonb NOT NULL,
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE avalon_rooms ADD COLUMN IF NOT EXISTS snapshot_version integer;
-ALTER TABLE avalon_rooms ADD COLUMN IF NOT EXISTS snapshot_hash text;
-ALTER TABLE avalon_rooms ADD COLUMN IF NOT EXISTS state_hash text;
-UPDATE avalon_rooms SET snapshot_version = version WHERE snapshot_version IS NULL;
-CREATE TABLE IF NOT EXISTS avalon_room_journal (
-  code text NOT NULL REFERENCES avalon_rooms(code) ON DELETE CASCADE,
-  version integer NOT NULL, entry jsonb NOT NULL,
-  PRIMARY KEY (code, version)
-);
-CREATE TABLE IF NOT EXISTS avalon_replays (
-  game_id text PRIMARY KEY,
-  revision integer NOT NULL,
-  payload jsonb NOT NULL,
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE TABLE IF NOT EXISTS avalon_profiles (
-  account text PRIMARY KEY, alias text NOT NULL DEFAULT ''
-);
-ALTER TABLE avalon_profiles ALTER COLUMN alias SET DEFAULT '';
-ALTER TABLE avalon_profiles ADD COLUMN IF NOT EXISTS preferences jsonb NOT NULL DEFAULT '{}';`;
+
 
 export class PostgresPersistence implements Persistence {
   readonly pool: Pool;
+  private readonly profiles: AccountRepository;
   private owner: PoolClient | null = null;
   private token = randomUUID();
   private available = false;
@@ -76,6 +37,7 @@ export class PostgresPersistence implements Persistence {
       idle_in_transaction_session_timeout: 15_000,
       application_name: "avalon",
     });
+    this.profiles = new AccountRepository(this.pool);
     this.pool.on("error", (error) =>
       console.error("[postgres] idle connection error", error.message),
     );
@@ -242,15 +204,10 @@ export class PostgresPersistence implements Persistence {
       client.release();
     }
   }
-
-  async getRoleWeights(accounts: readonly string[]): Promise<Record<string, RoleWeights>> {
-    if (!accounts.length) return {};
-    const result = await this.pool.query<{ account: string; weights: unknown }>(
-      'SELECT account, weights FROM avalon_role_weights WHERE account = ANY($1::text[])',
-      [[...new Set(accounts)]],
-    );
-    return Object.fromEntries(result.rows.map((row) => [row.account, normalizeRoleWeights(row.weights)]));
+  getRoleWeights(accounts: readonly string[]): Promise<Record<string, RoleWeights>> {
+    return this.profiles.getRoleWeights(accounts);
   }
+
 
   /** Optional preferences must not roll back the game result if their tables fail. */
   private async settleRoleWeights(
@@ -284,26 +241,14 @@ export class PostgresPersistence implements Persistence {
       console.warn('[roles] Optional role weight settlement unavailable; game result retained');
     }
   }
-
-  async getCards(account: string, claimAt?: number): Promise<RerollCards> {
-    const day = claimAt === undefined ? null : rewardDay(claimAt);
-    const result = await this.pool.query<RerollCards>(`INSERT INTO avalon_cards (account, cards, last_daily_day)
-      VALUES ($1, CASE WHEN $2::text IS NULL THEN 0 ELSE 1 END, $2)
-      ON CONFLICT(account) DO UPDATE SET
-        cards = CASE WHEN $2::text IS NOT NULL AND (avalon_cards.last_daily_day IS NULL OR avalon_cards.last_daily_day < $2)
-          THEN LEAST(2, avalon_cards.cards + 1) ELSE avalon_cards.cards END,
-        last_daily_day = CASE WHEN $2::text IS NOT NULL AND (avalon_cards.last_daily_day IS NULL OR avalon_cards.last_daily_day < $2)
-          THEN $2 ELSE avalon_cards.last_daily_day END
-      RETURNING cards, completed_games AS "completedGames", last_daily_day AS "lastDailyDay"`, [account, day]);
-    return result.rows[0]!;
+  getCards(account: string, claimAt?: number): Promise<RerollCards> {
+    return this.profiles.getCards(account, claimAt);
   }
 
-  async grantDebugCard(account: string): Promise<RerollCards> {
-    const result = await this.pool.query<RerollCards>(`INSERT INTO avalon_cards (account, cards)
-      VALUES ($1, 1) ON CONFLICT(account) DO UPDATE SET cards = LEAST(2, avalon_cards.cards + 1)
-      RETURNING cards, completed_games AS "completedGames", last_daily_day AS "lastDailyDay"`, [account]);
-    return result.rows[0]!;
+  grantDebugCard(account: string): Promise<RerollCards> {
+    return this.profiles.grantDebugCard(account);
   }
+
 
   async loadReplay(gameId: string): Promise<ReplayData | null> {
     const result = await this.pool.query<{ payload: ReplayData }>(
@@ -312,38 +257,22 @@ export class PostgresPersistence implements Persistence {
     );
     return result.rows[0]?.payload ?? null;
   }
-
-  async getPreferences(account: string): Promise<Partial<DisplayPreferences>> {
-    const result = await this.pool.query<{ preferences: Partial<DisplayPreferences> }>(
-      'SELECT preferences FROM avalon_profiles WHERE account = $1', [account]);
-    return result.rows[0]?.preferences ?? {};
+  getPreferences(account: string): Promise<Partial<DisplayPreferences>> {
+    return this.profiles.getPreferences(account);
   }
 
-  async savePreferences(account: string, patch: Partial<DisplayPreferences>): Promise<Partial<DisplayPreferences>> {
-    // Merge in PostgreSQL so concurrent devices updating different fields cannot lose changes.
-    const result = await this.pool.query<{ preferences: Partial<DisplayPreferences> }>(
-      `INSERT INTO avalon_profiles (account, preferences) VALUES ($1, $2::jsonb)
-       ON CONFLICT(account) DO UPDATE SET preferences = avalon_profiles.preferences || excluded.preferences
-       RETURNING preferences`, [account, JSON.stringify(patch)]);
-    return result.rows[0]!.preferences;
+  savePreferences(account: string, patch: Partial<DisplayPreferences>): Promise<Partial<DisplayPreferences>> {
+    return this.profiles.savePreferences(account, patch);
   }
 
-  async getAlias(account: string): Promise<string | null> {
-    const result = await this.pool.query<{ alias: string }>(
-      "SELECT alias FROM avalon_profiles WHERE account = $1",
-      [account],
-    );
-    return result.rows[0]?.alias || null;
+  getAlias(account: string): Promise<string | null> {
+    return this.profiles.getAlias(account);
   }
 
-  async setAlias(account: string, alias: string): Promise<string> {
-    await this.pool.query(
-      `INSERT INTO avalon_profiles (account, alias) VALUES ($1, $2)
-      ON CONFLICT(account) DO UPDATE SET alias = excluded.alias`,
-      [account, alias],
-    );
-    return alias;
+  setAlias(account: string, alias: string): Promise<string> {
+    return this.profiles.setAlias(account, alias);
   }
+
 
   async close(): Promise<void> {
     this.available = false;
