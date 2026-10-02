@@ -1,4 +1,9 @@
-/** Require an explicit CDN destination without embedding an operator's infrastructure. */
+/** Parse the one supported CDN path. An unset build base serves from the app origin. */
+export function staticBase(value) {
+  if (!value) return "/";
+  return staticPublishConfig({ STATIC_ASSET_BASE_URL: value });
+}
+
 export function staticPublishConfig(env) {
   if (!env.STATIC_ASSET_BASE_URL) {
     throw new Error('Set STATIC_ASSET_BASE_URL to the HTTPS CDN URL used for this build');

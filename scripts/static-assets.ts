@@ -35,7 +35,7 @@ export function staticAssets(publicDir: string, base: string): Plugin {
   return {
     name: "avalon-static-assets",
     apply: "build",
-    config: () => ({ define: { __PUBLIC_ASSET_URLS__: JSON.stringify(urls) } }),
+    config: () => ({ build: { copyPublicDir: false }, define: { __PUBLIC_ASSET_URLS__: JSON.stringify(urls) } }),
     buildStart() {
       for (const file of files)
         this.emitFile({
@@ -94,22 +94,4 @@ export function staticAssets(publicDir: string, base: string): Plugin {
       },
     },
   };
-}
-
-export function staticBase(value: string | undefined): string {
-  if (!value) return "/";
-  const url = new URL(value);
-  if (
-    url.protocol !== "https:" ||
-    url.username ||
-    url.password ||
-    url.search ||
-    url.hash ||
-    url.pathname !== "/avalon/"
-  ) {
-    throw new Error(
-      "STATIC_ASSET_BASE_URL must be an HTTPS URL ending in /avalon/ without credentials, query or fragment",
-    );
-  }
-  return url.href;
 }

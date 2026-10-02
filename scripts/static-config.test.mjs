@@ -5,7 +5,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
-import { staticPublishConfig } from './static-config.mjs';
+import { staticBase, staticPublishConfig } from './static-config.mjs';
+
+test('optional builds and required publishers share URL validation', () => {
+  assert.equal(staticBase(undefined), '/');
+  assert.equal(staticBase(''), '/');
+  assert.throws(() => staticPublishConfig({}));
+  assert.throws(() => staticBase('http://cdn.example.com/avalon/'));
+});
 
 test('CDN publication requires an explicit HTTPS destination scoped to Avalon', () => {
   for (const value of [undefined, 'http://cdn.example.com/avalon/',

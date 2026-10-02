@@ -1,7 +1,8 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
-import { staticAssets, staticBase } from "./scripts/static-assets";
+import { staticAssets } from "./scripts/static-assets";
+import { staticBase } from "./scripts/static-config.mjs";
 
 export default defineConfig(({ command, mode }) => {
   const base =

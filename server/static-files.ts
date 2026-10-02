@@ -1,8 +1,19 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Hono } from "hono";
 import { serveStatic } from "@hono/node-server/serve-static";
 
 export function createFrontendApp(root = "./dist/client") {
   const frontend = new Hono();
+  const manifestPath = join(root, 'static-assets.json');
+  const aliases = new Map<string, string>();
+  if (existsSync(manifestPath)) {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { base: string; files: Array<{ file: string }> };
+    for (const { file } of manifest.files) {
+      const source = /^assets\/public\/[a-f0-9]{16}\/(.+)$/.exec(file)?.[1];
+      if (source) aliases.set('/' + source, manifest.base + file);
+    }
+  }
   frontend.use("*", async (c, next) => {
     c.header("Cache-Control", "no-store");
     c.header("X-Content-Type-Options", "nosniff");
@@ -34,6 +45,12 @@ export function createFrontendApp(root = "./dist/client") {
         );
       }
     }
+  });
+  // Preserve old public URLs without shipping a duplicate copy of every image.
+  frontend.use('*', async (c, next) => {
+    const target = aliases.get(c.req.path);
+    if (target) return c.redirect(target, 302);
+    await next();
   });
   frontend.use("*", serveStatic({ root }));
   // Never return the SPA shell (or cache a 200 HTML response) for a missing asset.

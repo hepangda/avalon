@@ -30,10 +30,11 @@ files only; `static:upload` writes to the selected bucket; `static:verify` fetch
 the public CDN resources and checks content, MIME, CORS, cache policy and cache hits.
 These scripts read exported environment variables, not `.env` files.
 
-The Vite plugin emits content-addressed images and hashed JS/CSS, plus a manifest
+The Vite plugin emits each image once at its content-addressed URL, plus hashed JS/CSS and a manifest
 computed from the final files. The publisher validates paths, sizes and SHA-256
 before upload, and writes only manifest entries under `avalon/`. HTML, source
-maps, credentials and unversioned public copies are excluded. Each uploaded asset
+maps, credentials and unversioned public copies are excluded. The Node origin
+redirects old public image paths using the same manifest, without storing duplicate images. Each uploaded asset
 uses `Cache-Control: public, max-age=31536000, immutable`.
 
 For Docker, pass `--build-arg STATIC_ASSET_BASE_URL` with the same URL, extract
