@@ -1,7 +1,8 @@
-import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { disconnectRoom } from '@/lib/socket/client/socket';
-import { useRoomStore } from '@/lib/store/room';
 import { useAccountPreferencesStore } from '@/lib/store/accountPreferences';
+import { useRoomStore } from '@/lib/store/room';
+import { createContext,createElement,useCallback,useContext,useEffect,useRef,useState,type ReactNode } from 'react';
+import { initialRetryDelay,refreshDecision,SESSION_UNAVAILABLE,sessionReadFromResponse,type SessionRead } from './sessionRead';
 import type { AuthUser } from './types';
 
 export type { AuthUser } from './types';
@@ -12,20 +13,19 @@ let silentAuthDisabled =
 let silentAuthPromise: Promise<AuthUser | null> | null = null;
 let cancelSilentAuthAttempt: (() => void) | null = null;
 
-async function readAuthUser(): Promise<AuthUser | null> {
-  const response = await fetch('/api/auth/session', {
+/** Never rejects: a network error is `unavailable`, not a sign-out. */
+function readAuthSession(): Promise<SessionRead> {
+  return fetch('/api/auth/session', {
     headers: { Accept: 'application/json' },
     cache: 'no-store',
-  });
-  if (!response.ok) return null;
-  return ((await response.json()) as { user: AuthUser | null }).user;
+  }).then(sessionReadFromResponse, () => SESSION_UNAVAILABLE);
 }
 
 function attemptSilentAuth(): Promise<AuthUser | null> {
   if (silentAuthDisabled) return Promise.resolve(null);
   if (silentAuthPromise) return silentAuthPromise;
 
-  silentAuthPromise = new Promise<AuthUser | null>((resolve) => {
+  const attempt = new Promise<AuthUser | null>((resolve) => {
     const frame = document.createElement('iframe');
     let finished = false;
     const finish = async () => {
@@ -33,9 +33,10 @@ function attemptSilentAuth(): Promise<AuthUser | null> {
       finished = true;
       window.clearTimeout(timer);
       cancelSilentAuthAttempt = null;
-      const user = await readAuthUser().catch(() => null);
+      const read = await readAuthSession();
       frame.remove();
-      resolve(user);
+      // Renewal only follows a confirmed sign-out, which stands if the server cannot confirm otherwise.
+      resolve(read.kind === 'known' ? read.user : null);
     };
     cancelSilentAuthAttempt = () => {
       if (finished) return;
@@ -53,7 +54,12 @@ function attemptSilentAuth(): Promise<AuthUser | null> {
     document.body.appendChild(frame);
     const timer = window.setTimeout(() => void finish(), SILENT_AUTH_TIMEOUT_MS);
   });
-  return silentAuthPromise;
+  silentAuthPromise = attempt;
+  // Coalesce concurrent callers only; a session that lapses later renews with a new attempt.
+  void attempt.finally(() => {
+    if (silentAuthPromise === attempt) silentAuthPromise = null;
+  });
+  return attempt;
 }
 
 function disableSilentAuth(): void {
@@ -63,18 +69,34 @@ function disableSilentAuth(): void {
 
 /**
  * Read the local Avalon session, then make one best-effort `prompt=none` OIDC
- * attempt in a hidden iframe. Failure leaves the user signed out and never navigates the
+ * attempt in a hidden iframe. A signed-in session that reaches its fixed expiry is
+ * renewed the same way. Failure leaves the user signed out and never navigates the
  * visible page away from the current route.
+ *
+ * Only a confirmed answer (200 `{ user }` or 401) changes the account. While the
+ * server is unavailable (network error, 5xx during a restart or deploy), `refresh()`
+ * keeps the current account and skips renewal. Initial load has no account to keep:
+ * it shows the signed-out UI, so sign-in stays usable, and re-reads the session with
+ * backoff until the server answers.
  */
 function useAuthIdentityState() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const identityVersion = useRef(0);
+  const currentUser = useRef<AuthUser | null>(null);
+
+  useEffect(() => {
+    currentUser.current = user;
+  }, [user]);
 
   const refresh = useCallback(async () => {
     const version = ++identityVersion.current;
     const preferenceRevision = useAccountPreferencesStore.getState().revision;
-    const next = await readAuthUser().catch(() => null);
+    const decision = refreshDecision(await readAuthSession(), currentUser.current !== null);
+    // A restarting server says nothing about the session; keep the account and its room.
+    if (decision.action === 'keep') return currentUser.current;
+    // Renew through the identity-provider session before treating a lapsed session as sign-out.
+    const next = decision.action === 'renew' ? await attemptSilentAuth() : decision.user;
     if (version !== identityVersion.current) return next;
     useAccountPreferencesStore.getState().hydrate(next, preferenceRevision);
     setUser(next);
@@ -83,18 +105,25 @@ function useAuthIdentityState() {
 
   useEffect(() => {
     let active = true;
+    let retryTimer: number | undefined;
     const version = identityVersion.current;
-    const preferenceRevision = useAccountPreferencesStore.getState().revision;
     // Remove the retired anonymous targeting identifier from existing browsers.
     try { window.localStorage.removeItem('avalon-anonymous-id'); } catch { /* storage may be disabled */ }
 
-    void readAuthUser()
-      .catch(() => null)
-      .then((existing) => {
+    // Any refresh, login or logout bumps the version and takes over from this load.
+    const load = (attempt: number) => {
+      const preferenceRevision = useAccountPreferencesStore.getState().revision;
+      void readAuthSession().then((read) => {
         if (!active || version !== identityVersion.current) return;
+        setLoading(false);
+        if (read.kind === 'unavailable') {
+          // Silent renewal needs the server too; wait for a real answer instead.
+          retryTimer = window.setTimeout(() => load(attempt + 1), initialRetryDelay(attempt));
+          return;
+        }
+        const existing = read.user;
         useAccountPreferencesStore.getState().hydrate(existing, preferenceRevision);
         setUser(existing);
-        setLoading(false);
         if (existing) return;
         void attemptSilentAuth().then((discovered) => {
           if (!active || !discovered || version !== identityVersion.current) return;
@@ -102,9 +131,12 @@ function useAuthIdentityState() {
           setUser(discovered);
         });
       });
+    };
+    load(0);
 
     return () => {
       active = false;
+      window.clearTimeout(retryTimer);
     };
   }, []);
 

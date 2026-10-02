@@ -53,6 +53,9 @@ Register a confidential OIDC client with S256 PKCE, an API resource audience, an
 `OIDC_CLIENT_SECRET`, `OIDC_RESOURCE` and `OIDC_SESSION_SECRET` in local configuration
 or the deployment environment. Use a strong session secret and retain it across
 restarts. Tokens are stored in an encrypted HttpOnly session cookie.
+Only a confirmed answer from `/api/auth/session` (200 or 401) changes the signed-in
+account, so a restart or deploy that returns 5xx or drops the connection keeps players in
+their rooms; a page loaded during the outage shows sign-in and re-checks with backoff.
 
 Register the exact callback `${PUBLIC_ORIGIN}/api/auth/callback`; local Vite uses
 `http://localhost:5173/api/auth/callback`. `OIDC_RESOURCE` must match the registered
