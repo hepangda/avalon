@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { roomActions } from '@/lib/socket/client';
@@ -10,8 +8,7 @@ import type { ClientGameState } from '@/lib/engine';
 /**
  * In-game seat claim for unseated viewers (spectators / latecomers). Lists the
  * roster seats nobody holds (claimed === false) so a late joiner can take one
- * and start playing. Claiming flips this client to that seat; the role-reveal
- * overlay then appears because the new seat isn't in roleAcks yet.
+ * and start playing with that seat's existing acknowledgements and private state.
  */
 export function InGameSeatClaim({ code, game }: { code: string; game: ClientGameState }) {
   const t = useTranslations();

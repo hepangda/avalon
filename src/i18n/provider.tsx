@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, type ReactNode } from 'react';
 import { IntlProvider } from 'use-intl';
 import { useLocaleStore } from '@/lib/store/locale';
@@ -14,7 +12,14 @@ import en from '../../messages/en.json';
  * `messages/*.json` files as before. Locale is a persisted browser preference, independent of routing.
  */
 
-const MESSAGES: Record<Locale, typeof zh> = { zh, en: en as typeof zh };
+const MESSAGES: Record<Locale, typeof zh & Partial<typeof import('../../messages/zh.debug.json')>> = { zh, en };
+if (import.meta.env.DEV) {
+  const [zhDebug, enDebug] = await Promise.all([
+    import('../../messages/zh.debug.json'), import('../../messages/en.debug.json'),
+  ]);
+  Object.assign(MESSAGES.zh, zhDebug.default);
+  Object.assign(MESSAGES.en, enDebug.default);
+}
 
 const TIME_ZONE =
   typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC';

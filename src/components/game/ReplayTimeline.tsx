@@ -1,5 +1,3 @@
-'use client';
-
 import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';
 import { GameIcon } from './GameArt';

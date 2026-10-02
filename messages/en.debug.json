@@ -1,0 +1,178 @@
+{
+  "debug": {
+    "entry": "Debug gallery · Explore game scenarios",
+    "controls": "Simulation controls",
+    "subtitle": "Pick a scene, switch seats, and play at the table.",
+    "playerCount": "Players",
+    "perspective": "Perspective",
+    "reset": "Reset scene",
+    "undo": "Undo step",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "copyFailed": "Copy failed. Copy the scene URL from the address bar.",
+    "scenarios": "Scenarios",
+    "search": "Search scenarios…",
+    "noResults": "No matching scenarios.",
+    "advance": "Advance this scene",
+    "autoTeam": "Propose a team",
+    "approveRest": "Remaining players approve",
+    "rejectRest": "Remaining players reject",
+    "failCount": "Target fail cards",
+    "submitRest": "Submit remaining cards",
+    "legalCards": "Keeps submitted cards. Only evil players can fail, so the team limits the final count.",
+    "viewHolder": "View as Lady holder",
+    "viewAssassin": "View as assassin",
+    "startAssassination": "Start early assassination",
+    "connection": "Connection & errors",
+    "connected": "Simulate connected",
+    "latency": "Displayed latency",
+    "latencyHint": "Changes the indicator only; local actions stay immediate.",
+    "failNext": "Fail the next table action",
+    "offlineSeat": "Toggle seat connection",
+    "chooseSeat": "Choose a seat…",
+    "inspect": "Inspect current view",
+    "preview": "Game table preview",
+    "localOnly": "Local simulation. Use the controls to switch scenes or advance the game.",
+    "claimSeat": "Claim seat {seat}",
+    "disconnected": "Simulated offline. Restore the connection in Connection & errors.",
+    "simulatedError": "Simulated action failure. State is unchanged; try again.",
+    "groups": {
+      "identity": "Identity",
+      "proposal": "Teams & voting",
+      "mission": "Missions",
+      "special": "Special actions",
+      "ending": "Endings",
+      "connection": "Spectators & connection"
+    },
+    "scenes": {
+      "assassinHit": {
+        "title": "Assassination · Merlin hit",
+        "description": "The dagger strikes, Merlin is revealed and the red team wins. Reset to replay."
+      },
+      "assassinMiss": {
+        "title": "Assassination · Miss",
+        "description": "The dagger strikes, the target is revealed and the blue team wins. Reset to replay."
+      },
+      "role": {
+        "title": "Role reveal",
+        "description": "Reveal a role card; switch seats to inspect each role’s knowledge."
+      },
+      "team": {
+        "title": "Team building",
+        "description": "Select seats to build a team, or propose one automatically."
+      },
+      "lastProposal": {
+        "title": "Final proposal",
+        "description": "Four proposals rejected; one more rejection gives evil the win."
+      },
+      "voting": {
+        "title": "Voting in progress",
+        "description": "Some votes are in. Switch seats or complete the remaining votes."
+      },
+      "voted": {
+        "title": "Vote submitted",
+        "description": "Your approval is submitted. Inspect waiting and duplicate-submit prevention."
+      },
+      "approved": {
+        "title": "Proposal approved",
+        "description": "Resolves a unanimous approval automatically. Reset to replay."
+      },
+      "rejected": {
+        "title": "Proposal rejected",
+        "description": "Resolves a rejection and rotates the leader. Reset to replay."
+      },
+      "missionGood": {
+        "title": "Good mission player",
+        "description": "Good players can only submit success. Inspect the locked fail button."
+      },
+      "missionEvil": {
+        "title": "Evil mission player",
+        "description": "Evil players may submit success or fail."
+      },
+      "submitted": {
+        "title": "Mission card submitted",
+        "description": "The submitted card stays hidden while waiting for the rest of the team."
+      },
+      "missionSuccess": {
+        "title": "Mission success",
+        "description": "Collects, shuffles, and reveals success cards. Reset to replay."
+      },
+      "missionFail": {
+        "title": "Mission failure",
+        "description": "Reveals a mission with a fail card. Reset to replay."
+      },
+      "twoFails": {
+        "title": "Round four · Two fails required",
+        "description": "With 7–10 players, round four needs two fails. Try one or two."
+      },
+      "lady": {
+        "title": "Lady inspection",
+        "description": "Choose an eligible player from the Lady holder’s perspective."
+      },
+      "ladyGood": {
+        "title": "Lady result · Good",
+        "description": "Inspect a good result visible only to the examiner."
+      },
+      "ladyEvil": {
+        "title": "Lady result · Evil",
+        "description": "Inspect an evil result visible only to the examiner."
+      },
+      "assassination": {
+        "title": "Assassination after three successes",
+        "description": "Three successful missions. The assassin chooses a good player to strike."
+      },
+      "earlyAssassination": {
+        "title": "Early assassination",
+        "description": "An early strike before missions finish. Inspect public roles and targets."
+      },
+      "goodWins": {
+        "title": "Good wins · Assassin missed",
+        "description": "The assassin missed Merlin. All roles are revealed."
+      },
+      "evilWins": {
+        "title": "Evil wins · Merlin assassinated",
+        "description": "After three successful missions, killing Merlin gives evil the win."
+      },
+      "threeFails": {
+        "title": "Evil wins · Three failed missions",
+        "description": "Three failed missions end the game immediately."
+      },
+      "fiveRejections": {
+        "title": "Evil wins · Five rejections",
+        "description": "Five consecutive rejections. Inspect the proposal track and logs."
+      },
+      "spectator": {
+        "title": "Spectator",
+        "description": "All seats are occupied. Spectators cannot perform player actions."
+      },
+      "openSeat": {
+        "title": "Claim an open seat",
+        "description": "Claim the open seat, then reveal that player’s role."
+      },
+      "offline": {
+        "title": "Player offline",
+        "description": "One player is offline with their seat reserved. Toggle it in connection controls."
+      },
+      "reconnecting": {
+        "title": "Reconnecting",
+        "description": "Table actions pause. Restore the connection in the controls to continue."
+      },
+      "announcement": {
+        "title": "Team explanation",
+        "description": "The leader explains the draft and chooses the speaking direction, then speaks last."
+      },
+      "discussion": {
+        "title": "Speaking turns",
+        "description": "Each player ends their own turn in seat order."
+      },
+      "finalizing": {
+        "title": "Finalize team",
+        "description": "Keep or revise the team, then open voting."
+      },
+      "overdue": {
+        "title": "Overdue speech",
+        "description": "The speaker can still finish after the reminder expires."
+      }
+    }
+  }
+}

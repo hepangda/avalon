@@ -1,6 +1,4 @@
-'use client';
-
-import { useState } from 'react';
+import { useInviteLink } from '@/lib/game/useInviteLink';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -19,15 +17,7 @@ export function RoomHeader({
   latency = null,
 }: RoomHeaderProps) {
   const t = useTranslations();
-  const [copied, setCopied] = useState(false);
-
-  function copyInvite() {
-    const url = `${window.location.origin}/room/${code}`;
-    void navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    });
-  }
+  const { copied, copyInvite } = useInviteLink(code, 1500);
 
   return (
     <Card className="flex items-center justify-between gap-4">

@@ -9,12 +9,14 @@ export function TableSheet({
   onClose,
   children,
   error,
+  busy = false,
 }: {
   open: boolean;
   title: string;
   onClose: () => void;
   children: ReactNode;
   error?: string | null;
+  busy?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -31,9 +33,9 @@ export function TableSheet({
       ref={ref}
       className="table-sheet"
       aria-labelledby={titleId}
-      onCancel={onClose}
+      onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (!busy && e.target === e.currentTarget) onClose();
       }}
     >
       <div className="table-sheet-header">
@@ -43,6 +45,7 @@ export function TableSheet({
         <button
           type="button"
           className="table-tool"
+          disabled={busy}
           onClick={onClose}
           aria-label={t('mission.close')}
         >

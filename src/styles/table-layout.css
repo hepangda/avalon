@@ -1,0 +1,353 @@
+/* Full-screen match stage. The room preparation page keeps its document layout. */
+.table-screen {
+  container-type: size;
+  container-name: match;
+  /* Avatars follow the table width up to this cap, then hold still. */
+  --seat-max-diameter: 56px;
+  --seat-name-height: 18px;
+  --seat-meta-height: 14px;
+  --seat-card-gap: 8px;
+  /* Card frames grow from this floor into spare table height (see .game-table). */
+  --card-min-height: 52px;
+  --card-max-height: 72px;
+  --center-space: 170px;
+  --reveal-space: 140px;
+  /* Height plus margin of the footer's own-timer line. */
+  --timing-status-space: 22px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+  padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right))
+    env(safe-area-inset-bottom) max(12px, env(safe-area-inset-left));
+}
+.table-header {
+  display: flex;
+  flex: none;
+  height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid rgb(201 162 39 / 0.15);
+}
+.table-view-toggle:focus-visible,
+.table-report-close:focus-visible,
+.war-log :focus-visible {
+  outline: 2px solid #d7ba65;
+  outline-offset: -2px;
+}
+.table-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.table-bottom-tools {
+  grid-area: 2 / 1;
+  min-width: 0;
+  padding: 0 0 6px;
+}
+.table-play {
+  container: play / size;
+  grid-area: 1 / 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.table-report {
+  grid-area: 1 / 1;
+  position: relative;
+  display: flex;
+  visibility: hidden;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.table-report-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: rgb(201 162 39 / 0.15);
+  color: #ecd9a3;
+  font-size: 24px;
+  line-height: 1;
+}
+.table-report-close:hover {
+  background: rgb(201 162 39 / 0.25);
+}
+.table-workspace[data-view="report"] .table-play {
+  visibility: hidden;
+}
+.table-workspace[data-view="report"] .table-report {
+  visibility: visible;
+}
+.war-log {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+.war-log-title {
+  display: none;
+  padding: 16px 16px 4px;
+  font-family: var(--font-cinzel);
+  font-size: 16px;
+  color: #d7ba65;
+}
+.war-log-channels {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  padding: 8px 60px 8px 12px;
+  border-bottom: 1px solid rgb(201 162 39 / 0.15);
+}
+.war-log-channel {
+  min-height: 36px;
+  padding: 4px 14px;
+  border-radius: 6px;
+  color: #bdb29c;
+  font-size: 12px;
+}
+.war-log-channel[aria-selected="true"] {
+  background: rgb(201 162 39 / 0.15);
+  color: #ecd9a3;
+}
+.war-log-entries {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 16px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #665335 transparent;
+}
+.war-log-entry {
+  padding: 12px 0;
+  border-bottom: 1px solid rgb(201 162 39 / 0.1);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.war-log-entry:last-child {
+  border-bottom: 0;
+}
+@container match (min-width: 1080px) {
+  .table-tools > .table-view-toggle,
+  .table-report-close {
+    display: none;
+  }
+  .war-log-channels {
+    padding-right: 12px;
+  }
+  .table-workspace {
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 28cqw, 400px);
+    column-gap: 24px;
+  }
+  .table-workspace[data-view] .table-play {
+    visibility: visible;
+  }
+  .table-workspace .table-report {
+    grid-area: 1 / 2 / 3 / 3;
+    visibility: visible;
+    margin: 12px 0;
+    border: 1px solid rgb(201 162 39 / 0.2);
+    border-radius: 12px;
+    background: rgb(22 16 10 / 0.55);
+  }
+  .war-log-title {
+    display: block;
+  }
+  .table-bottom-tools,
+  .table-play .table-footer {
+    padding-left: 8%;
+    padding-right: 8%;
+  }
+}
+.table-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--font-cinzel);
+  font-size: 16px;
+  color: #d7ba65;
+  letter-spacing: 0.03em;
+}
+.table-latency {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.table-progress {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 0;
+}
+.table-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 22px;
+  font-size: 13px;
+}
+.table-status-detail {
+  min-width: 0;
+  text-align: right;
+  color: #bdb29c;
+  font-size: 12px;
+}
+.table-missions {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.table-mission {
+  min-width: 0;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  background: rgb(58 54 49 / 0.65);
+  color: #c8bca0;
+}
+.table-mission.is-current {
+  background: rgb(201 162 39 / 0.2);
+  color: #ecd9a3;
+}
+.table-mission.is-success {
+  background: rgb(2 132 199 / 0.25);
+  color: #bae6fd;
+}
+.table-mission.is-fail {
+  background: rgb(178 58 46 / 0.35);
+  color: #fecaca;
+}
+.table-mission-protection {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: #ecd9a3;
+  line-height: 1;
+}
+.table-mission-protection svg {
+  width: 10px;
+  height: 12px;
+}
+.table-stage {
+  container: stage / size;
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 5px 0 6px;
+  /* One avatar size for every phase, so seats never jump between turns. */
+  --seat-diameter: clamp(40px, 13cqw, var(--seat-max-diameter));
+  /* Resting seat metrics, kept for card sizing while timed turns tighten seats. */
+  --seat-rest-diameter: var(--seat-diameter);
+  --seat-rest-meta: var(--seat-meta-height);
+  --seat-rest-gap: var(--seat-card-gap);
+}
+/* Registered so it computes once on the table instead of at each use site. */
+@property --table-card-height {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 52px;
+}
+.game-table {
+  --seat-note-space: 0px;
+  --timed-seat-card-gap: 12px;
+  --seat-height: calc(var(--seat-diameter) + var(--seat-note-space) + var(--seat-name-height) + var(--seat-meta-height));
+  --table-edge: calc(var(--seat-name-height) + var(--seat-meta-height) + var(--seat-diameter) / 2);
+  --end-height: calc(var(--seat-height) + var(--seat-card-gap) + var(--card-height));
+  /* Card frames keep one size in every phase: the largest that leaves
+     --center-space for timed prompts (no seat meta, own-timer line shown) and
+     --reveal-space for results (resting seats, no timer line) while five seats
+     still fit across. Tables without spare height keep the minimum. */
+  --stage-height: calc(100cqh - var(--timing-slack, 0px));
+  --card-height: clamp(
+    var(--card-min-height),
+    min(
+      (var(--stage-height) - var(--center-space)) / 2
+        - (var(--seat-diameter) + var(--seat-note-space) + var(--seat-name-height) + var(--timed-seat-card-gap)),
+      (var(--stage-height) + var(--timing-status-space) - var(--reveal-space)) / 2
+        - (var(--seat-rest-diameter) + var(--seat-note-space) + var(--seat-name-height) + var(--seat-rest-meta) + var(--seat-rest-gap)),
+      (100cqw - 80px) / 3.7
+    ),
+    var(--card-max-height)
+  );
+  --card-width: calc(var(--card-height) * 0.74);
+  /* Resolved here, against the stage, for cards inside nested containers. */
+  --table-card-height: var(--card-height);
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: var(--end-height) minmax(0, 1fr) var(--end-height);
+}
+.game-table.has-seat-labels {
+  --seat-note-space: 18px;
+}
+/* The final reveal has no timed prompts, so its role cards may use the
+   spare height that results leave free and stay readable. */
+.game-table:has(.table-personal-zone .table-role-card) {
+  --center-space: 0px;
+  /* Only the outcome title and its reason sit between the two rows. */
+  --reveal-space: 88px;
+  --card-max-height: 104px;
+}
+@container play (min-width: 500px) {
+  .game-table {
+    --reveal-space: 160px;
+  }
+}
+.table-felt {
+  position: absolute;
+  inset: var(--table-edge) 0;
+  border: 1px solid rgb(201 162 39 / 0.4);
+  border-radius: 18px;
+  background: linear-gradient(155deg, #312b20, #211d16);
+  box-shadow:
+    inset 0 1px 0 rgb(232 220 192 / 0.05),
+    inset 0 0 42px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+}
+.table-end {
+  position: relative;
+  display: grid;
+  column-gap: 6px;
+  padding: 0 8px;
+  min-width: 0;
+  z-index: 2;
+}
+.table-player {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: var(--seat-card-gap);
+}
+.table-end-bottom .table-player {
+  flex-direction: column-reverse;
+}
+.table-seat-wrap {
+  position: relative;
+  width: 100%;
+  height: var(--seat-height);
+  flex: none;
+}

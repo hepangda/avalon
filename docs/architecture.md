@@ -91,3 +91,11 @@ per URI so jose can manage key rotation. Both caches are bounded and used only a
 login. HTTP and WebSocket session checks decrypt the session cookie locally and never
 contact the provider; WebSocket verification also skips display preferences and
 daily rewards.
+
+The current browser store accepts an atomic verified view and reads private
+identity and Lady results directly from that game projection. Old server push
+messages remain supported for older clients. Account-less seat tokens and game
+flow versions 1–4 remain necessary for existing rooms and event logs; they are
+not dead code. Removing these adapters requires a separate migration with a
+known data inventory and client refresh window. Room/replay expiry is unchanged;
+source cleanup never deletes persistent game data.

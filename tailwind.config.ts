@@ -5,7 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Medieval fantasy palette — deepened for M7.
+        // Shared medieval fantasy palette.
         parchment: {
           DEFAULT: '#e8dcc0',
           dim: '#c8bca0',
@@ -35,7 +35,6 @@ const config: Config = {
       },
       boxShadow: {
         candle: '0 0 28px -4px rgba(201, 162, 39, 0.35)',
-        'candle-lg': '0 0 60px -8px rgba(201, 162, 39, 0.4)',
         inset: 'inset 0 1px 0 0 rgba(255,255,255,0.06)',
       },
       keyframes: {
@@ -44,14 +43,9 @@ const config: Config = {
           '45%': { opacity: '0.92' },
           '55%': { opacity: '0.97' },
         },
-        shimmer: {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
-        },
       },
       animation: {
         flicker: 'flicker 4s ease-in-out infinite',
-        shimmer: 'shimmer 3s linear infinite',
       },
     },
   },

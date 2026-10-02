@@ -1,0 +1,129 @@
+.role-card {
+  --role-shade: 8 23 39;
+  --role-accent: #b6dcec;
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+  max-width: 100%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border: 1px solid #8f7848;
+  border-radius: 14px;
+  background: #10141d;
+  box-shadow: 0 16px 40px -16px #000b;
+  text-align: left;
+}
+.role-card[data-team="evil"] {
+  --role-shade: 37 10 19;
+  --role-accent: #efb2ad;
+}
+.role-card-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+.role-card-caption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 24% 7% 7%;
+  background: linear-gradient(to bottom, rgb(var(--role-shade) / 0), rgb(var(--role-shade) / 0.8) 36%, rgb(var(--role-shade) / 0.96) 72%, rgb(var(--role-shade) / 0.99));
+  color: #f5ecda;
+  text-shadow: 0 2px 8px #0009;
+}
+.role-card-team {
+  margin-bottom: 6px;
+  color: var(--role-accent);
+  font-size: clamp(9px, 3.5cqi, 12px);
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+.role-card-name {
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: clamp(20px, 9cqi, 32px);
+  font-weight: 600;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.role-card-description {
+  margin-top: 10px;
+  color: #e2dfd6;
+  font-size: clamp(12px, 4.2cqi, 14px);
+  line-height: 1.65;
+}
+.role-card--compact { border-radius: 10px; }
+.role-card--compact .role-card-caption { padding: 30% 8% 9%; }
+.role-card--compact .role-card-name { font-size: clamp(15px, 11cqi, 21px); }
+.role-card--compact .role-card-team {
+  margin-bottom: 4px;
+  font-size: clamp(8px, 6cqi, 10px);
+  letter-spacing: 0.03em;
+}
+.role-card--table {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  box-shadow: 0 3px 8px #0005;
+}
+.role-card--table .role-card-caption { padding: 34% 1px 5%; }
+.role-card--table .role-card-name {
+  font-family: var(--font-body);
+  /* As large as the card allows, shrinking only long names onto one line. */
+  font-size: max(9px, min(clamp(11px, 25cqi, 16px), (100cqi - 4px) / var(--name-ems, 1)));
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-align: center;
+  overflow-wrap: normal;
+}
+.role-reveal-card {
+  flex: none;
+  width: min(100%, 18rem);
+  aspect-ratio: 2 / 3;
+}
+.role-reveal-card[role="button"] { cursor: pointer; }
+.role-knowledge {
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid #c9a22740;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #c9a2270a, #080d185c);
+  box-shadow: inset 0 1px 0 #fff5db06;
+  text-align: left;
+}
+.role-knowledge-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.role-knowledge-row + .role-knowledge-row { margin-top: 8px; }
+.role-knowledge-label {
+  flex: none;
+  color: #c8b98f;
+  font-size: 12px;
+  line-height: 1.75;
+  white-space: nowrap;
+}
+.role-knowledge-players {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  color: #e8dcc0;
+  font-size: 14px;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+.role-knowledge-player {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #c9a22724;
+  overflow-wrap: anywhere;
+}

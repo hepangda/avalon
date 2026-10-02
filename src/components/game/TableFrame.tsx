@@ -1,3 +1,4 @@
+import { useInviteLink } from '@/lib/game/useInviteLink';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { PreferencesButton } from '@/components/PreferencesButton';
@@ -31,27 +32,16 @@ export function TableFrame({
   onDismissError?: () => void;
 }) {
   const t = useTranslations();
-  const [copied, setCopied] = useState(false);
+  const { copied, copyInvite } = useInviteLink(code);
   const [tab, setTab] = useState<'table' | 'report'>('table');
   const viewToggleRef = useRef<HTMLButtonElement>(null);
   const tabsId = useId();
-  async function invite() {
-    try {
-      await navigator.clipboard.writeText(
-        `${window.location.origin}/room/${code}`,
-      );
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
-    }
-  }
   return (
     <main className="table-screen">
       <header className="table-header">
         <button
           type="button"
-          onClick={() => void invite()}
+          onClick={() => void copyInvite()}
           className="table-brand"
           aria-label={t('lobby.inviteLink')}
         >

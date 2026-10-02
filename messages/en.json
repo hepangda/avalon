@@ -8,11 +8,8 @@
     "merlinOrMorgana": "Merlin / Morgana",
     "merlinOrMorganaShort": "M / M",
     "resetKnown": "Reset to known information",
-    "shortHint": "Private note · Only you can see this",
     "close": "Close",
     "title": "Identity notes",
-    "add": "Add note",
-    "privateHint": "Record guesses without changing actual roles. Notes are saved privately for your seat and restored on reconnect. They reset for a new game or when roles are reassigned.",
     "clear": "Clear note",
     "editPlayer": "Edit identity note for seat {seat}, {name}: {note}",
     "privateLabel": "Private note: {note}",
@@ -27,7 +24,6 @@
     "reconnecting": "Reconnecting…",
     "you": "you",
     "cancel": "Cancel",
-    "save": "Save",
     "leave": "Leave room",
     "back": "Back",
     "confirm": "Confirm"
@@ -35,25 +31,15 @@
   "home": {
     "createRoom": "Create a Room",
     "creating": "Creating…",
-    "or": "or join",
     "roomCode": "4-digit room code",
-    "join": "Join",
     "joinRoom": "Join a room",
     "identityRequiredToJoin": "Sign in before joining a room.",
-    "seatCount": "Number of seats",
-    "rosterLabel": "Player roster",
-    "seatPlaceholder": "Player {n}",
-    "addSeat": "+ Add seat",
-    "removeSeat": "Remove",
-    "rosterHint": "Set everyone's name in advance; blanks become \"Player X\". You can adjust later in the room.",
-    "defaultSeatName": "Player {n}",
-    "roomActionsTitle": "Create or join a room",
     "signInRequiredToCreate": "Sign in above before creating a room.",
     "signOut": "Sign out",
     "nameEmpty": "Name cannot be empty",
     "identityTitle": "Your account and alias",
-    "identityHint": "Sign in to play",
     "signIn": "Sign in",
+    "signingIn": "Signing in…",
     "accountAlias": "Alias",
     "saveAlias": "Set alias",
     "savingAlias": "Saving…",
@@ -65,50 +51,31 @@
     "authInvalidFlow": "The sign-in request expired. Please sign in again.",
     "authFailed": "Sign-in failed. Please try again.",
     "errInvalidCode": "Enter a 4-digit room code",
-    "errCreateFailed": "Failed to create room",
-    "errUnreachable": "Could not reach the server",
-    "nameLimit": "ID: up to 10 characters",
-    "signInRequiredToPlay": "Sign in to play, spectate, or view replays."
+    "errCreateFailed": "Failed to create room"
   },
   "lobby": {
     "rejectionCount": "{count, plural, one {# rejection} other {# rejections}}",
-    "descRejectionLimit": "The red team wins after {count} consecutive rejected proposals in one quest. Approval resets the count.",
     "rejectionLimit": "Discussion round limit",
     "decreaseDiscussionLimit": "Decrease discussion round limit",
     "increaseDiscussionLimit": "Increase discussion round limit",
-    "descPairedRoles": "Added together: Percival sees Merlin and Morgana but cannot tell them apart",
     "roomCode": "Room code",
     "inviteLink": "Invite Link",
     "copied": "Copied!",
-    "youAre": "You are",
-    "changeName": "Change name",
-    "nameEmpty": "Name cannot be empty",
     "players": "Players",
     "seated": "{count} seated",
     "host": "Host",
-    "kick": "Kick",
-    "spectators": "Spectators",
     "configuration": "Configuration",
     "goodEvil": "Blue {good} · Red {evil}",
     "useRecommended": "Use recommended settings",
     "enabled": "Enabled",
     "disabled": "Disabled",
-    "applyRecommended": "Apply Recommended Setup ({count}p)",
     "optionalRoles": "Optional roles",
     "rolesInPlay": "Roles in play ({count}p)",
     "tooManyEvil": "Too many special red team roles: {used} selected, only {budget} red team slots. Disable one.",
     "beginQuest": "Begin the Quest",
     "needPlayers": "Need 5–10 players ({count})",
-    "needSeats": "Need 5–10 seats ({count})",
-    "startWithEmpty": "{empty} empty seat(s) — latecomers can claim them after start",
     "waitingHost": "Waiting for the host to begin…",
     "enteringHall": "Entering the hall…",
-    "descPercival": "Sees Merlin & Morgana (cannot tell apart)",
-    "descMorgana": "Appears as Merlin to Percival",
-    "descMordred": "Hidden from Merlin",
-    "descOberon": "Red team, but neither knows nor is known by red teammates",
-    "descLady": "Inspect a player's alignment after missions 2–4",
-    "token": "Token",
     "missionPattern": "Mission pattern",
     "missionNumber": "Mission {n}",
     "failCardsRequired": "{count} fails",
@@ -118,7 +85,7 @@
   "roles": {
     "Merlin": {
       "name": "Merlin",
-      "blurb": "Sees evil. Must stay hidden."
+      "blurb": "Sees evil. Must stay hidden"
     },
     "Percival": {
       "name": "Percival",
@@ -131,7 +98,7 @@
     },
     "Morgana": {
       "name": "Morgana",
-      "blurb": "Looks like Merlin to Percival."
+      "blurb": "Looks like Merlin to Percival"
     },
     "Assassin": {
       "name": "Assassin",
@@ -139,16 +106,16 @@
     },
     "Oberon": {
       "name": "Oberon",
-      "blurb": "Neither knows nor is known by evil allies."
+      "blurb": "Neither knows nor is known by evil allies"
     },
     "Mordred": {
       "name": "Mordred",
-      "blurb": "Hidden from Merlin."
+      "blurb": "Hidden from Merlin"
     },
     "Minion": {
       "name": "Minion of Mordred",
       "shortName": "Minion",
-      "blurb": "Knows evil allies."
+      "blurb": ""
     }
   },
   "team": {
@@ -160,11 +127,6 @@
   "seat": {
     "addBot": "Add bot",
     "bot": "Bot",
-    "whoAreYou": "Who are you?",
-    "youAreNow": "You are now {name}",
-    "spectate": "Watch as a spectator",
-    "leaveSeatSpectate": "Leave seat & spectate",
-    "editRoster": "Edit roster",
     "claimToJoin": "Claim an empty seat to join the game",
     "sitTitle": "Take a seat",
     "sitDown": "Sit",
@@ -172,18 +134,12 @@
     "askStandUp": "Ask to leave",
     "empty": "Empty seat",
     "online": "Online",
-    "offline": "Offline",
-    "removeClaimedFirst": "This seat is occupied. Ask the player to stand first.",
-    "editSeats": "Edit seats",
-    "doneEditing": "Exit edit",
-    "spectatorSitHint": "Spectating. Choose an empty seat to sit down."
+    "offline": "Offline"
   },
   "roleReveal": {
     "title": "Your Secret Role",
     "tapToReveal": "Tap to reveal",
     "tapWhenReady": "Tap the card when you are ready to look.",
-    "whatYouPerceive": "What you perceive",
-    "seeNothing": "The shadows reveal nothing. Trust your wits alone.",
     "shownEvil": "Red Team",
     "shownMerlinOrMorgana": "Merlin or Morgana",
     "shownAlly": "Red teammates",
@@ -209,12 +165,10 @@
     "spectating": "Spectating — you see only public information",
     "reconnecting": "reconnecting",
     "confirmLeave": "Confirm leave & release seat",
-    "functions": "Functions",
     "enterFullscreen": "Enter fullscreen",
     "exitFullscreen": "Exit fullscreen",
     "fullscreenUnavailable": "Fullscreen is unavailable or not allowed in this browser.",
     "fullscreenFailed": "Could not switch fullscreen mode. Please try again.",
-    "refereeTools": "Referee tools",
     "leaveSeat": "Leave & release seat",
     "cardArt": "Card art",
     "cardArtClassic": "Classic",
@@ -223,12 +177,9 @@
   },
   "mission": {
     "track": "Quest track",
-    "history": "Battle Log",
-    "tapForHistory": "Tap a quest to see its details",
     "noHistory": "No record yet this round",
     "roundDetail": "Mission {n} Details",
     "votesThisRound": "Votes this round",
-    "missionOutcome": "Quest outcome",
     "notPlayed": "Not played yet",
     "close": "Close"
   },
@@ -237,24 +188,15 @@
     "youLead": "You lead this quest",
     "leaderChoosing": "{name} is choosing a team",
     "selectKnights": "Select {size} for mission {round}",
-    "rejectionWarning": "⚠ {n} rejection(s) until the red team wins",
-    "proposeTeam": "Announce draft team",
-    "chooseMore": "Choose {n} more",
-    "retract": "Retract",
-    "awaitingLeader": "Awaiting the leader's decision…"
+    "proposeTeam": "Announce draft team"
   },
   "vote": {
     "title": "Vote on the Team",
-    "proposesFor": "{name} proposes for mission {round}",
     "approve": "Approve",
     "reject": "Reject",
-    "decided": "The vote is decided.",
-    "castWaiting": "Your vote is cast. Awaiting the others…",
     "result": "Vote Result",
     "approved": "Approved",
     "rejectedResult": "Rejected",
-    "approvedCount": "{count} approve",
-    "rejectedCount": "{count} reject",
     "tally": "{approves} for / {rejects} against",
     "proposalLabel": "Proposal {n}",
     "proposer": "Proposed by",
@@ -263,20 +205,15 @@
   },
   "missionVote": {
     "title": "The Quest Unfolds",
-    "twoFailsNeeded": "2x",
     "oneFailSpoils": "one fail spoils it",
     "success": "Success",
     "fail": "Fail",
-    "sealed": "Your card is sealed. Awaiting the rest of the party…",
-    "watchAfar": "You watch from afar as the chosen knights embark…",
     "loyalOnlySuccess": "Blue team players can only play Success."
   },
   "missionResult": {
-    "resolved": "Mission {round} Resolved",
     "succeeds": "The quest succeeds!",
     "sabotaged": "The quest is sabotaged!",
-    "failCards": "{count} fail card(s) revealed",
-    "nextSoon": "The next quest begins shortly…"
+    "failCards": "{count} fail card(s) revealed"
   },
   "lady": {
     "title": "The Lady of the Lake",
@@ -284,10 +221,7 @@
     "gazingWaters": "{name} gazes into the waters…",
     "watersReveal": "The waters reveal {name} to be",
     "onlyYouSeen": "Only you have seen this. The quest continues…",
-    "examine": "Examine {name}",
-    "examineShort": "Examine",
-    "selectPlayer": "Select a player",
-    "notYours": "The Lady's gaze is not yours to direct."
+    "examineShort": "Examine"
   },
   "assassin": {
     "targetLabel": "Assassination target",
@@ -298,12 +232,9 @@
     "viewEnding": "View the ending",
     "skipAnimation": "Skip animation",
     "title": "The Assassin Strikes",
-    "goodPrevailed": "The blue team has won the quests, but hitting Merlin can still give the red team victory.",
     "nameMerlin": "Name the one you believe to be Merlin.",
-    "strikeDown": "Strike down {name}",
     "strikeSeat": "Strike {seat}",
     "strike": "Strike",
-    "chooseTarget": "Choose your target",
     "contemplating": "The Assassin contemplates their fateful choice…",
     "identitiesPublic": "All red team roles, including Oberon, are now public. Blue team roles stay hidden.",
     "startEarly": "Start assassination early",
@@ -311,8 +242,7 @@
     "earlyOutcome": "You will then choose a target: hit Merlin and the red team wins; miss Merlin and the blue team wins, regardless of the quest results.",
     "irreversible": "Revealed red team roles cannot be hidden again. A referee can restore the previous phase.",
     "confirmStart": "Stop quests & start assassination",
-    "starting": "Starting assassination…",
-    "startFailed": "Could not start assassination. Check your connection and try again."
+    "starting": "Starting assassination…"
   },
   "gameOver": {
     "reasonRejectionLimit": "Consecutive rejections reached the discussion round limit",
@@ -320,26 +250,19 @@
     "reasonThreeSuccesses": "Three quests succeeded",
     "goodTriumphs": "Blue Team Wins",
     "evilPrevails": "Red Team Wins",
-    "reasonThreeMissions": "by the outcome of the quests",
     "reasonFiveRejections": "Five consecutive proposals were rejected",
     "reasonAssassinatedMerlin": "Merlin was assassinated",
     "reasonAssassinMissed": "The assassin missed. Merlin survived.",
-    "questTally": "Quests — Blue {good} · Red {evil}",
-    "courtRevealed": "The court revealed",
-    "targeted": "🎯 targeted",
     "viewReplay": "View Replay",
     "newGame": "Back to home",
     "playAgain": "Play again",
     "restarting": "Returning to lobby…",
-    "restartFailed": "Could not return to the lobby. Please retry.",
-    "waitingRestart": "Waiting for the host to start another game",
-    "keepRoomHint": "Everyone returns together, keeping the room code, seats and settings."
+    "waitingRestart": "Waiting for the host to start another game"
   },
   "preferences": {
     "accountHint": "Saved to your account and synced across devices.",
     "saving": "Saving…",
     "saveFailed": "Could not save. Previous settings restored. Check your connection and try again.",
-
     "title": "Settings",
     "hint": "Saved automatically for this browser."
   },
@@ -351,15 +274,10 @@
   "cue": {
     "voteApproved": "Team Approved",
     "voteRejected": "Team Rejected",
-    "voteApprovedSub": "The party rides forth",
-    "voteRejectedSub": "Leadership passes on",
     "missionSuccess": "Quest Succeeded",
     "missionFail": "Quest Failed",
-    "missionSuccessSub": "The blue team wins this quest",
-    "missionFailSub": "The red team wins this quest",
     "cardSuccess": "Success",
     "cardFail": "Fail",
-    "revealingCards": "Revealing the quest cards…",
     "missionCardsTitle": "Quest Cards"
   },
   "identity": {
@@ -429,10 +347,7 @@
     "rerollCardUsed": "{player} used a reroll card. All roles have been redealt; confirm your new identity."
   },
   "proposal": {
-    "label": "Proposal",
-    "hammer": "Proposal {count}: rejection means the red team wins",
-    "hammerWarnLast": "Final proposal — one more rejection and the red team wins!",
-    "hammerWarn": "{n} more rejection(s) and the red team wins"
+    "hammerWarnLast": "Final proposal — one more rejection and the red team wins!"
   },
   "admin": {
     "rerollLeader": "Randomize starting leader",
@@ -444,7 +359,6 @@
     "actionFailed": "Action failed. Please try again.",
     "title": "Referee Tools",
     "enableHint": "Enabling referee tools lets you unbind players, vote, or propose on their behalf. Every action is logged publicly in red for the whole table to see.",
-    "enableFailed": "Could not enable, please retry",
     "open": "Enable referee tools",
     "close": "Disable referee tools",
     "someone": "Someone",
@@ -462,7 +376,6 @@
     "retractProposalTitle": "Retract proposal",
     "retractProposalHint": "Cancel this proposal and return to team building for the current leader to propose again.",
     "retractProposalBtn": "Retract proposal",
-    "phaseTitle": "Phase controls",
     "startAssassination": "Start Merlin identification",
     "previousPhase": "Return to previous phase",
     "previousPhaseHint": "Restore the previous phase, leader, team and results. Votes or mission cards for that phase must be submitted again. Revealed identities and inspections cannot be forgotten.",
@@ -477,7 +390,6 @@
     "title": "Battle Replay",
     "loading": "Loading replay…",
     "notFound": "Game not found",
-    "notFinished": "Game not finished yet",
     "backHome": "Back to home",
     "outcome": "{winner} Won",
     "goodWon": "Blue Team",
@@ -496,14 +408,12 @@
     "missionCards": "Cards played",
     "playedSuccess": "Success",
     "playedFail": "Fail",
-    "ladyCheck": "Lady of the Lake",
     "ladyResult": "{holder} examined {target}: {team}",
     "assassination": "Assassination",
     "assassinResult": "{assassin} struck {target}",
     "hitMerlin": "Merlin was found!",
     "missedMerlin": "Merlin survived",
-    "roles": "Roles revealed",
-    "proposalN": "Proposal {n}"
+    "roles": "Roles revealed"
   },
   "table": {
     "tabTable": "Table",
@@ -512,10 +422,7 @@
     "missionRule": "Mission {round}: requires {players} players; {fails, plural, one {# Fail card} other {# Fail cards}} will sabotage it.",
     "identity": "Identity",
     "lineup": "Lineup",
-    "more": "More",
     "lobby": "Room setup",
-    "gathered": "The knights are gathered",
-    "seatedCount": "{count} / {total} seated",
     "roundPhase": "Quest {round} · {phase}",
     "leader": "Leader",
     "playerCards": "Seat {seat} card area",
@@ -538,182 +445,6 @@
     "shuffling": "Shuffling…",
     "anonymousCards": "Anonymous quest cards"
   },
-  "debug": {
-    "entry": "Debug gallery · Explore game scenarios",
-    "controls": "Simulation controls",
-    "subtitle": "Pick a scene, switch seats, and play at the table.",
-    "playerCount": "Players",
-    "perspective": "Perspective",
-    "reset": "Reset scene",
-    "undo": "Undo step",
-    "copyLink": "Copy link",
-    "copied": "Copied",
-    "copyFailed": "Copy failed. Copy the scene URL from the address bar.",
-    "scenarios": "Scenarios",
-    "search": "Search scenarios…",
-    "noResults": "No matching scenarios.",
-    "advance": "Advance this scene",
-    "autoTeam": "Propose a team",
-    "approveRest": "Remaining players approve",
-    "rejectRest": "Remaining players reject",
-    "failCount": "Target fail cards",
-    "submitRest": "Submit remaining cards",
-    "legalCards": "Keeps submitted cards. Only evil players can fail, so the team limits the final count.",
-    "viewHolder": "View as Lady holder",
-    "viewAssassin": "View as assassin",
-    "startAssassination": "Start early assassination",
-    "connection": "Connection & errors",
-    "connected": "Simulate connected",
-    "latency": "Displayed latency",
-    "latencyHint": "Changes the indicator only; local actions stay immediate.",
-    "failNext": "Fail the next table action",
-    "offlineSeat": "Toggle seat connection",
-    "chooseSeat": "Choose a seat…",
-    "inspect": "Inspect current view",
-    "preview": "Game table preview",
-    "localOnly": "Local simulation. Use the controls to switch scenes or advance the game.",
-    "claimSeat": "Claim seat {seat}",
-    "disconnected": "Simulated offline. Restore the connection in Connection & errors.",
-    "simulatedError": "Simulated action failure. State is unchanged; try again.",
-    "groups": {
-      "identity": "Identity",
-      "proposal": "Teams & voting",
-      "mission": "Missions",
-      "special": "Special actions",
-      "ending": "Endings",
-      "connection": "Spectators & connection"
-    },
-    "scenes": {
-      "assassinHit": {
-        "title": "Assassination · Merlin hit",
-        "description": "The dagger strikes, Merlin is revealed and the red team wins. Reset to replay."
-      },
-      "assassinMiss": {
-        "title": "Assassination · Miss",
-        "description": "The dagger strikes, the target is revealed and the blue team wins. Reset to replay."
-      },
-      "role": {
-        "title": "Role reveal",
-        "description": "Reveal a role card; switch seats to inspect each role’s knowledge."
-      },
-      "team": {
-        "title": "Team building",
-        "description": "Select seats to build a team, or propose one automatically."
-      },
-      "lastProposal": {
-        "title": "Final proposal",
-        "description": "Four proposals rejected; one more rejection gives evil the win."
-      },
-      "voting": {
-        "title": "Voting in progress",
-        "description": "Some votes are in. Switch seats or complete the remaining votes."
-      },
-      "voted": {
-        "title": "Vote submitted",
-        "description": "Your approval is submitted. Inspect waiting and duplicate-submit prevention."
-      },
-      "approved": {
-        "title": "Proposal approved",
-        "description": "Resolves a unanimous approval automatically. Reset to replay."
-      },
-      "rejected": {
-        "title": "Proposal rejected",
-        "description": "Resolves a rejection and rotates the leader. Reset to replay."
-      },
-      "missionGood": {
-        "title": "Good mission player",
-        "description": "Good players can only submit success. Inspect the locked fail button."
-      },
-      "missionEvil": {
-        "title": "Evil mission player",
-        "description": "Evil players may submit success or fail."
-      },
-      "submitted": {
-        "title": "Mission card submitted",
-        "description": "The submitted card stays hidden while waiting for the rest of the team."
-      },
-      "missionSuccess": {
-        "title": "Mission success",
-        "description": "Collects, shuffles, and reveals success cards. Reset to replay."
-      },
-      "missionFail": {
-        "title": "Mission failure",
-        "description": "Reveals a mission with a fail card. Reset to replay."
-      },
-      "twoFails": {
-        "title": "Round four · Two fails required",
-        "description": "With 7–10 players, round four needs two fails. Try one or two."
-      },
-      "lady": {
-        "title": "Lady inspection",
-        "description": "Choose an eligible player from the Lady holder’s perspective."
-      },
-      "ladyGood": {
-        "title": "Lady result · Good",
-        "description": "Inspect a good result visible only to the examiner."
-      },
-      "ladyEvil": {
-        "title": "Lady result · Evil",
-        "description": "Inspect an evil result visible only to the examiner."
-      },
-      "assassination": {
-        "title": "Assassination after three successes",
-        "description": "Three successful missions. The assassin chooses a good player to strike."
-      },
-      "earlyAssassination": {
-        "title": "Early assassination",
-        "description": "An early strike before missions finish. Inspect public roles and targets."
-      },
-      "goodWins": {
-        "title": "Good wins · Assassin missed",
-        "description": "The assassin missed Merlin. All roles are revealed."
-      },
-      "evilWins": {
-        "title": "Evil wins · Merlin assassinated",
-        "description": "After three successful missions, killing Merlin gives evil the win."
-      },
-      "threeFails": {
-        "title": "Evil wins · Three failed missions",
-        "description": "Three failed missions end the game immediately."
-      },
-      "fiveRejections": {
-        "title": "Evil wins · Five rejections",
-        "description": "Five consecutive rejections. Inspect the proposal track and logs."
-      },
-      "spectator": {
-        "title": "Spectator",
-        "description": "All seats are occupied. Spectators cannot perform player actions."
-      },
-      "openSeat": {
-        "title": "Claim an open seat",
-        "description": "Claim the open seat, then reveal that player’s role."
-      },
-      "offline": {
-        "title": "Player offline",
-        "description": "One player is offline with their seat reserved. Toggle it in connection controls."
-      },
-      "reconnecting": {
-        "title": "Reconnecting",
-        "description": "Table actions pause. Restore the connection in the controls to continue."
-      },
-      "announcement": {
-        "title": "Team explanation",
-        "description": "The leader explains the draft and chooses the speaking direction, then speaks last."
-      },
-      "discussion": {
-        "title": "Speaking turns",
-        "description": "Each player ends their own turn in seat order."
-      },
-      "finalizing": {
-        "title": "Finalize team",
-        "description": "Keep or revise the team, then open voting."
-      },
-      "overdue": {
-        "title": "Overdue speech",
-        "description": "The speaker can still finish after the reminder expires."
-      }
-    }
-  },
   "discussion": {
     "flow": "Proposal flow",
     "finishSpeech": "Finish my turn",
@@ -725,7 +456,6 @@
     "finalizing": "Leader finalizes the team",
     "finalizingHint": "Keep or change the draft team, then confirm to begin voting.",
     "rules": "Draft a team → leader explains and chooses clockwise (left) or counterclockwise (right) speaking order → discussion, with the leader last → finalize the team → vote.",
-    "timeRules": "Each discussion turn lasts {seconds} seconds. The explanation gets half that time, assassination discussion gets 1.5 times, and other actions get 20 seconds. Overtime is advisory; actions never advance automatically.",
     "steps": {
       "TeamBuilding": "Draft",
       "TeamAnnouncement": "Explain",
@@ -752,18 +482,13 @@
     "paused": "Paused"
   },
   "reroll": {
-    "balance": "Reroll cards {count}/2",
-    "progress": "Next card: {count}/5 games",
-    "rules": "Earn 1 per 5 completed games and 1 on daily sign-in (resets at 04:00 UTC+8). Hold up to 2; rewards at capacity are not saved.",
-    "effect": "Spend 1 card to redeal the whole table. Your new role will be different. Everyone must confirm again.",
-    "use": "Use reroll card",
     "using": "Redealing…",
     "empty": "No reroll cards remaining",
-    "login": "Sign in to earn and use reroll cards",
-    "unavailable": "Available before confirming your role and the first team proposal only.",
+    "unavailable": "Too late to reroll: only available before the first team proposal.",
     "button": "Reroll cards ({count}/2)",
     "confirm": "Confirm reroll",
     "loginShort": "Sign in first",
-    "unavailableShort": "Reroll unavailable"
+    "unavailableShort": "Reroll unavailable",
+    "reconnecting": "Available once reconnected"
   }
 }

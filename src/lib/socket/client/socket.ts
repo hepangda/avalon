@@ -1,10 +1,8 @@
-'use client';
-
 import type { Ack } from '../types';
-import type { ClientEvent, ServerMessage, WireRequest } from '../protocol';
+import type { ClientEvent, EventPayload, EventAck, ServerMessage, WireRequest } from '../protocol';
 
 /**
- * Per-room WebSocket connection replacing the old Socket.IO client. One native
+ * Per-room WebSocket connection. One native
  * WebSocket is opened to `/rooms/{code}/ws`, which the Node server routes to that
  * room's in-memory instance. Requests are correlated to acks by an incrementing id;
  * unsolicited server pushes are dispatched to the registered handler.
@@ -167,17 +165,13 @@ export function disconnectRoom(): void {
   current = null;
 }
 
-/**
- * Promisified emit-with-ack against the active room connection. Mirrors the old
- * Socket.IO helper's signature so the action wrappers are unchanged: the third
- * type parameter is the full `Ack<…>` return shape.
- */
-export function emitWithAck<E extends ClientEvent, P, R>(event: E, payload: P): Promise<R> {
+/** Typed request wrapper for the active room connection. */
+export function emitWithAck<E extends ClientEvent>(event: E, payload: EventPayload<E>): Promise<EventAck<E>> {
   if (!current) {
     return Promise.resolve({
       ok: false,
       error: { code: 'NO_ROOM', message: 'Not connected to a room' },
-    } as R);
+    } as EventAck<E>);
   }
-  return current.emit(event, payload) as Promise<R>;
+  return current.emit(event, payload) as Promise<EventAck<E>>;
 }

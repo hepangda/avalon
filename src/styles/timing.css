@@ -1,0 +1,155 @@
+.game-table.is-proposal {
+  --seat-meta-height: 0px;
+  --seat-card-gap: 4px;
+}
+/* Keep timer cards clear of the speaking outline and avatar corner badges. */
+.game-table:has(.action-timer-bar) {
+  --seat-meta-height: 0px;
+  --seat-card-gap: var(--timed-seat-card-gap);
+}
+.discussion-turn { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; }
+.action-timer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #dfc878;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.action-timer[data-overdue="true"] { color: #fbbf24; }
+.action-timer-bar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #3f8060;
+  border-radius: 6px;
+  background: #14231b;
+  color: #f0fdf4;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.action-timer-bar-fill {
+  position: absolute;
+  inset: 0;
+  background: #257a47;
+  transform-origin: bottom;
+  transition: transform 250ms linear;
+}
+.action-timer-bar-value { position: relative; font-family: var(--font-numbers); }
+.action-timer-bar[data-paused="true"] .action-timer-bar-fill { transition: none; }
+.action-timer-paused { position: absolute; top: 1px; right: 3px; font-size: 8px; line-height: 1; }
+.action-timer-bar[data-overdue="true"] {
+  border-color: #d85a52;
+  background: #281616;
+  color: #fff1f2;
+}
+.action-timer-bar[data-overdue="true"] .action-timer-bar-fill {
+  background: #842d2b;
+}
+.table-player[data-speaking="true"] .table-seat-number { outline: 2px solid #dfc878; outline-offset: 4px; }
+.table-timing-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-height: 17px;
+  margin-bottom: 5px;
+  color: #ac9e7f;
+  font-size: 10px;
+}
+/* Size cards as if the timer line were shown, so they hold still when it comes and goes. */
+.table-play:not(:has(> .table-footer > .table-timing-status)) {
+  --timing-slack: var(--timing-status-space);
+}
+.discussion-steps, .discussion-order { display: flex; justify-content: center; gap: 6px; }
+.discussion-steps { color: #a89b7e; font-size: 10px; }
+.discussion-steps li + li::before { content: '›'; margin-right: 6px; color: #786b51; }
+.discussion-steps [aria-current="step"] { color: #f3da8a; font-weight: 600; }
+.table-status.has-discussion { overflow-x: auto; scrollbar-width: none; }
+.table-status.has-discussion > .table-status-label,
+.table-status.has-discussion > .table-status-detail { flex-shrink: 0; white-space: nowrap; }
+.table-status .discussion-steps { flex: 1; white-space: nowrap; }
+.table-status-round, .discussion-step-short { display: none; }
+@container match (max-width: 600px) {
+  .table-status.has-discussion { gap: 6px; }
+  .table-status.has-discussion .table-status-full,
+  .discussion-step-full { display: none; }
+  .table-status.has-discussion .table-status-round,
+  .discussion-step-short { display: inline; }
+  .table-status.has-discussion .table-status-label { font-size: 11px; }
+  .table-status .discussion-steps { gap: 3px; }
+  .table-status .discussion-steps li + li::before { margin-right: 3px; }
+}
+.discussion-order li {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #73603a;
+  border-radius: 50%;
+  color: #d5c8aa;
+  font-size: 11px;
+}
+.discussion-order [data-done="true"] { opacity: .45; }
+.discussion-order [aria-current="step"] { color: #1c1a14; background: #dfc878; }
+
+/* Keep surrounding text modest; give seat labels the extra space so players
+   can scan numbers easily. Use the play area's actual width and height. */
+@container match (min-width: 640px) and (min-height: 620px) {
+  .table-brand { font-size: 18px; }
+  .table-tool { font-size: 13px; }
+}
+@container play (min-width: 600px) and (min-height: 560px) {
+  .game-table {
+    --seat-name-height: 20px;
+    --seat-label-height: clamp(20px, 2.5cqw, 24px);
+  }
+  .game-table.has-seat-labels {
+    --seat-note-space: calc(var(--seat-label-height) + 2px);
+  }
+  .table-seat-name {
+    max-width: 200px;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+  .table-role-note, .table-self-label, .seat-number-tag {
+    height: var(--seat-label-height);
+    font-size: clamp(12px, 1.5cqw, 14px);
+    line-height: calc(var(--seat-label-height) - 2px);
+  }
+  .table-role-note { max-width: min(100%, 8em); }
+  .seat-number-tag {
+    min-width: var(--seat-label-height);
+    font-size: clamp(14px, 1.8cqw, 16px);
+  }
+  .table-status, .table-mission { font-size: 14px; }
+  .table-status-detail, .table-action-placeholder {
+    font-size: 13px;
+  }
+}
+/* Use the space left after seats, cards and controls for a modest readability
+   boost. Cap the title at 28px even on very large tables. */
+@container table-center (min-width: 480px) and (min-height: 160px) {
+  .table-phase-title {
+    font-size: clamp(24px, min(3cqw, 14cqh), 28px);
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+  .table-phase-detail, .table-team-chip {
+    font-size: clamp(14px, min(2cqw, 10cqh), 16px);
+  }
+  .table-team-chip { max-width: 160px; }
+}
+
+.discussion-arrow {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-inline: 6px;
+}
+.table-phase-title.is-team-changed { color: #e6a27d; }

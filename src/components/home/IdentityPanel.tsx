@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MAX_NAME_LENGTH, sanitizeName } from '@/lib/game/displayName';
 import { Input } from '@/components/ui/Input';
-import { useAuthIdentity, type AuthUser } from '@/lib/auth/useAuthIdentity';
+import type { AuthUser } from '@/lib/auth/types';
 import { accountDisplayName } from '@/lib/auth/types';
 
 interface IdentityPanelProps {
-  user: AuthUser | null;
+  user: AuthUser;
   loading: boolean;
   authError?: string | null;
-  onLogin: () => void;
   onLogout: () => Promise<void>;
   onSaveAlias: (alias: string) => Promise<void>;
 }
@@ -20,24 +19,21 @@ export function IdentityPanel({
   user,
   loading,
   authError,
-  onLogin,
   onLogout,
   onSaveAlias,
 }: IdentityPanelProps) {
   const t = useTranslations();
-  const { refresh } = useAuthIdentity();
-  useEffect(() => { if (user) void refresh(); }, [refresh, user?.id]);
-  const [draft, setDraft] = useState(user ? accountDisplayName(user) : '');
+  const [draft, setDraft] = useState(accountDisplayName(user));
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setDraft(user ? accountDisplayName(user) : '');
+    setDraft(accountDisplayName(user));
   }, [user?.id, user?.alias, user?.username]);
 
   async function saveIdentity() {
-    if (!user || saving || loading) return;
+    if (saving || loading) return;
     const name = sanitizeName(draft);
     if (!name) {
       setSaved(false);
@@ -69,7 +65,6 @@ export function IdentityPanel({
       <div className="flex items-center justify-between gap-3">
         <p className="min-w-0 font-serif text-sm font-semibold text-gold">{t('home.identityTitle')}</p>
 
-        {user ? (
           <div className="flex min-w-0 items-center gap-2">
             {user.picture ? (
               <img
@@ -95,19 +90,8 @@ export function IdentityPanel({
               {t('home.signOut')}
             </button>
           </div>
-        ) : (
-          <Button
-            variant="ghost"
-            className="h-9 shrink-0 border border-gold/25 px-3 text-xs"
-            disabled={loading}
-            onClick={onLogin}
-          >
-            {t('home.signIn')}
-          </Button>
-        )}
       </div>
 
-      {user && (
         <form
           className="space-y-2"
           onSubmit={(event) => {
@@ -139,7 +123,6 @@ export function IdentityPanel({
             </Button>
           </div>
         </form>
-      )}
 
       {authError && <p className="text-xs text-crimson">{authError}</p>}
       {error && (

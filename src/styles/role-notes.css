@@ -1,0 +1,152 @@
+.table-seat-labels {
+  position: absolute;
+  z-index: 1;
+  bottom: calc(var(--seat-name-height) + var(--seat-meta-height) + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: max-content;
+  max-width: 100%;
+}
+.table-end-top .table-seat-labels {
+  bottom: 1px;
+}
+.table-role-note, .table-self-label, .seat-number-tag {
+  height: 16px;
+  width: max-content;
+  max-width: min(100%, calc(var(--seat-diameter) + 8px));
+  padding: 0 4px;
+  border: 1px solid #70613f;
+  border-radius: 6px;
+  color: #dfc878;
+  background: rgb(25 21 16 / 94%);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+  font-size: 10px;
+  line-height: 14px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.table-role-note {
+  min-width: 0;
+}
+.seat-number-tag {
+  flex-shrink: 0;
+  min-width: 15px;
+  padding: 0 3px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.table-self-label {
+  flex-shrink: 0;
+  border-color: #8f7848;
+  background: #332b19;
+}
+.table-role-note[data-team="good"] {
+  color: #f0f9ff;
+  background: var(--note-background, #255a78);
+  border-color: var(--note-border, #5286a4);
+}
+.table-role-note[data-team="evil"] {
+  color: #fff1f2;
+  background: var(--note-background, #853c36);
+  border-color: var(--note-border, #b56860);
+}
+.table-role-note[data-team="ambiguous"] {
+  color: #fff7ed;
+  background: var(--note-background, linear-gradient(110deg, #255a78 50%, #853c36 50%));
+  border-color: var(--note-border, #9a8192);
+}
+.table-role-note[data-fixed="true"][data-team="good"] {
+  --note-background: #15384e;
+  --note-hover: #1c475f;
+  --note-border: #365a70;
+}
+.table-role-note[data-fixed="true"][data-team="evil"] {
+  --note-background: #49231f;
+  --note-hover: #5b2c26;
+  --note-border: #74433d;
+}
+.table-role-note[data-fixed="true"][data-team="ambiguous"] {
+  --note-background: linear-gradient(110deg, #15384e 50%, #49231f 50%);
+  --note-hover: linear-gradient(110deg, #1c475f 50%, #5b2c26 50%);
+  --note-border: #685360;
+}
+button.table-role-note[data-team="good"]:hover { background: var(--note-hover, #306d90); }
+button.table-role-note[data-team="evil"]:hover { background: var(--note-hover, #9d4840); }
+button.table-role-note[data-team="ambiguous"]:hover {
+  background: var(--note-hover, linear-gradient(110deg, #306d90 50%, #9d4840 50%));
+}
+.role-note-option[data-team="good"] {
+  color: #7dd3fc;
+}
+.role-note-option[data-team="evil"] {
+  color: #fca5a5;
+}
+.table-role-note[data-team="claim"], .role-note-option[data-team="claim"] {
+  color: #f1ede5;
+  background: #3f3b35;
+  border-color: #80756a;
+}
+button.table-role-note[data-team="claim"]:hover {
+  background: #514b42;
+}
+.role-note-popover {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  border: 1px solid #70613f;
+  border-radius: 9px;
+  color: #e8dcc0;
+  background: #211d16;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 45%);
+}
+.role-note-popover::backdrop {
+  background: transparent;
+  pointer-events: none;
+}
+.role-note-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.role-note-option {
+  flex: 1 0 auto;
+  min-width: 48px;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid #514832;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.role-note-option[aria-pressed="true"] {
+  border-color: currentColor;
+  background: rgb(201 162 39 / 15%);
+}
+.role-note-clear {
+  color: #b4a88c;
+}
+button.table-role-note:hover, .role-note-option:hover {
+  background: #403623;
+}
+.table-role-note:focus-visible {
+  outline: 2px solid #e6c14a;
+  outline-offset: 2px;
+}
+.role-note-popover button:focus-visible {
+  outline: 1px solid #e6c14a;
+  outline-offset: -2px;
+}
+@container match (max-width: 380px) {
+  .table-end:has(> .table-player:nth-child(5)) .table-self-label { display: none; }
+  .table-end:has(> .table-player:nth-child(5)) .table-role-note { padding: 0 2px; font-size: 9px; }
+}

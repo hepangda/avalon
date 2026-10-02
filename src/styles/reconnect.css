@@ -1,0 +1,46 @@
+.reconnect-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 24px;
+  border: 0;
+  color: #e8dcc0;
+  background: rgb(15 12 9 / 85%);
+  backdrop-filter: blur(4px);
+}
+.reconnect-overlay[open] {
+  display: grid;
+  place-items: center;
+}
+.reconnect-overlay::backdrop { background: transparent; }
+.reconnect-overlay p { font-size: 18px; }
+
+.reconnect-content { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.reconnect-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgb(201 162 39 / 20%);
+  border-top-color: #dfc878;
+  border-radius: 50%;
+  animation: reconnect-spin 900ms linear infinite;
+}
+@keyframes reconnect-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .reconnect-spinner { animation-duration: 2400ms; }
+}
+.reconnect-refresh-slot { min-height: 44px; }
+.reconnect-refresh {
+  min-height: 44px;
+  padding: 8px 20px;
+  border: 1px solid #8c743f;
+  border-radius: 8px;
+  background: #665022;
+  color: #f1e2b9;
+  font-size: 14px;
+}
+.reconnect-refresh:hover { background: #79602b; }
+.reconnect-refresh:focus-visible { outline: 2px solid #dfc878; outline-offset: 3px; }

@@ -1,5 +1,3 @@
-'use client';
-
 import { useTranslations } from 'use-intl';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, ClientVoteRecord } from '@/lib/engine';
@@ -7,12 +5,10 @@ import type { ClientGameState, ClientVoteRecord } from '@/lib/engine';
 export function VoteResultPanel({
   record,
   game,
-  compact = false,
   showProposalLabel = false,
 }: {
   record: ClientVoteRecord;
   game: ClientGameState;
-  compact?: boolean;
   showProposalLabel?: boolean;
 }) {
   const t = useTranslations();
@@ -21,8 +17,8 @@ export function VoteResultPanel({
   const rejects = record.votes.length - approves;
 
   return (
-    <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
-      <div className={`flex items-center justify-between gap-2 ${compact ? 'flex-wrap' : ''}`}>
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="min-w-0 truncate text-xs text-parchment/70">
           {showProposalLabel && (
             <span className="text-parchment/50">
@@ -57,7 +53,7 @@ export function VoteResultPanel({
 
       <div>
         <p className="mb-1 text-xs text-parchment/50">{t('vote.votesDetail')}</p>
-        <div className={compact ? 'grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-1' : 'grid grid-cols-2 gap-1 sm:grid-cols-3'}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-1">
           {record.votes
             .slice()
             .sort((a, b) => {

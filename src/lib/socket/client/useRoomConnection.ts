@@ -1,17 +1,15 @@
-'use client';
-
+import type { HeartbeatState,ViewSnapshot } from '../stateIntegrity';
 import { ViewSynchronizer } from './viewSync';
-import type { HeartbeatState, ViewSnapshot } from '../stateIntegrity';
 
-import { useEffect } from 'react';
-import { gameImageUrls, preloadImages } from '@/lib/game/preloadImages';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
+import { gameImageUrls,preloadImages } from '@/lib/game/preloadImages';
 import { useCardArtStore } from '@/lib/store/cardArt';
-import { connectRoom, emitWithAck, getConnection, type ConnState } from './socket';
-import { createLatencyHeartbeat } from './heartbeat';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
-import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
-import type { Ack, PlayerLatency, RoomConfig } from '../types';
+import { useEffect } from 'react';
+import type { PlayerLatency } from '../types';
+import { createLatencyHeartbeat } from './heartbeat';
+import { connectRoom,emitWithAck,getConnection,type ConnState } from './socket';
 
 /**
  * Connect to a room and keep the room store in sync. Handles initial join and
@@ -71,11 +69,7 @@ export function useRoomConnection(code: string | null) {
       const joiningSync = sync;
       const session = useSessionStore.getState().getSession(roomCode);
       try {
-        const res = await emitWithAck<
-          'room:join',
-          { code: string; playerId?: string; playerToken?: string; hostToken?: string; syncVersion: 1 },
-          Ack<{ playerId?: string; playerToken?: string; isHost: boolean }>
-        >('room:join', {
+        const res = await emitWithAck('room:join', {
           code: roomCode,
           syncVersion: 1,
           playerId: session?.playerId,
@@ -117,7 +111,7 @@ export function useRoomConnection(code: string | null) {
         sync.dispose();
         if (n.type !== 'session_replaced') sync = newSynchronizer();
         store.setSyncing(true);
-        useRoomStore.setState({ myPlayerId: null, game: null, reveal: null, ladyResult: null });
+        useRoomStore.setState({ myPlayerId: null, game: null });
         useSessionStore
           .getState()
           .setSession(roomCode, { playerId: undefined, playerToken: undefined });
@@ -130,7 +124,7 @@ export function useRoomConnection(code: string | null) {
         store.setIsHost(false);
         store.setIsReferee(false);
         getConnection()?.close();
-        useRoomStore.setState({ game: null, reveal: null, ladyResult: null });
+        useRoomStore.setState({ game: null });
         store.setNotice(n);
         return;
       }
@@ -199,106 +193,3 @@ export function useRoomConnection(code: string | null) {
     };
   }, [code, loading, user?.id, refresh]);
 }
-
-/** Thin typed wrappers around emitWithAck for room/game actions. */
-export const roomActions = {
-  config: (config: RoomConfig) =>
-    emitWithAck<'room:config', { config: RoomConfig }, Ack>('room:config', { config }),
-  rename: (name: string) =>
-    emitWithAck<'room:rename', { name: string }, Ack<{ name: string }>>('room:rename', { name }),
-  addBot: () => emitWithAck<'room:addBot', Record<string, never>, Ack>('room:addBot', {}),
-  kick: (targetPlayerId: string) =>
-    emitWithAck<'room:kick', { targetPlayerId: string }, Ack>('room:kick', { targetPlayerId }),
-  transferHost: (targetPlayerId: string) =>
-    emitWithAck<'room:transferHost', { targetPlayerId: string }, Ack>('room:transferHost', {
-      targetPlayerId,
-    }),
-  claimSeat: (seatId?: string, name?: string, avatarUrl?: string) =>
-    emitWithAck<
-      'room:claimSeat',
-      { seatId?: string; name?: string; avatarUrl?: string },
-      Ack<{ playerId: string; playerToken: string }>
-    >('room:claimSeat', {
-      seatId,
-      ...(name?.trim() ? { name } : {}),
-      ...(avatarUrl ? { avatarUrl } : {}),
-    }),
-  releaseSeat: () =>
-    emitWithAck<'room:releaseSeat', Record<string, never>, Ack>('room:releaseSeat', {}),
-  setRoster: (names: string[]) =>
-    emitWithAck<'room:setRoster', { names: string[] }, Ack>('room:setRoster', { names }),
-  start: () => emitWithAck<'room:start', Record<string, never>, Ack>('room:start', {}),
-  restart: () => emitWithAck<'room:restart', Record<string, never>, Ack>('room:restart', {}),
-  removeSeat: (seatId: string) =>
-    emitWithAck<'room:removeSeat', { seatId: string }, Ack>('room:removeSeat', { seatId }),
-  leave: () => emitWithAck<'room:leave', Record<string, never>, Ack>('room:leave', {}),
-};
-
-/** Game-phase action wrappers. */
-export const gameActions = {
-  useRerollCard: (roleRevision: number) =>
-    emitWithAck<'game:useRerollCard', { roleRevision: number }, Ack>('game:useRerollCard', { roleRevision }),
-  ackRole: (roleRevision = 0) =>
-    emitWithAck<'game:ackRole', { roleRevision: number }, Ack>('game:ackRole', { roleRevision }),
-  proposeTeam: (team: string[]) =>
-    emitWithAck<'game:proposeTeam', { team: string[] }, Ack>('game:proposeTeam', { team }),
-  finalizeTeam: (team: string[]) =>
-    emitWithAck<'game:finalizeTeam', { team: string[] }, Ack>('game:finalizeTeam', { team }),
-  startDiscussion: (direction: 'clockwise' | 'counterclockwise' = 'clockwise') =>
-    emitWithAck<'game:startDiscussion', { direction: 'clockwise' | 'counterclockwise' }, Ack>('game:startDiscussion', { direction }),
-  endSpeech: () =>
-    emitWithAck<'game:endSpeech', Record<string, never>, Ack>('game:endSpeech', {}),
-  vote: (value: 'approve' | 'reject') =>
-    emitWithAck<'game:vote', { value: 'approve' | 'reject' }, Ack>('game:vote', { value }),
-  missionCard: (card: 'success' | 'fail') =>
-    emitWithAck<'game:missionCard', { card: 'success' | 'fail' }, Ack>('game:missionCard', {
-      card,
-    }),
-  useLady: (targetPlayerId: string) =>
-    emitWithAck<'game:useLady', { targetPlayerId: string }, Ack>('game:useLady', {
-      targetPlayerId,
-    }),
-  startAssassination: () =>
-    emitWithAck<'game:startAssassination', Record<string, never>, Ack>('game:startAssassination', {}),
-  assassinate: (targetPlayerId: string) =>
-    emitWithAck<'game:assassinate', { targetPlayerId: string }, Ack>('game:assassinate', {
-      targetPlayerId,
-    }),
-};
-
-/** Referee (admin) action wrappers. */
-export const adminActions = {
-  setTimersPaused: (paused: boolean) =>
-    emitWithAck<'admin:setTimersPaused', { paused: boolean }, Ack>('admin:setTimersPaused', { paused }),
-  skipSpeech: (targetPlayerId: string) =>
-    emitWithAck<'admin:skipSpeech', { targetPlayerId: string }, Ack>('admin:skipSpeech', { targetPlayerId }),
-  rerollLeader: () =>
-    emitWithAck<'admin:rerollLeader', Record<string, never>, Ack>('admin:rerollLeader', {}),
-  rerollRoles: () =>
-    emitWithAck<'admin:rerollRoles', Record<string, never>, Ack>('admin:rerollRoles', {}),
-  startAssassination: () =>
-    emitWithAck<'admin:startAssassination', Record<string, never>, Ack>('admin:startAssassination', {}),
-  previousPhase: () =>
-    emitWithAck<'admin:previousPhase', Record<string, never>, Ack>('admin:previousPhase', {}),
-  auth: () =>
-    emitWithAck<'admin:auth', Record<string, never>, Ack<{ ok: boolean }>>('admin:auth', {}),
-  close: () => emitWithAck<'admin:close', Record<string, never>, Ack>('admin:close', {}),
-  unbind: (targetPlayerId: string) =>
-    emitWithAck<'admin:unbind', { targetPlayerId: string }, Ack>('admin:unbind', {
-      targetPlayerId,
-    }),
-  vote: (targetPlayerId: string, value: 'approve' | 'reject') =>
-    emitWithAck<'admin:vote', { targetPlayerId: string; value: 'approve' | 'reject' }, Ack>(
-      'admin:vote',
-      { targetPlayerId, value },
-    ),
-  propose: (targetPlayerId: string, team: string[]) =>
-    emitWithAck<'admin:propose', { targetPlayerId: string; team: string[] }, Ack>('admin:propose', {
-      targetPlayerId,
-      team,
-    }),
-  retractVotes: () =>
-    emitWithAck<'admin:retractVotes', Record<string, never>, Ack>('admin:retractVotes', {}),
-  retractProposal: () =>
-    emitWithAck<'admin:retractProposal', Record<string, never>, Ack>('admin:retractProposal', {}),
-};

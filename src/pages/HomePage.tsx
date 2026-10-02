@@ -128,10 +128,6 @@ export default function HomePage() {
               user={authUser}
               loading={authLoading}
               authError={authError}
-              onLogin={() => {
-                setAuthError(null);
-                login(location.pathname);
-              }}
               onLogout={logout}
               onSaveAlias={saveAlias}
             />

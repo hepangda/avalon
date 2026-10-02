@@ -1,5 +1,3 @@
-'use client';
-
 import { sanitizeName } from '@/lib/game/displayName';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';

@@ -2,114 +2,74 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { useRoomStore } from './room';
 import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
 import { projectStateForViewer } from '@/lib/engine';
+import type { RoomView } from '@/lib/socket/stateIntegrity';
 
+function view(viewer = 'p0'): RoomView {
+  const state = buildStartedGame(FIVE_P);
+  const game = projectStateForViewer(state, viewer);
+  return { room: { code: '1234', status: 'in_game', hostPlayerId: 'p0',
+    members: game.players.map(({ id, name, seat }) => ({ id, name, seat, connected: true, claimed: true, isSpectator: false })),
+    config: { maxPlayers: 5, allowSpectators: true, allowMidJoin: true, options: state.config.options, roster: [] } },
+    game, playerId: viewer === 'spectator' ? null : viewer, isHost: viewer === 'p0', isReferee: false };
+}
+function apply(value: RoomView, recovery = false) {
+  useRoomStore.getState().applyView({ epoch: 'test', revision: 1, hash: 'already-verified', view: value }, recovery);
+}
 afterEach(() => useRoomStore.getState().reset());
 
 describe('room store lifecycle', () => {
-  it('applies latency deltas without replacing game history or private reveals', () => {
+  it('applies latency deltas without replacing game history or private knowledge', () => {
+    const initial = view(); apply(initial);
     const store = useRoomStore.getState();
-    const view = projectStateForViewer(buildStartedGame(FIVE_P), 'p0');
-    store.setSnapshot({
-      code: '1234', status: 'in_game', hostPlayerId: 'p0',
-      members: view.players.map(({ id, name, seat }) => ({ id, name, seat, connected: true, claimed: true, isSpectator: false })),
-      config: {
-        maxPlayers: 5, allowSpectators: true, allowMidJoin: true,
-        options: buildStartedGame(FIVE_P).config.options, roster: [],
-      },
-    });
-    store.setGame(view);
-    const reveal = useRoomStore.getState().reveal;
     store.setPlayerLatency({ playerId: 'p0', latency: 250 });
     const updated = useRoomStore.getState();
     expect(updated.snapshot?.members.find((p) => p.id === 'p0')?.latency).toBe(250);
     expect(updated.game?.players.find((p) => p.id === 'p0')?.latency).toBe(250);
-    expect(updated.game?.logs).toBe(view.logs);
-    expect(updated.game?.players.find((p) => p.id === 'p1')).toBe(view.players.find((p) => p.id === 'p1'));
-    expect(updated.reveal).toBe(reveal);
+    expect(updated.game?.logs).toBe(initial.game!.logs);
+    expect(updated.game?.knownPlayers).toBe(initial.game!.knownPlayers);
+    expect(updated.game?.players.find((p) => p.id === 'p1')).toBe(initial.game!.players.find((p) => p.id === 'p1'));
     store.setPlayerLatency({ playerId: 'p0', latency: 250 });
     store.setPlayerLatency({ playerId: 'unknown', latency: 100 });
     expect(useRoomStore.getState()).toBe(updated);
   });
-
-  it('clears the completed game and private data while retaining room identity on restart', () => {
-    const store = useRoomStore.getState();
-    store.setRoomCode('1234');
-    store.setMyPlayerId('p0');
-    store.setIsHost(true);
-    store.setIsReferee(true);
-    store.setGame(projectStateForViewer(buildStartedGame(FIVE_P), 'p0'));
-    store.setReveal({ selfRole: 'Merlin', knownPlayers: [] });
-    store.setLadyResult({ targetId: 'p4', loyalty: 'evil' });
-    store.setSnapshot({
-      code: '1234',
-      status: 'lobby',
-      hostPlayerId: 'p0',
-      members: [],
-      config: {
-        maxPlayers: 5,
-        allowSpectators: true,
-        allowMidJoin: true,
-        options: buildStartedGame(FIVE_P).config.options,
-        roster: [],
-      },
-    });
-    expect(useRoomStore.getState()).toMatchObject({
-      roomCode: '1234',
-      myPlayerId: 'p0',
-      isHost: true,
-      isReferee: false,
-      game: null,
-      reveal: null,
-      ladyResult: null,
-    });
+  it('clears completed game and private data while preserving room identity on restart', () => {
+    const current = view(); current.isReferee = true;
+    current.game!.privateLadyResult = { targetId: 'p4', loyalty: 'evil' }; apply(current);
+    apply({ ...current, room: { ...current.room, status: 'lobby' }, game: null, isReferee: false });
+    expect(useRoomStore.getState()).toMatchObject({ roomCode: '1234', myPlayerId: 'p0', isHost: true, isReferee: false, game: null });
   });
-
   it('keeps referee mode on the same connection and clears it when disconnected', () => {
     const store = useRoomStore.getState();
-    store.setConn('connected');
-    store.setIsReferee(true);
-    store.setConn('connected');
-    expect(useRoomStore.getState().isReferee).toBe(true);
-    store.setConn('disconnected');
-    expect(useRoomStore.getState().isReferee).toBe(false);
-    store.setConn('connected');
-    expect(useRoomStore.getState().isReferee).toBe(false);
+    apply({ ...view(), isReferee: true });
+    store.setConn('connected'); expect(useRoomStore.getState().isReferee).toBe(true);
+    store.setConn('disconnected'); expect(useRoomStore.getState().isReferee).toBe(false);
+    store.setConn('connected'); expect(useRoomStore.getState().isReferee).toBe(false);
   });
-
-  it('clears referee mode when leaving the room', () => {
-    useRoomStore.getState().setIsReferee(true);
+  it('clears room identity, private state and synchronization when leaving', () => {
+    apply({ ...view(), isReferee: true }, true);
     useRoomStore.getState().reset();
-    expect(useRoomStore.getState().isReferee).toBe(false);
+    expect(useRoomStore.getState()).toMatchObject({ roomCode: null, myPlayerId: null, game: null, isReferee: false, syncing: true, recoveryRevision: 0 });
   });
-
   it('discards a stale Lady result when an authoritative rewind removes it', () => {
-    useRoomStore.getState().setLadyResult({ targetId: 'p4', loyalty: 'evil' });
-    useRoomStore.getState().setGame(projectStateForViewer(buildStartedGame(FIVE_P), 'p0'));
-    expect(useRoomStore.getState().ladyResult).toBeNull();
+    const current = view(); current.game!.privateLadyResult = { targetId: 'p4', loyalty: 'evil' }; apply(current);
+    apply(view()); expect(useRoomStore.getState().game?.privateLadyResult).toBeUndefined();
   });
-
-  it('replaces cached identity and knowledge with the latest state after a redeal', () => {
-    const store = useRoomStore.getState();
-    store.setReveal({ selfRole: 'Assassin', knownPlayers: [{ playerId: 'p0', shownAs: 'evil', certain: true }] });
-    const view = projectStateForViewer(buildStartedGame(FIVE_P), 'p0');
-    store.setGame(view);
-    expect(useRoomStore.getState().reveal).toEqual({ selfRole: view.selfRole, knownPlayers: view.knownPlayers });
-    store.setGame(projectStateForViewer(buildStartedGame(FIVE_P), 'spectator'));
-    expect(useRoomStore.getState().reveal).toBeNull();
+  it('replaces identity and knowledge after a redeal or spectator transition', () => {
+    apply(view('p4'));
+    const next = view(); apply(next);
+    expect(useRoomStore.getState().game?.selfRole).toBe(next.game!.selfRole);
+    expect(useRoomStore.getState().game?.knownPlayers).toEqual(next.game!.knownPlayers);
+    apply(view('spectator'));
+    expect(useRoomStore.getState().game?.selfRole).toBeNull();
+    expect(useRoomStore.getState().game?.knownPlayers).toEqual([]);
   });
-});
-
-it('atomically replaces identity, game, room and private data during verified recovery', () => {
-  const store = useRoomStore.getState();
-  const game = projectStateForViewer(buildStartedGame(FIVE_P), 'spectator');
-  store.setGame(projectStateForViewer(buildStartedGame(FIVE_P), 'p0'));
-  store.setMyPlayerId('p0'); store.setIsReferee(true);
-  const room = { code: '1234', status: 'in_game' as const, hostPlayerId: null, members: [],
-    config: { maxPlayers: 5, allowSpectators: true, allowMidJoin: true, roster: [], options: buildStartedGame(FIVE_P).config.options } };
-  const changes: unknown[] = [];
-  const stop = useRoomStore.subscribe((state) => changes.push(state));
-  store.applyView({ epoch: 'new', revision: 1, hash: 'verified-by-controller', view: { room, game, playerId: null, isHost: false, isReferee: false } }, true);
-  stop();
-  expect(changes).toHaveLength(1);
-  expect(useRoomStore.getState()).toMatchObject({ roomCode: '1234', snapshot: room, game, myPlayerId: null, isReferee: false, reveal: null, ladyResult: null, syncing: false, recoveryRevision: 1 });
+  it('atomically replaces identity, game, room and private data during verified recovery', () => {
+    apply({ ...view(), isReferee: true });
+    const changes: unknown[] = [];
+    const stop = useRoomStore.subscribe((state) => changes.push(state));
+    const next = view('spectator'); apply(next, true); stop();
+    expect(changes).toHaveLength(1);
+    expect(useRoomStore.getState()).toMatchObject({ roomCode: '1234', snapshot: next.room, game: next.game,
+      myPlayerId: null, isReferee: false, syncing: false, recoveryRevision: 1 });
+  });
 });

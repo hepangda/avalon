@@ -1,12 +1,5 @@
-'use client';
-
 import { forwardRef, useMemo } from 'react';
-import { Link as RouterLink, useLocation, useNavigate, type LinkProps } from 'react-router-dom';
-
-/** Navigation is independent of the browser's language preference. */
-export function usePathname(): string {
-  return useLocation().pathname;
-}
+import { Link as RouterLink, useNavigate, type LinkProps } from 'react-router-dom';
 
 export function useRouter() {
   const navigate = useNavigate();

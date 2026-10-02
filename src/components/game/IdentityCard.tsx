@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -13,11 +11,9 @@ import type { ClientGameState } from '@/lib/engine';
 export function IdentityCard({
   game,
   myPlayerId,
-  compact = false,
 }: {
   game: ClientGameState;
   myPlayerId: string | null;
-  compact?: boolean;
 }) {
   const t = useTranslations();
   const reduceMotion = useReducedMotion();
@@ -42,19 +38,10 @@ export function IdentityCard({
         onClick={() => setOpen(true)}
         title={t('identity.myRole')}
         aria-haspopup="dialog"
-        className={compact ? 'table-tool' : 'flex shrink-0 flex-col items-center gap-1'}
+        className="table-tool"
       >
-        {compact ? (
-          <GameIcon name="crest" className="h-5 w-5" />
-        ) : (
-          <span className="relative flex h-[4.6rem] w-[3.3rem] items-center justify-center rounded-lg border-2 border-gold/40 bg-gradient-to-br from-royal to-ink shadow-lg shadow-black/40 transition-shadow hover:shadow-candle">
-            <span className="absolute inset-1.5 rounded-md border border-gold/20" />
-            <GameIcon name="crest" className="h-9 w-9 drop-shadow-[0_0_10px_rgba(201,162,39,0.45)]" />
-          </span>
-        )}
-        <span className={compact ? '' : 'text-[10px] text-parchment/55'}>
-          {t(compact ? 'table.identity' : 'identity.myRole')}
-        </span>
+        <GameIcon name="crest" className="h-5 w-5" />
+        <span>{t('table.identity')}</span>
       </button>
       {createPortal(
         <dialog

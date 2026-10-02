@@ -31,26 +31,16 @@ export default function ReplayPage() {
     setError(null);
 
     async function load() {
-      // A durable archive may still be retrying its transfer from the room.
-      const maxAttempts = 6;
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        if (cancelled) return;
-        const res = await fetch(`/api/games/${gameId}/replay`, {
-          signal: controller.signal, cache: 'no-store',
-        });
-        if (res.ok) {
-          const d = (await res.json()) as ReplayData;
-          if (!cancelled) setData(d);
-          return;
-        }
-        if ((res.status === 404 || res.status === 409) && attempt < maxAttempts - 1) {
-          await new Promise((r) => setTimeout(r, 700));
-          continue;
-        }
-        if (!cancelled)
-          setError(t(res.status === 404 ? 'replay.notFound' : res.status === 409 ? 'replay.notFinished' : 'replay.loadFailed'));
+      const res = await fetch(`/api/games/${gameId}/replay`, {
+        signal: controller.signal, cache: 'no-store',
+      });
+      if (cancelled) return;
+      if (!res.ok) {
+        setError(t(res.status === 404 ? 'replay.notFound' : 'replay.loadFailed'));
         return;
       }
+      const replay = await res.json() as ReplayData;
+      if (!cancelled) setData(replay);
     }
 
     void load().catch(() => {

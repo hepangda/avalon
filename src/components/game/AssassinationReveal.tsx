@@ -2,7 +2,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
-import { FlipCard } from '@/components/animations';
+import { FlipCard } from '@/components/animations/FlipCard';
 import { seatLabel } from '@/lib/game/playerLabel';
 import type { TablePresentation } from '@/lib/game/tablePresentation';
 import { GameIcon } from './GameArt';

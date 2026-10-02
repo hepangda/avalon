@@ -1,8 +1,8 @@
-import { Outlet, useLocation } from 'react-router-dom';
-import { useTranslations } from 'use-intl';
-import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
-import { AccountLogin } from './AccountLogin';
 import { PreferencesButton } from '@/components/PreferencesButton';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
+import { Outlet,useLocation } from 'react-router-dom';
+import { useTranslations } from 'use-intl';
+import { AccountLogin } from './AccountLogin';
 
 /** Direct room, game and replay links use the same account requirement as home. */
 export function RequireAccount() {

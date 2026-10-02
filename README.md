@@ -123,14 +123,16 @@ TEST_DATABASE_URL=postgres://user:password@localhost:5432/avalon_test npm run te
 | Path | Purpose |
 | --- | --- |
 | `src/` | React UI, translations integration, client stores and WebSockets |
-| `src/lib/engine/` | Deterministic rules, role visibility and player projections |
+| `src/lib/engine/` | Deterministic rules, event modules, role visibility and player projections |
+| `src/components/game/GameView.tsx` | Injectable game table shared by rooms and gallery |
+| `src/styles/` | Ordered table, card, dialog and timer styles |
 | `server/` | Node backend and colocated tests |
 | `server/index.ts` | Node HTTP/WebSocket entry point and shutdown |
-| `server/app.ts` | HTTP API routes |
-| `server/room.ts` | Serialized room operations |
+| `server/app.ts`, `server/http/` | HTTP API composition and route groups |
+| `server/room.ts`, `server/room-*.ts` | Serialized commits and separate membership, referee, view and recovery services |
 | `server/database.ts` | PostgreSQL transactions and process ownership |
-| `server/auth.ts` | Authentication and session handling |
-| `messages/` | Chinese and English interface text |
+| `server/auth.ts`, `server/auth/` | Auth API, OIDC protocol, session encryption and provider cache |
+| `messages/` | Chinese/English text; `*.debug.json` loads only in development |
 | `public/assets/` | Optimized game artwork |
 | `scripts/` | Development launcher, static publishing and bot benchmarks |
 | `deploy/` | Optional R2 and Kubernetes deployment documentation |

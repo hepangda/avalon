@@ -1,16 +1,3 @@
-/**
- * WebSocket wire protocol shared by the browser client and the room
- * runtime. Replaces Socket.IO's event/ack machinery with a tiny JSON envelope.
- *
- * Three message shapes travel over a single native WebSocket per room:
- *  - `req`  client → server: an action expecting an ack, correlated by `id`.
- *  - `ack`  server → client: the result for a given request `id`.
- *  - `push` server → client: an unsolicited event (state sync, snapshot, …).
- *
- * `event` strings are the same keys as the old Socket.IO contracts
- * (`ClientToServerEvents` / `ServerToClientEvents`), so the handler logic ports
- * across almost verbatim.
- */
 import type { Ack, ClientToServerEvents, ServerToClientEvents } from './types';
 
 export type ClientEvent = keyof ClientToServerEvents;
@@ -38,5 +25,8 @@ export interface WirePush {
   payload: unknown;
 }
 
-export type ClientMessage = WireRequest;
 export type ServerMessage = WireAck | WirePush;
+
+/** Infer each action's payload and acknowledgement from the shared contract. */
+export type EventPayload<E extends ClientEvent> = Parameters<ClientToServerEvents[E]>[0];
+export type EventAck<E extends ClientEvent> = Parameters<Parameters<ClientToServerEvents[E]>[1]>[0];

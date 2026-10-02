@@ -1,115 +1,37 @@
-'use client';
-
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
-import { cn } from '@/lib/utils/cn';
-import { GameIcon } from './GameArt';
+import { FlipCard } from '@/components/animations/FlipCard';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, Team } from '@/lib/engine';
+import { GameIcon } from './GameArt';
+import { TableSheet } from './TableSheet';
 
-/**
- * The Lady of the Lake's private result, shown as a card that flips to reveal
- * the inspected player's allegiance — good (blue) or evil (crimson). Only the
- * holder sees it (the result is private); tap to dismiss. This gives the
- * inspection a proper reveal instead of only a war-log line.
- */
-export function LadyResultReveal({
-  game,
-  result,
-  onClose,
-}: {
-  game: ClientGameState;
-  result: { targetId: string; loyalty: Team };
-  onClose: () => void;
+/** Only the inspecting player receives this private loyalty result. */
+export function LadyResultReveal({ game, result, onClose }: {
+  game: ClientGameState; result: { targetId: string; loyalty: Team }; onClose: () => void;
 }) {
   const t = useTranslations();
-  const reduce = useReducedMotion();
+  const reduceMotion = useReducedMotion();
   const [flipped, setFlipped] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
   useEffect(() => {
-    const id = setTimeout(() => setFlipped(true), reduce ? 0 : 550);
-    return () => clearTimeout(id);
-  }, [reduce]);
-
+    const timer = setTimeout(() => setFlipped(true), reduceMotion ? 0 : 550);
+    return () => clearTimeout(timer);
+  }, [reduceMotion]);
   const evil = result.loyalty === 'evil';
-  const name = labelById(game, result.targetId);
-
-  const overlay = (
-    <motion.div
-      className="fixed inset-0 z-[55] flex items-center justify-center p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-    >
-      <div className="absolute inset-0 bg-black/65" />
-      <motion.div
-        className="panel relative w-full max-w-xs space-y-4 p-5 text-center"
-        initial={{ scale: 0.8, y: 20, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div>
-          <GameIcon name="lady" className="mx-auto h-12 w-12" />
-          <p className="mt-1 text-sm text-parchment/70">{t('lady.watersReveal', { name })}</p>
-        </div>
-
-        {/* The loyalty card flips face-up. */}
-        <div className="mx-auto h-32 w-24" style={{ perspective: 1000 }}>
-          <motion.div
-            className="relative h-full w-full"
-            style={{ transformStyle: 'preserve-3d' }}
-            initial={false}
-            animate={{ rotateY: flipped ? 180 : 0 }}
-            transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 200, damping: 20 }}
-          >
-            <div
-              className="absolute inset-0 flex items-center justify-center rounded-xl border-2 border-sky-300/50 bg-gradient-to-br from-royal to-ink"
-              style={{
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-              }}
-            >
-              <GameIcon name="lady" className="h-16 w-16 opacity-80" />
-            </div>
-            <div
-              className={cn(
-                'absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-xl border-2',
-                evil ? 'border-crimson bg-crimson/30' : 'border-sky-300 bg-sky-600/30',
-              )}
-              style={{
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-              }}
-            >
-              <GameIcon name={evil ? 'reject' : 'approve'} className="h-14 w-14" />
-              <span
-                className={cn('font-serif text-xl', evil ? 'text-crimson-bright' : 'text-sky-200')}
-              >
-                {evil ? t('team.evil') : t('team.good')}
-              </span>
-            </div>
-          </motion.div>
-        </div>
-
+  return (
+    <TableSheet open title={t('lady.title')} onClose={onClose}>
+      <div className="space-y-4 text-center">
+        <p className="text-sm text-parchment/70">{t('lady.watersReveal', { name: labelById(game, result.targetId) })}</p>
+        <FlipCard revealed={flipped} className="mx-auto h-32 w-24"
+          back={<div className="flex h-full items-center justify-center rounded-xl border-2 border-sky-300/50 bg-gradient-to-br from-royal to-ink"><GameIcon name="lady" className="h-16 w-16" /></div>}
+          front={<div className={`flex h-full flex-col items-center justify-center rounded-xl border-2 ${evil ? 'border-crimson bg-crimson/30' : 'border-sky-300 bg-sky-600/30'}`}>
+            <GameIcon name={evil ? 'reject' : 'approve'} className="h-14 w-14" />
+            <span className={`font-serif text-xl ${evil ? 'text-crimson-bright' : 'text-sky-200'}`}>{t(evil ? 'team.evil' : 'team.good')}</span>
+          </div>} />
         <p className="text-xs text-parchment/40">{t('lady.onlyYouSeen')}</p>
-        <button
-          className="w-full rounded-md border border-gold/40 bg-stone/80 py-2 text-sm text-parchment hover:border-gold/80"
-          onClick={onClose}
-        >
-          {t('mission.close')}
-        </button>
-      </motion.div>
-    </motion.div>
+        <button type="button" className="table-action w-full" onClick={onClose}>{t('mission.close')}</button>
+      </div>
+    </TableSheet>
   );
-
-  if (!mounted) return null;
-  return createPortal(<AnimatePresence>{overlay}</AnimatePresence>, document.body);
 }

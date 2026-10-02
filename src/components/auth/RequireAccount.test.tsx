@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
-import { RequireAccount } from './RequireAccount';
 import { IdentityPanel } from '@/components/home/IdentityPanel';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter,Route,Routes } from 'react-router-dom';
+import { beforeEach,describe,expect,it,vi } from 'vitest';
+import { AccountLogin } from './AccountLogin';
+import { RequireAccount } from './RequireAccount';
 
 vi.mock('@/lib/auth/useAuthIdentity', () => ({ useAuthIdentity: vi.fn() }));
 vi.mock('use-intl', () => ({ useTranslations: () => (key: string) => key }));
@@ -40,7 +41,8 @@ describe('account-required UI', () => {
   it('waits for the session before mounting protected content', () => {
     vi.mocked(useAuthIdentity).mockReturnValue({ ...useAuthIdentity(), loading: true });
     const html = renderRoute();
-    expect(html).toContain('home.signIn');
+    expect(html).toContain('home.signingIn');
+    expect(html).toContain('animate-spin');
     expect(html).toContain('disabled=""');
     expect(html).not.toContain('protected content');
   });
@@ -52,8 +54,9 @@ describe('account-required UI', () => {
 
   it('offers no nickname form while signed out, and keeps account aliases', () => {
     const props = { loading: false, onLogin: vi.fn(), onLogout: vi.fn(), onSaveAlias: vi.fn() };
-    const signedOut = renderToStaticMarkup(<IdentityPanel {...props} user={null} />);
+    const signedOut = renderToStaticMarkup(<AccountLogin loading={false} onLogin={props.onLogin} />);
     expect(signedOut).toContain('home.signIn');
+    expect(signedOut).not.toContain('animate-spin');
     expect(signedOut).not.toContain('<input');
     expect(signedOut).not.toContain('<form');
     const signedIn = renderToStaticMarkup(<IdentityPanel {...props} user={{ id: 'account', username: 'Player', alias: 'Alias' }} />);

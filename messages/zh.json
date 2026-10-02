@@ -8,11 +8,8 @@
     "merlinOrMorgana": "梅林 / 莫甘娜",
     "merlinOrMorganaShort": "梅 / 莫",
     "resetKnown": "恢复已知标注",
-    "shortHint": "私人标记 · 仅自己可见",
     "close": "关闭",
     "title": "身份标记",
-    "add": "标记身份",
-    "privateHint": "记录你对身份的推测，不会改变真实身份。标记随当前座位保存，重连后恢复；重新开局或重新分配身份后重置。",
     "clear": "清除标记",
     "editPlayer": "标记 {seat} 号 {name} 的身份：{note}",
     "privateLabel": "私人备注：{note}",
@@ -27,7 +24,6 @@
     "reconnecting": "重连中",
     "you": "你",
     "cancel": "取消",
-    "save": "保存",
     "leave": "离开房间",
     "back": "返回",
     "confirm": "确认"
@@ -35,25 +31,15 @@
   "home": {
     "createRoom": "创建房间",
     "creating": "正在创建...",
-    "or": "已有房间？",
     "roomCode": "4 位数字房间码",
-    "join": "加入",
     "joinRoom": "加入房间",
     "identityRequiredToJoin": "请先登录，再加入房间。",
-    "seatCount": "座位人数",
-    "rosterLabel": "玩家名册",
-    "seatPlaceholder": "第 {n} 位玩家",
-    "addSeat": "+ 添加座位",
-    "removeSeat": "移除",
-    "rosterHint": "预先排好所有人的名字；留空将自动命名为「玩家 X」。可在房间页继续调整。",
-    "defaultSeatName": "玩家 {n}",
-    "roomActionsTitle": "创建或加入房间",
     "signInRequiredToCreate": "请先在上方登录，再创建房间。",
     "signOut": "退出登录",
     "nameEmpty": "名字不能为空",
     "identityTitle": "您的账号和别名",
-    "identityHint": "登录后开始游戏",
     "signIn": "账号登录",
+    "signingIn": "正在登录…",
     "accountAlias": "别名",
     "saveAlias": "设置别名",
     "savingAlias": "正在保存…",
@@ -65,50 +51,31 @@
     "authInvalidFlow": "登录请求已过期，请重新登录。",
     "authFailed": "登录失败，请重新尝试。",
     "errInvalidCode": "请输入 4 位数字房间码",
-    "errCreateFailed": "房间创建失败，请再试一次",
-    "errUnreachable": "连不上服务器，请稍后再试",
-    "nameLimit": "ID 最多 10 个字",
-    "signInRequiredToPlay": "请先登录，再参与游戏、观战或查看回放。"
+    "errCreateFailed": "房间创建失败，请再试一次"
   },
   "lobby": {
     "rejectionCount": "{count} 次",
-    "descRejectionLimit": "同一任务连续 {count} 次提名被否决，红方直接获胜；提名通过后清零。",
     "rejectionLimit": "讨论轮数上限",
     "decreaseDiscussionLimit": "减少讨论轮数上限",
     "increaseDiscussionLimit": "增加讨论轮数上限",
-    "descPairedRoles": "两者同时加入：派西维尔能看到梅林与莫甘娜，但无法分辨",
     "roomCode": "房间码",
     "inviteLink": "邀请链接",
     "copied": "已复制！",
-    "youAre": "你是",
-    "changeName": "修改名字",
-    "nameEmpty": "名字不能为空",
     "players": "玩家",
     "seated": "{count} 人已就坐",
     "host": "房主",
-    "kick": "踢出",
-    "spectators": "观战者",
     "configuration": "配置",
     "goodEvil": "蓝方 {good} · 红方 {evil}",
     "useRecommended": "采用推荐配置",
     "enabled": "已启用",
     "disabled": "未启用",
-    "applyRecommended": "应用推荐配置（{count} 人）",
     "optionalRoles": "可选角色",
     "rolesInPlay": "本局角色（{count} 人）",
     "tooManyEvil": "红方特殊角色过多：已选 {used} 个，仅有 {budget} 个红方名额。请关闭一个。",
     "beginQuest": "开启征程",
     "needPlayers": "需要 5–10 名玩家（当前 {count}）",
-    "needSeats": "需要 5–10 个座位（当前 {count}）",
-    "startWithEmpty": "有 {empty} 个空座位，开始后可由后来者认领补齐",
     "waitingHost": "等待房主开始…",
     "enteringHall": "正在进入大厅…",
-    "descPercival": "看到梅林与莫甘娜（无法分辨）",
-    "descMorgana": "在派西维尔眼中显现为梅林",
-    "descMordred": "对梅林隐身",
-    "descOberon": "红方，但不与其他红方互认身份",
-    "descLady": "在第 2–4 个任务后审视一名玩家的阵营",
-    "token": "标记",
     "missionPattern": "任务版型",
     "missionNumber": "任务 {n}",
     "failCardsRequired": "{count} 失败",
@@ -148,7 +115,7 @@
     "Minion": {
       "name": "莫德雷德的爪牙",
       "shortName": "爪牙",
-      "blurb": "知晓邪恶同伴。"
+      "blurb": ""
     }
   },
   "team": {
@@ -160,11 +127,6 @@
   "seat": {
     "addBot": "添加机器人",
     "bot": "机器人",
-    "whoAreYou": "你是谁？",
-    "youAreNow": "你现在是 {name}",
-    "spectate": "以旁观者身份观战",
-    "leaveSeatSpectate": "离开座位改为旁观",
-    "editRoster": "编辑名册",
     "claimToJoin": "认领一个空座位加入游戏",
     "sitTitle": "就坐",
     "sitDown": "坐下",
@@ -172,18 +134,12 @@
     "askStandUp": "请离",
     "empty": "空位",
     "online": "在线",
-    "offline": "离线",
-    "removeClaimedFirst": "这个座位已经有人了，请先让 TA 起立",
-    "editSeats": "编辑座位",
-    "doneEditing": "退出编辑",
-    "spectatorSitHint": "旁观中，选择一个空位坐下"
+    "offline": "离线"
   },
   "roleReveal": {
     "title": "你的秘密身份",
     "tapToReveal": "点击揭示",
     "tapWhenReady": "准备好后点击卡牌查看。",
-    "whatYouPerceive": "你所感知的",
-    "seeNothing": "阴影中一无所获。只能依靠你的智慧。",
     "shownEvil": "红方",
     "shownMerlinOrMorgana": "梅林或莫甘娜",
     "shownAlly": "红方同伴",
@@ -209,12 +165,10 @@
     "spectating": "观战中——你只能看到公开信息",
     "reconnecting": "正在重连",
     "confirmLeave": "确认退出并解绑座位",
-    "functions": "功能",
     "enterFullscreen": "进入全屏",
     "exitFullscreen": "退出全屏",
     "fullscreenUnavailable": "当前浏览器不支持或未允许全屏。",
     "fullscreenFailed": "全屏切换失败，请重试。",
-    "refereeTools": "裁判功能",
     "leaveSeat": "退出并离开座位",
     "cardArt": "卡面风格",
     "cardArtClassic": "经典",
@@ -223,12 +177,9 @@
   },
   "mission": {
     "track": "任务进度",
-    "history": "战况回顾",
-    "tapForHistory": "点击任务查看该轮详情",
     "noHistory": "本轮暂无记录",
     "roundDetail": "第 {n} 个任务详情",
     "votesThisRound": "本轮投票",
-    "missionOutcome": "任务结果",
     "notPlayed": "尚未进行",
     "close": "关闭"
   },
@@ -237,24 +188,15 @@
     "youLead": "由你领导这次征程",
     "leaderChoosing": "{name} 正在选择队伍",
     "selectKnights": "为第 {round} 个任务选择 {size} 名骑士",
-    "rejectionWarning": "⚠ 再被否决 {n} 次，红方将获胜",
-    "proposeTeam": "公示拟定队形",
-    "chooseMore": "再选 {n} 名",
-    "retract": "撤回",
-    "awaitingLeader": "等待队长的决定…"
+    "proposeTeam": "公示拟定队形"
   },
   "vote": {
     "title": "为队伍投票",
-    "proposesFor": "{name} 为第 {round} 个任务提名",
     "approve": "赞成",
     "reject": "反对",
-    "decided": "投票已定。",
-    "castWaiting": "你的票已投出。等待其他人…",
     "result": "投票结果",
     "approved": "通过",
     "rejectedResult": "被否决",
-    "approvedCount": "{count} 赞成",
-    "rejectedCount": "{count} 反对",
     "tally": "{approves} 赞成 / {rejects} 反对",
     "proposalLabel": "第 {n} 次提名",
     "proposer": "提名者",
@@ -263,20 +205,15 @@
   },
   "missionVote": {
     "title": "征程展开",
-    "twoFailsNeeded": "2x",
     "oneFailSpoils": "一张失败票即可破坏",
     "success": "成功",
     "fail": "失败",
-    "sealed": "你的卡牌已封存。等待队伍中其他人…",
-    "watchAfar": "你远远望着被选中的骑士们出征…",
     "loyalOnlySuccess": "蓝方只能提交成功牌。"
   },
   "missionResult": {
-    "resolved": "第 {round} 个任务已结算",
     "succeeds": "任务成功！",
     "sabotaged": "任务被破坏！",
-    "failCards": "揭示了 {count} 张失败票",
-    "nextSoon": "下一次征程即将开始…"
+    "failCards": "揭示了 {count} 张失败票"
   },
   "lady": {
     "title": "湖中仙女",
@@ -284,10 +221,7 @@
     "gazingWaters": "{name} 正凝视水面…",
     "watersReveal": "水面揭示出 {name} 的阵营为",
     "onlyYouSeen": "只有你看到了这一结果。征程继续…",
-    "examine": "审视 {name}",
-    "examineShort": "审视",
-    "selectPlayer": "选择一名玩家",
-    "notYours": "湖中仙女的目光不由你指引。"
+    "examineShort": "审视"
   },
   "assassin": {
     "targetLabel": "刺杀目标",
@@ -298,12 +232,9 @@
     "viewEnding": "查看结局",
     "skipAnimation": "跳过动画",
     "title": "刺客出手",
-    "goodPrevailed": "蓝方已在任务中获胜，但刺中梅林仍可让红方取胜。",
     "nameMerlin": "指认你认为是梅林的那个人。",
-    "strikeDown": "刺杀 {name}",
     "strikeSeat": "刺杀{seat}",
     "strike": "刺杀",
-    "chooseTarget": "选择你的目标",
     "contemplating": "刺客正在思忖这命运攸关的抉择…",
     "identitiesPublic": "所有红方身份（包括奥伯伦）现已公开，蓝方身份仍然保密。",
     "startEarly": "提前进入刺杀",
@@ -311,8 +242,7 @@
     "earlyOutcome": "随后由你选择刺杀目标：刺中梅林则红方获胜，刺错则蓝方获胜，不再按任务结果判定胜负。",
     "irreversible": "已公开的红方身份无法撤回；若需纠正阶段，请使用裁判功能。",
     "confirmStart": "终止任务并进入刺杀",
-    "starting": "正在进入刺杀…",
-    "startFailed": "无法进入刺杀，请检查网络连接后重试。"
+    "starting": "正在进入刺杀…"
   },
   "gameOver": {
     "reasonRejectionLimit": "提名连续被否决，达到讨论轮数上限",
@@ -320,26 +250,19 @@
     "reasonThreeSuccesses": "三个任务成功",
     "goodTriumphs": "蓝方胜利",
     "evilPrevails": "红方胜利",
-    "reasonThreeMissions": "由任务的结果决定",
     "reasonFiveRejections": "连续五次提名被否决",
     "reasonAssassinatedMerlin": "梅林被刺杀",
     "reasonAssassinMissed": "刺杀落空，梅林幸存",
-    "questTally": "任务 — 蓝方 {good} · 红方 {evil}",
-    "courtRevealed": "宫廷揭晓",
-    "targeted": "🎯 被指认",
     "viewReplay": "查看复盘",
     "newGame": "返回首页",
     "playAgain": "再来一局",
     "restarting": "正在返回准备页…",
-    "restartFailed": "返回准备页失败，请重试。",
-    "waitingRestart": "等待房主开启下一局",
-    "keepRoomHint": "保留房间号、玩家座位和配置，全员一起返回准备页。"
+    "waitingRestart": "等待房主开启下一局"
   },
   "preferences": {
     "accountHint": "自动保存到账号，在不同设备登录后同步。",
     "saving": "正在保存…",
     "saveFailed": "保存失败，已恢复原设置。请检查网络后重新选择。",
-
     "title": "设置",
     "hint": "自动保存，仅影响当前浏览器中的显示。"
   },
@@ -351,15 +274,10 @@
   "cue": {
     "voteApproved": "提名通过",
     "voteRejected": "提名被否决",
-    "voteApprovedSub": "队伍获准出征",
-    "voteRejectedSub": "队长之位易主",
     "missionSuccess": "任务成功",
     "missionFail": "任务失败",
-    "missionSuccessSub": "蓝方赢下本次任务",
-    "missionFailSub": "红方赢下本次任务",
     "cardSuccess": "成功",
     "cardFail": "失败",
-    "revealingCards": "正在揭示任务卡…",
     "missionCardsTitle": "出征结果"
   },
   "identity": {
@@ -429,10 +347,7 @@
     "rerollCardUsed": "{player} 使用了重随卡，全桌身份已重新发放，请重新确认"
   },
   "proposal": {
-    "label": "提名",
-    "hammer": "第 {count} 次：再被否决则红方获胜",
-    "hammerWarnLast": "这是最后一次提名，再被否决红方将获胜！",
-    "hammerWarn": "再被否决 {n} 次，红方将获胜"
+    "hammerWarnLast": "这是最后一次提名，再被否决红方将获胜！"
   },
   "admin": {
     "rerollLeader": "重新随机起始队长",
@@ -444,7 +359,6 @@
     "actionFailed": "操作失败，请重试",
     "title": "裁判功能",
     "enableHint": "开启裁判功能后，你可以解绑玩家、代替投票或提名。所有操作都会在公开战报中红字记录，全场可见。",
-    "enableFailed": "开启失败，请重试",
     "open": "开启裁判功能",
     "close": "关闭裁判功能",
     "someone": "某人",
@@ -462,7 +376,6 @@
     "retractProposalTitle": "撤回提名",
     "retractProposalHint": "取消本次提名，回到组队阶段，由当前队长重新提名。",
     "retractProposalBtn": "撤回提名",
-    "phaseTitle": "阶段控制",
     "startAssassination": "发起梅林指认",
     "previousPhase": "返回上一阶段",
     "previousPhaseHint": "恢复上一阶段的队长、队伍和任务记录，并清空该阶段待提交的投票或任务牌。已经公开的身份或验人信息无法撤回。",
@@ -477,7 +390,6 @@
     "title": "战局复盘",
     "loading": "正在加载复盘…",
     "notFound": "未找到该对局",
-    "notFinished": "对局尚未结束",
     "backHome": "返回首页",
     "outcome": "{winner}胜利",
     "goodWon": "蓝方",
@@ -496,14 +408,12 @@
     "missionCards": "出牌",
     "playedSuccess": "成功",
     "playedFail": "失败",
-    "ladyCheck": "湖中仙女",
     "ladyResult": "{holder} 查验 {target}：{team}",
     "assassination": "刺杀",
     "assassinResult": "{assassin} 刺杀 {target}",
     "hitMerlin": "命中梅林！",
     "missedMerlin": "未命中梅林",
-    "roles": "身份揭示",
-    "proposalN": "第 {n} 次提名"
+    "roles": "身份揭示"
   },
   "table": {
     "tabTable": "圆桌",
@@ -512,10 +422,7 @@
     "missionRule": "第{round}轮任务：需要{players}人参加，{fails}张失败票可破坏",
     "identity": "身份",
     "lineup": "阵容",
-    "more": "更多",
     "lobby": "房间准备",
-    "gathered": "骑士已集结",
-    "seatedCount": "{count} / {total} 已入座",
     "roundPhase": "任务 {round} · {phase}",
     "leader": "队长",
     "playerCards": "{seat} 号玩家的卡牌区",
@@ -538,182 +445,6 @@
     "shuffling": "正在洗混…",
     "anonymousCards": "匿名任务牌"
   },
-  "debug": {
-    "entry": "调试画廊 · 模拟游戏场景",
-    "controls": "模拟控制台",
-    "subtitle": "选一个局面，换一个视角，直接在牌桌上操作。",
-    "playerCount": "玩家人数",
-    "perspective": "观察视角",
-    "reset": "重置场景",
-    "undo": "撤销一步",
-    "copyLink": "复制入口",
-    "copied": "已复制",
-    "copyFailed": "复制失败，请复制地址栏中的场景链接。",
-    "scenarios": "预设场景",
-    "search": "搜索场景…",
-    "noResults": "没有匹配的场景。",
-    "advance": "推进当前局面",
-    "autoTeam": "自动提名队伍",
-    "approveRest": "其余玩家全部赞成",
-    "rejectRest": "其余玩家全部反对",
-    "failCount": "目标失败牌数",
-    "submitRest": "补齐任务牌并结算",
-    "legalCards": "保留已交的牌；仅邪恶玩家可出失败，实际张数受队伍阵营限制。",
-    "viewHolder": "切到湖中仙女持有者",
-    "viewAssassin": "切到刺客视角",
-    "startAssassination": "提前进入刺杀",
-    "connection": "连接与异常",
-    "connected": "模拟连接正常",
-    "latency": "显示延迟",
-    "latencyHint": "仅改变延迟显示，不延缓本地操作。",
-    "failNext": "下一次牌桌操作返回错误",
-    "offlineSeat": "切换座位在线状态",
-    "chooseSeat": "选择一个座位…",
-    "inspect": "查看当前视角数据",
-    "preview": "游戏牌桌预览",
-    "localOnly": "本页为本地模拟。使用控制台切换场景或推进游戏。",
-    "claimSeat": "坐到 {seat} 号位",
-    "disconnected": "当前模拟为断线状态，请在“连接与异常”中恢复连接。",
-    "simulatedError": "模拟操作失败。状态未改变，可以重试。",
-    "groups": {
-      "identity": "身份",
-      "proposal": "组队与投票",
-      "mission": "任务",
-      "special": "特殊行动",
-      "ending": "游戏结局",
-      "connection": "旁观与连接"
-    },
-    "scenes": {
-      "assassinHit": {
-        "title": "刺杀动画 · 命中梅林",
-        "description": "匕首出手，翻开梅林并揭晓红方胜利；重置可重播。"
-      },
-      "assassinMiss": {
-        "title": "刺杀动画 · 刺杀落空",
-        "description": "匕首出手，翻开目标并揭晓蓝方胜利；重置可重播。"
-      },
-      "role": {
-        "title": "身份揭示",
-        "description": "翻开身份卡；切换座位检查每个角色的可见信息。"
-      },
-      "team": {
-        "title": "队长组队",
-        "description": "点击座位选择队伍，或一键自动提名。"
-      },
-      "lastProposal": {
-        "title": "第五次提案",
-        "description": "已经连续四次否决；再被否决即邪恶获胜。"
-      },
-      "voting": {
-        "title": "投票进行中",
-        "description": "已有部分玩家投票；可切换视角或补齐其他玩家的票。"
-      },
-      "voted": {
-        "title": "已投票，等待他人",
-        "description": "当前玩家已投赞成票，检查等待和禁止重复提交的状态。"
-      },
-      "approved": {
-        "title": "提案通过动画",
-        "description": "自动结算全票赞成；重置可重播。"
-      },
-      "rejected": {
-        "title": "提案否决动画",
-        "description": "自动结算全票反对，然后轮转队长；重置可重播。"
-      },
-      "missionGood": {
-        "title": "好人执行任务",
-        "description": "好人只能交成功牌；检查失败按钮的锁定状态。"
-      },
-      "missionEvil": {
-        "title": "坏人执行任务",
-        "description": "邪恶玩家可以交成功或失败牌。"
-      },
-      "submitted": {
-        "title": "已交任务牌",
-        "description": "已提交的任务牌保持隐藏，等待其余队员。"
-      },
-      "missionSuccess": {
-        "title": "任务成功动画",
-        "description": "自动收牌、洗牌并揭示全成功结果；重置可重播。"
-      },
-      "missionFail": {
-        "title": "任务失败动画",
-        "description": "自动揭示包含失败牌的任务结果；重置可重播。"
-      },
-      "twoFails": {
-        "title": "第四轮 · 两张失败门槛",
-        "description": "7–10 人局：第四轮只有一张失败仍成功，可试一张或两张。"
-      },
-      "lady": {
-        "title": "湖中仙女查验",
-        "description": "从持有者视角选择可查验的玩家。"
-      },
-      "ladyGood": {
-        "title": "查验结果 · 好人",
-        "description": "查看仅对查验者可见的好人阵营结果。"
-      },
-      "ladyEvil": {
-        "title": "查验结果 · 邪恶",
-        "description": "查看仅对查验者可见的邪恶阵营结果。"
-      },
-      "assassination": {
-        "title": "三次成功后的刺杀",
-        "description": "三次任务成功，刺客从好人中选择梅林。"
-      },
-      "earlyAssassination": {
-        "title": "提前刺杀",
-        "description": "任务未完成时提前刺杀，检查公开身份与候选目标。"
-      },
-      "goodWins": {
-        "title": "正义胜利 · 刺杀落空",
-        "description": "刺客未命中梅林，公开全部角色。"
-      },
-      "evilWins": {
-        "title": "邪恶胜利 · 梅林被刺",
-        "description": "三次任务成功后刺杀梅林，邪恶翻盘。"
-      },
-      "threeFails": {
-        "title": "邪恶胜利 · 三次失败",
-        "description": "三次任务失败，直接进入游戏结束。"
-      },
-      "fiveRejections": {
-        "title": "邪恶胜利 · 五次否决",
-        "description": "同一轮连续五次否决，检查提案轨迹与日志。"
-      },
-      "spectator": {
-        "title": "旁观者",
-        "description": "所有座位已有人，旁观者不可执行玩家操作。"
-      },
-      "openSeat": {
-        "title": "旁观者入座",
-        "description": "模拟空座，点击入座后查看该玩家的身份。"
-      },
-      "offline": {
-        "title": "玩家离线",
-        "description": "一位玩家掉线，座位保留；可在连接设置中切换。"
-      },
-      "reconnecting": {
-        "title": "断线重连",
-        "description": "牌桌操作暂停；在连接设置中恢复连接后继续。"
-      },
-      "announcement": {
-        "title": "陈述理由",
-        "description": "队长陈述组队理由，并选择左右发言方向，队长最后发言。"
-      },
-      "discussion": {
-        "title": "顺次发言",
-        "description": "按座位轮流发言，每人自行结束。"
-      },
-      "finalizing": {
-        "title": "队长定稿",
-        "description": "保留或修改队形，确认后进入投票。"
-      },
-      "overdue": {
-        "title": "发言超时",
-        "description": "计时超时后仍可手动结束发言。"
-      }
-    }
-  },
   "discussion": {
     "flow": "本轮流程",
     "finishSpeech": "结束我的发言",
@@ -725,7 +456,6 @@
     "finalizing": "队长调整最终队形",
     "finalizingHint": "可保留或修改拟定队形，确认后全员投票。",
     "rules": "拟定队伍 → 队长陈述理由并选择顺时针（左手边）或逆时针（右手边）开始发言 → 依次讨论，队长最后发言 → 最终定队 → 投票。每位玩家自行结束发言，裁判可跳过当前玩家。",
-    "timeRules": "每人讨论 {seconds} 秒，陈述理由时长为讨论的一半，刺杀讨论为 1.5 倍，其他操作 20 秒。超时仅提示，不自动结束发言、提交操作或跳过阶段。",
     "steps": {
       "TeamBuilding": "拟定",
       "TeamAnnouncement": "陈述理由",
@@ -752,18 +482,13 @@
     "paused": "已暂停"
   },
   "reroll": {
-    "balance": "重随卡 {count}/2",
-    "progress": "下一张进度 {count}/5 局",
-    "rules": "完整参与每 5 局获得 1 张；每日上线获得 1 张（UTC+8 04:00 刷新）。最多 2 张，满额奖励不补发。",
-    "effect": "消耗 1 张，全桌重新发放身份。你的新身份必定与上次不同，所有人需要重新确认。",
-    "use": "使用重随卡",
     "using": "重随中…",
     "empty": "重随卡不足",
-    "login": "登录账号后可领取和使用重随卡",
-    "unavailable": "仅在确认身份前、首个组队提案提交前可用",
+    "unavailable": "已过重随时机：仅限首个组队提案提交前使用",
     "button": "重随卡 ({count}/2)",
     "confirm": "确认重随",
     "loginShort": "请先登录",
-    "unavailableShort": "暂时无法重随"
+    "unavailableShort": "暂时无法重随",
+    "reconnecting": "连接恢复后可重随"
   }
 }

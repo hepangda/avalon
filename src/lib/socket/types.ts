@@ -2,7 +2,6 @@ import type { HeartbeatState, ViewSnapshot } from './stateIntegrity';
 import type {
   ClientGameState,
   GameOptions,
-  GameState,
   PlayerId,
   Role,
   Team,
@@ -57,39 +56,11 @@ export interface RoomSnapshot {
   members: RoomMember[];
 }
 
-/**
- * In-memory runtime for a single room. Authoritative. Lives in the GameStore
- * map keyed by room code. The engine GameState (if a game is running) is the
- * source of game truth; everything else is socket/room bookkeeping.
- */
-export interface RoomRuntime {
-  code: string;
-  roomId: string; // DB Room.id
-  hostPlayerId: PlayerId | null;
-  status: RoomStatus;
-  config: RoomConfig;
-  members: Map<PlayerId, RoomMember>;
-  /** Live socket id per player (for targeted private emits). */
-  socketByPlayer: Map<PlayerId, string>;
-  /** Sockets attached to the room without a claimed seat (spectators/unseated).
-   *  They receive the spectator-projected state. */
-  spectatorSockets: Set<string>;
-  /** Engine state when a game is in progress; null in lobby. */
-  game: GameState | null;
-  /** DB Game.id for the active game; null in lobby. */
-  gameId: string | null;
-  /** Monotonic event sequence for the active game's event log. */
-  eventSeq: number;
-  /** Serializes all DB persistence for this room so checkpoints never race. */
-  persistChain: Promise<void>;
-}
-
 // ---------------------------------------------------------------------------
 // Socket payload contracts (client ⇄ server)
 // ---------------------------------------------------------------------------
 
-export type VoteValue = 'approve' | 'reject';
-export type MissionCard = 'success' | 'fail';
+import type { VoteValue, MissionCard } from '@/lib/engine/types';
 
 export interface PlayerLatency {
   playerId: PlayerId;
@@ -115,7 +86,6 @@ export interface ClientToServerEvents {
   'room:config': (p: { config: RoomConfig }, ack: (r: Ack) => void) => void;
   'room:rename': (p: { name: string }, ack: (r: Ack<{ name: string }>) => void) => void;
   'room:kick': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
-  'room:transferHost': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
   'room:addBot': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:start': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:restart': (p: Record<string, never>, ack: (r: Ack) => void) => void;
@@ -188,15 +158,3 @@ export interface ServerToClientEvents {
   'system:notice': (p: { type: string; message?: string }) => void;
   error: (p: { code: string; message: string }) => void;
 }
-
-export interface SocketData {
-  playerId?: PlayerId;
-  code?: string;
-  /** True if this socket authenticated as the room owner via hostToken. */
-  isHost?: boolean;
-  /** True if this socket authenticated with the room super-password (referee
-   *  powers). Per-socket, not persisted — a refresh clears it. */
-  isAdmin?: boolean;
-}
-
-export interface InterServerEvents {}

@@ -1,0 +1,178 @@
+{
+  "debug": {
+    "entry": "调试画廊 · 模拟游戏场景",
+    "controls": "模拟控制台",
+    "subtitle": "选一个局面，换一个视角，直接在牌桌上操作。",
+    "playerCount": "玩家人数",
+    "perspective": "观察视角",
+    "reset": "重置场景",
+    "undo": "撤销一步",
+    "copyLink": "复制入口",
+    "copied": "已复制",
+    "copyFailed": "复制失败，请复制地址栏中的场景链接。",
+    "scenarios": "预设场景",
+    "search": "搜索场景…",
+    "noResults": "没有匹配的场景。",
+    "advance": "推进当前局面",
+    "autoTeam": "自动提名队伍",
+    "approveRest": "其余玩家全部赞成",
+    "rejectRest": "其余玩家全部反对",
+    "failCount": "目标失败牌数",
+    "submitRest": "补齐任务牌并结算",
+    "legalCards": "保留已交的牌；仅邪恶玩家可出失败，实际张数受队伍阵营限制。",
+    "viewHolder": "切到湖中仙女持有者",
+    "viewAssassin": "切到刺客视角",
+    "startAssassination": "提前进入刺杀",
+    "connection": "连接与异常",
+    "connected": "模拟连接正常",
+    "latency": "显示延迟",
+    "latencyHint": "仅改变延迟显示，不延缓本地操作。",
+    "failNext": "下一次牌桌操作返回错误",
+    "offlineSeat": "切换座位在线状态",
+    "chooseSeat": "选择一个座位…",
+    "inspect": "查看当前视角数据",
+    "preview": "游戏牌桌预览",
+    "localOnly": "本页为本地模拟。使用控制台切换场景或推进游戏。",
+    "claimSeat": "坐到 {seat} 号位",
+    "disconnected": "当前模拟为断线状态，请在“连接与异常”中恢复连接。",
+    "simulatedError": "模拟操作失败。状态未改变，可以重试。",
+    "groups": {
+      "identity": "身份",
+      "proposal": "组队与投票",
+      "mission": "任务",
+      "special": "特殊行动",
+      "ending": "游戏结局",
+      "connection": "旁观与连接"
+    },
+    "scenes": {
+      "assassinHit": {
+        "title": "刺杀动画 · 命中梅林",
+        "description": "匕首出手，翻开梅林并揭晓红方胜利；重置可重播。"
+      },
+      "assassinMiss": {
+        "title": "刺杀动画 · 刺杀落空",
+        "description": "匕首出手，翻开目标并揭晓蓝方胜利；重置可重播。"
+      },
+      "role": {
+        "title": "身份揭示",
+        "description": "翻开身份卡；切换座位检查每个角色的可见信息。"
+      },
+      "team": {
+        "title": "队长组队",
+        "description": "点击座位选择队伍，或一键自动提名。"
+      },
+      "lastProposal": {
+        "title": "第五次提案",
+        "description": "已经连续四次否决；再被否决即邪恶获胜。"
+      },
+      "voting": {
+        "title": "投票进行中",
+        "description": "已有部分玩家投票；可切换视角或补齐其他玩家的票。"
+      },
+      "voted": {
+        "title": "已投票，等待他人",
+        "description": "当前玩家已投赞成票，检查等待和禁止重复提交的状态。"
+      },
+      "approved": {
+        "title": "提案通过动画",
+        "description": "自动结算全票赞成；重置可重播。"
+      },
+      "rejected": {
+        "title": "提案否决动画",
+        "description": "自动结算全票反对，然后轮转队长；重置可重播。"
+      },
+      "missionGood": {
+        "title": "好人执行任务",
+        "description": "好人只能交成功牌；检查失败按钮的锁定状态。"
+      },
+      "missionEvil": {
+        "title": "坏人执行任务",
+        "description": "邪恶玩家可以交成功或失败牌。"
+      },
+      "submitted": {
+        "title": "已交任务牌",
+        "description": "已提交的任务牌保持隐藏，等待其余队员。"
+      },
+      "missionSuccess": {
+        "title": "任务成功动画",
+        "description": "自动收牌、洗牌并揭示全成功结果；重置可重播。"
+      },
+      "missionFail": {
+        "title": "任务失败动画",
+        "description": "自动揭示包含失败牌的任务结果；重置可重播。"
+      },
+      "twoFails": {
+        "title": "第四轮 · 两张失败门槛",
+        "description": "7–10 人局：第四轮只有一张失败仍成功，可试一张或两张。"
+      },
+      "lady": {
+        "title": "湖中仙女查验",
+        "description": "从持有者视角选择可查验的玩家。"
+      },
+      "ladyGood": {
+        "title": "查验结果 · 好人",
+        "description": "查看仅对查验者可见的好人阵营结果。"
+      },
+      "ladyEvil": {
+        "title": "查验结果 · 邪恶",
+        "description": "查看仅对查验者可见的邪恶阵营结果。"
+      },
+      "assassination": {
+        "title": "三次成功后的刺杀",
+        "description": "三次任务成功，刺客从好人中选择梅林。"
+      },
+      "earlyAssassination": {
+        "title": "提前刺杀",
+        "description": "任务未完成时提前刺杀，检查公开身份与候选目标。"
+      },
+      "goodWins": {
+        "title": "正义胜利 · 刺杀落空",
+        "description": "刺客未命中梅林，公开全部角色。"
+      },
+      "evilWins": {
+        "title": "邪恶胜利 · 梅林被刺",
+        "description": "三次任务成功后刺杀梅林，邪恶翻盘。"
+      },
+      "threeFails": {
+        "title": "邪恶胜利 · 三次失败",
+        "description": "三次任务失败，直接进入游戏结束。"
+      },
+      "fiveRejections": {
+        "title": "邪恶胜利 · 五次否决",
+        "description": "同一轮连续五次否决，检查提案轨迹与日志。"
+      },
+      "spectator": {
+        "title": "旁观者",
+        "description": "所有座位已有人，旁观者不可执行玩家操作。"
+      },
+      "openSeat": {
+        "title": "旁观者入座",
+        "description": "模拟空座，点击入座后查看该玩家的身份。"
+      },
+      "offline": {
+        "title": "玩家离线",
+        "description": "一位玩家掉线，座位保留；可在连接设置中切换。"
+      },
+      "reconnecting": {
+        "title": "断线重连",
+        "description": "牌桌操作暂停；在连接设置中恢复连接后继续。"
+      },
+      "announcement": {
+        "title": "陈述理由",
+        "description": "队长陈述组队理由，并选择左右发言方向，队长最后发言。"
+      },
+      "discussion": {
+        "title": "顺次发言",
+        "description": "按座位轮流发言，每人自行结束。"
+      },
+      "finalizing": {
+        "title": "队长定稿",
+        "description": "保留或修改队形，确认后进入投票。"
+      },
+      "overdue": {
+        "title": "发言超时",
+        "description": "计时超时后仍可手动结束发言。"
+      }
+    }
+  }
+}

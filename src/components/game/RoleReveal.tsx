@@ -1,43 +1,52 @@
-'use client';
-
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { useTranslations } from 'use-intl';
+import { FlipCard } from '@/components/animations/FlipCard';
 import { Button } from '@/components/ui/Button';
-import { FlipCard } from '@/components/animations';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
+import type { ClientGameState } from '@/lib/engine';
+import { gameActions } from '@/lib/socket/client';
+import { motion,useReducedMotion } from 'framer-motion';
+import { useEffect,useRef,useState,type ReactNode } from 'react';
+import { useTranslations } from 'use-intl';
 import { GameIcon } from './GameArt';
 import { RoleCard } from './RoleCard';
-import { gameActions } from '@/lib/socket/client';
-import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { RoleKnowledge } from './RoleKnowledge';
-import type { ClientGameState, Role, VisibilityInfo } from '@/lib/engine';
 
 interface RoleRevealProps {
   onAck?: typeof gameActions.ackRole;
   onReroll?: typeof gameActions.useRerollCard;
   blocked?: boolean;
   game: ClientGameState;
-  reveal: { selfRole: Role; knownPlayers: VisibilityInfo[] } | null;
   myPlayerId: string | null;
   timer?: ReactNode;
 }
 
-export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRole, onReroll = gameActions.useRerollCard, blocked = false, timer }: RoleRevealProps) {
+/** Why the reroll button is disabled, as a message key; the most lasting reason wins. */
+export function rerollHintKey({ open, signedIn, cards, connected }: { open: boolean; signedIn: boolean; cards: number; connected: boolean }): string | null {
+  if (!open) return 'reroll.unavailable';
+  if (!signedIn) return 'reroll.loginShort';
+  if (!cards) return 'reroll.empty';
+  if (!connected) return 'reroll.reconnecting';
+  return null;
+}
+
+export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onReroll = gameActions.useRerollCard, blocked = false, timer }: RoleRevealProps) {
   const t = useTranslations();
   const { user, refresh } = useAuthIdentity();
   const [rerolling, setRerolling] = useState(false);
   const [confirmReroll, setConfirmReroll] = useState(false);
   const rerollInFlight = useRef(false);
   useEffect(() => { setConfirmReroll(false); }, [game.gameId, game.roleRevision, myPlayerId, user?.id, blocked, game.canRerollOpening]);
-  useEffect(() => { void refresh(); }, [refresh, game.gameId, game.roleRevision]);
+  useEffect(() => { void refresh(); }, [refresh, game.gameId]);
   const reduceMotion = useReducedMotion();
   const [flipped, setFlipped] = useState(false);
   const [acking, setAcking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const role = game.selfRole ?? reveal?.selfRole;
+  const role = game.selfRole;
   const variant = game.players.find((p) => p.id === myPlayerId)?.roleVariant;
-  const knownPlayers = game.selfRole ? game.knownPlayers : reveal?.knownPlayers ?? [];
+  const knownPlayers = game.knownPlayers;
+  const cards = user?.rerollCards?.cards ?? 0;
+  const rerollHint = rerollHintKey({ open: game.canRerollOpening, signedIn: !!user, cards, connected: !blocked });
+  const showRerollHint = !error && !acking && !rerolling && rerollHint !== null;
 
   async function handleAck() {
     // The overlay closes when roleAcks (in projected state) includes us; no need
@@ -59,7 +68,7 @@ export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRo
   }
 
   async function handleReroll() {
-    if (rerollInFlight.current || acking || blocked || !user?.rerollCards?.cards || !game.canRerollOpening) return;
+    if (rerollInFlight.current || acking || blocked || !cards || !game.canRerollOpening) return;
     if (!confirmReroll) {
       setConfirmReroll(true);
       return;
@@ -121,14 +130,16 @@ export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRo
             <Button className="w-36 shrink-0 whitespace-nowrap px-3" variant="secondary" onClick={handleReroll}
               onBlur={() => setConfirmReroll(false)}
               onKeyDown={(event) => { if (event.key === 'Escape') setConfirmReroll(false); }}
-              disabled={blocked || acking || rerolling || !user?.rerollCards?.cards || !game.canRerollOpening}>
-              {rerolling ? t('reroll.using') : confirmReroll ? t('reroll.confirm') : t('reroll.button', { count: user?.rerollCards?.cards ?? 0 })}
+              aria-describedby={showRerollHint ? 'reroll-hint' : undefined}
+              disabled={blocked || acking || rerolling || !cards || !game.canRerollOpening}>
+              {rerolling ? t('reroll.using') : confirmReroll ? t('reroll.confirm') : t('reroll.button', { count: cards })}
             </Button>
             <Button className="min-w-0 flex-1 whitespace-nowrap" onClick={handleAck} disabled={acking || rerolling || blocked}>
               {acking ? t('roleReveal.entering') : t('roleReveal.understand')}
             </Button>
           </div>
           {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
+          {showRerollHint && <p id="reroll-hint" className="text-xs text-parchment/50">{t(rerollHint)}</p>}
         </motion.div>
       )}
 

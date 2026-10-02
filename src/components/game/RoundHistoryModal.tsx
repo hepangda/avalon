@@ -1,6 +1,4 @@
-'use client';
-
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { TableSheet } from './TableSheet';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { VoteResultPanel } from './VoteResultPanel';
@@ -22,54 +20,12 @@ export function RoundHistoryModal({
   onClose: () => void;
 }) {
   const t = useTranslations();
-  const reduceMotion = useReducedMotion();
   const open = roundIndex !== null;
   const votes = open ? game.voteHistory.filter((v) => v.roundIndex === roundIndex) : [];
   const result = open ? game.missionResults.find((m) => m.roundIndex === roundIndex) : undefined;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center"
-          onClick={onClose}
-        >
-          {/* Fade the scrim separately so the panel is not faded twice. */}
-          <motion.div
-            aria-hidden="true"
-            className="absolute inset-0 bg-black/60"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-          />
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label={t('mission.roundDetail', { n: (roundIndex ?? 0) + 1 })}
-            className="relative max-h-[80vh] w-full max-w-md overflow-y-auto rounded-xl border border-gold/40 bg-stone/95 p-4 shadow-2xl"
-            initial={{ y: reduceMotion ? 0 : 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: reduceMotion ? 0 : 40, opacity: 0 }}
-            transition={{
-              y: { type: 'spring', stiffness: 300, damping: 35 },
-              opacity: { duration: 0.18, ease: 'easeOut' },
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-serif text-lg text-gold">
-                {t('mission.roundDetail', { n: (roundIndex ?? 0) + 1 })}
-              </h3>
-              <button
-                className="text-parchment/50 hover:text-parchment"
-                onClick={onClose}
-                aria-label={t('mission.close')}
-              >
-                ✕
-              </button>
-            </div>
-
+    <TableSheet open={open} title={t('mission.roundDetail', { n: (roundIndex ?? 0) + 1 })} onClose={onClose}>
             {roundIndex !== null && game.config.requiredFails[roundIndex] === 2 && (
               <p className="mb-3 text-sm text-gold">{t('table.twoFails')}</p>
             )}
@@ -88,7 +44,7 @@ export function RoundHistoryModal({
                   <MissionCardReveal
                     teamSize={result.teamSize}
                     failCount={result.failCount}
-                    instant
+
                   />
                 </div>
               ) : (
@@ -107,7 +63,7 @@ export function RoundHistoryModal({
                     key={v.proposalIndex}
                     className="rounded-lg border border-gold/10 bg-ink/20 p-2.5"
                   >
-                    <VoteResultPanel record={v} game={game} compact showProposalLabel />
+                    <VoteResultPanel record={v} game={game} showProposalLabel />
                   </div>
                 ))}
               </div>
@@ -118,9 +74,6 @@ export function RoundHistoryModal({
             <Button variant="secondary" className="mt-4 w-full" onClick={onClose}>
               {t('mission.close')}
             </Button>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    </TableSheet>
   );
 }

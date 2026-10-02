@@ -1,5 +1,3 @@
-'use client';
-
 import { useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { Card } from '@/components/ui/Card';

@@ -28,7 +28,6 @@ interface GameTableProps {
   playerStatus?: (player: ClientPlayer) => ReactNode;
   speakerId?: string;
   proposalLayout?: boolean;
-  hostId?: string | null;
   missionReveal?: Extract<TablePresentation, { kind: 'mission' }> | null;
   onRevealComplete?: (id: string) => void;
   roleNotes?: RoleNotes;
@@ -54,7 +53,6 @@ export function GameTable({
   playerStatus,
   speakerId,
   proposalLayout = false,
-  hostId,
   missionReveal,
   onRevealComplete,
   roleNotes = {},
@@ -142,9 +140,7 @@ export function GameTable({
             >
               {p.name}
             </span>
-            <span className="table-seat-meta">
-              {!isMe && hostId === p.id ? t('lobby.host') : ''}
-            </span>
+            <span className="table-seat-meta" aria-hidden="true" />
           </button>
           <div className="table-seat-labels">
             <span className="seat-number-tag" title={`${p.seat + 1}. ${p.name}`}>{p.seat + 1}</span>

@@ -1,5 +1,3 @@
-'use client';
-
 import { useTranslations } from 'use-intl';
 import { routing } from '@/i18n/routing';
 import { useLocaleStore } from '@/lib/store/locale';
