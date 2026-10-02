@@ -1,68 +1,26 @@
 'use client';
 
-import { forwardRef } from 'react';
+import { forwardRef, useMemo } from 'react';
 import { Link as RouterLink, useLocation, useNavigate, type LinkProps } from 'react-router-dom';
-import { isLocale, routing, type Locale } from './routing';
 
-/**
- * Locale-aware navigation helpers backed by react-router. Drop-in replacement
- * for the old next-intl `@/i18n/navigation` module: components importing
- * `Link`, `useRouter`, `usePathname` from here are unchanged. Paths passed in
- * are locale-agnostic (e.g. `/room/0123`); the active locale prefix is added
- * automatically, or overridden via the `{ locale }` option.
- */
-
-/** Active locale, read from the leading path segment (`/zh/...`). */
-export function useCurrentLocale(): Locale {
-  const { pathname } = useLocation();
-  const seg = pathname.split('/')[1];
-  return isLocale(seg) ? seg : routing.defaultLocale;
-}
-
-/** Strip a leading `/<locale>` from a pathname → its locale-agnostic form. */
-function stripLocale(pathname: string): string {
-  const parts = pathname.split('/');
-  if (isLocale(parts[1])) {
-    const rest = '/' + parts.slice(2).join('/');
-    return rest.length > 1 ? rest.replace(/\/$/, '') : '/';
-  }
-  return pathname || '/';
-}
-
-/** Prefix a locale-agnostic path with `/<locale>`. */
-function withLocale(path: string, locale: string): string {
-  const clean = path.startsWith('/') ? path : `/${path}`;
-  return clean === '/' ? `/${locale}` : `/${locale}${clean}`;
-}
-
-/** The current path without its locale prefix (mirrors next-intl usePathname). */
+/** Navigation is independent of the browser's language preference. */
 export function usePathname(): string {
-  const { pathname } = useLocation();
-  return stripLocale(pathname);
-}
-
-interface NavOptions {
-  locale?: string;
+  return useLocation().pathname;
 }
 
 export function useRouter() {
   const navigate = useNavigate();
-  const current = useCurrentLocale();
-  return {
-    push: (path: string, opts?: NavOptions) => navigate(withLocale(path, opts?.locale ?? current)),
-    replace: (path: string, opts?: NavOptions) =>
-      navigate(withLocale(path, opts?.locale ?? current), { replace: true }),
-  };
+  return useMemo(() => ({
+    push: (path: string) => navigate(path),
+    replace: (path: string) => navigate(path, { replace: true }),
+  }), [navigate]);
 }
 
-type LocaleLinkProps = Omit<LinkProps, 'to'> & { href: string; locale?: string };
+type AppLinkProps = Omit<LinkProps, 'to'> & { href: string };
 
-/** `<Link href="/room/0123">` — locale prefix added automatically. */
-export const Link = forwardRef<HTMLAnchorElement, LocaleLinkProps>(function Link(
-  { href, locale, ...rest },
+export const Link = forwardRef<HTMLAnchorElement, AppLinkProps>(function Link(
+  { href, ...rest },
   ref,
 ) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const current = useCurrentLocale();
-  return <RouterLink ref={ref} to={withLocale(href, locale ?? current)} {...rest} />;
+  return <RouterLink ref={ref} to={href} {...rest} />;
 });

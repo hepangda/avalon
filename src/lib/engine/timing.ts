@@ -47,7 +47,7 @@ export function syncActionTimers(previous: GameState, next: GameState, event: Ga
     return existing ? (reset ? resumeTimer(existing, now) : { ...existing }) : {
       playerId, action, startedAt: now,
       // The evil team's assassination discussion gets 1.5 times the speaking time.
-      durationMs: action === 'speak' ? speechMs : action === 'assassinate' ? speechMs * 1.5 : 20_000,
+      durationMs: action === 'announce' && next.flowVersion === 5 ? speechMs / 2 : action === 'speak' ? speechMs : action === 'assassinate' ? speechMs * 1.5 : 20_000,
       ...(carryPause ? { pausedAt: now } : {}),
     };
   });

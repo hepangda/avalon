@@ -1,4 +1,5 @@
 import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 const eslintConfig = tseslint.config(
   {
@@ -7,7 +8,7 @@ const eslintConfig = tseslint.config(
       parser: tseslint.parser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
-    plugins: { '@typescript-eslint': tseslint.plugin },
+    plugins: { '@typescript-eslint': tseslint.plugin, 'react-hooks': reactHooks },
     rules: {
       // Allow intentionally-unused args/vars prefixed with underscore.
       '@typescript-eslint/no-unused-vars': [
@@ -29,7 +30,7 @@ const eslintConfig = tseslint.config(
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', '.wrangler/**', '.next/**'],
+    ignores: ['dist/**', 'node_modules/**', '.wrangler/**', '.next/**', '.private/**', '.backups/**', '.pnpm-store/**', '.omo/**', 'worker-configuration.d.ts'],
   },
 );
 

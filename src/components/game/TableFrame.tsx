@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
-import { useCurrentLocale } from '@/i18n/navigation';
+import { PreferencesButton } from '@/components/PreferencesButton';
 import { formatLatency, latencyTextClass } from '@/lib/utils/latency';
 
 export function TableFrame({
@@ -31,7 +31,6 @@ export function TableFrame({
   onDismissError?: () => void;
 }) {
   const t = useTranslations();
-  const locale = useCurrentLocale();
   const [copied, setCopied] = useState(false);
   const [tab, setTab] = useState<'table' | 'report'>('table');
   const viewToggleRef = useRef<HTMLButtonElement>(null);
@@ -39,7 +38,7 @@ export function TableFrame({
   async function invite() {
     try {
       await navigator.clipboard.writeText(
-        `${window.location.origin}/${locale}/room/${code}`,
+        `${window.location.origin}/room/${code}`,
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
@@ -67,6 +66,7 @@ export function TableFrame({
             {connected ? `● ${formatLatency(latency)}` : t('game.reconnecting')}
           </span>
           {headerAction?.(() => setTab('report'))}
+          <PreferencesButton />
         </div>
       </header>
       <div className="table-workspace" data-view={tab}>

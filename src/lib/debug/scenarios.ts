@@ -83,6 +83,7 @@ export function propose(state: GameState, discuss = true): GameState {
     team,
   });
   if (!discuss) return next;
+  if (next.phase === 'TeamAnnouncement') next = applyEvent(next, { type: 'START_DISCUSSION', by: state.players[state.leaderIndex]!.id });
   for (const by of next.discussion!.order) next = applyEvent(next, { type: 'END_SPEECH', by });
   return applyEvent(next, { type: 'FINALIZE_TEAM', by: state.players[state.leaderIndex]!.id, team });
 }
@@ -176,6 +177,7 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
   if (['announcement', 'discussion', 'finalizing', 'overdue'].includes(id)) {
     state = propose(state, false);
     if (id === 'announcement') return { state, viewerId: leader() };
+    state = applyEvent(state, { type: 'START_DISCUSSION', by: leader() });
     if (id === 'finalizing') {
       for (const by of state.discussion!.order) state = applyEvent(state, { type: 'END_SPEECH', by });
     } else if (id === 'overdue') {

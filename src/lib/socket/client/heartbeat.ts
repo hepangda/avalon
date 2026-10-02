@@ -4,6 +4,7 @@ import type { Ack } from '../types';
 export function createLatencyHeartbeat(
   send: (rtt: number | undefined) => Promise<Ack<unknown>>,
   publish: (latency: number | null) => void,
+  onAck?: (ack: Ack<unknown>) => void,
 ) {
   let lastRtt: number | undefined;
   let pending = false;
@@ -27,6 +28,7 @@ export function createLatencyHeartbeat(
         if (disposed || current !== generation) return;
         lastRtt = res.ok ? Math.round(performance.now() - sent) : undefined;
         publish(lastRtt ?? null);
+        onAck?.(res);
       } catch {
         if (disposed || current !== generation) return;
         lastRtt = undefined;

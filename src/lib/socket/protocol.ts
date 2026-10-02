@@ -1,6 +1,6 @@
 /**
- * WebSocket wire protocol shared by the browser client and the room Durable
- * Object. Replaces Socket.IO's event/ack machinery with a tiny JSON envelope.
+ * WebSocket wire protocol shared by the browser client and the room
+ * runtime. Replaces Socket.IO's event/ack machinery with a tiny JSON envelope.
  *
  * Three message shapes travel over a single native WebSocket per room:
  *  - `req`  client → server: an action expecting an ack, correlated by `id`.

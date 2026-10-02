@@ -5,8 +5,8 @@ import type { ClientEvent, ServerMessage, WireRequest } from '../protocol';
 
 /**
  * Per-room WebSocket connection replacing the old Socket.IO client. One native
- * WebSocket is opened to `/rooms/{code}/ws`, which the Worker routes to that
- * room's Durable Object. Requests are correlated to acks by an incrementing id;
+ * WebSocket is opened to `/rooms/{code}/ws`, which the Node server routes to that
+ * room's in-memory instance. Requests are correlated to acks by an incrementing id;
  * unsolicited server pushes are dispatched to the registered handler.
  */
 
@@ -55,14 +55,17 @@ class RoomConnection {
     this.ws = ws;
 
     ws.onopen = () => {
+      if (this.ws !== ws) return;
       this.reconnectAttempts = 0;
       this.handlers.onState?.('connected');
     };
-    ws.onmessage = (ev) => this.onMessage(ev.data);
+    ws.onmessage = (ev) => { if (this.ws === ws) this.onMessage(ev.data); };
     ws.onerror = () => {
       /* the close event fires next and drives reconnect */
     };
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      if (this.ws !== ws) return;
+      if (event.code === 4001) this.closedByUser = true;
       this.rejectAllPending();
       this.handlers.onState?.('disconnected');
       if (!this.closedByUser) this.scheduleReconnect();
@@ -155,6 +158,13 @@ export function connectRoom(code: string, handlers: RoomHandlers): RoomConnectio
 
 export function getConnection(): RoomConnection | null {
   return current;
+}
+
+/** End the authenticated connection when its account is no longer active. */
+export function disconnectRoom(): void {
+  current?.setHandlers({});
+  current?.close();
+  current = null;
 }
 
 /**

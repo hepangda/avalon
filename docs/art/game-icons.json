@@ -1,0 +1,55 @@
+{
+  "generator": "Built-in image_gen",
+  "revision": "original-component-reference-2026-10-02",
+  "reference": "User-provided photograph of the original printed component guide; interpreted and repainted, not an exact scan.",
+  "style": "Use case: stylized-concept. Asset type: one production-ready transparent gameplay icon for an Avalon board-game web app, square canvas, preferably 1024x1024. Image 1 is ONLY a motif reference: a low-resolution photograph of the original printed game's component guide. Repaint the requested single object cleanly at high resolution, restoring the pictured silhouette, colors and material rather than copying photo noise. Restrained hand-painted medieval board-game illustration, warm aged gold, sculpted painterly shading, crisp readable silhouette at 32 pixels. Front view, centered, object occupies approximately 82 percent of canvas with even transparent padding. TRUE TRANSPARENT background, preserve alpha; no opaque square, no background scene, no card rectangle, no typography, no Chinese labels, no letters, no numbers, no watermark, no multi-icon sheet, no added floor or cast shadow outside object.",
+  "backgroundRevision": "Use case: precise-object-edit. Keep the single foreground icon EXACTLY the same: identical shape, position, painterly colors, details and size. Change ONLY the background: replace EVERY grey/white checkerboard square and ALL white background artifacts outside the object with perfectly flat solid vivid green #00ff00, including empty gaps around and between parts. This is a chroma-key production asset. Background must be a single constant green with no checkerboard, no texture, no gradient, no shadow, no green tint or reflection on the foreground. No added letters or symbols. Preserve the original foreground, do not redesign it.",
+  "export": {
+    "size": [
+      256,
+      256
+    ],
+    "format": "WebP",
+    "quality": 90,
+    "alpha": "Green chroma key removed with soft matte and despill after background correction."
+  },
+  "icons": [
+    {
+      "slug": "crest",
+      "subject": "Repaint only the TEAM MARKER SHIELD at the upper-left of the reference. A tall medieval heater shield, squared shoulders tapering to a rounded pointed bottom, aged brass/gold rim, deep red upper field fading to very dark red lower tip. A clearly recognizable pale ivory stylized heraldic dragon, seen in profile with angular lifted wings and curling tail, decorates the red face. Keep the simple original red-and-ivory shield identity, not a fleur-de-lis. Remove the rectangular backing of the printed token; deliver just the shield.",
+      "file": "public/assets/game/icons/crest.webp"
+    },
+    {
+      "slug": "leader",
+      "subject": "Repaint only the LEADER MARKER CROWN at middle-left of the reference below the team shield. A simple squat warm gold medieval open crown with broad solid gold band, three clearly visible tall pointed tips capped by small round finials, central tip tallest, subtle warm crimson inner lining and a single small red central jewel. Painterly amber highlights and dark bronze shadows. No blue gemstone, no excessively ornate filigree, no purple velvet cap. Deliver just the crown without the dark square backing of the printed token.",
+      "file": "public/assets/game/icons/leader.webp"
+    },
+    {
+      "slug": "approve",
+      "subject": "Repaint only the APPROVE VOTE OBJECT on the pale card in the lower-right foreground of the reference. A single smooth pale ivory / cream WHITE STONE, slightly irregular round flattened pebble, subtle warm natural marbling and a gentle domed polished highlight, warm grey shaded lower edge. A substantial solid light stone easily distinguished at a glance from a black rejection stone. Front view like the original printed vote symbol. No emblem engraved on it, no sun rays, no border medal, no checkmark; no paper card or printed title.",
+      "file": "public/assets/game/icons/approve.webp"
+    },
+    {
+      "slug": "reject",
+      "subject": "Repaint only the REJECT VOTE OBJECT on the card just behind the white stone at the lower middle-right of the reference. A single smooth charcoal BLACK STONE, slightly irregular round flattened pebble, subtle natural marbling, gentle graphite highlight at top-left, very dark rounded lower edge. Give its contour a restrained grey rim highlight so the dark stone remains legible on dark UI. The object should still read predominantly black, not silver. Front view like the original printed vote symbol. No dagger, no emblem, no red X, no border medal; no paper card or printed title.",
+      "file": "public/assets/game/icons/reject.webp"
+    },
+    {
+      "slug": "mission-success",
+      "subject": "Repaint only the UPRIGHT SUCCESS CHALICE on the front mission card at the lower-left of the reference. A richly burnished golden medieval ceremonial goblet with broad open bowl, short decorative stem, broad oval foot, a vivid red oval jewel on the front of its bowl, and small blue and red heraldic medallions at the two sides linked by short gold curved arms. Symmetric iconic composition. The red jewel is centered, blue medallion left, red medallion right. Keep the original chalice recognizable and chunky enough for small UI display. Deliver the upright chalice alone, without the dark rectangular card, no starburst.",
+      "file": "public/assets/game/icons/mission-success.webp"
+    },
+    {
+      "slug": "mission-fail",
+      "subject": "Repaint only the INVERTED FAILURE CHALICE on the rear mission card at the lower-left of the reference. The original failure object is an upside-down golden ceremonial goblet, inverted from its successful state: broad oval FOOT AT THE TOP, short gold stem descends into a broad inverted bowl / open rim below, red jewel and small muted heraldic pendants belong to the same gold chalice design. Front view, vertically inverted cup, clearly visually distinct from an upright success chalice. Tarnished dark amber bronze and muted red, legible golden rim highlights, painterly shading. Deliver only this overturned chalice, no skull, no starburst, no card rectangle, no liquid or additional props.",
+      "file": "public/assets/game/icons/mission-fail.webp"
+    },
+    {
+      "slug": "lady",
+      "reference": "Separately supplied photograph of the original Lady of the Lake card.",
+      "prompt": "Use case: stylized-concept. Asset type: one square gameplay icon for the Lady of the Lake in an Avalon web board game. Image 1 is the user's original printed character reference; interpret and repaint this specific character faithfully as a clean hand-painted medieval fantasy illustration, not a scan. Subject: an ADULT woman with long loose golden-blonde hair, shown in a three-quarter back view from waist up, turning her head over her left shoulder to look toward the viewer, soft composed expression, recognizable original pose and face silhouette. White opaque draped fabric covers her chest and lower torso, leaving only shoulders and upper back visible, like the reference. Her lower torso emerges from a small self-contained cluster of cool teal lake ripples with two small water-lily leaves and a white water-lily flower, all integrated into a compact icon silhouette. Do not add a sword, crown, wings, jewelry, crescent moon frame or heraldic pedestal. Painterly brushed oil/tempera, restrained antique storybook palette: honey blonde hair, warm pale skin, ivory cloth, blue-green lake. Close framing with large readable face in upper third; centered icon occupies 85 percent of square canvas, entire hair and water motif inside with even padding, legible at 32-48px. Production chroma-key background: ALL canvas outside the character and compact lake motif must be perfectly solid flat vivid MAGENTA #ff00ff; no gradient, no checkerboard, no shadows outside silhouette, no magenta tint on subject. No full rectangular lake scene, no card border, no medallion, no text, no labels, no watermark. Prefer square 1024x1024.",
+      "file": "public/assets/game/icons/lady.webp",
+      "alpha": "Magenta chroma key removed with soft matte and despill."
+    }
+  ]
+}

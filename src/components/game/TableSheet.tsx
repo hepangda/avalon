@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useLayoutEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'use-intl';
 
@@ -19,11 +19,12 @@ export function TableSheet({
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const t = useTranslations();
-  useEffect(() => {
+  useLayoutEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
+    return () => { if (dialog.open) dialog.close(); };
   }, [open]);
   return createPortal(
     <dialog

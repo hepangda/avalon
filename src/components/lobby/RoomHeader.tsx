@@ -8,7 +8,6 @@ import { formatLatency, latencyDotClass, latencyTextClass } from '@/lib/utils/la
 
 interface RoomHeaderProps {
   code: string;
-  status: string;
   connected: boolean;
   /** This client's own latency in ms (null until first ping). */
   latency?: number | null;
@@ -16,7 +15,6 @@ interface RoomHeaderProps {
 
 export function RoomHeader({
   code,
-  status,
   connected,
   latency = null,
 }: RoomHeaderProps) {
@@ -46,8 +44,7 @@ export function RoomHeader({
             </span>
           ) : (
             t('common.reconnecting')
-          )}{' '}
-          · {status}
+          )}
         </p>
       </div>
       <Button variant="secondary" onClick={copyInvite}>

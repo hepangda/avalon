@@ -4,7 +4,7 @@ import { useTranslations } from 'use-intl';
 import { Link } from '@/i18n/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { LocaleSwitcher } from '@/components/LocaleSwitcher';
+import { PreferencesButton } from '@/components/PreferencesButton';
 import { ReplayTimeline } from '@/components/game/ReplayTimeline';
 import { GameIcon, RolePortrait } from '@/components/game/GameArt';
 import { TEAM_COLOR } from '@/lib/game/roleMeta';
@@ -92,7 +92,7 @@ export default function ReplayPage() {
     <main className="mx-auto max-w-2xl space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl text-gold">{t('replay.title')}</h1>
-        <LocaleSwitcher />
+        <PreferencesButton />
       </div>
 
       {/* Outcome banner */}

@@ -19,9 +19,11 @@
     "saveFailed": "Your browser could not save this note. You can still use it, but it may be lost after refreshing."
   },
   "common": {
+    "sessionReplaced": "This room is now open on another device. Reload to resume here.",
     "appName": "Avalon",
     "tagline": "The Resistance · gather your court and uncover the traitors",
     "loading": "Entering the hall…",
+    "forceRefresh": "Force refresh",
     "reconnecting": "Reconnecting…",
     "you": "you",
     "cancel": "Cancel",
@@ -37,7 +39,7 @@
     "roomCode": "4-digit room code",
     "join": "Join",
     "joinRoom": "Join a room",
-    "identityRequiredToJoin": "Sign in or set an anonymous identity before joining a room.",
+    "identityRequiredToJoin": "Sign in before joining a room.",
     "seatCount": "Number of seats",
     "rosterLabel": "Player roster",
     "seatPlaceholder": "Player {n}",
@@ -49,18 +51,12 @@
     "signInRequiredToCreate": "Sign in above before creating a room.",
     "signOut": "Sign out",
     "nameEmpty": "Name cannot be empty",
-    "identityTitle": "Your identity",
-    "accountIdentity": "Using your account identity",
-    "anonymousIdentity": "Anonymous identity: {name}",
-    "identityHint": "Sign in or join anonymously",
+    "identityTitle": "Your account and alias",
+    "identityHint": "Sign in to play",
     "signIn": "Sign in",
-    "anonymousNamePlaceholder": "Choose an anonymous name",
-    "useAnonymousName": "Use name",
-    "identitySaved": "Anonymous identity saved",
-    "accountAlias": "Game alias",
-    "saveAlias": "Save alias",
+    "accountAlias": "Alias",
+    "saveAlias": "Set alias",
     "savingAlias": "Saving…",
-    "aliasHint": "Up to 10 characters. Saved to your account and used whenever you sign in.",
     "aliasSaved": "Alias saved for future sign-ins",
     "aliasSaveFailed": "Could not save your alias. Please try again.",
     "authDenied": "Sign-in was cancelled or not authorized.",
@@ -71,7 +67,8 @@
     "errInvalidCode": "Enter a 4-digit room code",
     "errCreateFailed": "Failed to create room",
     "errUnreachable": "Could not reach the server",
-    "nameLimit": "ID: up to 10 characters"
+    "nameLimit": "ID: up to 10 characters",
+    "signInRequiredToPlay": "Sign in to play, spectate, or view replays."
   },
   "lobby": {
     "rejectionCount": "{count, plural, one {# rejection} other {# rejections}}",
@@ -93,6 +90,9 @@
     "spectators": "Spectators",
     "configuration": "Configuration",
     "goodEvil": "Blue {good} · Red {evil}",
+    "useRecommended": "Use recommended settings",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
     "applyRecommended": "Apply Recommended Setup ({count}p)",
     "optionalRoles": "Optional roles",
     "rolesInPlay": "Roles in play ({count}p)",
@@ -158,6 +158,8 @@
     "evil": "Red Team"
   },
   "seat": {
+    "addBot": "Add bot",
+    "bot": "Bot",
     "whoAreYou": "Who are you?",
     "youAreNow": "You are now {name}",
     "spectate": "Watch as a spectator",
@@ -186,7 +188,7 @@
     "shownMerlinOrMorgana": "Merlin or Morgana",
     "shownAlly": "Red teammates",
     "perceptionLabel": "{kind}:",
-    "understand": "I understand my fate",
+    "understand": "Got it",
     "entering": "Entering…"
   },
   "phase": {
@@ -198,7 +200,7 @@
     "LadyOfLake": "Lady of the Lake",
     "Assassination": "The Assassination",
     "GameOver": "Game Over",
-    "TeamAnnouncement": "Team announcement",
+    "TeamAnnouncement": "Team explanation",
     "Discussion": "Discussion",
     "TeamFinalizing": "Finalize team"
   },
@@ -208,8 +210,16 @@
     "reconnecting": "reconnecting",
     "confirmLeave": "Confirm leave & release seat",
     "functions": "Functions",
+    "enterFullscreen": "Enter fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "fullscreenUnavailable": "Fullscreen is unavailable or not allowed in this browser.",
+    "fullscreenFailed": "Could not switch fullscreen mode. Please try again.",
     "refereeTools": "Referee tools",
-    "leaveSeat": "Leave & release seat"
+    "leaveSeat": "Leave & release seat",
+    "cardArt": "Card art",
+    "cardArtClassic": "Classic",
+    "cardArtModern": "Modern",
+    "cardArtFurry": "Furry"
   },
   "mission": {
     "track": "Quest track",
@@ -325,6 +335,14 @@
     "waitingRestart": "Waiting for the host to start another game",
     "keepRoomHint": "Everyone returns together, keeping the room code, seats and settings."
   },
+  "preferences": {
+    "accountHint": "Saved to your account and synced across devices.",
+    "saving": "Saving…",
+    "saveFailed": "Could not save. Previous settings restored. Check your connection and try again.",
+
+    "title": "Settings",
+    "hint": "Saved automatically for this browser."
+  },
   "locale": {
     "switch": "Language",
     "zh": "中文",
@@ -407,7 +425,8 @@
     "teamAnnounced": "{leader} announced a draft team: {team}.",
     "teamFinalized": "{leader} finalized the team: {team}. Voting begins.",
     "speechBegins": "It is {player}’s turn to speak.",
-    "discussionFinished": "Everyone has spoken. {leader} may now revise the team."
+    "discussionFinished": "Everyone has spoken. {leader} may now revise the team.",
+    "rerollCardUsed": "{player} used a reroll card. All roles have been redealt; confirm your new identity."
   },
   "proposal": {
     "label": "Proposal",
@@ -678,8 +697,8 @@
         "description": "Table actions pause. Restore the connection in the controls to continue."
       },
       "announcement": {
-        "title": "Team announcement",
-        "description": "The draft is announced automatically. Speaking begins at the next seat after the leader and ends with the leader."
+        "title": "Team explanation",
+        "description": "The leader explains the draft and chooses the speaking direction, then speaks last."
       },
       "discussion": {
         "title": "Speaking turns",
@@ -697,29 +716,31 @@
   },
   "discussion": {
     "flow": "Proposal flow",
-    "start": "Start discussion",
     "finishSpeech": "Finish my turn",
     "finalize": "Confirm final team and vote",
-    "announced": "Draft team announced",
+    "announced": "Leader explains the team",
     "speaking": "{name} is speaking",
     "speechProgress": "Speaker {current} of {total}",
-    "order": "Seat order from the next seat after the leader; the leader speaks last",
+    "order": "Speak in the chosen direction, with the leader last",
     "finalizing": "Leader finalizes the team",
     "finalizingHint": "Keep or change the draft team, then confirm to begin voting.",
-    "rules": "Submitting the draft announces the team and starts speaking turns in seat order, beginning with the next seat after the leader. The leader speaks last, then revises the team and opens voting. Players end their own turn; referees may skip the current speaker.",
-    "timeRules": "Each speech has {seconds} seconds and the assassination discussion gets 1.5 times as long; other actions have 20 seconds. Timeouts only remind players and never submit actions or advance play.",
+    "rules": "Draft a team → leader explains and chooses clockwise (left) or counterclockwise (right) speaking order → discussion, with the leader last → finalize the team → vote.",
+    "timeRules": "Each discussion turn lasts {seconds} seconds. The explanation gets half that time, assassination discussion gets 1.5 times, and other actions get 20 seconds. Overtime is advisory; actions never advance automatically.",
     "steps": {
       "TeamBuilding": "Draft",
-      "TeamAnnouncement": "Announce",
-      "Discussion": "Announce & discuss",
+      "TeamAnnouncement": "Explain",
+      "Discussion": "Discuss",
       "TeamFinalizing": "Finalize",
       "Voting": "Vote"
-    }
+    },
+    "teamChanged": "The leader changed the team",
+    "startClockwise": "Speak clockwise",
+    "startCounterclockwise": "Speak counterclockwise"
   },
   "timing": {
     "role": "View role",
     "propose": "Draft",
-    "announce": "Announce",
+    "announce": "Explain team",
     "speak": "Speak",
     "finalize": "Finalize",
     "vote": "Vote",
@@ -729,5 +750,20 @@
     "seconds": "{time}s",
     "overdue": "+{time}s overdue",
     "paused": "Paused"
+  },
+  "reroll": {
+    "balance": "Reroll cards {count}/2",
+    "progress": "Next card: {count}/5 games",
+    "rules": "Earn 1 per 5 completed games and 1 on daily sign-in (resets at 04:00 UTC+8). Hold up to 2; rewards at capacity are not saved.",
+    "effect": "Spend 1 card to redeal the whole table. Your new role will be different. Everyone must confirm again.",
+    "use": "Use reroll card",
+    "using": "Redealing…",
+    "empty": "No reroll cards remaining",
+    "login": "Sign in to earn and use reroll cards",
+    "unavailable": "Available before confirming your role and the first team proposal only.",
+    "button": "Reroll cards ({count}/2)",
+    "confirm": "Confirm reroll",
+    "loginShort": "Sign in first",
+    "unavailableShort": "Reroll unavailable"
   }
 }

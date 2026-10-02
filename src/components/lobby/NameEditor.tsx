@@ -24,7 +24,6 @@ export function NameEditor({ code, currentName }: { code: string; currentName: s
     setSaving(false);
     if (res.ok && res.data) {
       useSessionStore.getState().setSession(code, { name: res.data.name });
-      useSessionStore.getState().setLastName(res.data.name);
       setEditing(false);
     } else if (res.error) {
       setError(res.error.message);

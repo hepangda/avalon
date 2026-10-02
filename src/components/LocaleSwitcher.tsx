@@ -1,39 +1,32 @@
 'use client';
 
-import { useTransition } from 'react';
-import { useLocale } from 'use-intl';
-import { usePathname, useRouter } from '@/i18n/navigation';
+import { useTranslations } from 'use-intl';
 import { routing } from '@/i18n/routing';
+import { useLocaleStore } from '@/lib/store/locale';
+import { useAccountPreferencesStore } from '@/lib/store/accountPreferences';
 import { cn } from '@/lib/utils/cn';
 
-/** Compact zh/en toggle that preserves the current path. */
-export function LocaleSwitcher() {
-  const locale = useLocale();
-  const pathname = usePathname();
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-
-  function switchTo(next: string) {
-    if (next === locale) return;
-    startTransition(() => {
-      // Replace keeps history clean; pathname is locale-agnostic here.
-      router.replace(pathname, { locale: next });
-    });
-  }
-
+/** Changes language in place without navigating or remounting the room. */
+export function LocaleSwitcher({ disabled = false }: { disabled?: boolean }) {
+  const t = useTranslations('locale');
+  const locale = useLocaleStore((state) => state.locale);
+  const save = useAccountPreferencesStore((state) => state.save);
   return (
-    <div className="flex items-center gap-1 rounded-full border border-gold/30 bg-ink/40 p-0.5">
-      {routing.locales.map((l) => (
+    <div role="group" aria-label={t('switch')} className="flex items-center gap-1 rounded-full border border-gold/30 bg-ink/40 p-0.5">
+      {routing.locales.map((value) => (
         <button
-          key={l}
-          disabled={pending}
-          onClick={() => switchTo(l)}
+          key={value}
+          type="button"
+          disabled={disabled}
+          lang={value}
+          aria-pressed={value === locale}
+          onClick={() => { if (value !== locale) void save({ locale: value }); }}
           className={cn(
-            'rounded-full px-2.5 py-1 text-xs transition-colors',
-            l === locale ? 'bg-gold text-ink' : 'text-parchment/60 hover:text-parchment',
+            'min-h-10 rounded-full px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold disabled:cursor-wait disabled:opacity-60',
+            value === locale ? 'bg-gold text-ink' : 'text-parchment/60 hover:text-parchment',
           )}
         >
-          {l === 'zh' ? '中文' : 'EN'}
+          {t(value)}
         </button>
       ))}
     </div>

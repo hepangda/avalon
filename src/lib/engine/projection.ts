@@ -48,7 +48,7 @@ export function projectStateForViewer(
       seat: p.seat,
       connected: p.connected,
       ...(showRole ? { role: p.role } : {}),
-      ...(showRole && p.role === 'LoyalServant' ? { roleVariant: variants[p.id] } : {}),
+      ...(showRole && variants[p.id] !== undefined ? { roleVariant: variants[p.id] } : {}),
       isLeader: p.id === leaderPlayerId,
       isLadyHolder: state.ladyEnabled && p.id === state.ladyHolderId,
     };
@@ -165,6 +165,7 @@ export function projectStateForViewer(
     selfRole,
     knownPlayers,
     roleAcks: [...state.roleAcks],
+    teamChanged: state.teamChanged,
     proposedTeam: state.proposedTeam ? [...state.proposedTeam] : null,
     votes,
     missionSubmissions:

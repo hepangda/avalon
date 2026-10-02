@@ -1,4 +1,8 @@
 import type { Role, Team } from '@/lib/engine';
+import { assetUrl } from '@/lib/assets';
+import { DEFAULT_CARD_ART_STYLE, type CardArtStyle } from '@/lib/preferences';
+import { CARD_DECKS } from './cardDecks';
+export { CARD_ART_STYLES, isCardArtStyle, type CardArtStyle } from '@/lib/preferences';
 
 /**
  * Non-text role presentation data. Display names and blurbs live in the i18n
@@ -27,15 +31,14 @@ const ROLE_ART_SLUG: Record<Role, string> = {
   Minion: 'minion',
 };
 
-export type CardArtStyle = 'classic' | 'furry';
-
-export function roleArt(role: Role, variant = 0, style: CardArtStyle = 'classic') {
-  const index = Number.isInteger(variant) && variant >= 0 ? variant % 4 : 0;
-  const slug = role === 'LoyalServant' ? `loyal-servant-${index + 1}` : ROLE_ART_SLUG[role];
-  const root = style === 'furry' ? '/assets/game/roles/furry' : '/assets/game/roles';
+export function roleArt(role: Role, variant = 0, style: CardArtStyle = DEFAULT_CARD_ART_STYLE) {
+  const index = Number.isInteger(variant) && variant >= 0 ? variant : 0;
+  const variants = CARD_DECKS[style].variants[role];
+  const slug = variants?.[index % variants.length] ?? ROLE_ART_SLUG[role];
+  const root = `/assets/game/roles/${style}`;
   return {
-    card: `${root}/cards/${slug}.webp`,
-    avatar: `${root}/avatars/${slug}.webp`,
+    card: assetUrl(`${root}/cards/${slug}.webp`),
+    avatar: assetUrl(`${root}/avatars/${slug}.webp`),
   };
 }
 

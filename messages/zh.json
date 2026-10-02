@@ -19,10 +19,12 @@
     "saveFailed": "浏览器无法保存备注。本次仍可使用，但刷新后可能丢失。"
   },
   "common": {
+    "sessionReplaced": "已在另一台设备继续游玩。刷新页面可切回此设备。",
     "appName": "阿瓦隆",
     "tagline": "开个房间，拉朋友来一局",
     "loading": "正在进入房间...",
-    "reconnecting": "正在重连...",
+    "forceRefresh": "强制刷新",
+    "reconnecting": "重连中",
     "you": "你",
     "cancel": "取消",
     "save": "保存",
@@ -37,7 +39,7 @@
     "roomCode": "4 位数字房间码",
     "join": "加入",
     "joinRoom": "加入房间",
-    "identityRequiredToJoin": "请先登录或设置匿名身份，再加入房间。",
+    "identityRequiredToJoin": "请先登录，再加入房间。",
     "seatCount": "座位人数",
     "rosterLabel": "玩家名册",
     "seatPlaceholder": "第 {n} 位玩家",
@@ -49,18 +51,12 @@
     "signInRequiredToCreate": "请先在上方登录，再创建房间。",
     "signOut": "退出登录",
     "nameEmpty": "名字不能为空",
-    "identityTitle": "你的身份",
-    "accountIdentity": "已使用账号身份",
-    "anonymousIdentity": "匿名身份：{name}",
-    "identityHint": "登录，或以匿名身份加入",
+    "identityTitle": "您的账号和别名",
+    "identityHint": "登录后开始游戏",
     "signIn": "账号登录",
-    "anonymousNamePlaceholder": "设置匿名昵称",
-    "useAnonymousName": "使用昵称",
-    "identitySaved": "匿名身份已保存",
-    "accountAlias": "游戏别名",
-    "saveAlias": "保存别名",
+    "accountAlias": "别名",
+    "saveAlias": "设置别名",
     "savingAlias": "正在保存…",
-    "aliasHint": "最多 10 个字。保存到当前账户，以后登录自动使用此名称。",
     "aliasSaved": "别名已保存，以后登录将自动使用",
     "aliasSaveFailed": "别名保存失败，请稍后重试。",
     "authDenied": "登录已取消或未获授权。",
@@ -71,7 +67,8 @@
     "errInvalidCode": "请输入 4 位数字房间码",
     "errCreateFailed": "房间创建失败，请再试一次",
     "errUnreachable": "连不上服务器，请稍后再试",
-    "nameLimit": "ID 最多 10 个字"
+    "nameLimit": "ID 最多 10 个字",
+    "signInRequiredToPlay": "请先登录，再参与游戏、观战或查看回放。"
   },
   "lobby": {
     "rejectionCount": "{count} 次",
@@ -93,6 +90,9 @@
     "spectators": "观战者",
     "configuration": "配置",
     "goodEvil": "蓝方 {good} · 红方 {evil}",
+    "useRecommended": "采用推荐配置",
+    "enabled": "已启用",
+    "disabled": "未启用",
     "applyRecommended": "应用推荐配置（{count} 人）",
     "optionalRoles": "可选角色",
     "rolesInPlay": "本局角色（{count} 人）",
@@ -158,6 +158,8 @@
     "evil": "红方"
   },
   "seat": {
+    "addBot": "添加机器人",
+    "bot": "机器人",
     "whoAreYou": "你是谁？",
     "youAreNow": "你现在是 {name}",
     "spectate": "以旁观者身份观战",
@@ -186,7 +188,7 @@
     "shownMerlinOrMorgana": "梅林或莫甘娜",
     "shownAlly": "红方同伴",
     "perceptionLabel": "{kind}：",
-    "understand": "我已知晓我的命运",
+    "understand": "我已知晓",
     "entering": "正在进入…"
   },
   "phase": {
@@ -198,7 +200,7 @@
     "LadyOfLake": "湖中仙女",
     "Assassination": "刺杀",
     "GameOver": "游戏结束",
-    "TeamAnnouncement": "队形公示",
+    "TeamAnnouncement": "陈述理由",
     "Discussion": "顺次发言",
     "TeamFinalizing": "队长定稿"
   },
@@ -208,8 +210,16 @@
     "reconnecting": "正在重连",
     "confirmLeave": "确认退出并解绑座位",
     "functions": "功能",
+    "enterFullscreen": "进入全屏",
+    "exitFullscreen": "退出全屏",
+    "fullscreenUnavailable": "当前浏览器不支持或未允许全屏。",
+    "fullscreenFailed": "全屏切换失败，请重试。",
     "refereeTools": "裁判功能",
-    "leaveSeat": "退出并离开座位"
+    "leaveSeat": "退出并离开座位",
+    "cardArt": "卡面风格",
+    "cardArtClassic": "经典",
+    "cardArtModern": "现代",
+    "cardArtFurry": "兽人"
   },
   "mission": {
     "track": "任务进度",
@@ -325,6 +335,14 @@
     "waitingRestart": "等待房主开启下一局",
     "keepRoomHint": "保留房间号、玩家座位和配置，全员一起返回准备页。"
   },
+  "preferences": {
+    "accountHint": "自动保存到账号，在不同设备登录后同步。",
+    "saving": "正在保存…",
+    "saveFailed": "保存失败，已恢复原设置。请检查网络后重新选择。",
+
+    "title": "设置",
+    "hint": "自动保存，仅影响当前浏览器中的显示。"
+  },
   "locale": {
     "switch": "语言",
     "zh": "中文",
@@ -407,7 +425,8 @@
     "teamAnnounced": "{leader} 公示拟定队形：{team}。",
     "teamFinalized": "{leader} 确认最终队形：{team}，开始投票。",
     "speechBegins": "轮到 {player} 发言。",
-    "discussionFinished": "全员发言完毕，由 {leader} 调整最终队形。"
+    "discussionFinished": "全员发言完毕，由 {leader} 调整最终队形。",
+    "rerollCardUsed": "{player} 使用了重随卡，全桌身份已重新发放，请重新确认"
   },
   "proposal": {
     "label": "提名",
@@ -678,8 +697,8 @@
         "description": "牌桌操作暂停；在连接设置中恢复连接后继续。"
       },
       "announcement": {
-        "title": "队形公示",
-        "description": "拟定队形已自动公示，从队长下一座开始发言，队长最后发言。"
+        "title": "陈述理由",
+        "description": "队长陈述组队理由，并选择左右发言方向，队长最后发言。"
       },
       "discussion": {
         "title": "顺次发言",
@@ -697,29 +716,31 @@
   },
   "discussion": {
     "flow": "本轮流程",
-    "start": "公示完毕，开始发言",
     "finishSpeech": "结束我的发言",
     "finalize": "确认最终队形，开始投票",
-    "announced": "拟定队形公示",
+    "announced": "队长陈述组队理由",
     "speaking": "{name} 正在发言",
     "speechProgress": "第 {current} / {total} 位发言",
-    "order": "从队长下一座开始，按座位顺序发言，队长最后发言",
+    "order": "按队长选择的方向依次发言，队长最后发言",
     "finalizing": "队长调整最终队形",
     "finalizingHint": "可保留或修改拟定队形，确认后全员投票。",
-    "rules": "每次组队固定为：队长提交拟定队形并自动公示 → 从队长下一座开始按座位顺次发言，队长最后发言 → 队长修改队形 → 投票。每位玩家自行结束发言，裁判可跳过当前玩家。",
-    "timeRules": "每人发言 {seconds} 秒，刺杀讨论时长为发言的 1.5 倍，其他操作 20 秒。超时仅提示，不自动结束发言、提交操作或跳过阶段。",
+    "rules": "拟定队伍 → 队长陈述理由并选择顺时针（左手边）或逆时针（右手边）开始发言 → 依次讨论，队长最后发言 → 最终定队 → 投票。每位玩家自行结束发言，裁判可跳过当前玩家。",
+    "timeRules": "每人讨论 {seconds} 秒，陈述理由时长为讨论的一半，刺杀讨论为 1.5 倍，其他操作 20 秒。超时仅提示，不自动结束发言、提交操作或跳过阶段。",
     "steps": {
       "TeamBuilding": "拟定",
-      "TeamAnnouncement": "公示",
-      "Discussion": "公示与发言",
+      "TeamAnnouncement": "陈述理由",
+      "Discussion": "讨论",
       "TeamFinalizing": "定稿",
       "Voting": "投票"
-    }
+    },
+    "teamChanged": "队长更换了队伍",
+    "startClockwise": "顺时针开始发言",
+    "startCounterclockwise": "逆时针开始发言"
   },
   "timing": {
     "role": "确认身份",
     "propose": "拟定队形",
-    "announce": "队形公示",
+    "announce": "陈述理由",
     "speak": "发言",
     "finalize": "修改队形",
     "vote": "投票",
@@ -729,5 +750,20 @@
     "seconds": "{time} 秒",
     "overdue": "超时 {time} 秒",
     "paused": "已暂停"
+  },
+  "reroll": {
+    "balance": "重随卡 {count}/2",
+    "progress": "下一张进度 {count}/5 局",
+    "rules": "完整参与每 5 局获得 1 张；每日上线获得 1 张（UTC+8 04:00 刷新）。最多 2 张，满额奖励不补发。",
+    "effect": "消耗 1 张，全桌重新发放身份。你的新身份必定与上次不同，所有人需要重新确认。",
+    "use": "使用重随卡",
+    "using": "重随中…",
+    "empty": "重随卡不足",
+    "login": "登录账号后可领取和使用重随卡",
+    "unavailable": "仅在确认身份前、首个组队提案提交前可用",
+    "button": "重随卡 ({count}/2)",
+    "confirm": "确认重随",
+    "loginShort": "请先登录",
+    "unavailableShort": "暂时无法重随"
   }
 }

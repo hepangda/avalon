@@ -3,9 +3,10 @@ import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts', 'worker/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}', 'server/**/*.test.ts'],
     environment: 'node',
   },
+  esbuild: { jsx: 'automatic' },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

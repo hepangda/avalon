@@ -1,0 +1,176 @@
+{
+  "generator": "Built-in image_gen",
+  "revision": "original-reference-redraw-2026-10-02",
+  "style": "Use case: stylized-concept. Asset type: one finished portrait illustration for the CLASSIC Avalon identity card deck. Repaint the supplied original printed board-game reference into clean high-resolution hand-painted fantasy art. Reference is visual guidance only. Faithfully preserve the original character's distinctive gender, appearance, costume, expression, silhouette, and close-up composition. Classic richly brushed oil/tempera fantasy board-game illustration, warm sculpted highlights, very deep shadows, subtle canvas grain, dramatic expressive features, restrained background. NOT photorealistic, NOT 3D, NOT anime, NOT a full-body scene, NOT an ornate movie poster. Vertical 2:3 canvas, preferably 1024x1536. Tight head-and-shoulders portrait, large face in upper-middle of card, head fills most of width, full head fits within canvas; lower 20 percent is naturally dark clothing/shadow for live UI captions. Full bleed rectangular painting, no printed black card border, no white margins, no text, no names, no typography, no logos, no watermark, no faction badge or corner emblem. Do not replicate scanned print damage.",
+  "export": {
+    "cardSize": [
+      1024,
+      1536
+    ],
+    "avatarSize": [
+      512,
+      512
+    ],
+    "format": "WebP",
+    "quality": 88,
+    "avatarMethod": "Face-focused square crops of the same generated paintings; crop coordinates refer to 1024 × 1536 source PNGs."
+  },
+  "roles": [
+    {
+      "slug": "merlin",
+      "subject": "Merlin: elderly deeply lined man with thick long silver-white beard, closed lowered eyes and furrowed brows, dark navy hood with a simple gold edge. He cups a glowing round BLUE CRYSTAL ORB in both hands just below his beard. Original close-up portrait and inward concentration. Cool deep blue background, warm golden skin, bright cyan glow under beard. Orb visible above bottom caption area. No staff.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/merlin.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/merlin.webp"
+    },
+    {
+      "slug": "percival",
+      "subject": "Percival: stern young adult male knight, straight chestnut bowl-cut fringe, piercing teal-blue eyes, short moustache and pointed goatee, a small scar on right cheek, broad dark raised collar and black cloak. Three-quarter shoulders and gaze directed at viewer. Cool teal-blue softly mottled background, warm amber lighting on face. Preserve very distinctive haircut and facial hair.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/percival.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/percival.webp"
+    },
+    {
+      "slug": "mordred",
+      "subject": "Mordred: pale sinister male sorcerer with pointed black hood, ashen almost white face, black branching markings around both eyes and across forehead, small oval luminous turquoise jewel centered on forehead, narrow blue eyes, black lips and a cold slight smile. Deep charcoal hood frames face, electric cool blue reflected light along left cheek, muted warm ochre background. No crown, no armor prince, no beard.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 256,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/mordred.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/mordred.webp"
+    },
+    {
+      "slug": "morgana",
+      "subject": "Morgana: regal adult woman, long fiery copper-red hair with a braided section, simple horizontal golden circlet with large central red ruby, tall ribbed golden collar, dark burgundy gown. Three-quarter view facing left, sidelong cunning gaze, strong lips, warm amber-gold skin lighting and burnt-orange background. Keep original red hair and gold circlet, not black-haired or purple sorceress.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/morgana.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/morgana.webp"
+    },
+    {
+      "slug": "assassin",
+      "subject": "Assassin: dangerous adult WOMAN with long dark brown flowing hair, sharply arched brows, luminous amber-gold eyes, intense direct stare. A single upright polished sword blade runs exactly up the vertical center foreground, dividing her face in half and hiding nose, both eyes visible on either side. Deep black cloak at shoulders, blazing warm ochre-gold lighting, dark brown background. Blade slender enough that both eyes and most cheeks are visible. No male assassin, no hood hiding the face, no extra weapons.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/assassin.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/assassin.webp"
+    },
+    {
+      "slug": "oberon",
+      "subject": "Oberon: feral male fae creature with exaggerated long pointed ears, swept-up flame-like stiff golden-brown hair, deeply furrowed forehead, bright amber skin, furious open mouth showing sharp teeth, bare shoulders. Original monster-like close-up portrait, blazing golden-yellow face against deep ochre-brown and black. Uncanny, intense and wild. No antlers, no forest king costume, no crown, no blood.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/oberon.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/oberon.webp"
+    },
+    {
+      "slug": "minion",
+      "subject": "Use ONLY the LEFT character in the supplied two-card reference. Minion of Mordred: hardened adult human male, short disheveled black hair, dark stubble and moustache, bruised/scarred cheek, hard suspicious stare, steel gorget and dark red cloth. Upright broadsword in foreground just LEFT of center hides one side of his face; exposed eye glares at viewer. Burnished bronze and amber lighting, deep brown-black background. One portrait only; do not make a diptych, do not include right-hand helmeted character.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 160,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/minion.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/minion.webp"
+    },
+    {
+      "slug": "loyal-servant-1",
+      "subject": "Use ONLY TOP LEFT character from reference sheet. Loyal Servant: adult male guard wearing rounded dark steel helmet with raised central ridge and chainmail hanging down both sides of face and neck, clean-shaven, strong profile turned to left, watchful eyes. Close shoulders in plain worn steel armor. Cool blue mottled background, warm realistic skin highlights, blue silver armor. No sword in front of face. ONE card only, not a sheet.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/loyal-servant-1.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/loyal-servant-1.webp"
+    },
+    {
+      "slug": "loyal-servant-2",
+      "subject": "Use ONLY TOP MIDDLE character from reference sheet. Loyal Servant: adult male knight, short dark beard and moustache, steel great bascinet with hinged visor lifted ABOVE forehead; helmet encloses cheeks and chin, distinct nose and alert eyes visible, three-quarter gaze left. Solid practical silver armor with subtle wear. Cool blue mottled background, warm skin, cold steel. ONE card only, not a sheet.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/loyal-servant-2.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/loyal-servant-2.webp"
+    },
+    {
+      "slug": "loyal-servant-3",
+      "subject": "Use ONLY TOP RIGHT character from reference sheet. Loyal Servant: rugged adult male knight WITHOUT helmet, tousled wavy dark brown hair down to ears, thick brows, broad angular jaw, short dark stubble, serious determined expression, head turned slightly left. Large polished silver pauldrons and breastplate. Cool blue mottled background, warm skin and cool silver armor. ONE card only, not a sheet.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/loyal-servant-3.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/loyal-servant-3.webp"
+    },
+    {
+      "slug": "loyal-servant-4",
+      "subject": "Use ONLY BOTTOM LEFT character from reference sheet. Loyal Servant: brave adult WOMAN knight wearing polished silver pointed medieval helmet with a narrow nasal ridge, face fully visible, steady direct gaze, dark hair tucked beneath helmet, clean steel gorget and rounded silver pauldrons, hint of blue cloak. Cool blue mottled background, warm skin and luminous silver armor. ONE card only, not a sheet.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/loyal-servant-4.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/loyal-servant-4.webp"
+    },
+    {
+      "slug": "loyal-servant-5",
+      "subject": "Use ONLY the BOTTOM MIDDLE character, the unhelmeted woman, from the supplied reference sheet. Fifth Loyal Servant of Arthur: poised adult noblewoman with auburn-brown hair neatly swept back and pinned up, a few loose wisps framing her temples, no helmet, no circlet. Three-quarter shoulders facing left, face turned back towards viewer, perceptive steady gaze, noble restrained expression. Dark deep blue medieval dress with simple modest neckline and delicate small gold chain. Close head-and-shoulders portrait, cool blue mottled backdrop, warm amber highlights on natural face, subtle cool blue rim light on cheek. Distinct from the armored woman knight. ONE portrait only, no grid, no text, no insignia.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/loyal-servant-5.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/loyal-servant-5.webp"
+    },
+    {
+      "slug": "minion-2",
+      "subject": "Use ONLY the RIGHT character in this two-card reference. Second Minion of Mordred: stern adult male soldier in a large riveted burnished bronze medieval helmet with the visor raised above the forehead. Helmet casts a deep shadow across his eyes, nose and firm mouth remain visible; cheeks enclosed in curved bronze plate, head in strong three-quarter profile facing LEFT. A small healed diagonal scar on visible cheek, plain dark burgundy cloak, bronze gorget and shoulder armor. Warm glowing bronze-gold highlights and dark copper-brown background. Keep the massive iconic helmet silhouette, no sword across face, no exposed hair. ONE portrait only, not a diptych, ignore the left-hand sword-bearing man.",
+      "avatarCrop": {
+        "x": 0,
+        "y": 128,
+        "width": 1024,
+        "height": 1024
+      },
+      "card": "public/assets/game/roles/classic/cards/minion-2.webp",
+      "avatar": "public/assets/game/roles/classic/avatars/minion-2.webp"
+    }
+  ]
+}

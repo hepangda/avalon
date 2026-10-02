@@ -53,11 +53,30 @@ export function HandArea({
     );
   const canStartDiscussion = game.phase === 'TeamAnnouncement' && game.players.some((p) => p.id === myPlayerId && p.isLeader);
   const canEndSpeech = game.phase === 'Discussion' && game.discussion?.order[game.discussion.speakerIndex] === myPlayerId;
-  if (canStartDiscussion || canEndSpeech)
+  if (canStartDiscussion)
+    return (
+      <>
+        <button type="button" className="table-action" disabled={disabled}
+          onClick={() => void run(() => actions.startDiscussion('clockwise'))}>
+          <svg className="discussion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+            <path d="M19 12H5m7-7-7 7 7 7" />
+          </svg>
+          <span>{t('discussion.startClockwise')}</span>
+        </button>
+        <button type="button" className="table-action" disabled={disabled}
+          onClick={() => void run(() => actions.startDiscussion('counterclockwise'))}>
+          <span>{t('discussion.startCounterclockwise')}</span>
+          <svg className="discussion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+            <path d="M5 12h14m-7-7 7 7-7 7" />
+          </svg>
+        </button>
+      </>
+    );
+  if (canEndSpeech)
     return (
       <button type="button" className="table-action" disabled={disabled}
-        onClick={() => void run(canStartDiscussion ? actions.startDiscussion : actions.endSpeech)}>
-        {t(canStartDiscussion ? 'discussion.start' : 'discussion.finishSpeech')}
+        onClick={() => void run(actions.endSpeech)}>
+        {t('discussion.finishSpeech')}
       </button>
     );
   if (canVote)

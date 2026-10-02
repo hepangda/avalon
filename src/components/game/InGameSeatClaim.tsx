@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { roomActions } from '@/lib/socket/client';
-import { useRoomStore } from '@/lib/store/room';
-import { useSessionStore } from '@/lib/store/session';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
+import { accountDisplayName } from '@/lib/auth/types';
 import type { ClientGameState } from '@/lib/engine';
 
 /**
@@ -17,21 +17,20 @@ export function InGameSeatClaim({ code, game }: { code: string; game: ClientGame
   const t = useTranslations();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const identityName = useSessionStore((state) => state.lastName);
-  const identityAvatarUrl = useSessionStore((state) => state.lastAvatarUrl);
+  const { user } = useAuthIdentity();
 
   const openSeats = game.players
     .filter((p) => p.claimed === false)
     .sort((a, b) => a.seat - b.seat);
-  if (openSeats.length === 0) return null;
+  if (!user || openSeats.length === 0) return null;
 
   async function claim(seatId: string) {
+    if (!user) return;
     setBusy(seatId);
     setError(null);
-    const res = await roomActions.claimSeat(seatId, identityName, identityAvatarUrl);
+    const res = await roomActions.claimSeat(seatId, accountDisplayName(user), user.picture);
     setBusy(null);
     if (res.ok && res.data) {
-      useRoomStore.getState().setMyPlayerId(res.data.playerId);
       const { useSessionStore } = await import('@/lib/store/session');
       useSessionStore.getState().setSession(code, {
         playerId: res.data.playerId,

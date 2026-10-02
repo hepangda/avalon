@@ -177,7 +177,6 @@ export function VoteRevealReel({
       clearTimeout(t2);
     };
     // Runs once per mount; the overlay remounts this on each new cue.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

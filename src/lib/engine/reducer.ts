@@ -1,3 +1,4 @@
+import { validRoleAssignment } from './roleWeights';
 import type {
   EngineContext,
   EngineError,
@@ -181,7 +182,7 @@ export function createGame(input: CreateGameInput): EngineResult {
 
   const state: GameState = {
     phase: 'Lobby',
-    flowVersion: 4,
+    flowVersion: 5,
     discussion: null,
     actionTimers: [],
     config,
@@ -216,13 +217,15 @@ export function createGame(input: CreateGameInput): EngineResult {
 // START_GAME → assign roles (seeded) → RoleReveal
 // ---------------------------------------------------------------------------
 
-function startGame(s: GameState, by: PlayerId, flowVersion: 1 | 2 | 3 | 4 = 4): EngineResult {
+function startGame(s: GameState, by: PlayerId, flowVersion: 1 | 2 | 3 | 4 | 5 = 5, assignedRoles?: Role[]): EngineResult {
   if (s.phase !== 'Lobby') return err('WRONG_PHASE', 'Game already started');
   // Host = seat 0 by convention (room layer enforces host identity too).
   if (s.players[0]?.id !== by) return err('NOT_HOST', 'Only the host can start');
 
   const rng = createRng(s.seed);
-  const shuffledRoles = rng.shuffle(s.config.roles);
+  // Consume the legacy shuffle to preserve the seeded leader stream and old replays.
+  const ordinaryRoles = rng.shuffle(s.config.roles);
+  const shuffledRoles = validRoleAssignment(s.config.roles, assignedRoles) ? assignedRoles : ordinaryRoles;
   if (shuffledRoles.length !== s.players.length) {
     return err('INVALID_ROLE_SET', 'Role count != player count at assignment');
   }
@@ -294,6 +297,36 @@ function logRoleKnowledge(s: GameState): void {
   }
 }
 
+function useRerollCard(s: GameState, by: PlayerId, roleRevision: number, ctx: EngineContext, assignedRoles?: Role[]): EngineResult {
+  const player = playerById(s, by);
+  if (!player) return err('UNKNOWN_PLAYER', 'Unknown player');
+  if (!canRerollOpening(s) || s.roleAcks.includes(by) || roleRevision !== (s.roleRevision ?? 0)) {
+    return err('WRONG_PHASE', 'Reroll is only available before confirming your current identity and the first proposal.');
+  }
+  // Sample the user's new role from the remaining role cards, then shuffle the
+  // rest of the table. No rejection loop, and no identifiable two-player swap.
+  const alternatives = s.config.roles.filter((role) => role !== player.role);
+  if (!alternatives.length) return err('INVALID_ROLE_SET', 'No different identity available');
+  const role = alternatives[Math.floor(ctx.rng.next() * alternatives.length)]!;
+  const remaining = [...s.config.roles];
+  remaining.splice(remaining.indexOf(role), 1);
+  const shuffled = ctx.rng.shuffle(remaining);
+  const next = clone(s);
+  const supplied = validRoleAssignment(s.config.roles, assignedRoles)
+    && assignedRoles[s.players.findIndex((p) => p.id === by)] !== player.role;
+  next.players = next.players.map((p, i) => ({
+    ...p, role: supplied ? assignedRoles[i]! : p.id === by ? role : shuffled.pop()!,
+  }));
+  next.assassinId = next.players.find((p) => p.role === 'Assassin')?.id ?? null;
+  next.roleAcks = [];
+  next.roleRevision = (s.roleRevision ?? 0) + 1;
+  next.phaseRevision = (s.phaseRevision ?? 0) + 1;
+  next.logs = next.logs.filter((log) => log.channel !== 'private' || (log.key !== 'yourRole' && !log.key.startsWith('perceive.')));
+  pushPublic(next, 'rerollCardUsed', { player: by });
+  logRoleKnowledge(next);
+  return ok(next);
+}
+
 function rerollOpening(
   s: GameState,
   event: Extract<GameEvent, { type: 'REROLL_LEADER' | 'REROLL_ROLES' }>,
@@ -316,7 +349,8 @@ function rerollOpening(
       seat: next.leaderIndex + 1,
     }, 'admin');
   } else {
-    const roles = ctx.rng.shuffle(next.config.roles);
+    const ordinaryRoles = ctx.rng.shuffle(next.config.roles);
+    const roles = validRoleAssignment(next.config.roles, event.assignedRoles) ? event.assignedRoles : ordinaryRoles;
     next.players = next.players.map((p, i) => ({ ...p, role: roles[i]! }));
     next.assassinId = next.players.find((p) => p.role === 'Assassin')?.id ?? null;
     next.roleAcks = [];
@@ -351,6 +385,7 @@ function proposeTeam(s: GameState, by: PlayerId, team: PlayerId[], admin = false
   }
 
   const next = clone(s);
+  next.teamChanged = final && !!s.proposedTeam?.some((id) => !team.includes(id));
   next.proposedTeam = [...team];
   next.openingClosed = true;
   next.votes = {};
@@ -358,14 +393,16 @@ function proposeTeam(s: GameState, by: PlayerId, team: PlayerId[], admin = false
   next.phase = final || s.flowVersion === 1 ? 'Voting' : 'TeamAnnouncement';
   if (s.flowVersion !== 1) pushPublic(next, final ? 'teamFinalized' : 'teamAnnounced', {
     leader: by, team: team.join(','),
+    ...(final ? { changed: s.proposedTeam?.some((id) => !team.includes(id)) ? 1 : 0 } : {}),
   });
   // Publish the draft and start the first speaking turn in the same state update.
-  if (!final && s.flowVersion !== 1 && s.flowVersion !== 2)
+  if (!final && s.flowVersion !== 1 && s.flowVersion !== 2 && s.flowVersion !== 5)
     return startDiscussion(next, leaderId(next));
   return ok(next);
 }
 
-function startDiscussion(s: GameState, by: PlayerId): EngineResult {
+function startDiscussion(s: GameState, by: PlayerId, direction: 'clockwise' | 'counterclockwise' = 'clockwise'): EngineResult {
+  if (direction !== 'clockwise' && direction !== 'counterclockwise') return err('INVALID_DIRECTION', 'Invalid speaking direction');
   if (s.phase !== 'TeamAnnouncement') return err('WRONG_PHASE', 'Not in TeamAnnouncement');
   if (by !== leaderId(s)) return err('NOT_LEADER', 'Only the leader may start discussion');
   const next = clone(s);
@@ -373,8 +410,11 @@ function startDiscussion(s: GameState, by: PlayerId): EngineResult {
   // Start with the next seat so the leader closes the discussion. Older logs
   // retain their original order when restored or replayed.
   const offset = s.flowVersion === 2 || s.flowVersion === 3 ? 0 : 1;
-  const start = seats.findIndex((p) => p.id === by) + offset;
-  next.discussion = { order: seats.map((_, i) => seats[(start + i) % seats.length]!.id), speakerIndex: 0 };
+  // Seats increase left-to-right along the bottom row: decreasing seats
+  // move clockwise, starting at the leader's left hand.
+  const step = s.flowVersion === 5 && direction === 'clockwise' ? -1 : 1;
+  const start = seats.findIndex((p) => p.id === by) + offset * step;
+  next.discussion = { order: seats.map((_, i) => seats[((start + i * step) % seats.length + seats.length) % seats.length]!.id), speakerIndex: 0 };
   next.phase = 'Discussion';
   pushPublic(next, 'speechBegins', { player: next.discussion.order[0]! });
   return ok(next);
@@ -666,6 +706,7 @@ function phaseCheckpoint(s: GameState): PhaseCheckpoint {
     leaderIndex: s.leaderIndex,
     rejectionCount: s.rejectionCount,
     proposedTeam: s.proposedTeam,
+    teamChanged: s.teamChanged,
     discussion: s.discussion ?? null,
     votes: s.votes,
     missionCards: s.missionCards,
@@ -786,9 +827,11 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
 function dispatch(state: GameState, event: GameEvent, ctx: EngineContext): EngineResult {
   switch (event.type) {
     case 'START_GAME':
-      return startGame(state, event.by, event.flowVersion);
+      return startGame(state, event.by, event.flowVersion, event.assignedRoles);
     case 'ACK_ROLE':
       return ackRole(state, event.by, event.roleRevision);
+    case 'USE_REROLL_CARD':
+      return useRerollCard(state, event.by, event.roleRevision, ctx, event.assignedRoles);
     case 'REROLL_LEADER':
     case 'REROLL_ROLES':
       return rerollOpening(state, event, ctx);
@@ -797,7 +840,7 @@ function dispatch(state: GameState, event: GameEvent, ctx: EngineContext): Engin
     case 'FINALIZE_TEAM':
       return proposeTeam(state, event.by, event.team, event.admin ?? false, true);
     case 'START_DISCUSSION':
-      return startDiscussion(state, event.by);
+      return startDiscussion(state, event.by, event.direction);
     case 'END_SPEECH':
       return endSpeech(state, event.by);
     case 'SKIP_SPEECH':

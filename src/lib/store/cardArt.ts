@@ -1,13 +1,25 @@
-import { create } from 'zustand';
-import type { CardArtStyle } from '@/lib/game/roleMeta';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { DEFAULT_CARD_ART_STYLE, isCardArtStyle, type CardArtStyle } from "@/lib/preferences";
 
 interface CardArtState {
   style: CardArtStyle;
-  setResource: (resource: unknown) => void;
+  setStyle: (style: CardArtStyle) => void;
 }
 
-// Only the current Flagship evaluation determines the art; never persist a decision.
-export const useCardArtStore = create<CardArtState>((set) => ({
-  style: 'classic',
-  setResource: (resource) => set({ style: resource === 'furry' ? 'furry' : 'classic' }),
-}));
+export const useCardArtStore = create<CardArtState>()(
+  persist(
+    (set) => ({
+      style: DEFAULT_CARD_ART_STYLE,
+      setStyle: (style) => set({ style }),
+    }),
+    {
+      name: "avalon-card-art",
+      partialize: ({ style }) => ({ style }),
+      merge: (stored, current) => {
+        const style = (stored as Partial<CardArtState> | null)?.style;
+        return { ...current, style: isCardArtStyle(style) ? style : current.style };
+      },
+    },
+  ),
+);

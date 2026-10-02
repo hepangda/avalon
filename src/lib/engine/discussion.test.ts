@@ -18,7 +18,7 @@ function ready(count = 5, speechSeconds?: number): GameState {
     players: Array.from({ length: count }, (_, i) => ({ id: `p${i}`, name: `P${i}` })),
   });
   if (!created.ok) throw new Error(created.error.message);
-  let state = step(created.state, { type: 'START_GAME', by: 'p0' });
+  let state = step(created.state, { type: 'START_GAME', by: 'p0', flowVersion: 4 });
   for (const p of state.players) state = step(state, { type: 'ACK_ROLE', by: p.id });
   return state;
 }
@@ -211,5 +211,77 @@ describe('advisory action timers', () => {
     expect(state.actionTimers).toEqual([expect.objectContaining({ playerId: 'p0', action: 'lady', startedAt: 4000, durationMs: 20_000 })]);
     const restored: GameState = JSON.parse(JSON.stringify(state));
     expect(projectStateForViewer(restored, 'spectator').actionTimers).toEqual(state.actionTimers);
+  });
+});
+
+describe('leader explanation and direction (v5)', () => {
+  function explaining(count = 5, seconds?: number) {
+    const state = ready(count, seconds);
+    state.flowVersion = 5;
+    state.leaderIndex = count - 1;
+    return step(state, {
+      type: 'PROPOSE_TEAM', by: leaderId(state),
+      team: state.players.slice(0, count >= 8 ? 3 : 2).map((p) => p.id),
+    }, 3000);
+  }
+
+  it.each([[undefined, 60_000], [90, 45_000], [45, 22_500]] as const)(
+    'gives the explanation half of a %s second discussion turn', (seconds, durationMs) => {
+      let state = explaining(5, seconds);
+      expect(state.phase).toBe('TeamAnnouncement');
+      expect(state.discussion).toBeNull();
+      expect(state.actionTimers).toEqual([{ playerId: leaderId(state), action: 'announce', startedAt: 3000, durationMs }]);
+      expect(projectStateForViewer(JSON.parse(JSON.stringify(state)), 'spectator').actionTimers).toEqual(state.actionTimers);
+      expect(reduce(state, { type: 'START_DISCUSSION', by: 'p0' }, { now: 4000, rng: createRng('x') }))
+        .toMatchObject({ ok: false, error: { code: 'NOT_LEADER' } });
+      for (const event of [
+        { type: 'CAST_VOTE', by: 'p0', value: 'approve' },
+        { type: 'END_SPEECH', by: leaderId(state) },
+        { type: 'FINALIZE_TEAM', by: leaderId(state), team: state.proposedTeam! },
+      ] satisfies GameEvent[]) expect(reduce(state, event, { now: 4000, rng: createRng('x') }).ok).toBe(false);
+      state = step(state, { type: 'SET_CONNECTED', by: leaderId(state), connected: false }, 999_000);
+      expect(state.phase).toBe('TeamAnnouncement');
+      state = step(state, { type: 'START_DISCUSSION', by: leaderId(state) }, 1_000_000);
+      expect(state.actionTimers?.[0]).toMatchObject({ action: 'speak', durationMs: durationMs * 2, startedAt: 1_000_000 });
+    },
+  );
+
+  it.each([5, 6, 7, 8, 9, 10])('speaks once per seat in either direction with %i players', (count) => {
+    for (const direction of ['clockwise', 'counterclockwise'] as const) {
+      let state = explaining(count);
+      state = step(state, { type: 'START_DISCUSSION', by: leaderId(state), direction });
+      const order = state.discussion!.order;
+      expect(order).toEqual(Array.from({ length: count }, (_, i) =>
+        `p${(count - 1 + (direction === 'clockwise' ? -1 : 1) * (i + 1) + count) % count}`));
+      expect(new Set(order).size).toBe(count);
+      expect(order.at(-1)).toBe(leaderId(state));
+      for (const by of order) state = step(state, { type: 'END_SPEECH', by });
+      expect(state.phase).toBe('TeamFinalizing');
+    }
+  });
+
+  it('rejects malformed directions without changing state', () => {
+    const state = explaining();
+    const before = structuredClone(state);
+    const result = reduce(state, { type: 'START_DISCUSSION', by: leaderId(state), direction: 'invalid' } as unknown as GameEvent,
+      { now: 4000, rng: createRng('x') });
+    expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_DIRECTION' } });
+    expect(state).toEqual(before);
+  });
+
+  it('only marks membership changes, preserves the notice on reconnect, and clears it on rewind', () => {
+    let state = explaining();
+    state = step(state, { type: 'START_DISCUSSION', by: leaderId(state), direction: 'counterclockwise' });
+    for (const by of state.discussion!.order) state = step(state, { type: 'END_SPEECH', by });
+    const reordered = step(state, { type: 'FINALIZE_TEAM', by: leaderId(state), team: [...state.proposedTeam!].reverse() });
+    expect(reordered.teamChanged).toBe(false);
+    state = step(state, { type: 'FINALIZE_TEAM', by: leaderId(state), team: ['p2', 'p3'] });
+    expect(state.teamChanged).toBe(true);
+    expect(projectStateForViewer(JSON.parse(JSON.stringify(state)), 'spectator').teamChanged).toBe(true);
+    state = step(state, { type: 'PREVIOUS_PHASE', actor: 'referee' });
+    expect(state.phase).toBe('TeamFinalizing');
+    expect(state.teamChanged).toBe(false);
+    state = step(state, { type: 'FINALIZE_TEAM', by: leaderId(state), team: state.proposedTeam! });
+    expect(state.teamChanged).toBe(false);
   });
 });

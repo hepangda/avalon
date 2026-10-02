@@ -154,8 +154,8 @@ export interface LogEntry {
  */
 export interface GameState {
   phase: GamePhase;
-  /** Replay rules: v1 has no discussion, v2 confirms announcements, v2–3 speak leader-first. */
-  flowVersion?: 1 | 2 | 3 | 4;
+  /** Replay rules: v1 has no discussion, v2 confirms announcements, v2–3 speak leader-first; v5 adds timed explanation and direction. */
+  flowVersion?: 1 | 2 | 3 | 4 | 5;
   discussion?: DiscussionState | null;
   actionTimers?: ActionTimer[];
   config: GameConfig;
@@ -167,6 +167,7 @@ export interface GameState {
   rejectionCount: number; // consecutive rejected proposals this round (0..5)
 
   proposedTeam: PlayerId[] | null;
+  teamChanged?: boolean;
   votes: Record<PlayerId, VoteValue>; // accumulating; empty between Voting phases
   /** Server-only: never projected to any client. */
   missionCards: Record<PlayerId, MissionCard>;
@@ -210,6 +211,7 @@ export type PhaseCheckpoint = Pick<
   | 'roundIndex'
   | 'leaderIndex'
   | 'rejectionCount'
+  | 'teamChanged'
   | 'proposedTeam'
   | 'discussion'
   | 'votes'
@@ -242,12 +244,13 @@ export interface VisibilityInfo {
 // ---------------------------------------------------------------------------
 
 export type GameEvent =
-  | { type: 'START_GAME'; by: PlayerId; flowVersion?: 1 | 2 | 3 | 4 }
+  | { type: 'START_GAME'; by: PlayerId; flowVersion?: 1 | 2 | 3 | 4 | 5; assignedRoles?: Role[] }
   | { type: 'ACK_ROLE'; by: PlayerId; roleRevision?: number }
   | { type: 'REROLL_LEADER'; actor: string }
-  | { type: 'REROLL_ROLES'; actor: string }
+  | { type: 'REROLL_ROLES'; actor: string; assignedRoles?: Role[] }
+  | { type: 'USE_REROLL_CARD'; by: PlayerId; roleRevision: number; assignedRoles?: Role[] }
   | { type: 'PROPOSE_TEAM'; by: PlayerId; team: PlayerId[]; admin?: boolean }
-  | { type: 'START_DISCUSSION'; by: PlayerId }
+  | { type: 'START_DISCUSSION'; by: PlayerId; direction?: 'clockwise' | 'counterclockwise' }
   | { type: 'END_SPEECH'; by: PlayerId }
   | { type: 'SKIP_SPEECH'; target: PlayerId; actor: string }
   | { type: 'SET_TIMERS_PAUSED'; paused: boolean; actor: string }
@@ -308,6 +311,7 @@ export type EngineErrorCode =
   | 'INVALID_PLAYER_COUNT'
   | 'INVALID_ROLE_SET'
   | 'WRONG_TEAM_SIZE'
+  | 'INVALID_DIRECTION'
   | 'INVALID_TEAM_MEMBER'
   | 'DUPLICATE_TEAM_MEMBER'
   | 'ALREADY_VOTED'
@@ -332,6 +336,7 @@ export type EngineResult =
 // ---------------------------------------------------------------------------
 
 export interface ClientPlayer {
+  isBot?: boolean;
   id: PlayerId;
   name: string;
   /** OAuth profile picture copied from room membership by the socket layer. */
@@ -425,6 +430,7 @@ export interface ClientGameState {
    *  overlay while the viewer's own id is absent from this list. */
   roleAcks: PlayerId[];
   proposedTeam: PlayerId[] | null;
+  teamChanged?: boolean;
   votes: ClientVote[] | null;
   /** Public submission markers only. Never includes the value of a mission card. */
   missionSubmissions: PlayerId[];

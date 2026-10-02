@@ -1,46 +1,44 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Outlet, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { I18nProvider } from './i18n/provider';
-import { isLocale, routing } from './i18n/routing';
+import { routing, stripLocalePrefix } from './i18n/routing';
 import HomePage from './pages/HomePage';
 import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
 import ReplayPage from './pages/ReplayPage';
 import { AuthIdentityProvider } from '@/lib/auth/useAuthIdentity';
-import { CardResourceSync } from '@/components/CardResourceSync';
+import { RequireAccount } from '@/components/auth/RequireAccount';
 
-const DebugGalleryPage = lazy(() => import('./pages/DebugGalleryPage'));
+const DebugGalleryPage = import.meta.env.DEV
+  ? lazy(() => import('./pages/DebugGalleryPage'))
+  : null;
 
-/**
- * Validates the `:locale` segment and provides i18n for everything under it.
- * An unknown locale falls back to the default (mirrors the old server-side
- * locale redirect + next-intl `notFound()`).
- */
-function LocaleLayout() {
-  const { locale } = useParams();
-  if (!isLocale(locale)) return <Navigate to={`/${routing.defaultLocale}`} replace />;
-  return (
-    <I18nProvider>
-      <Outlet />
-    </I18nProvider>
-  );
+/** Keep existing bookmarks and invitations working, including query and hash. */
+function LegacyLocaleRedirect() {
+  const { pathname, search, hash } = useLocation();
+  return <Navigate to={`${stripLocalePrefix(pathname)}${search}${hash}`} replace />;
 }
 
 export function App() {
   return (
-    <AuthIdentityProvider>
-      <CardResourceSync />
-      <Routes>
-        <Route path="/" element={<Navigate to={`/${routing.defaultLocale}`} replace />} />
-        <Route path="/:locale" element={<LocaleLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="debug/gallery" element={<Suspense fallback={<div className="p-6">Debug gallery…</div>}><DebugGalleryPage /></Suspense>} />
-          <Route path="room/:code" element={<LobbyPage />} />
-          <Route path="game/:code" element={<GamePage />} />
-          <Route path="replay/:gameId" element={<ReplayPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to={`/${routing.defaultLocale}`} replace />} />
-      </Routes>
-    </AuthIdentityProvider>
+    <I18nProvider>
+      <AuthIdentityProvider>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          {DebugGalleryPage && (
+            <Route path="/debug/gallery" element={<Suspense fallback={<div className="p-6">Debug gallery…</div>}><DebugGalleryPage /></Suspense>} />
+          )}
+          <Route element={<RequireAccount />}>
+            <Route path="/room/:code" element={<LobbyPage />} />
+            <Route path="/game/:code" element={<GamePage />} />
+            <Route path="/replay/:gameId" element={<ReplayPage />} />
+          </Route>
+          {routing.locales.map((locale) => (
+            <Route key={locale} path={`/${locale}/*`} element={<LegacyLocaleRedirect />} />
+          ))}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthIdentityProvider>
+    </I18nProvider>
   );
 }

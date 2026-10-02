@@ -1,5 +1,7 @@
 'use client';
 
+import type { ViewSnapshot } from '../socket/stateIntegrity';
+
 import { create } from 'zustand';
 import type { ClientGameState, Role, Team, VisibilityInfo } from '@/lib/engine';
 import type { PlayerId } from '@/lib/engine';
@@ -19,6 +21,10 @@ interface LadyResult {
 
 interface RoomState {
   conn: ConnStatus;
+  syncing: boolean;
+  recoveryRevision: number;
+  setSyncing: (syncing: boolean) => void;
+  applyView: (snapshot: ViewSnapshot, recovery: boolean) => void;
   /**
    * The room code the current snapshot/game/identity belongs to. The store is a
    * process-global singleton that survives client-side navigation, so this tags
@@ -56,6 +62,17 @@ interface RoomState {
 
 export const useRoomStore = create<RoomState>((set) => ({
   conn: 'connecting',
+  syncing: true,
+  recoveryRevision: 0,
+  setSyncing: (syncing) => set({ syncing }),
+  applyView: ({ view }, recovery) => set((state) => ({
+    roomCode: view.room.code, snapshot: view.room, game: view.game,
+    myPlayerId: view.playerId, isHost: view.isHost, isReferee: view.isReferee,
+    reveal: view.game?.selfRole ? { selfRole: view.game.selfRole, knownPlayers: view.game.knownPlayers } : null,
+    ladyResult: view.game?.privateLadyResult ?? null,
+    syncing: false,
+    recoveryRevision: state.recoveryRevision + (recovery ? 1 : 0),
+  })),
   roomCode: null,
   myPlayerId: null,
   isHost: false,

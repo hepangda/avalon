@@ -24,7 +24,7 @@ export function AssassinPanel({ game }: { game: ClientGameState }) {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <GameIcon name="reject" className="mx-auto h-12 w-12" />
+      <GameIcon name="assassinate" className="mx-auto h-12 w-12" />
       <h3 className="font-serif text-xl text-crimson">{t('assassin.title')}</h3>
       <p className="text-sm text-parchment/60">
         {isAssassin ? t('assassin.nameMerlin') : t('assassin.contemplating')}

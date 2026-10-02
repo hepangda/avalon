@@ -29,7 +29,6 @@ type RefereeTool =
 export function AdminPanel({ game }: { game: ClientGameState }) {
   const t = useTranslations();
   const authed = useRoomStore((state) => state.isReferee);
-  const setAuthed = useRoomStore((state) => state.setIsReferee);
   const [activeTool, setActiveTool] = useState<RefereeTool | null>(null);
   const [skipTarget, setSkipTarget] = useState<string | null>(null);
   const speakerId = game.phase === 'Discussion' ? game.discussion?.order[game.discussion.speakerIndex] : undefined;
@@ -140,7 +139,6 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
       if (res.ok) {
         setActiveTool(null);
       } else {
-        if (res.error?.code === 'NOT_ADMIN') setAuthed(false);
         setError(res.error?.message ?? t('admin.actionFailed'));
       }
     } catch (error) {
@@ -154,7 +152,6 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
   async function handleAuth() {
     await run(async () => {
       const res = await adminActions.auth();
-      if (res.ok && res.data?.ok) setAuthed(true);
       return { ...res, ok: res.ok && !!res.data?.ok };
     });
   }
@@ -162,7 +159,6 @@ export function AdminPanel({ game }: { game: ClientGameState }) {
   async function handleDisable() {
     await run(async () => {
       const res = await adminActions.close();
-      if (res.ok) setAuthed(false);
       return res;
     });
   }

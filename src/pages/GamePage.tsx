@@ -1,3 +1,5 @@
+import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { useParams } from 'react-router-dom';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
@@ -40,6 +42,7 @@ import type { Ack } from '@/lib/socket/types';
 
 export default function GamePage() {
   const code = useParams().code ?? '';
+  const { refresh } = useAuthIdentity();
   const router = useRouter();
   useRoomConnection(code);
   const {
@@ -52,14 +55,17 @@ export default function GamePage() {
     ladyResult,
     myPlayerId,
     selfLatency,
+    syncing,
+    recoveryRevision,
     notice,
   } = useRoomStore();
   const game = roomCode === code ? rawGame : null;
+  useEffect(() => { if (game?.phase === 'GameOver') void refresh(); }, [game?.gameId, game?.phase, refresh]);
   useEffect(() => {
     if (snapshot?.code === code && snapshot.status === 'lobby')
       router.replace(`/room/${code}`);
   }, [code, router, snapshot?.code, snapshot?.status]);
-  return <GameView code={code} game={game} isHost={isHost} conn={conn}
+  return <GameView key={`${code}-${recoveryRevision}`} code={code} game={game} isHost={isHost} conn={syncing && conn === 'connected' ? 'connecting' : conn}
     reveal={reveal} ladyResult={ladyResult} myPlayerId={myPlayerId}
     selfLatency={selfLatency} notice={notice}
     onDismissNotice={() => useRoomStore.getState().setNotice(null)} />;
@@ -101,7 +107,7 @@ export function GameView({
       : undefined,
   );
   useEffect(() => setNoteTarget(null), [notesKey, notesEnabled]);
-  const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.discussion?.speakerIndex}`;
+  const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.roleRevision}-${game?.discussion?.speakerIndex}`;
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
   const { presentation, reportGame, finish } = useTablePresentation(game);
@@ -113,7 +119,9 @@ export function GameView({
     return (
       <main className="table-screen items-center justify-center">
         <p role={notice?.type === 'join_error' ? 'alert' : 'status'}>
-          {notice?.type === 'join_error'
+          {notice?.type === 'session_replaced'
+            ? t('common.sessionReplaced')
+            : notice?.type === 'join_error'
             ? notice.message
             : t(
                 conn === 'disconnected'
@@ -395,8 +403,8 @@ export function GameView({
   else if (game.phase === 'Voting')
     board = (
       <>
-        <h2 className="table-phase-title" aria-live="polite">
-          {t(canVote ? 'table.voteQuestion' : 'table.waitingVotes')}
+        <h2 className={`table-phase-title${game.teamChanged ? ' is-team-changed' : ''}`} aria-live="polite">
+          {t(game.teamChanged ? 'discussion.teamChanged' : canVote ? 'table.voteQuestion' : 'table.waitingVotes')}
         </h2>
         {chips(team)}
       </>
@@ -456,9 +464,7 @@ export function GameView({
         </p>
       </>
     );
-  const proposalPhases = game.phase === 'TeamAnnouncement'
-    ? ['TeamBuilding', 'TeamAnnouncement', 'Discussion', 'TeamFinalizing', 'Voting'] as const
-    : ['TeamBuilding', 'Discussion', 'TeamFinalizing', 'Voting'] as const;
+  const proposalPhases = ['TeamBuilding', 'TeamAnnouncement', 'Discussion', 'TeamFinalizing', 'Voting'] as const;
   const showProposals = proposalPhases.some((phase) => phase === activePhase);
   const proposalGame = presentation?.kind === 'vote'
     ? { ...game, rejectionCount: presentation.record.proposalIndex }
@@ -481,6 +487,7 @@ export function GameView({
         : '';
   return (
     <>
+      <ReconnectOverlay active={conn !== 'connected' && notice?.type !== 'session_replaced' && notice?.type !== 'join_error'} />
       <TableFrame
         code={code}
         onOpenReport={() => setLogChannel('public')}
@@ -515,7 +522,7 @@ export function GameView({
         latency={selfLatency}
         error={
           action.error ??
-          (notice?.type === 'join_error' ? notice.message : null)
+          (notice?.type === 'session_replaced' ? t('common.sessionReplaced') : notice?.type === 'join_error' ? notice.message : null)
         }
         onDismissError={() => {
           action.clearError();
@@ -667,7 +674,7 @@ export function GameView({
       )}
       {needsRoleReveal && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-deep py-6">
-          <RoleReveal key={`${game.gameId}-${myPlayerId}-${game.roleRevision ?? 0}`} game={game} reveal={reveal} myPlayerId={myPlayerId} onAck={actions.ackRole} blocked={conn !== 'connected'}
+          <RoleReveal key={`${game.gameId}-${myPlayerId}-${game.roleRevision ?? 0}`} game={game} reveal={reveal} myPlayerId={myPlayerId} onAck={actions.ackRole} onReroll={actions.useRerollCard} blocked={conn !== 'connected'}
             timer={selfTimer && <ActionTimerBadge timer={selfTimer} now={now} />} />
         </div>
       )}

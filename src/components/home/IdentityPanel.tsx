@@ -1,12 +1,11 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MAX_NAME_LENGTH, sanitizeName } from '@/lib/game/displayName';
 import { Input } from '@/components/ui/Input';
-import type { AuthUser } from '@/lib/auth/useAuthIdentity';
+import { useAuthIdentity, type AuthUser } from '@/lib/auth/useAuthIdentity';
 import { accountDisplayName } from '@/lib/auth/types';
-import { useSessionStore } from '@/lib/store/session';
 
 interface IdentityPanelProps {
   user: AuthUser | null;
@@ -26,20 +25,19 @@ export function IdentityPanel({
   onSaveAlias,
 }: IdentityPanelProps) {
   const t = useTranslations();
-  const lastName = useSessionStore((state) => state.lastName);
-  const setLastName = useSessionStore((state) => state.setLastName);
-  const [draft, setDraft] = useState(user ? accountDisplayName(user) : lastName);
+  const { refresh } = useAuthIdentity();
+  useEffect(() => { if (user) void refresh(); }, [refresh, user?.id]);
+  const [draft, setDraft] = useState(user ? accountDisplayName(user) : '');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const inputId = useId();
 
   useEffect(() => {
-    setDraft(user ? accountDisplayName(user) : lastName);
-  }, [user?.id, user?.alias, user?.username, lastName]);
+    setDraft(user ? accountDisplayName(user) : '');
+  }, [user?.id, user?.alias, user?.username]);
 
   async function saveIdentity() {
-    if (saving || loading) return;
+    if (!user || saving || loading) return;
     const name = sanitizeName(draft);
     if (!name) {
       setSaved(false);
@@ -48,43 +46,28 @@ export function IdentityPanel({
     }
     setSaved(false);
     setError(null);
-    if (user) {
-      setSaving(true);
-      try {
-        await onSaveAlias(name);
-        setDraft(name);
-        setSaved(true);
-      } catch (error) {
-        setError(
-          t(
-            error instanceof Error && error.message === 'AUTH_REQUIRED'
-              ? 'home.authLoginRequired'
-              : 'home.aliasSaveFailed',
-          ),
-        );
-      } finally {
-        setSaving(false);
-      }
-    } else {
+    setSaving(true);
+    try {
+      await onSaveAlias(name);
       setDraft(name);
-      setLastName(name);
       setSaved(true);
+    } catch (error) {
+      setError(
+        t(
+          error instanceof Error && error.message === 'AUTH_REQUIRED'
+            ? 'home.authLoginRequired'
+            : 'home.aliasSaveFailed',
+        ),
+      );
+    } finally {
+      setSaving(false);
     }
   }
 
   return (
     <Card className="space-y-3 p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-serif text-sm font-semibold text-gold">{t('home.identityTitle')}</p>
-          <p className="truncate text-xs text-parchment/45">
-            {user
-              ? t('home.accountIdentity')
-              : lastName
-                ? t('home.anonymousIdentity', { name: lastName })
-                : t('home.identityHint')}
-          </p>
-        </div>
+        <p className="min-w-0 font-serif text-sm font-semibold text-gold">{t('home.identityTitle')}</p>
 
         {user ? (
           <div className="flex min-w-0 items-center gap-2">
@@ -124,48 +107,38 @@ export function IdentityPanel({
         )}
       </div>
 
-      <form
-        className="space-y-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void saveIdentity();
-        }}
-      >
-        {user && (
-          <label htmlFor={inputId} className="text-xs text-parchment/70">
-            {t('home.accountAlias')}
-          </label>
-        )}
-        <div className="flex gap-2">
-          <Input
-            id={inputId}
-            value={draft}
-            disabled={saving || loading}
-            aria-label={t(user ? 'home.accountAlias' : 'home.anonymousNamePlaceholder')}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              setSaved(false);
-              setError(null);
-            }}
-            placeholder={t(user ? 'home.accountAlias' : 'home.anonymousNamePlaceholder')}
-            maxLength={MAX_NAME_LENGTH}
-            autoComplete="nickname"
-            className="h-10 min-w-0"
-          />
-          <Button
-            type="submit"
-            variant="secondary"
-            className="h-10 shrink-0 px-4 text-xs"
-            disabled={saving || loading}
-          >
-            {t(saving ? 'home.savingAlias' : user ? 'home.saveAlias' : 'home.useAnonymousName')}
-          </Button>
-        </div>
-        {user && <p className="text-xs text-parchment/45">{t('home.aliasHint')}</p>}
-      </form>
-
-      {!user && !lastName.trim() && (
-        <p className="text-xs text-parchment/45">{t('home.nameLimit')}</p>
+      {user && (
+        <form
+          className="space-y-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void saveIdentity();
+          }}
+        >
+          <div className="flex gap-2">
+            <Input
+              value={draft}
+              disabled={saving || loading}
+              aria-label={t('home.accountAlias')}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setSaved(false);
+                setError(null);
+              }}
+              maxLength={MAX_NAME_LENGTH}
+              autoComplete="nickname"
+              className="h-10 min-w-0"
+            />
+            <Button
+              type="submit"
+              variant="secondary"
+              className="h-10 shrink-0 px-4 text-xs"
+              disabled={saving || loading}
+            >
+              {t(saving ? 'home.savingAlias' : 'home.saveAlias')}
+            </Button>
+          </div>
+        </form>
       )}
 
       {authError && <p className="text-xs text-crimson">{authError}</p>}
@@ -176,7 +149,7 @@ export function IdentityPanel({
       )}
       {saved && (
         <p role="status" className="text-xs text-emerald-300/75">
-          {t(user ? 'home.aliasSaved' : 'home.identitySaved')}
+          {t('home.aliasSaved')}
         </p>
       )}
     </Card>

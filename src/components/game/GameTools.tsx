@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import type { ClientGameState } from '@/lib/engine';
 import { FunctionsPanel } from './FunctionsPanel';
+import { FullscreenControl } from './FullscreenControl';
 
 export function GameTools({
   game,
@@ -72,6 +73,9 @@ export function GameTools({
                   >
                     ✕
                   </button>
+                </div>
+                <div className="shrink-0 px-4 pt-3">
+                  <FullscreenControl />
                 </div>
                 {notesControl && <div className="shrink-0 px-4 pt-3">{notesControl}</div>}
                 {onClearNotes && (

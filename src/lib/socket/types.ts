@@ -1,3 +1,4 @@
+import type { HeartbeatState, ViewSnapshot } from './stateIntegrity';
 import type {
   ClientGameState,
   GameOptions,
@@ -14,6 +15,8 @@ import type { RoleNotesDocument, RoleNotesSyncRequest } from '@/lib/game/roleNot
  * GameOptions plus room policies (spectators, mid-join, max players).
  */
 export interface RoomConfig {
+  /** Follow player-count recommendations and default rules; absent in legacy rooms. */
+  useRecommended?: boolean;
   maxPlayers: number;
   allowSpectators: boolean;
   allowMidJoin: boolean;
@@ -26,6 +29,7 @@ export type RoomStatus = 'lobby' | 'in_game' | 'finished';
 
 /** A lobby/seated member as tracked in the room (pre-game and during game). */
 export interface RoomMember {
+  isBot?: boolean;
   id: PlayerId;
   name: string;
   /** OAuth profile picture when this seat belongs to an authenticated user. */
@@ -103,31 +107,34 @@ export interface ClientToServerEvents {
   /** Private, seat-authenticated notes; never broadcast or included in replay. */
   'notes:sync': (p: RoleNotesSyncRequest, ack: (r: Ack<RoleNotesDocument>) => void) => void;
   'room:join': (
-    p: { code: string; playerId?: PlayerId; playerToken?: string; hostToken?: string },
-    ack: (r: Ack<{ playerId?: PlayerId; isHost: boolean }>) => void,
+    p: { code: string; playerId?: PlayerId; playerToken?: string; hostToken?: string; syncVersion?: 1 },
+    ack: (r: Ack<{ playerId?: PlayerId; playerToken?: string; isHost: boolean }>) => void,
   ) => void;
+  'room:resync': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:leave': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:config': (p: { config: RoomConfig }, ack: (r: Ack) => void) => void;
   'room:rename': (p: { name: string }, ack: (r: Ack<{ name: string }>) => void) => void;
   'room:kick': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
   'room:transferHost': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
+  'room:addBot': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:start': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:restart': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:removeSeat': (p: { seatId: PlayerId }, ack: (r: Ack) => void) => void;
-  /** Claim a roster seat by its player id (must be unclaimed). Switches seats
-   *  if the caller already holds one. */
+  /** Omit seatId to sit in the lobby, allocating a seat up to the 10-player limit.
+   * During a game, an existing empty seat must be selected explicitly. */
   'room:claimSeat': (
-    p: { seatId: PlayerId; name?: string; avatarUrl?: string },
+    p: { seatId?: PlayerId; name?: string; avatarUrl?: string },
     ack: (r: Ack<{ playerId: PlayerId; playerToken: string }>) => void,
   ) => void;
   /** Release the caller's current seat (becomes a spectator / unseated). */
   'room:releaseSeat': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   /** Host edits the roster (lobby only): the full ordered list of seat names. */
   'room:setRoster': (p: { names: string[] }, ack: (r: Ack) => void) => void;
+  'game:useRerollCard': (p: { roleRevision: number }, ack: (r: Ack) => void) => void;
   'game:ackRole': (p: { roleRevision?: number }, ack: (r: Ack) => void) => void;
   'game:proposeTeam': (p: { team: PlayerId[] }, ack: (r: Ack) => void) => void;
   'game:finalizeTeam': (p: { team: PlayerId[] }, ack: (r: Ack) => void) => void;
-  'game:startDiscussion': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'game:startDiscussion': (p: { direction?: 'clockwise' | 'counterclockwise' }, ack: (r: Ack) => void) => void;
   'game:endSpeech': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'game:vote': (p: { value: VoteValue }, ack: (r: Ack) => void) => void;
   'game:missionCard': (p: { card: MissionCard }, ack: (r: Ack) => void) => void;
@@ -139,7 +146,7 @@ export interface ClientToServerEvents {
    * and reports the previous measurement back so the server can share each
    * player's self-measured latency with the rest of the room.
    */
-  'net:ping': (p: { rtt?: number }, ack: (r: Ack) => void) => void;
+  'net:ping': (p: { rtt?: number }, ack: (r: Ack<HeartbeatState>) => void) => void;
   // -------------------------------------------------------------------------
   // Referee (admin) actions. Authorized per-socket — anyone may enable the
   // referee panel; there is no password. The server performs every "act as
@@ -172,6 +179,7 @@ export interface ClientToServerEvents {
 
 /** Events the server emits. */
 export interface ServerToClientEvents {
+  'view:sync': (snapshot: ViewSnapshot) => void;
   'net:latency': (update: PlayerLatency) => void;
   'state:sync': (state: ClientGameState) => void;
   'room:snapshot': (snapshot: RoomSnapshot) => void;
@@ -191,5 +199,4 @@ export interface SocketData {
   isAdmin?: boolean;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface InterServerEvents {}

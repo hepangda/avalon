@@ -115,6 +115,7 @@ export function proposeForVote(state: GameState, event: Extract<GameEvent, { typ
     state = result.state;
   };
   step(event);
+  if (state.phase === 'TeamAnnouncement') step({ type: 'START_DISCUSSION', by: event.by });
   for (const by of state.discussion!.order) step({ type: 'END_SPEECH', by });
   step({ type: 'FINALIZE_TEAM', by: event.by, team: event.team });
   return state;

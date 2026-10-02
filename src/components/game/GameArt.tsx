@@ -1,16 +1,18 @@
 import type { ImgHTMLAttributes } from 'react';
+import { assetUrl } from '@/lib/assets';
 import type { Role } from '@/lib/engine';
 import { roleArt } from '@/lib/game/roleMeta';
 import { useCardArtStore } from '@/lib/store/cardArt';
 import { cn } from '@/lib/utils/cn';
 
 export type GameIconName =
-  'crest' | 'approve' | 'reject' | 'missionSuccess' | 'missionFail' | 'lady' | 'leader';
+  'crest' | 'approve' | 'reject' | 'missionSuccess' | 'missionFail' | 'lady' | 'leader' | 'assassinate';
 
 const GAME_ICON_SRC: Record<GameIconName, string> = {
   crest: '/assets/game/icons/crest.webp',
   approve: '/assets/game/icons/approve.webp',
   reject: '/assets/game/icons/reject.webp',
+  assassinate: '/assets/game/icons/assassinate.webp',
   missionSuccess: '/assets/game/icons/mission-success.webp',
   missionFail: '/assets/game/icons/mission-fail.webp',
   lady: '/assets/game/icons/lady.webp',
@@ -28,7 +30,7 @@ export function GameIcon({
 }: ArtProps & { name: GameIconName }) {
   return (
     <img
-      src={GAME_ICON_SRC[name]}
+      src={assetUrl(GAME_ICON_SRC[name])}
       alt={alt}
       aria-hidden={alt ? undefined : true}
       draggable={false}

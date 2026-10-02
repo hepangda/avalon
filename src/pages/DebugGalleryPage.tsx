@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslations } from "use-intl";
 import { Link } from "@/i18n/navigation";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { PreferencesButton } from "@/components/PreferencesButton";
 import { GameView } from "./GamePage";
 import { useRoleText } from "@/lib/game/useRoleText";
 import {
@@ -169,11 +169,12 @@ function GallerySession({
     }
   }
   const actions: typeof gameActions = {
+    useRerollCard: (roleRevision) => dispatch({ type: "USE_REROLL_CARD", by: viewerId, roleRevision }),
     ackRole: (roleRevision = 0) => dispatch({ type: "ACK_ROLE", by: viewerId, roleRevision }),
     proposeTeam: (team) =>
       dispatch({ type: "PROPOSE_TEAM", by: viewerId, team }),
     finalizeTeam: (team) => dispatch({ type: 'FINALIZE_TEAM', by: viewerId, team }),
-    startDiscussion: () => dispatch({ type: 'START_DISCUSSION', by: viewerId }),
+    startDiscussion: (direction) => dispatch({ type: 'START_DISCUSSION', by: viewerId, direction }),
     endSpeech: () => dispatch({ type: 'END_SPEECH', by: viewerId }),
     vote: (value) => dispatch({ type: "CAST_VOTE", by: viewerId, value }),
     missionCard: (card) =>
@@ -284,7 +285,7 @@ function GallerySession({
         <header className="debug-heading">
           <div>
             <Link href="/">← AVALON</Link>
-            <LocaleSwitcher />
+            <PreferencesButton />
           </div>
           <h1>Debug gallery</h1>
           <p>{t("debug.subtitle")}</p>

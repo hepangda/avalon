@@ -9,9 +9,9 @@ import { persist } from 'zustand/middleware';
  * same seat after a refresh or network drop. Keyed by room code.
  *
  * - `playerId` is the claimed seat's id (absent until the player claims a seat).
- * - `playerToken` proves ownership of that seat during reconnect.
- * - `hostToken` is the opaque owner token (present only in the creator's
- *   browser); whoever holds it is the room host.
+ * - `playerToken` supports reconnecting to legacy seats without account bindings.
+ * - `hostToken` supports legacy room ownership; current rooms use the account.
+ * A valid account session is always required in addition to these tokens.
  */
 interface SessionEntry {
   playerId?: string;
@@ -22,29 +22,21 @@ interface SessionEntry {
 
 interface SessionState {
   sessions: Record<string, SessionEntry>; // room code → entry
-  lastName: string;
-  lastAvatarUrl?: string;
   setSession: (code: string, entry: Partial<SessionEntry>) => void;
   getSession: (code: string) => SessionEntry | undefined;
   clearSession: (code: string) => void;
-  setLastName: (name: string) => void;
-  setAccountIdentity: (name: string, avatarUrl?: string) => void;
-  clearAccountAvatar: () => void;
 }
 
 export const useSessionStore = create<SessionState>()(
   persist(
     (set, get) => ({
       sessions: {},
-      lastName: '',
-      lastAvatarUrl: undefined,
       setSession: (code, entry) =>
         set((s) => {
           const normalized = entry.name === undefined ? entry : { ...entry, name: sanitizeName(entry.name) };
           const merged = { ...s.sessions[code], ...normalized };
           return {
             sessions: { ...s.sessions, [code]: merged },
-            lastName: normalized.name || s.lastName,
           };
         }),
       getSession: (code) => get().sessions[code],
@@ -54,11 +46,17 @@ export const useSessionStore = create<SessionState>()(
           delete next[code];
           return { sessions: next };
         }),
-      // Choosing an anonymous name must not reuse a previous account avatar.
-      setLastName: (name) => set({ lastName: sanitizeName(name), lastAvatarUrl: undefined }),
-      setAccountIdentity: (name, avatarUrl) => set({ lastName: sanitizeName(name), lastAvatarUrl: avatarUrl }),
-      clearAccountAvatar: () => set({ lastAvatarUrl: undefined }),
     }),
-    { name: 'avalon-session' },
+    {
+      name: 'avalon-session',
+      version: 1,
+      // Keep reconnect tokens, but permanently discard the old local identity.
+      migrate: (stored) => ({ sessions: (stored as Partial<SessionState> | null)?.sessions ?? {} }),
+      partialize: ({ sessions }) => ({ sessions }),
+      merge: (stored, current) => ({
+        ...current,
+        sessions: (stored as Partial<SessionState> | null)?.sessions ?? {},
+      }),
+    },
   ),
 );

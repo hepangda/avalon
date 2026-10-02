@@ -1,0 +1,67 @@
+{
+  "generator": "Built-in image_gen",
+  "avatarPrompt": "Use case: identity-preserve. Create the matching square avatar version of this exact Avalon character card. Preserve precisely the same person, facial identity, age, hair, beard, eyes, costume colors, painterly rendering and lighting. Reframe as a tight head-and-shoulders portrait, head centered with face large and readable at 40 pixels, entire head inside the central 80 percent so it can be circularly masked by the interface. Use the same atmospheric scene as soft background. Fill a 1:1 square, 1024x1024. Remove the rectangular gold card frame; no circular medallion, no border, no text, no letters, no watermark. This is the paired avatar of the card, not a different character.",
+  "newCharacterReference": "For loyal-servant-2 and loyal-servant-4, the generated Merlin card is a style and card-frame reference only: replace Merlin with the described entirely different character. Do not keep Merlin's beard, hood, magic or facial features. The revised loyal-servant-3 uses loyal-servant-1 and Percival as painting-style, palette, lighting and character-scale references; its revisionPrompt supersedes the shared style prompt.",
+  "style": "Use case: stylized-concept. Asset type: a finished vertical identity playing-card illustration for an Arthurian Avalon game, portrait aspect ratio 2:3, 1024x1536. Repaint and expand the reference medallion into a complete full-bleed rectangular card scene; preserve the recognizable character, face, hair and costume identity but remove the circular medallion. Style: sophisticated dark fantasy oil painting, finely painted face, rich fabric and aged metal, restrained antique gold detail, luminous atmospheric depth, cinematic chiaroscuro, cohesive premium board-game art. Composition: a single centered character visible from head to knees, entire head and props comfortably inside frame, face centered around 26 percent of image height and large enough for a companion avatar. Scene fills all edges, fine understated engraved rectangular gold frame inset 2 percent, not a circular frame. Lower quarter is quieter shadowed cloak/environment for live interface typography; still painted scene, not a blank panel. No text, no letters, no numbers, no watermark, no game UI, no labels, no pasted medallion. ",
+  "roles": [
+    {
+      "slug": "merlin",
+      "ref": "merlin",
+      "subject": "Merlin, wise elderly man with a long silver beard and deep blue gold-embroidered hooded robes, holding a luminous blue crystal staff in a moonlit ruined observatory, subtle celestial charts, distant Avalon spires; sapphire and midnight blue, warm gold candle accents."
+    },
+    {
+      "slug": "percival",
+      "ref": "percival-v3",
+      "subject": "Percival, intense young adult male knight with neat straight brown bowl-cut fringe, bright teal eyes, short moustache and goatee, black high-collared armor and engraved silver details, a gold star brooch. Keep this specific recognizable hairstyle and facial hair. He stands holding his sheathed sword in a royal blue vaulted hall with a distant celestial window; steel blue, muted teal and antique gold, vigilant and heroic."
+    },
+    {
+      "slug": "loyal-servant-1",
+      "ref": "loyal-servant",
+      "subject": "Loyal Servant of Arthur, warm handsome adult male knight with tousled brown hair and short beard, chainmail and royal blue cloak with gold fleur-de-lis brooch, one hand resting on an upright sword, castle courtyard at dawn; blue and muted golden light, steadfast and noble."
+    },
+    {
+      "slug": "morgana",
+      "ref": "morgana",
+      "subject": "Morgana, pale regal sorceress with long flowing black curls and a gold crescent diadem set with a ruby, burgundy and black velvet high-collared gown. Purple magic curls from one raised hand, midnight castle and crescent moon behind her, wine red and restrained violet with antique gold, cunning elegance."
+    },
+    {
+      "slug": "assassin",
+      "ref": "assassin",
+      "subject": "Assassin, rugged adult male in a black hood with subtle gold embroidery, scarred severe face partly lit and visible, black leather armor and muted crimson cloak, holding a single elegant dagger low by his side, dim castle passage with red torchlight, charcoal and deep crimson, quiet menace."
+    },
+    {
+      "slug": "oberon",
+      "ref": "oberon",
+      "subject": "Oberon, gaunt otherworldly male outcast king with pale bark-like skin, long dark tangled hair, pointed ears, one glowing amber eye and a crown of branching black thorns with amber stone, layered ancient mossy robes. Twisted nocturnal forest, amber fireflies and grey green mist, isolated and uncanny."
+    },
+    {
+      "slug": "mordred",
+      "ref": "mordred",
+      "subject": "Mordred, pale handsome young adult male dark prince with tousled black hair and tall black spiked crown, black engraved plate armor, heavy dark crimson cloak and antique gold chains. A dark sword held point downward, throne-room ruin behind, blood red light and black steel, cold commanding presence."
+    },
+    {
+      "slug": "minion",
+      "ref": "minion",
+      "subject": "Minion of Mordred, weathered adult male henchman with coarse dark stubble, a stitched burgundy hood, rugged dark leather and chainmail armor with crossed straps. Holding a worn spear, smoky red-lit fortress rampart, embers far behind, deep rust and charcoal, hardened and watchful."
+    },
+    {
+      "slug": "loyal-servant-2",
+      "subject": "A second distinct Loyal Servant of Arthur: a brave young adult woman knight with copper-red braided hair, freckles, silver chainmail, royal blue cloak and gold fleur-de-lis clasp. Holds a blue heraldic shield at her side, dawn on the castle bridge, steadfast expression. Must look clearly different from the other loyal servants."
+    },
+    {
+      "slug": "loyal-servant-3",
+      "subject": "An East Asian male wandering swordsman integrated into the Avalon card deck: long loosely half-tied dark hair, angular face, sapphire-blue cross-collared tunic and cloak with antique-gold fleur-de-lis details, fitted leather and light engraved protective panels. A relaxed asymmetric three-quarter stance with a sheathed sword diagonally across his waist, in a warmly lit castle cloister. Rich painterly blue-and-gold rendering and close character framing match the other loyal servants.",
+      "revisionPrompt": "Use case: stylized-concept. Create ONE new loyal-servant-3 full character card that looks unquestionably painted by the SAME ARTIST as reference images 1 and 2, for the SAME Avalon card deck. Images 1 and 2 are STYLE, PALETTE, LIGHTING and CHARACTER-SCALE references only. Do not copy their characters, poses or outfits. Highest priority: reproduce their rich jewel-blue and antique-gold dark-fantasy oil-painting treatment, sculpted warm face lighting, lush fabric, aged metal details, deep brown-black shadows, softly painted atmospheric architecture, and intimate dominant character framing. Match their painterly game-illustration finish exactly, NOT a live-action costume-drama photo, NOT a wuxia movie poster, NOT desaturated grey landscape realism, NOT ink wash, NOT anime.\nSubject: a handsome adult EAST ASIAN MALE wandering swordsman, early thirties, clear East Asian features, dark almond-shaped eyes, strong brows, clean-shaven, a composed alert gaze; long dark hair tied loosely half-up, several natural loose strands, no ornate tall crown. He has the understated elegance and independent bearing of a xia-ke, reimagined as a loyal champion in the Arthurian fantasy world.\nRedesign the wardrobe naturally for this character: richly painted sapphire-blue cross-collared tunic, fitted dark leather and a few finely engraved silver protective panels, woven blue cloak with restrained gold embroidery and a small gold fleur-de-lis clasp, practical belt and leather wrist guards. Elegant tailored layers, believable weight and drape; keep the loyal-blue visual language of reference 1. Do not reproduce the previous heavy plate-armored chapel knight.\nPose and composition: relaxed asymmetric three-quarter stance in a castle cloister, one shoulder forward, one hand at the hilt of a sheathed straight sword worn diagonally low across his waist, the other lightly steadying its scabbard. Head turns toward the viewer. Quiet readiness with clear martial body language, NOT both hands stacked over an upright sword. Cloak hangs in one broad diagonal fold with a small movement of air, not a huge trailing tornado of fabric. Crop from the entire head to knees, do not show feet: head and torso dominate the card as in the two references, head/hair about one fifth of canvas height, face easily readable, face near the upper quarter.\nBackdrop: shadowed medieval Avalon castle cloister with a weathered stone arch, one warm lantern and distant blue castle towers beyond; restrained scenery subordinated to the character, same atmospheric depth and fantasy architecture as reference 1. No Chinese mountain panorama, pagoda, banners covering the landscape or movie-poster horizon.\nOutput 1024x1536 portrait, exact 2:3, thin elegant antique-gold rectangular border comparable to the reference set. Full painted scene to the edges, quiet darker lower quarter for a live UI text gradient. No words, labels, numbers, logos, watermark or user-interface. This is an original pose and costume design in the exact visual language of the supplied card deck.",
+      "avatarRevisionPrompt": "Use case: identity-preserve. Create the companion square avatar for the exact East Asian male swordsman in the supplied Avalon character card. Keep the same recognizable man, angular East Asian face, dark eyes and strong eyebrows, long dark loosely half-tied hair, calm alert expression, sapphire-blue cross-collared clothing and rich blue cloak with a gold fleur-de-lis clasp. Reframe the same slight three-quarter pose into a close head-and-shoulders portrait, head centered, face large and readable at 40 pixels, entire hair silhouette comfortably inside a future circular crop. Preserve the supplied card's richly painted oil-painting texture, warm golden sculpted skin lighting, jewel-blue cloth, antique gold details, deep brown-black shadows and softly brushed castle atmosphere. Do NOT convert into a photograph, film still, smooth beauty portrait, grey wuxia poster or anime; it must visibly match the painterly Avalon card. Softened stone arch, warm lantern light and distant blue castle as background. Square 1024x1024. No border, circular medallion, text, symbols over the face, labels or watermark. Preserve identity and art style exactly.",
+      "styleReferences": [
+        "public/assets/game/roles/modern/cards/loyal-servant-1.webp",
+        "public/assets/game/roles/modern/cards/percival.webp"
+      ]
+    },
+    {
+      "slug": "loyal-servant-4",
+      "subject": "A fourth distinct Loyal Servant of Arthur: an adult East Asian woman ranger with dark hair tied in a high knot, soft blue cloak over leather and silver lamellar armor, gold fleur-de-lis clasp, holds a longbow low beside her. Misty wooded path near Avalon castle, alert composed expression. Must look clearly different from the other loyal servants."
+    }
+  ],
+  "assetRoot": "public/assets/game/roles/modern"
+}

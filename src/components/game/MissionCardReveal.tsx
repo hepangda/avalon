@@ -64,7 +64,6 @@ export function MissionCardReveal({
     const id = setTimeout(() => onComplete?.(), totalMs);
     return () => clearTimeout(id);
     // Run once on mount; cards/teamSize are fixed per instance.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

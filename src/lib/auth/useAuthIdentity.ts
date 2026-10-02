@@ -1,6 +1,8 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { useSessionStore } from '@/lib/store/session';
-import { accountDisplayName, type AuthUser } from './types';
+import { disconnectRoom } from '@/lib/socket/client/socket';
+import { useRoomStore } from '@/lib/store/room';
+import { useAccountPreferencesStore } from '@/lib/store/accountPreferences';
+import type { AuthUser } from './types';
 
 export type { AuthUser } from './types';
 
@@ -17,10 +19,6 @@ async function readAuthUser(): Promise<AuthUser | null> {
   });
   if (!response.ok) return null;
   return ((await response.json()) as { user: AuthUser | null }).user;
-}
-
-function rememberIdentity(user: AuthUser | null): void {
-  if (user) useSessionStore.getState().setAccountIdentity(accountDisplayName(user), user.picture);
 }
 
 function attemptSilentAuth(): Promise<AuthUser | null> {
@@ -65,7 +63,7 @@ function disableSilentAuth(): void {
 
 /**
  * Read the local Avalon session, then make one best-effort `prompt=none` OIDC
- * attempt in a hidden iframe. Failure remains anonymous and never navigates the
+ * attempt in a hidden iframe. Failure leaves the user signed out and never navigates the
  * visible page away from the current route.
  */
 function useAuthIdentityState() {
@@ -75,9 +73,10 @@ function useAuthIdentityState() {
 
   const refresh = useCallback(async () => {
     const version = ++identityVersion.current;
+    const preferenceRevision = useAccountPreferencesStore.getState().revision;
     const next = await readAuthUser().catch(() => null);
     if (version !== identityVersion.current) return next;
-    rememberIdentity(next);
+    useAccountPreferencesStore.getState().hydrate(next, preferenceRevision);
     setUser(next);
     return next;
   }, []);
@@ -85,18 +84,21 @@ function useAuthIdentityState() {
   useEffect(() => {
     let active = true;
     const version = identityVersion.current;
+    const preferenceRevision = useAccountPreferencesStore.getState().revision;
+    // Remove the retired anonymous targeting identifier from existing browsers.
+    try { window.localStorage.removeItem('avalon-anonymous-id'); } catch { /* storage may be disabled */ }
 
     void readAuthUser()
       .catch(() => null)
       .then((existing) => {
         if (!active || version !== identityVersion.current) return;
-        rememberIdentity(existing);
+        useAccountPreferencesStore.getState().hydrate(existing, preferenceRevision);
         setUser(existing);
         setLoading(false);
         if (existing) return;
         void attemptSilentAuth().then((discovered) => {
           if (!active || !discovered || version !== identityVersion.current) return;
-          rememberIdentity(discovered);
+          useAccountPreferencesStore.getState().hydrate(discovered);
           setUser(discovered);
         });
       });
@@ -105,6 +107,30 @@ function useAuthIdentityState() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    // Also runs on account changes and unmount; do not retain a previous account's socket or roles.
+    return () => {
+      disconnectRoom();
+      useRoomStore.getState().reset();
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+    const onVisible = () => { if (document.visibilityState === 'visible') void refresh(); };
+    const dayMs = 24 * 60 * 60 * 1000;
+    // Claim when an online account crosses 04:00 UTC+8, including a resumed tab.
+    const delay = dayMs - ((Date.now() + 4 * 60 * 60 * 1000) % dayMs) + 100;
+    const timer = window.setTimeout(onVisible, delay);
+    window.addEventListener('focus', onVisible);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('focus', onVisible);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [user, refresh]);
 
   const login = useCallback((nextPath: string) => {
     // A user-initiated sign-in is interactive. Stop any background
@@ -118,8 +144,10 @@ function useAuthIdentityState() {
     // Explicit logout must not immediately sign the same IdP session back in.
     disableSilentAuth();
     identityVersion.current += 1;
+    useAccountPreferencesStore.getState().hydrate(null);
     await fetch('/api/auth/logout', { method: 'POST' });
-    useSessionStore.getState().clearAccountAvatar();
+    disconnectRoom();
+    useRoomStore.getState().reset();
     setUser(null);
   }, []);
 
@@ -137,7 +165,6 @@ function useAuthIdentityState() {
       const { user: next } = (await response.json()) as { user: AuthUser };
       if (version !== identityVersion.current) return;
       if (next.id !== user.id) throw new Error('AUTH_REQUIRED');
-      rememberIdentity(next);
       setUser(next);
     },
     [user],
@@ -148,7 +175,7 @@ function useAuthIdentityState() {
 
 const AuthIdentityContext = createContext<ReturnType<typeof useAuthIdentityState> | null>(null);
 
-/** A single identity lifecycle shared by the home UI and flag evaluation. */
+/** A single account lifecycle shared by the home UI and protected routes. */
 export function AuthIdentityProvider({ children }: { children: ReactNode }) {
   const identity = useAuthIdentityState();
   return createElement(AuthIdentityContext.Provider, { value: identity }, children);

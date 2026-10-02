@@ -98,3 +98,18 @@ describe('room store lifecycle', () => {
     expect(useRoomStore.getState().reveal).toBeNull();
   });
 });
+
+it('atomically replaces identity, game, room and private data during verified recovery', () => {
+  const store = useRoomStore.getState();
+  const game = projectStateForViewer(buildStartedGame(FIVE_P), 'spectator');
+  store.setGame(projectStateForViewer(buildStartedGame(FIVE_P), 'p0'));
+  store.setMyPlayerId('p0'); store.setIsReferee(true);
+  const room = { code: '1234', status: 'in_game' as const, hostPlayerId: null, members: [],
+    config: { maxPlayers: 5, allowSpectators: true, allowMidJoin: true, roster: [], options: buildStartedGame(FIVE_P).config.options } };
+  const changes: unknown[] = [];
+  const stop = useRoomStore.subscribe((state) => changes.push(state));
+  store.applyView({ epoch: 'new', revision: 1, hash: 'verified-by-controller', view: { room, game, playerId: null, isHost: false, isReferee: false } }, true);
+  stop();
+  expect(changes).toHaveLength(1);
+  expect(useRoomStore.getState()).toMatchObject({ roomCode: '1234', snapshot: room, game, myPlayerId: null, isReferee: false, reveal: null, ladyResult: null, syncing: false, recoveryRevision: 1 });
+});

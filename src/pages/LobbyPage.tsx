@@ -1,3 +1,4 @@
+import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
@@ -5,11 +6,13 @@ import { useRouter } from '@/i18n/navigation';
 import { RoomHeader } from '@/components/lobby/RoomHeader';
 import { ConfigPanel } from '@/components/lobby/ConfigPanel';
 import { SeatPicker } from '@/components/lobby/SeatPicker';
-import { LocaleSwitcher } from '@/components/LocaleSwitcher';
+import { PreferencesButton } from '@/components/PreferencesButton';
 import { Button } from '@/components/ui/Button';
 import { useRoomConnection, roomActions } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
+import { accountDisplayName } from '@/lib/auth/types';
 import type { RoomConfig } from '@/lib/socket/types';
 
 export default function LobbyPage() {
@@ -20,18 +23,18 @@ export default function LobbyPage() {
 
   useRoomConnection(code);
 
-  const conn = useRoomStore((s) => s.conn);
+  const conn = useRoomStore((s) => s.syncing && s.conn === 'connected' ? 'connecting' : s.conn);
   const snapshot = useRoomStore((s) => s.snapshot);
   const myPlayerId = useRoomStore((s) => s.myPlayerId);
   const isHost = useRoomStore((s) => s.isHost);
   const notice = useRoomStore((s) => s.notice);
   const selfLatency = useRoomStore((s) => s.selfLatency);
-  const identityName = useSessionStore((s) => s.lastName);
-  const identityAvatarUrl = useSessionStore((s) => s.lastAvatarUrl);
+  const { user } = useAuthIdentity();
+  const identityName = user ? accountDisplayName(user) : '';
+  const identityAvatarUrl = user?.picture;
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const seatedCount = snapshot?.members.filter((m) => !m.isSpectator).length ?? 0;
-  const claimedCount = snapshot?.members.filter((m) => !m.isSpectator && m.claimed).length ?? 0;
+  const seatedCount = snapshot?.members.filter((m) => !m.isSpectator && m.claimed).length ?? 0;
   const canStart = seatedCount >= 5 && seatedCount <= 10;
 
   // Redirect into the game once it starts. Guard on the snapshot's own code:
@@ -73,12 +76,11 @@ export default function LobbyPage() {
     router.push('/');
   }
 
-  async function handleClaim(seatId: string) {
+  async function handleClaim() {
+    if (!user) return;
     setActionError(null);
-    const res = await roomActions.claimSeat(seatId, identityName, identityAvatarUrl);
+    const res = await roomActions.claimSeat(undefined, identityName, identityAvatarUrl);
     if (res.ok && res.data) {
-      useRoomStore.getState().setMyPlayerId(res.data.playerId);
-      const { useSessionStore } = await import('@/lib/store/session');
       useSessionStore.getState().setSession(code, {
         playerId: res.data.playerId,
         playerToken: res.data.playerToken,
@@ -92,8 +94,6 @@ export default function LobbyPage() {
     setActionError(null);
     const res = await roomActions.releaseSeat();
     if (res.ok) {
-      useRoomStore.getState().setMyPlayerId(null);
-      const { useSessionStore } = await import('@/lib/store/session');
       useSessionStore
         .getState()
         .setSession(code, { playerId: undefined, playerToken: undefined });
@@ -107,36 +107,40 @@ export default function LobbyPage() {
     return roomActions.kick(id);
   }
 
-  async function handleRosterChange(names: string[]) {
-    setActionError(null);
-    return roomActions.setRoster(names);
-  }
-
   if (!snapshot || snapshot.code !== code) {
     return (
       <main className="flex min-h-screen items-center justify-center">
         <p className="animate-pulse text-parchment/60">
-          {conn === 'disconnected' ? t('common.reconnecting') : t('lobby.enteringHall')}
+          {notice?.type === 'session_replaced' ? t('common.sessionReplaced') : conn === 'disconnected' ? t('common.reconnecting') : t('lobby.enteringHall')}
         </p>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-4 px-4 pt-4 pb-[calc(11rem+env(safe-area-inset-bottom))]">
-      <div className="flex justify-end">
-        <LocaleSwitcher />
+    <main className="mx-auto max-w-2xl space-y-4 px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <ReconnectOverlay active={conn !== 'connected' && notice?.type !== 'session_replaced' && notice?.type !== 'join_error'} />
+      <div className="flex items-center justify-between gap-4">
+        <button
+          className="inline-flex min-h-10 items-center gap-2 text-sm text-parchment/60 transition-colors hover:text-parchment"
+          onClick={() => void handleLeave()}
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m12 5-7 7 7 7M5 12h14" />
+          </svg>
+          {t('common.leave')}
+        </button>
+        <PreferencesButton />
       </div>
       <RoomHeader
         code={code}
-        status={snapshot.status}
         connected={conn === 'connected'}
         latency={selfLatency}
       />
 
-      {(notice?.type === 'join_error' || actionError) && (
+      {(notice?.type === 'join_error' || notice?.type === 'session_replaced' || actionError) && (
         <div className="rounded-lg border border-crimson/50 bg-crimson/20 px-4 py-2 text-sm text-parchment">
-          {actionError ?? notice?.message}
+          {notice?.type === 'session_replaced' ? t('common.sessionReplaced') : actionError ?? notice?.message}
         </div>
       )}
 
@@ -145,11 +149,11 @@ export default function LobbyPage() {
         hostPlayerId={snapshot.hostPlayerId}
         myPlayerId={myPlayerId}
         isHost={isHost}
+        disabled={conn !== 'connected'}
         onClaim={handleClaim}
         onStand={handleStand}
         onKick={handleKick}
-        onRosterChange={handleRosterChange}
-        onRemoveSeat={roomActions.removeSeat}
+        onAddBot={roomActions.addBot}
       />
 
       <ConfigPanel
@@ -161,25 +165,14 @@ export default function LobbyPage() {
 
       {isHost ? (
         <div className="space-y-1.5">
-          <Button className="w-full py-3 text-base" onClick={handleStart} disabled={!canStart}>
-            {canStart ? t('lobby.beginQuest') : t('lobby.needSeats', { count: seatedCount })}
+          <Button className="w-full py-3 text-base" onClick={handleStart} disabled={!canStart || conn !== 'connected'}>
+            {canStart ? t('lobby.beginQuest') : t('lobby.needPlayers', { count: seatedCount })}
           </Button>
-          {canStart && claimedCount < seatedCount && (
-            <p className="text-center text-xs text-amber-400">
-              {t('lobby.startWithEmpty', { empty: seatedCount - claimedCount })}
-            </p>
-          )}
         </div>
       ) : (
         <p className="text-center text-sm text-parchment/50">{t('lobby.waitingHost')}</p>
       )}
 
-      <button
-        className="mx-auto block text-xs text-parchment/40 hover:text-parchment/70"
-        onClick={() => void handleLeave()}
-      >
-        {t('common.leave')}
-      </button>
     </main>
   );
 }

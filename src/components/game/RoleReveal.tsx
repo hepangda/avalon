@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import { Button } from '@/components/ui/Button';
@@ -8,11 +8,13 @@ import { FlipCard } from '@/components/animations';
 import { GameIcon } from './GameArt';
 import { RoleCard } from './RoleCard';
 import { gameActions } from '@/lib/socket/client';
+import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { RoleKnowledge } from './RoleKnowledge';
 import type { ClientGameState, Role, VisibilityInfo } from '@/lib/engine';
 
 interface RoleRevealProps {
   onAck?: typeof gameActions.ackRole;
+  onReroll?: typeof gameActions.useRerollCard;
   blocked?: boolean;
   game: ClientGameState;
   reveal: { selfRole: Role; knownPlayers: VisibilityInfo[] } | null;
@@ -20,8 +22,14 @@ interface RoleRevealProps {
   timer?: ReactNode;
 }
 
-export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRole, blocked = false, timer }: RoleRevealProps) {
+export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRole, onReroll = gameActions.useRerollCard, blocked = false, timer }: RoleRevealProps) {
   const t = useTranslations();
+  const { user, refresh } = useAuthIdentity();
+  const [rerolling, setRerolling] = useState(false);
+  const [confirmReroll, setConfirmReroll] = useState(false);
+  const rerollInFlight = useRef(false);
+  useEffect(() => { setConfirmReroll(false); }, [game.gameId, game.roleRevision, myPlayerId, user?.id, blocked, game.canRerollOpening]);
+  useEffect(() => { void refresh(); }, [refresh, game.gameId, game.roleRevision]);
   const reduceMotion = useReducedMotion();
   const [flipped, setFlipped] = useState(false);
   const [acking, setAcking] = useState(false);
@@ -34,7 +42,8 @@ export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRo
   async function handleAck() {
     // The overlay closes when roleAcks (in projected state) includes us; no need
     // to track a local "waiting" state — each player enters independently.
-    if (acking || blocked) return;
+    if (acking || rerollInFlight.current || blocked) return;
+    setConfirmReroll(false);
     setAcking(true);
     setError(null);
     try {
@@ -46,6 +55,31 @@ export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRo
     } catch {
       setError(t('table.actionFailed'));
       setAcking(false);
+    }
+  }
+
+  async function handleReroll() {
+    if (rerollInFlight.current || acking || blocked || !user?.rerollCards?.cards || !game.canRerollOpening) return;
+    if (!confirmReroll) {
+      setConfirmReroll(true);
+      return;
+    }
+    rerollInFlight.current = true;
+    setConfirmReroll(false);
+    setRerolling(true);
+    setError(null);
+    try {
+      const res = await onReroll(game.roleRevision ?? 0);
+      if (!res.ok) {
+        const code = res.error?.code;
+        setError(t(code === 'NO_REROLL_CARDS' ? 'reroll.empty' : code === 'AUTH_REQUIRED' ? 'reroll.loginShort' : code === 'WRONG_PHASE' ? 'reroll.unavailableShort' : 'table.actionFailed'));
+      }
+      await refresh();
+    } catch {
+      setError(t('table.actionFailed'));
+    } finally {
+      rerollInFlight.current = false;
+      setRerolling(false);
     }
   }
 
@@ -83,9 +117,17 @@ export function RoleReveal({ game, reveal, myPlayerId, onAck = gameActions.ackRo
         >
           <RoleKnowledge game={game} knownPlayers={knownPlayers} />
 
-          <Button className="w-full" onClick={handleAck} disabled={acking || blocked}>
-            {acking ? t('roleReveal.entering') : t('roleReveal.understand')}
-          </Button>
+          <div className="flex w-full items-stretch gap-2">
+            <Button className="w-36 shrink-0 whitespace-nowrap px-3" variant="secondary" onClick={handleReroll}
+              onBlur={() => setConfirmReroll(false)}
+              onKeyDown={(event) => { if (event.key === 'Escape') setConfirmReroll(false); }}
+              disabled={blocked || acking || rerolling || !user?.rerollCards?.cards || !game.canRerollOpening}>
+              {rerolling ? t('reroll.using') : confirmReroll ? t('reroll.confirm') : t('reroll.button', { count: user?.rerollCards?.cards ?? 0 })}
+            </Button>
+            <Button className="min-w-0 flex-1 whitespace-nowrap" onClick={handleAck} disabled={acking || rerolling || blocked}>
+              {acking ? t('roleReveal.entering') : t('roleReveal.understand')}
+            </Button>
+          </div>
           {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
         </motion.div>
       )}

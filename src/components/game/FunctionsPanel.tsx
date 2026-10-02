@@ -108,7 +108,7 @@ export function FunctionsPanel({
           }}
           className="flex w-full items-center gap-3 rounded-lg border border-crimson/40 bg-ink/30 px-4 py-3 text-left transition-colors hover:border-crimson hover:bg-crimson/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          <GameIcon name="reject" className="h-8 w-8" />
+          <GameIcon name="assassinate" className="h-8 w-8" />
           <span className="min-w-0 flex-1 text-sm font-semibold text-parchment">
             {t('assassin.startEarly')}
           </span>

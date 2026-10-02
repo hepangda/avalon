@@ -101,13 +101,14 @@ body {
 .table-screen {
   container-type: size;
   container-name: match;
-  --seat-diameter: 60px;
+  /* Avatars follow the table width up to this cap, then hold still. */
+  --seat-max-diameter: 56px;
   --seat-name-height: 18px;
   --seat-meta-height: 14px;
   --seat-card-gap: 8px;
   /* Card frames grow from this floor into spare table height (see .game-table). */
-  --card-min-height: 46px;
-  --card-max-height: 64px;
+  --card-min-height: 52px;
+  --card-max-height: 72px;
   --center-space: 170px;
   --reveal-space: 140px;
   /* Height plus margin of the footer's own-timer line. */
@@ -354,19 +355,27 @@ body {
   flex: 1 1 0;
   min-height: 0;
   padding: 5px 0 6px;
-  /* Resting seat size, kept for card sizing while timed turns shrink seats. */
+  /* One avatar size for every phase, so seats never jump between turns. */
+  --seat-diameter: clamp(40px, 13cqw, var(--seat-max-diameter));
+  /* Resting seat metrics, kept for card sizing while timed turns tighten seats. */
   --seat-rest-diameter: var(--seat-diameter);
   --seat-rest-meta: var(--seat-meta-height);
   --seat-rest-gap: var(--seat-card-gap);
 }
+/* Registered so it computes once on the table instead of at each use site. */
+@property --table-card-height {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 52px;
+}
 .game-table {
   --seat-note-space: 0px;
-  --seat-compact-diameter: clamp(40px, 8cqw, 56px);
+  --timed-seat-card-gap: 12px;
   --seat-height: calc(var(--seat-diameter) + var(--seat-note-space) + var(--seat-name-height) + var(--seat-meta-height));
   --table-edge: calc(var(--seat-name-height) + var(--seat-meta-height) + var(--seat-diameter) / 2);
   --end-height: calc(var(--seat-height) + var(--seat-card-gap) + var(--card-height));
   /* Card frames keep one size in every phase: the largest that leaves
-     --center-space for timed prompts (compact seats, own-timer line shown) and
+     --center-space for timed prompts (no seat meta, own-timer line shown) and
      --reveal-space for results (resting seats, no timer line) while five seats
      still fit across. Tables without spare height keep the minimum. */
   --stage-height: calc(100cqh - var(--timing-slack, 0px));
@@ -374,7 +383,7 @@ body {
     var(--card-min-height),
     min(
       (var(--stage-height) - var(--center-space)) / 2
-        - (var(--seat-compact-diameter) + var(--seat-note-space) + var(--seat-name-height) + 4px),
+        - (var(--seat-diameter) + var(--seat-note-space) + var(--seat-name-height) + var(--timed-seat-card-gap)),
       (var(--stage-height) + var(--timing-status-space) - var(--reveal-space)) / 2
         - (var(--seat-rest-diameter) + var(--seat-note-space) + var(--seat-name-height) + var(--seat-rest-meta) + var(--seat-rest-gap)),
       (100cqw - 80px) / 3.7
@@ -382,6 +391,8 @@ body {
     var(--card-max-height)
   );
   --card-width: calc(var(--card-height) * 0.74);
+  /* Resolved here, against the stage, for cards inside nested containers. */
+  --table-card-height: var(--card-height);
   position: relative;
   height: 100%;
   min-height: 0;
@@ -391,9 +402,16 @@ body {
 .game-table.has-seat-labels {
   --seat-note-space: 18px;
 }
+/* The final reveal has no timed prompts, so its role cards may use the
+   spare height that results leave free and stay readable. */
+.game-table:has(.table-personal-zone .table-role-card) {
+  --center-space: 0px;
+  /* Only the outcome title and its reason sit between the two rows. */
+  --reveal-space: 88px;
+  --card-max-height: 104px;
+}
 @container play (min-width: 500px) {
   .game-table {
-    --card-max-height: 76px;
     --reveal-space: 160px;
   }
 }
@@ -581,7 +599,6 @@ button.table-role-note:hover, .role-note-option:hover {
   outline-offset: -2px;
 }
 @container match (max-width: 380px) {
-  .table-stage { --seat-diameter: 50px; }
   .table-end:has(> .table-player:nth-child(5)) .table-self-label { display: none; }
   .table-end:has(> .table-player:nth-child(5)) .table-role-note { padding: 0 2px; font-size: 9px; }
 }
@@ -830,9 +847,10 @@ button.table-role-note:hover, .role-note-option:hover {
   text-overflow: ellipsis;
 }
 .table-public-roles {
-  /* Revealed evil roles in the centre stay at the minimum card size. */
-  --card-height: var(--card-min-height);
-  --card-width: calc(var(--card-min-height) * 0.74);
+  /* Revealed evil roles match the seat cards, shrinking only when the centre
+     cannot also fit the title, seat labels and prompt. */
+  --card-height: clamp(32px, 100cqh - 100px, var(--table-card-height));
+  --card-width: calc(var(--card-height) * 0.74);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -1023,8 +1041,6 @@ button.table-role-note:hover, .role-note-option:hover {
 }
 @media (min-width: 1000px) and (min-height: 700px) {
   .table-screen {
-    --seat-diameter: 76px;
-    --card-min-height: 54px;
     padding-left: max(24px, env(safe-area-inset-left));
     padding-right: max(24px, env(safe-area-inset-right));
   }
@@ -1038,7 +1054,7 @@ button.table-role-note:hover, .role-note-option:hover {
 }
 @media (max-height: 700px) {
   .table-screen {
-    --seat-diameter: 52px;
+    --seat-max-diameter: 52px;
     --seat-name-height: 16px;
     --seat-meta-height: 12px;
     --card-min-height: 40px;
@@ -1060,7 +1076,7 @@ button.table-role-note:hover, .role-note-option:hover {
 }
 @media (max-height: 570px) {
   .table-screen {
-    --seat-diameter: 44px;
+    --seat-max-diameter: 44px;
     --seat-meta-height: 0px;
     --card-min-height: 36px;
     --seat-card-gap: 4px;
@@ -1088,7 +1104,7 @@ button.table-role-note:hover, .role-note-option:hover {
 }
 @media (orientation: landscape) and (max-height: 500px) {
   .table-screen {
-    --seat-diameter: 40px;
+    --seat-max-diameter: 40px;
     --seat-name-height: 14px;
     --card-min-height: 32px;
     --seat-card-gap: 3px;
@@ -1203,13 +1219,16 @@ button.table-role-note:hover, .role-note-option:hover {
   border-radius: 5px;
   box-shadow: 0 3px 8px #0005;
 }
-.role-card--table .role-card-caption { padding: 30% 3% 6%; }
+.role-card--table .role-card-caption { padding: 34% 1px 5%; }
 .role-card--table .role-card-name {
   font-family: var(--font-body);
-  font-size: clamp(7px, 20cqi, 11px);
-  font-weight: 500;
-  line-height: 1.05;
+  /* As large as the card allows, shrinking only long names onto one line. */
+  font-size: max(9px, min(clamp(11px, 25cqi, 16px), (100cqi - 4px) / var(--name-ems, 1)));
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   text-align: center;
+  overflow-wrap: normal;
 }
 .role-reveal-card {
   flex: none;
@@ -1516,16 +1535,13 @@ button.table-role-note:hover, .role-note-option:hover {
 
 /* Timed turns: reminders never disable an action. */
 .game-table.is-proposal {
-  --seat-diameter: var(--seat-compact-diameter);
   --seat-meta-height: 0px;
-  --card-min-height: 40px;
   --seat-card-gap: 4px;
 }
-/* Leave room for the center prompt while keeping timed cards at full size. */
+/* Keep timer cards clear of the speaking outline and avatar corner badges. */
 .game-table:has(.action-timer-bar) {
-  --seat-diameter: var(--seat-compact-diameter);
   --seat-meta-height: 0px;
-  --seat-card-gap: 4px;
+  --seat-card-gap: var(--timed-seat-card-gap);
 }
 .discussion-turn { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; }
 .action-timer {
@@ -1665,3 +1681,58 @@ button.table-role-note:hover, .role-note-option:hover {
   }
   .table-team-chip { max-width: 160px; }
 }
+
+.discussion-arrow {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-inline: 6px;
+}
+.table-phase-title.is-team-changed { color: #e6a27d; }
+
+.reconnect-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 24px;
+  border: 0;
+  color: #e8dcc0;
+  background: rgb(15 12 9 / 85%);
+  backdrop-filter: blur(4px);
+}
+.reconnect-overlay[open] {
+  display: grid;
+  place-items: center;
+}
+.reconnect-overlay::backdrop { background: transparent; }
+.reconnect-overlay p { font-size: 18px; }
+
+.reconnect-content { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.reconnect-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgb(201 162 39 / 20%);
+  border-top-color: #dfc878;
+  border-radius: 50%;
+  animation: reconnect-spin 900ms linear infinite;
+}
+@keyframes reconnect-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .reconnect-spinner { animation-duration: 2400ms; }
+}
+.reconnect-refresh-slot { min-height: 44px; }
+.reconnect-refresh {
+  min-height: 44px;
+  padding: 8px 20px;
+  border: 1px solid #8c743f;
+  border-radius: 8px;
+  background: #665022;
+  color: #f1e2b9;
+  font-size: 14px;
+}
+.reconnect-refresh:hover { background: #79602b; }
+.reconnect-refresh:focus-visible { outline: 2px solid #dfc878; outline-offset: 3px; }

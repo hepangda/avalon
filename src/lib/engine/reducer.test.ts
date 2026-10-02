@@ -527,6 +527,6 @@ describe('Role reveal is per-player (no global RoleReveal gate)', () => {
     // Only the leader acks, then immediately proposes — no waiting on others.
     s = apply(s, { type: 'ACK_ROLE', by: leader(s) });
     s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
-    expect(s.phase).toBe('Discussion');
+    expect(s.phase).toBe('TeamAnnouncement');
   });
 });

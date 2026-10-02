@@ -45,7 +45,7 @@ export function TableCard({
           seat: nominee,
         })}
       >
-        <GameIcon name={assassination ? 'reject' : 'crest'} className="table-card-icon" />
+        <GameIcon name={assassination ? 'assassinate' : 'crest'} className="table-card-icon" />
         <span>{assassination ? t('assassin.strikeSeat', { seat: nominee }) : nominee}</span>
       </div>
     );

@@ -1,13 +1,23 @@
 node_modules/
 dist/
 build/
+coverage/
+.next/
+.pnpm-store/
+*.tsbuildinfo
 
-# Cloudflare / Wrangler
+# Local agent state and private operations archives
+.omo/
+.private/
+
+# Legacy local state / optional R2 publishing
 .wrangler/
 worker-configuration.d.ts
 
 # Env
 .env
+.env.*
+!.env.example
 .env.local
 .env*.local
 .dev.vars
@@ -21,3 +31,12 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# Private database migration rollback snapshots
+.backups/
+
+# Database exports and private keys
+*.dump
+*.sql.gz
+*.pem
+*.key
