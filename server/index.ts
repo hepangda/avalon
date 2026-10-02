@@ -1,4 +1,3 @@
-import type { IncomingMessage } from "node:http";
 import { AuthError } from "./auth";
 import { authenticateRoomSocket } from "./socket-auth";
 import "dotenv/config";
@@ -75,11 +74,6 @@ const sockets = new WebSocketServer({
   maxPayload: 64 * 1024,
   perMessageDeflate: false,
 });
-const upgradeCookies = new WeakMap<IncomingMessage, string[]>();
-sockets.on("headers", (headers, request) => {
-  for (const cookie of upgradeCookies.get(request) ?? []) headers.push(`Set-Cookie: ${cookie}`);
-  upgradeCookies.delete(request);
-});
 server.on("upgrade", async (request, socket, head) => {
   const pathname = new URL(request.url ?? "/", publicOrigin).pathname;
   const match = /^\/rooms\/([0-9]{4})\/ws$/.exec(pathname);
@@ -89,9 +83,7 @@ server.on("upgrade", async (request, socket, head) => {
   }
   let account: string;
   try {
-    const session = await authenticateRoomSocket(publicOrigin, request.headers.cookie ?? '', env);
-    account = session.account;
-    upgradeCookies.set(request, session.cookies);
+    account = await authenticateRoomSocket(request.headers.cookie ?? '', env);
   } catch (error) {
     const status = error instanceof AuthError && error.status === 401
       ? "401 Unauthorized"

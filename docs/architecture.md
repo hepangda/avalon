@@ -76,3 +76,12 @@ must capture both `avalon_rooms` and `avalon_room_journal` in one consistent dat
 snapshot. A snapshot-only server is not compatible with
 this journal schema; rollback requires an explicit data/schema migration or a
 pre-upgrade database restore, not merely deploying the old application image.
+
+## Module boundaries and compatibility
+
+OIDC discovery is validated before a five-minute cache is populated; concurrent
+requests share one lookup and failures are not cached. JWKS resolvers are retained
+per URI so jose can manage key rotation. Both caches are bounded and used only at
+login. HTTP and WebSocket session checks decrypt the session cookie locally and never
+contact the provider; WebSocket verification also skips display preferences and
+daily rewards.

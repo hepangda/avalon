@@ -1,39 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from './env';
-
-// OIDC cryptographic verification is outside these profile tests. The application
-// session is still a real encrypted cookie and is handled by the real auth flow.
-vi.mock('jose', () => ({
-  createRemoteJWKSet: vi.fn(),
-  jwtVerify: vi.fn(async (token: string) => ({
-    payload: { sub: token.replace(/^(access|id)-/, ''), token_use: 'access_token' },
-  })),
-}));
-
 import app from './app';
 import { MemoryPersistence } from './test-persistence';
 import { accountKey, accountProfile } from './account-profile';
 import { authenticateRoomSocket } from './socket-auth';
+import { SESSION_COOKIE, SESSION_TTL_SECONDS, sealSession } from './auth/session';
 
 const origin = 'https://avalon.test';
 const issuer = 'https://auth.pangda.app';
 const sessionSecret = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
-const metadata = {
-  issuer,
-  authorization_endpoint: `${issuer}/authorize`,
-  token_endpoint: `${issuer}/token`,
-  userinfo_endpoint: `${issuer}/userinfo`,
-  jwks_uri: `${issuer}/jwks`,
-};
 
-beforeEach(() => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => Response.json(metadata)),
-  );
-});
 afterEach(() => {
-  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
@@ -48,7 +25,6 @@ function harness() {
     OIDC_ISSUER: issuer,
     OIDC_CLIENT_ID: 'avalon',
     OIDC_CLIENT_SECRET: 'test-client-secret',
-    OIDC_RESOURCE: 'https://avalon.pangda.app/createRoom',
     OIDC_SESSION_SECRET: sessionSecret,
     ENVIRONMENT: 'production',
     persistence: new MemoryPersistence(),
@@ -57,27 +33,9 @@ function harness() {
   return { env, init };
 }
 
-async function sessionCookie(id = 'user-a', username = 'Original', expired = false) {
-  const key = await crypto.subtle.importKey('raw', new Uint8Array(32), 'AES-GCM', false, [
-    'encrypt',
-  ]);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const value = {
-    accessToken: `access-${id}`,
-    refreshToken: `refresh-${id}`,
-    accessTokenExpiresAt: Date.now() + (expired ? -1 : 3600_000),
-    user: { id, username, picture: 'https://example.com/avatar.png' },
-  };
-  const cipher = await crypto.subtle.encrypt(
-    {
-      name: 'AES-GCM',
-      iv,
-      additionalData: new TextEncoder().encode('avalon:oidc-session:v1'),
-    },
-    key,
-    new TextEncoder().encode(JSON.stringify(value)),
-  );
-  return `avalon_oidc_session=v1.${Buffer.from(iv).toString('base64url')}.${Buffer.from(cipher).toString('base64url')}`;
+async function sessionCookie(id = 'user-a', username = 'Original') {
+  const env = { OIDC_SESSION_SECRET: sessionSecret } as Env;
+  return `${SESSION_COOKIE}=${await sealSession(env, issuer, { id, username, picture: 'https://example.com/avatar.png' })}`;
 }
 
 function save(env: Env, cookie: string, body: unknown) {
@@ -141,41 +99,27 @@ describe('account aliases', () => {
     expect(await accountProfile(env, 'user-a').getAlias()).toBe('A的名字');
   });
 
-  it('keeps the alias when OIDC tokens refresh with a different provider name', async () => {
+  it('ends a session at its fixed expiry over HTTP and WebSocket', async () => {
     const { env } = harness();
-    await save(env, await sessionCookie(), { alias: '不变的别名' });
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string) => {
-        if (url.endsWith('/token'))
-          return Response.json({
-            access_token: 'access-user-a',
-            refresh_token: 'refresh-user-a',
-            id_token: 'id-user-a',
-            token_type: 'Bearer',
-            expires_in: 3600,
-          });
-        if (url.endsWith('/userinfo'))
-          return Response.json({ sub: 'user-a', preferred_username: 'Refreshed name' });
-        return Response.json(metadata);
-      }),
-    );
-    const refreshed = await app.request(
-      `${origin}/api/auth/session`,
-      {
-        headers: { Cookie: await sessionCookie('user-a', 'Original', true) },
-      },
-      env,
-    );
-    expect(await refreshed.json()).toMatchObject({
-      user: { username: 'Refreshed name', alias: '不变的别名' },
-    });
-    expect(refreshed.headers.get('Set-Cookie')).toContain('avalon_oidc_session=');
-    const socketSession = await authenticateRoomSocket(
-      origin, await sessionCookie('user-a', 'Original', true), env,
-    );
-    expect(socketSession.account).toBe(accountKey(issuer, 'user-a'));
-    expect(socketSession.cookies.some((cookie) => cookie.startsWith('avalon_oidc_session='))).toBe(true);
+    const issuedAt = Date.parse('2026-10-01T00:00:00Z');
+    const now = vi.spyOn(Date, 'now').mockReturnValue(issuedAt);
+    const cookie = await sessionCookie();
+    now.mockReturnValue(issuedAt + SESSION_TTL_SECONDS * 1000 - 1);
+    expect(await authenticateRoomSocket(cookie, env)).toBe(accountKey(issuer, 'user-a'));
+    now.mockReturnValue(issuedAt + SESSION_TTL_SECONDS * 1000);
+    const expired = await app.request(`${origin}/api/auth/session`, { headers: { Cookie: cookie } }, env);
+    expect(await expired.json()).toEqual({ user: null });
+    expect(expired.headers.get('Set-Cookie')).toMatch(/^avalon_oidc_session=;.*Max-Age=0/);
+    await expect(authenticateRoomSocket(cookie, env)).rejects.toMatchObject({ code: 'AUTH_REQUIRED', status: 401 });
+  });
+
+  it('rejects a session issued under another configured issuer', async () => {
+    const { env } = harness();
+    const staging = { ...env, OIDC_ISSUER: 'https://auth-staging.pangda.app' } as Env;
+    const cookie = await sessionCookie();
+    const response = await app.request(`${origin}/api/auth/session`, { headers: { Cookie: cookie } }, staging);
+    expect(await response.json()).toEqual({ user: null });
+    await expect(authenticateRoomSocket(cookie, staging)).rejects.toMatchObject({ code: 'AUTH_REQUIRED' });
   });
 
   it('uses the saved alias and account avatar when creating a room', async () => {
@@ -323,7 +267,7 @@ describe('account-only room access', () => {
         }, env);
         expect(response.status).toBe(401);
       }
-      await expect(authenticateRoomSocket(origin, cookie, env)).rejects.toMatchObject({
+      await expect(authenticateRoomSocket(cookie, env)).rejects.toMatchObject({
         code: 'AUTH_REQUIRED', status: 401,
       });
       expect(init).not.toHaveBeenCalled();
@@ -343,20 +287,7 @@ describe('account-only room access', () => {
     expect(await response.json()).toMatchObject({ code: '1234' });
     expect((await app.request(`${origin}/api/games/game-1/replay`, { headers: { Cookie: cookie } }, env)).status).toBe(404);
     expect(loadReplay).toHaveBeenCalledWith('game-1');
-    expect(await authenticateRoomSocket(origin, cookie, env)).toEqual({
-      account: accountKey(issuer, 'user-a'), cookies: [],
-    });
-  });
-
-  it('rejects an expired session when its refresh is denied', async () => {
-    const { env } = harness();
-    vi.mocked(fetch).mockImplementation(async (input) =>
-      String(input).endsWith('/token')
-        ? Response.json({ error: 'invalid_grant' }, { status: 400 })
-        : Response.json(metadata),
-    );
-    await expect(authenticateRoomSocket(origin, await sessionCookie('user-a', 'Original', true), env))
-      .rejects.toMatchObject({ code: 'AUTH_REQUIRED', status: 401 });
+    expect(await authenticateRoomSocket(cookie, env)).toBe(accountKey(issuer, 'user-a'));
   });
 });
 

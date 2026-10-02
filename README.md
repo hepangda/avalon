@@ -48,20 +48,24 @@ account limit. The API permits this only in explicit development mode on loopbac
 
 ## Authentication
 
-Register a confidential OIDC client with S256 PKCE, an API resource audience, and
-`openid profile offline_access` scopes. Set `OIDC_ISSUER`, `OIDC_CLIENT_ID`,
-`OIDC_CLIENT_SECRET`, `OIDC_RESOURCE` and `OIDC_SESSION_SECRET` in local configuration
-or the deployment environment. Use a strong session secret and retain it across
-restarts. Tokens are stored in an encrypted HttpOnly session cookie.
+Register a confidential OIDC client with S256 PKCE and `openid profile` scopes. Set
+`OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_SESSION_SECRET` in local
+configuration or the deployment environment. Use a base64url-encoded 32-byte session
+secret and retain it across restarts.
+
+Provider tokens are used only during login and are never stored. The encrypted HttpOnly
+session cookie holds the verified account identity and expires seven days after login;
+the browser then signs in again with a hidden `prompt=none` request while the provider
+session lasts. Accounts disabled at the provider therefore lose access within seven days.
 Only a confirmed answer from `/api/auth/session` (200 or 401) changes the signed-in
 account, so a restart or deploy that returns 5xx or drops the connection keeps players in
 their rooms; a page loaded during the outage shows sign-in and re-checks with backoff.
 
 Register the exact callback `${PUBLIC_ORIGIN}/api/auth/callback`; local Vite uses
-`http://localhost:5173/api/auth/callback`. `OIDC_RESOURCE` must match the registered
-API resource audience. The approved issuers and development loopback aliases are
-explicit in `server/auth.ts`. Supporting another provider requires adapting and
-testing that integration, not just changing the example issuer URL.
+`http://localhost:5173/api/auth/callback`. The approved issuers are explicit in
+`server/auth/config.ts`; development additionally accepts a loopback issuer such as
+`http://localhost:17001`. Supporting another provider requires adapting and testing that
+integration, not just changing the example issuer URL.
 
 ## Self-hosting
 
