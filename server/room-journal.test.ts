@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest';
-import { canonicalJson, sha256 } from '@/lib/socket/stateIntegrity';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
+import { buildStartedGame,FIVE_P } from '@/lib/engine/testkit';
+import { canonicalJson,sha256 } from '@/lib/socket/stateIntegrity';
+import { describe,expect,it } from 'vitest';
 import type { RoomDocument } from './persistence';
 import { DEFAULT_ROOM_CONFIG } from './room-helpers';
-import { applyChanges, diffState, documentHash, replayJournal, type JournalEntry } from './room-journal';
+import { applyChanges,diffState,documentHash,replayJournal,type JournalEntry } from './room-journal';
 
 function document(): RoomDocument {
   return { schemaVersion: 1, meta: { code: '1234', hostToken: 'secret', status: 'in_game', config: DEFAULT_ROOM_CONFIG, gameId: 'game', seed: 'seed' },

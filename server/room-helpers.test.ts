@@ -1,13 +1,13 @@
-import { describe, expect, it } from 'vitest';
 import type { RoomMember } from '@/lib/socket/types';
+import { describe,expect,it } from 'vitest';
 import type { RoomMeta } from './persistence';
 import {
-  DEFAULT_ROOM_CONFIG,
-  mergeConfig,
-  restoreSeatIdentity,
-  sanitizeAvatarUrl,
-  sanitizeConfig,
-  snapshot,
+DEFAULT_ROOM_CONFIG,
+mergeConfig,
+restoreSeatIdentity,
+sanitizeAvatarUrl,
+sanitizeConfig,
+snapshot,
 } from './room-helpers';
 
 describe('game rule configuration', () => {

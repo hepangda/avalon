@@ -79,6 +79,12 @@ pre-upgrade database restore, not merely deploying the old application image.
 
 ## Module boundaries and compatibility
 
+`Room` owns the single command queue and COMMIT boundary. `RoomState` contains
+its durable fields; membership, referee and private-note handlers mutate only
+inside that queue. `RoomViews` owns committed viewer digests; `RoomCheckpoints`
+compacts verified snapshots independently. Account queries share the pool, while
+room, replay, card debit and reward settlement stay in the same transaction.
+
 OIDC discovery is validated before a five-minute cache is populated; concurrent
 requests share one lookup and failures are not cached. JWKS resolvers are retained
 per URI so jose can manage key rotation. Both caches are bounded and used only at

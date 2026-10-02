@@ -118,8 +118,7 @@ class ReplayBuilder {
     }
   }
 
-  /** Get-or-create a round; create fields (leader/team) are set once, matching
-   *  the old `upsert(..., update: {})` semantics. */
+  /** Create the round once; later checkpoints update only their own result fields. */
   private ensureRound(
     roundIndex: number,
     leaderPlayerId: string,

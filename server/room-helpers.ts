@@ -1,13 +1,12 @@
-import { resolveRoomConfig } from '@/lib/socket/roomConfig';
-import { fallbackSeatName } from '@/lib/game/names';
+import { rejectionLimit,speechDuration,type GameOptions } from '@/lib/engine';
 import { sanitizeName } from '@/lib/game/displayName';
-import { rejectionLimit, speechDuration, type GameOptions } from '@/lib/engine';
-export { sanitizeName } from '@/lib/game/displayName';
-import type { RoomConfig, RoomMember, RoomSnapshot } from '@/lib/socket/types';
+import { fallbackSeatName } from '@/lib/game/names';
+import { resolveRoomConfig } from '@/lib/socket/roomConfig';
+import type { RoomConfig,RoomMember,RoomSnapshot } from '@/lib/socket/types';
 import type { RoomMeta } from './persistence';
+export { sanitizeName } from '@/lib/game/displayName';
 
-/** Pure room helpers (ported from the old GameStore + createRoom), operating on
- *  a plain members Map + config so the room runtime stays thin. */
+/** Pure room configuration and member helpers. */
 
 export const DEFAULT_ROOM_CONFIG: RoomConfig = {
   maxPlayers: 10,
@@ -30,23 +29,6 @@ type Members = Map<string, RoomMember>;
 /** Non-spectator members, ordered by seat. */
 export function activePlayers(members: Members): RoomMember[] {
   return [...members.values()].filter((m) => !m.isSpectator).sort((a, b) => a.seat - b.seat);
-}
-
-/** Next free seat index for a non-spectator member. */
-export function nextSeat(members: Members): number {
-  const used = new Set(
-    [...members.values()].filter((m) => !m.isSpectator).map((m) => m.seat),
-  );
-  let seat = 0;
-  while (used.has(seat)) seat++;
-  return seat;
-}
-
-/** Roster seats nobody currently holds (claimable by a joining player). */
-export function claimableSeats(members: Members): RoomMember[] {
-  return [...members.values()]
-    .filter((m) => !m.isSpectator && !m.claimed)
-    .sort((a, b) => a.seat - b.seat);
 }
 
 export function snapshot(

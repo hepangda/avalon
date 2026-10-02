@@ -1,6 +1,6 @@
-import { setImmediate as yieldToIO } from 'node:timers/promises';
-import { createHash } from 'node:crypto';
 import { canonicalJson } from '@/lib/socket/stateIntegrity';
+import { createHash } from 'node:crypto';
+import { setImmediate as yieldToIO } from 'node:timers/promises';
 import type { RoomDocument } from './persistence';
 
 export class JournalIntegrityError extends Error {
