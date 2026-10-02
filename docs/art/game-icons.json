@@ -50,6 +50,11 @@
       "prompt": "Use case: stylized-concept. Asset type: one square gameplay icon for the Lady of the Lake in an Avalon web board game. Image 1 is the user's original printed character reference; interpret and repaint this specific character faithfully as a clean hand-painted medieval fantasy illustration, not a scan. Subject: an ADULT woman with long loose golden-blonde hair, shown in a three-quarter back view from waist up, turning her head over her left shoulder to look toward the viewer, soft composed expression, recognizable original pose and face silhouette. White opaque draped fabric covers her chest and lower torso, leaving only shoulders and upper back visible, like the reference. Her lower torso emerges from a small self-contained cluster of cool teal lake ripples with two small water-lily leaves and a white water-lily flower, all integrated into a compact icon silhouette. Do not add a sword, crown, wings, jewelry, crescent moon frame or heraldic pedestal. Painterly brushed oil/tempera, restrained antique storybook palette: honey blonde hair, warm pale skin, ivory cloth, blue-green lake. Close framing with large readable face in upper third; centered icon occupies 85 percent of square canvas, entire hair and water motif inside with even padding, legible at 32-48px. Production chroma-key background: ALL canvas outside the character and compact lake motif must be perfectly solid flat vivid MAGENTA #ff00ff; no gradient, no checkerboard, no shadows outside silhouette, no magenta tint on subject. No full rectangular lake scene, no card border, no medallion, no text, no labels, no watermark. Prefer square 1024x1024.",
       "file": "public/assets/game/icons/lady.webp",
       "alpha": "Magenta chroma key removed with soft matte and despill."
+    },
+    {
+      "slug": "assassinate",
+      "source": "Retained dagger artwork from the previous icon set, described in README.md.",
+      "output": "public/assets/game/icons/assassinate.webp"
     }
   ]
 }

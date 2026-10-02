@@ -127,7 +127,8 @@ ID, so reordering the registry does not change assignments, and adding a portrai
 only moves players selected for that new portrait.
 
 The original generation prompts and output paths are saved in
-`docs/art/player-avatars.json`. The ten portraits were generated individually with
+`docs/art/player-avatars.json`; concatenate `sharedPrompt` and each `subject` to
+reconstruct an exact prompt. The ten portraits were generated individually with
 the built-in `image_gen` tool, then optimized as 512 × 512 WebP assets. Future
 portraits should use the same centered face-and-shoulders framing and readable
 storybook illustration style, with important features inside a circular crop.
