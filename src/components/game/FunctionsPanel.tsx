@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { gameActions, roomActions } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
+import { wouldDissolveRoom } from '@/lib/game/roomDissolution';
 import { useRoomAction } from '@/lib/game/useRoomAction';
 import type { ClientGameState } from '@/lib/engine';
 import { AdminPanel } from './AdminPanel';
@@ -17,8 +18,11 @@ export function FunctionsPanel({ code, game, onAssassinationStarted }: {
 }) {
   const t = useTranslations();
   const router = useRouter();
+  const snapshot = useRoomStore((state) => state.snapshot);
+  const myPlayerId = useRoomStore((state) => state.myPlayerId);
   const isHost = useRoomStore((state) => state.isHost);
   const hostPlayerId = useRoomStore((state) => state.snapshot?.hostPlayerId);
+  const willDissolve = snapshot ? wouldDissolveRoom(snapshot, myPlayerId, isHost) : false;
   const transfer = useRoomAction(`${code}:host:${isHost}`, t('table.actionFailed'));
   const hostCandidates = game.players.filter((player) => player.claimed && player.connected && !player.isBot && player.id !== hostPlayerId);
   const [confirm, setConfirm] = useState<'leave' | 'assassination' | null>(null);
@@ -73,7 +77,7 @@ export function FunctionsPanel({ code, game, onAssassinationStarted }: {
         <span className="flex w-8 shrink-0 justify-center text-2xl" aria-hidden="true">🚪</span>
         <span className="min-w-0 flex-1 text-sm font-semibold text-crimson">{t('game.leaveSeat')}</span>
       </button>
-      <TableSheet open={confirm !== null} title={t(confirm === 'assassination' ? 'assassin.startEarly' : 'game.leaveSeat')}
+      <TableSheet open={confirm !== null} title={t(confirm === 'assassination' ? 'assassin.startEarly' : willDissolve ? 'common.dissolveRoomTitle' : 'game.leaveSeat')}
         onClose={() => setConfirm(null)} busy={action.busy} error={action.error}>
         <div className="space-y-4">
           {confirm === 'assassination' ? (
@@ -81,11 +85,11 @@ export function FunctionsPanel({ code, game, onAssassinationStarted }: {
               <p>{t('assassin.earlyConsequences')}</p><p>{t('assassin.earlyOutcome')}</p>
               <p className="font-semibold text-parchment">{t('assassin.irreversible')}</p>
             </div>
-          ) : <p className="text-sm text-parchment/80">{t('game.confirmLeave')}</p>}
+          ) : <p className="text-sm text-parchment/80">{t(willDissolve ? 'common.confirmDissolveRoom' : 'game.confirmLeave')}</p>}
           <div className="flex gap-2">
             <Button variant="ghost" autoFocus disabled={action.busy} onClick={() => setConfirm(null)}>{t('common.cancel')}</Button>
             <Button variant="danger" disabled={action.busy} onClick={() => void (confirm === 'assassination' ? startAssassination() : leave())}>
-              {t(confirm === 'assassination' ? (action.busy ? 'assassin.starting' : 'assassin.confirmStart') : 'game.leaveSeat')}
+              {t(confirm === 'assassination' ? (action.busy ? 'assassin.starting' : 'assassin.confirmStart') : willDissolve ? 'common.confirmDissolve' : 'game.leaveSeat')}
             </Button>
           </div>
         </div>

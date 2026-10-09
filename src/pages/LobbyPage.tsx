@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslations } from 'use-intl';
 import { useRouter } from '@/i18n/navigation';
+import { TableSheet } from '@/components/game/TableSheet';
+import { wouldDissolveRoom } from '@/lib/game/roomDissolution';
 import { GameIcon } from '@/components/game/GameArt';
 import { LobbyProgress } from '@/components/lobby/LobbyProgress';
 import { LobbyTable } from '@/components/lobby/LobbyTable';
@@ -47,6 +49,7 @@ export default function LobbyPage() {
   const viewToggle = useRef<HTMLButtonElement>(null);
   const [pending, setPending] = useState(false);
   const actionPending = useRef(false);
+  const [dissolutionAction, setDissolutionAction] = useState<(() => Promise<void | Ack<unknown>>) | null>(null);
 
   const seated = (snapshot?.members ?? []).filter((m) => !m.isSpectator && m.claimed).sort((a, b) => a.seat - b.seat);
   const seatedCount = seated.length;
@@ -86,6 +89,7 @@ export default function LobbyPage() {
     try {
       const result = await action();
       if (result && !result.ok) setActionError(result.error?.message ?? t('table.actionFailed'));
+      else setDissolutionAction(null);
     } catch {
       setActionError(t('table.actionFailed'));
     } finally {
@@ -100,9 +104,22 @@ export default function LobbyPage() {
     if (!res.ok && res.error) setActionError(res.error.message);
   }
 
+  function requestDeparture(action: () => Promise<void | Ack<unknown>>, playerId: string | null, hostLeaving = false) {
+    if (busy || !snapshot) return;
+    if (wouldDissolveRoom(snapshot, playerId, hostLeaving)) {
+      setActionError(null);
+      setDissolutionAction(() => action);
+    } else void act(action);
+  }
+
   async function handleLeave() {
-    await roomActions.leave();
-    router.push('/');
+    const res = await roomActions.leave();
+    if (res.ok) {
+      useSessionStore.getState().setSession(code, { playerId: undefined, playerToken: undefined });
+      useRoomStore.getState().reset();
+      router.push('/');
+    }
+    return res;
   }
 
   async function handleClaim() {
@@ -181,7 +198,8 @@ export default function LobbyPage() {
             className="table-tool -ml-2.5 shrink-0"
             aria-label={t('common.leave')}
             title={t('common.leave')}
-            onClick={() => void handleLeave()}
+            disabled={busy}
+            onClick={() => requestDeparture(handleLeave, myPlayerId, isHost)}
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <path d="m12 5-7 7 7 7M5 12h14" />
@@ -220,7 +238,7 @@ export default function LobbyPage() {
               busy={busy}
               deck={<DeckPreview count={count} options={config.options} onOpen={isHost ? () => setView('setup') : undefined} />}
               onClaim={() => void act(handleClaim)}
-              onKick={(id) => void act(() => roomActions.kick(id))}
+              onKick={(id) => requestDeparture(() => roomActions.kick(id), id)}
               onTransferHost={(id) => void act(() => roomActions.transferHost(id))}
             />
           </div>
@@ -288,7 +306,7 @@ export default function LobbyPage() {
               </button>
             )}
             {hasSeat && (
-              <button type="button" className="table-tool" disabled={busy} onClick={() => void act(handleStand)}>
+              <button type="button" className="table-tool" disabled={busy} onClick={() => requestDeparture(handleStand, myPlayerId)}>
                 <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M10 15V4m0 0L6 8m4-4 4 4M4 17h12" />
                 </svg>
@@ -314,6 +332,17 @@ export default function LobbyPage() {
           </div>
         </div>}
       </div>
+
+      <TableSheet open={dissolutionAction !== null} title={t('common.dissolveRoomTitle')}
+        onClose={() => setDissolutionAction(null)} busy={pending} error={actionError}>
+        <div className="space-y-4">
+          <p className="text-sm text-parchment/80">{t('common.confirmDissolveRoom')}</p>
+          <div className="flex gap-2">
+            <Button variant="ghost" autoFocus disabled={pending} onClick={() => setDissolutionAction(null)}>{t('common.cancel')}</Button>
+            <Button variant="danger" disabled={busy} onClick={() => { if (dissolutionAction) void act(dissolutionAction); }}>{t('common.confirmDissolve')}</Button>
+          </div>
+        </div>
+      </TableSheet>
 
       {notices && (
         <div role="alert" className="table-error">

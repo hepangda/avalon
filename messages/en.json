@@ -28,6 +28,9 @@
     "unknown": "The game could not start. Please try again later."
   },
   "common": {
+    "dissolveRoomTitle": "Dissolve this room?",
+    "confirmDissolveRoom": "This action will dissolve the room. All players and spectators will lose access, and the room cannot be restored. Continue?",
+    "confirmDissolve": "Confirm and dissolve",
     "sessionReplaced": "This room is now open on another device. Reload to resume here.",
     "appName": "Avalon",
     "tagline": "The Resistance · gather your court and uncover the traitors",

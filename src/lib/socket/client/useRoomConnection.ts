@@ -1,6 +1,7 @@
 import type { HeartbeatState,ViewSnapshot } from '../stateIntegrity';
 import { ViewSynchronizer } from './viewSync';
 
+import { useRouter } from '@/i18n/navigation';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { gameImageUrls,preloadImages } from '@/lib/game/preloadImages';
 import { useCardArtStore } from '@/lib/store/cardArt';
@@ -18,6 +19,7 @@ import { connectRoom,emitWithAck,getConnection,type ConnState } from './socket';
  * New players still choose a seat through `room:claimSeat`.
  */
 export function useRoomConnection(code: string | null) {
+  const router = useRouter();
   const { user, loading, refresh } = useAuthIdentity();
   const cardArtStyle = useCardArtStore((state) => state.style);
   useEffect(() => {
@@ -87,6 +89,7 @@ export function useRoomConnection(code: string | null) {
           store.setNotice({ type: 'join_error', code: res.error.code, message: res.error.message });
         }
       } catch {
+        if (!active || sync !== joiningSync) return;
         store.setNotice({ type: 'join_error', message: 'Could not reach the server' });
       }
     }
@@ -107,12 +110,13 @@ export function useRoomConnection(code: string | null) {
 
     function onNotice(n: { type: string; message?: string }) {
       if (n.type === 'room_dissolved') {
+        active = false;
         sync.dispose();
         heartbeat.reset();
         getConnection()?.close();
         useSessionStore.getState().setSession(roomCode, { playerId: undefined, playerToken: undefined, hostToken: undefined });
-        useRoomStore.setState({ snapshot: null, game: null, myPlayerId: null, isHost: false, isReferee: false });
-        store.setNotice({ type: 'join_error', code: 'ROOM_NOT_FOUND' });
+        store.reset();
+        router.replace('/');
         return;
       }
       // Being kicked (host) or unbound (referee) frees our seat server-side; drop
@@ -143,6 +147,7 @@ export function useRoomConnection(code: string | null) {
     }
 
     function onPush(event: string, payload: unknown) {
+      if (!active) return;
       switch (event) {
         case 'view:sync':
           void sync.receive(payload as ViewSnapshot);
@@ -202,5 +207,5 @@ export function useRoomConnection(code: string | null) {
       // lobby → game reuse it); the next consumer re-attaches via connectRoom.
       getConnection()?.setHandlers({});
     };
-  }, [code, loading, user?.id, refresh]);
+  }, [code, loading, user?.id, refresh, router]);
 }

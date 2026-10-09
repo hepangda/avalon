@@ -28,6 +28,9 @@
     "unknown": "暂时无法开始游戏，请稍后重试。"
   },
   "common": {
+    "dissolveRoomTitle": "确认解散房间？",
+    "confirmDissolveRoom": "此操作将导致房间解散，所有玩家和观众都将无法继续使用此房间。解散后无法恢复，确定继续吗？",
+    "confirmDissolve": "确认并解散",
     "sessionReplaced": "已在另一台设备继续游玩。刷新页面可切回此设备。",
     "appName": "阿瓦隆",
     "tagline": "开个房间，拉朋友来一局",
