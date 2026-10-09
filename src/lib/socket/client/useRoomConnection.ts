@@ -81,8 +81,10 @@ export function useRoomConnection(code: string | null) {
           useSessionStore.getState().setSession(roomCode, {
             playerId: res.data.playerId, playerToken: res.data.playerToken,
           });
+          // A failed earlier attempt (e.g. while the server restarted) no longer applies.
+          if (useRoomStore.getState().notice?.type === 'join_error') store.setNotice(null);
         } else if (res.error) {
-          store.setNotice({ type: 'join_error', message: res.error.message });
+          store.setNotice({ type: 'join_error', code: res.error.code, message: res.error.message });
         }
       } catch {
         store.setNotice({ type: 'join_error', message: 'Could not reach the server' });
@@ -104,6 +106,15 @@ export function useRoomConnection(code: string | null) {
     }
 
     function onNotice(n: { type: string; message?: string }) {
+      if (n.type === 'room_dissolved') {
+        sync.dispose();
+        heartbeat.reset();
+        getConnection()?.close();
+        useSessionStore.getState().setSession(roomCode, { playerId: undefined, playerToken: undefined, hostToken: undefined });
+        useRoomStore.setState({ snapshot: null, game: null, myPlayerId: null, isHost: false, isReferee: false });
+        store.setNotice({ type: 'join_error', code: 'ROOM_NOT_FOUND' });
+        return;
+      }
       // Being kicked (host) or unbound (referee) frees our seat server-side; drop
       // the local seat identity so the "who are you?" picker reloads to an
       // unclaimed state instead of still highlighting our old seat.

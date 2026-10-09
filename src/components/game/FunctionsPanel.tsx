@@ -17,6 +17,10 @@ export function FunctionsPanel({ code, game, onAssassinationStarted }: {
 }) {
   const t = useTranslations();
   const router = useRouter();
+  const isHost = useRoomStore((state) => state.isHost);
+  const hostPlayerId = useRoomStore((state) => state.snapshot?.hostPlayerId);
+  const transfer = useRoomAction(`${code}:host:${isHost}`, t('table.actionFailed'));
+  const hostCandidates = game.players.filter((player) => player.claimed && player.connected && !player.isBot && player.id !== hostPlayerId);
   const [confirm, setConfirm] = useState<'leave' | 'assassination' | null>(null);
   const action = useRoomAction(`${code}:${game.gameId}:${game.phaseRevision}:${confirm}`, t('table.actionFailed'));
   useEffect(() => {
@@ -47,6 +51,23 @@ export function FunctionsPanel({ code, game, onAssassinationStarted }: {
         </button>
       )}
       {!game.isSpectator && <AdminPanel game={game} />}
+      {isHost && hostCandidates.length > 0 && (
+        <details className="rounded-lg border border-gold/20 bg-ink/30 px-4 py-3">
+          <summary className="cursor-pointer text-sm font-semibold text-parchment">{t('lobby.transferHost')}</summary>
+          <div className="mt-3 space-y-2">
+            {hostCandidates.map((player) => (
+              <div key={player.id} className="flex items-center justify-between gap-3 text-sm text-parchment">
+                <span className="truncate">{player.name}</span>
+                <Button variant="ghost" disabled={transfer.busy} aria-label={`${t('lobby.transferHost')} ${player.name}`}
+                  onClick={() => void transfer.run(() => roomActions.transferHost(player.id))}>
+                  {t('lobby.transferHost')}
+                </Button>
+              </div>
+            ))}
+            {transfer.error && <p role="alert" className="text-sm text-crimson">{transfer.error}</p>}
+          </div>
+        </details>
+      )}
       <button type="button" onClick={() => setConfirm('leave')}
         className="flex w-full items-center gap-3 rounded-lg border border-gold/20 bg-ink/30 px-4 py-3 text-left transition-colors hover:border-crimson/60 hover:bg-crimson/5">
         <span className="flex w-8 shrink-0 justify-center text-2xl" aria-hidden="true">🚪</span>

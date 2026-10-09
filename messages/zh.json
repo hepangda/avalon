@@ -15,6 +15,18 @@
     "privateLabel": "私人备注：{note}",
     "saveFailed": "浏览器无法保存备注。本次仍可使用，但刷新后可能丢失。"
   },
+  "startErrors": {
+    "title": "开局失败",
+    "roleSplit": "{players} 人局需要 {expectedGood} 名蓝方和 {expectedEvil} 名红方，当前配置为 {good} 名蓝方和 {evil} 名红方。请关闭部分特殊角色，或切换到推荐配置后重试。",
+    "invalidRoles": "角色配置不符合当前人数要求。请关闭部分特殊角色，或切换到推荐配置后重试。",
+    "invalidPlayers": "需要 5–10 名玩家入座才能开局。",
+    "notHost": "只有房主可以开始游戏。",
+    "notInRoom": "尚未连接到房间，请重新进入房间后重试。",
+    "alreadyStarted": "游戏已经开始，请等待进入游戏或刷新页面。",
+    "disconnected": "与房间的连接已断开，请等待重连后重试。",
+    "timeout": "开局请求超时，请等待房间状态更新后重试。",
+    "unknown": "暂时无法开始游戏，请稍后重试。"
+  },
   "common": {
     "sessionReplaced": "已在另一台设备继续游玩。刷新页面可切回此设备。",
     "appName": "阿瓦隆",
@@ -26,7 +38,9 @@
     "cancel": "取消",
     "leave": "离开房间",
     "back": "返回",
-    "confirm": "确认"
+    "confirm": "确认",
+    "roomNotFound": "房间不存在或已关闭，请检查房间码",
+    "backHome": "返回首页"
   },
   "home": {
     "createRoom": "创建房间",
@@ -51,7 +65,11 @@
     "authInvalidFlow": "登录请求已过期，请重新登录。",
     "authFailed": "登录失败，请重新尝试。",
     "errInvalidCode": "请输入 4 位数字房间码",
-    "errCreateFailed": "房间创建失败，请再试一次"
+    "errCreateFailed": "房间创建失败，请再试一次",
+    "orJoinWithCode": "或输入房间码加入",
+    "signInHint": "登录后即可创建房间，或加入朋友的对局",
+    "aliasHint": "在牌桌上显示给其他玩家的名字",
+    "signedInAs": "登录账号：{name}"
   },
   "lobby": {
     "rejectionCount": "{count} 次",
@@ -64,12 +82,7 @@
     "players": "玩家",
     "seated": "{count} 人已就坐",
     "host": "房主",
-    "configuration": "配置",
-    "goodEvil": "蓝方 {good} · 红方 {evil}",
-    "useRecommended": "采用推荐配置",
-    "enabled": "已启用",
-    "disabled": "未启用",
-    "optionalRoles": "可选角色",
+    "transferHost": "设为房主",
     "rolesInPlay": "本局角色（{count} 人）",
     "tooManyEvil": "红方特殊角色过多：已选 {used} 个，仅有 {budget} 个红方名额。请关闭一个。",
     "beginQuest": "开启征程",
@@ -78,9 +91,17 @@
     "enteringHall": "正在进入大厅…",
     "missionPattern": "任务版型",
     "missionNumber": "任务 {n}",
-    "failCardsRequired": "{count} 失败",
     "speechDuration": "每人发言时长",
-    "seconds": "{seconds} 秒"
+    "seconds": "{seconds} 秒",
+    "recommended": "推荐配置",
+    "redSeatsFull": "红方名额已满，请先移出一个红方角色",
+    "tableRules": "牌桌规则",
+    "shorterSpeech": "缩短发言时长",
+    "longerSpeech": "延长发言时长",
+    "moreNeeded": "还差 {count} 人开局",
+    "readyToBegin": "人数已齐，可以开局",
+    "configuration": "配置",
+    "tableSize": "{count} 人局"
   },
   "roles": {
     "Merlin": {
@@ -490,5 +511,27 @@
     "loginShort": "请先登录",
     "unavailableShort": "暂时无法重随",
     "reconnecting": "连接恢复后可重随"
+  },
+  "roomDetails": {
+    "name": "房间名",
+    "unnamed": "未命名房间",
+    "visibility": "可见性",
+    "public": "公开",
+    "private": "私密",
+    "saveFailed": "保存失败，请重试。"
+  },
+  "publicRooms": {
+    "title": "等待加入",
+    "refresh": "刷新",
+    "loading": "正在寻找房间…",
+    "error": "加载失败，请刷新重试。",
+    "empty": "还没有正在等人的房间",
+    "unnamed": "房间 {code}",
+    "players": "{count} / {max} 人",
+    "join": "加入",
+    "pagination": "公开房间分页",
+    "previous": "上一页",
+    "next": "下一页",
+    "emptyHint": "创建一个房间，邀请朋友入座吧"
   }
 }

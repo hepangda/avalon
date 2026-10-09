@@ -15,6 +15,18 @@
     "privateLabel": "Private note: {note}",
     "saveFailed": "Your browser could not save this note. You can still use it, but it may be lost after refreshing."
   },
+  "startErrors": {
+    "title": "Unable to start game",
+    "roleSplit": "A {players}-player game needs {expectedGood} blue and {expectedEvil} red roles, but the current setup has {good} blue and {evil} red. Disable some special roles or switch to the recommended setup, then try again.",
+    "invalidRoles": "The role setup does not match the player count. Disable some special roles or switch to the recommended setup, then try again.",
+    "invalidPlayers": "You need 5–10 seated players to start.",
+    "notHost": "Only the host can start the game.",
+    "notInRoom": "You are not connected to the room. Rejoin and try again.",
+    "alreadyStarted": "The game has already started. Wait to enter the game or refresh the page.",
+    "disconnected": "The room connection was lost. Wait to reconnect and try again.",
+    "timeout": "The start request timed out. Wait for the room status to update before trying again.",
+    "unknown": "The game could not start. Please try again later."
+  },
   "common": {
     "sessionReplaced": "This room is now open on another device. Reload to resume here.",
     "appName": "Avalon",
@@ -26,7 +38,9 @@
     "cancel": "Cancel",
     "leave": "Leave room",
     "back": "Back",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "roomNotFound": "This room doesn't exist or has already closed.",
+    "backHome": "Back to home"
   },
   "home": {
     "createRoom": "Create a Room",
@@ -51,7 +65,11 @@
     "authInvalidFlow": "The sign-in request expired. Please sign in again.",
     "authFailed": "Sign-in failed. Please try again.",
     "errInvalidCode": "Enter a 4-digit room code",
-    "errCreateFailed": "Failed to create room"
+    "errCreateFailed": "Failed to create room",
+    "orJoinWithCode": "or join with a room code",
+    "signInHint": "Sign in to create a room or join your friends.",
+    "aliasHint": "The name other players see at the table.",
+    "signedInAs": "Signed in as {name}"
   },
   "lobby": {
     "rejectionCount": "{count, plural, one {# rejection} other {# rejections}}",
@@ -64,12 +82,7 @@
     "players": "Players",
     "seated": "{count} seated",
     "host": "Host",
-    "configuration": "Configuration",
-    "goodEvil": "Blue {good} · Red {evil}",
-    "useRecommended": "Use recommended settings",
-    "enabled": "Enabled",
-    "disabled": "Disabled",
-    "optionalRoles": "Optional roles",
+    "transferHost": "Make host",
     "rolesInPlay": "Roles in play ({count}p)",
     "tooManyEvil": "Too many special red team roles: {used} selected, only {budget} red team slots. Disable one.",
     "beginQuest": "Begin the Quest",
@@ -78,9 +91,17 @@
     "enteringHall": "Entering the hall…",
     "missionPattern": "Mission pattern",
     "missionNumber": "Mission {n}",
-    "failCardsRequired": "{count} fails",
     "speechDuration": "Speaking time per player",
-    "seconds": "{seconds} seconds"
+    "seconds": "{seconds} seconds",
+    "recommended": "Recommended",
+    "redSeatsFull": "No red seats left. Remove a red role first.",
+    "tableRules": "Table rules",
+    "shorterSpeech": "Shorter speaking time",
+    "longerSpeech": "Longer speaking time",
+    "moreNeeded": "{count} more to begin",
+    "readyToBegin": "Ready to begin",
+    "configuration": "Setup",
+    "tableSize": "{count}-player game"
   },
   "roles": {
     "Merlin": {
@@ -490,5 +511,27 @@
     "loginShort": "Sign in first",
     "unavailableShort": "Reroll unavailable",
     "reconnecting": "Available once reconnected"
+  },
+  "roomDetails": {
+    "name": "Room name",
+    "unnamed": "Unnamed room",
+    "visibility": "Visibility",
+    "public": "Public",
+    "private": "Private",
+    "saveFailed": "Could not save. Please try again."
+  },
+  "publicRooms": {
+    "title": "Waiting to join",
+    "refresh": "Refresh",
+    "loading": "Finding rooms…",
+    "error": "Could not load rooms. Please refresh.",
+    "empty": "No rooms are waiting yet",
+    "unnamed": "Room {code}",
+    "players": "{count} / {max} players",
+    "join": "Join",
+    "pagination": "Public room pages",
+    "previous": "Previous",
+    "next": "Next",
+    "emptyHint": "Create a room and invite your friends to take a seat"
   }
 }

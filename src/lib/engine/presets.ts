@@ -6,15 +6,15 @@ import { buildRoleSet } from './roles';
  * Project-recommended optional-role setups per player count, offered as
  * "one-click recommended" presets in the lobby. The original rulebook allows
  * optional-role combinations rather than prescribing these presets.
- * Lady of the Lake is a separate module toggle, left off by default here.
+ * Lady of the Lake is a separate module toggle, recommended from 9 players.
  */
 export const RECOMMENDED_OPTIONS: Record<number, GameOptions> = {
   5: { percival: true, morgana: true, mordred: false, oberon: false, ladyOfTheLake: false },
   6: { percival: true, morgana: true, mordred: false, oberon: false, ladyOfTheLake: false },
   7: { percival: true, morgana: true, oberon: true, mordred: false, ladyOfTheLake: false },
   8: { percival: true, morgana: true, mordred: false, oberon: false, ladyOfTheLake: false },
-  9: { percival: true, morgana: true, mordred: true, oberon: false, ladyOfTheLake: false },
-  10: { percival: true, morgana: true, mordred: true, oberon: true, ladyOfTheLake: false },
+  9: { percival: true, morgana: true, mordred: true, oberon: false, ladyOfTheLake: true },
+  10: { percival: true, morgana: true, mordred: true, oberon: true, ladyOfTheLake: true },
 };
 
 export function recommendedOptions(playerCount: number): GameOptions {

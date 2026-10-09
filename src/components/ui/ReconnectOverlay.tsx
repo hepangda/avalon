@@ -3,13 +3,14 @@ import { createPortal } from 'react-dom';
 import { useTranslations } from 'use-intl';
 
 /** The modal top layer covers sheets and makes the disconnected page inert. */
-export function ReconnectOverlay({ active }: { active: boolean }) {
-  return active ? <ActiveReconnectOverlay /> : null;
+export function ReconnectOverlay({ active, sessionReplaced = false }: { active: boolean; sessionReplaced?: boolean }) {
+  return active ? <ActiveReconnectOverlay key={String(sessionReplaced)} sessionReplaced={sessionReplaced} /> : null;
 }
 
-function ActiveReconnectOverlay() {
+function ActiveReconnectOverlay({ sessionReplaced }: { sessionReplaced: boolean }) {
   const t = useTranslations();
-  const [canRefresh, setCanRefresh] = useState(false);
+  const [canRefresh, setCanRefresh] = useState(sessionReplaced);
+  const message = t(sessionReplaced ? 'common.sessionReplaced' : 'common.reconnecting');
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -33,12 +34,12 @@ function ActiveReconnectOverlay() {
   return createPortal(
     <dialog
       ref={dialog}
-      aria-label={t('common.reconnecting')}
+      aria-label={message}
       className="reconnect-overlay"
     >
       <div className="reconnect-content">
-        <span className="reconnect-spinner" aria-hidden="true" />
-        <p role="status" aria-live="polite">{t('common.reconnecting')}</p>
+        {!sessionReplaced && <span className="reconnect-spinner" aria-hidden="true" />}
+        <p role={sessionReplaced ? 'alert' : 'status'} aria-live={sessionReplaced ? 'assertive' : 'polite'}>{message}</p>
         <div className="reconnect-refresh-slot">
           {canRefresh && (
             <button type="button" className="reconnect-refresh" onClick={() => window.location.reload()}>

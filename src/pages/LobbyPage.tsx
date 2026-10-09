@@ -1,19 +1,29 @@
-import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { useRouter } from '@/i18n/navigation';
-import { RoomHeader } from '@/components/lobby/RoomHeader';
-import { ConfigPanel } from '@/components/lobby/ConfigPanel';
-import { SeatPicker } from '@/components/lobby/SeatPicker';
+import { GameIcon } from '@/components/game/GameArt';
+import { LobbyProgress } from '@/components/lobby/LobbyProgress';
+import { LobbyTable } from '@/components/lobby/LobbyTable';
+import { DeckPreview, RoleDeck } from '@/components/lobby/RoleDeck';
+import { RoomTitle } from '@/components/lobby/RoomTitle';
+import { TableRules } from '@/components/lobby/TableRules';
 import { PreferencesButton } from '@/components/PreferencesButton';
 import { Button } from '@/components/ui/Button';
+import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
 import { useRoomConnection, roomActions } from '@/lib/socket/client';
+import { joinErrorText } from '@/lib/socket/client/joinErrorText';
+import { disconnectRoom } from '@/lib/socket/client/socket';
+import { resolveRoomConfig } from '@/lib/socket/roomConfig';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { accountDisplayName } from '@/lib/auth/types';
-import type { RoomConfig } from '@/lib/socket/types';
+import { cn } from '@/lib/utils/cn';
+import { formatLatency, latencyTextClass } from '@/lib/utils/latency';
+import type { GameOptions } from '@/lib/engine';
+import type { Ack, RoomConfig } from '@/lib/socket/types';
+import './lobby.css';
 
 export default function LobbyPage() {
   const t = useTranslations();
@@ -33,9 +43,17 @@ export default function LobbyPage() {
   const identityName = user ? accountDisplayName(user) : '';
   const identityAvatarUrl = user?.picture;
   const [actionError, setActionError] = useState<string | null>(null);
+  const [view, setView] = useState<'table' | 'setup'>('table');
+  const viewToggle = useRef<HTMLButtonElement>(null);
+  const [pending, setPending] = useState(false);
+  const actionPending = useRef(false);
 
-  const seatedCount = snapshot?.members.filter((m) => !m.isSpectator && m.claimed).length ?? 0;
+  const seated = (snapshot?.members ?? []).filter((m) => !m.isSpectator && m.claimed).sort((a, b) => a.seat - b.seat);
+  const seatedCount = seated.length;
+  const hasSeat = seated.some((m) => m.id === myPlayerId);
   const canStart = seatedCount >= 5 && seatedCount <= 10;
+  const connected = conn === 'connected';
+  const busy = !connected || pending;
 
   // Redirect into the game once it starts. Guard on the snapshot's own code:
   // the room store is a global singleton that can briefly still hold a previous
@@ -59,15 +77,26 @@ export default function LobbyPage() {
     };
   }, [conn, identityName, myPlayerId]);
 
+  /** Seat and start actions run one at a time; a failure surfaces in the table's error banner. */
+  async function act(action: () => Promise<void | Ack<unknown>>) {
+    if (!connected || actionPending.current) return;
+    actionPending.current = true;
+    setPending(true);
+    setActionError(null);
+    try {
+      const result = await action();
+      if (result && !result.ok) setActionError(result.error?.message ?? t('table.actionFailed'));
+    } catch {
+      setActionError(t('table.actionFailed'));
+    } finally {
+      actionPending.current = false;
+      setPending(false);
+    }
+  }
+
   async function handleConfig(config: RoomConfig) {
     setActionError(null);
     const res = await roomActions.config(config);
-    if (!res.ok && res.error) setActionError(res.error.message);
-  }
-
-  async function handleStart() {
-    setActionError(null);
-    const res = await roomActions.start();
     if (!res.ok && res.error) setActionError(res.error.message);
   }
 
@@ -78,101 +107,223 @@ export default function LobbyPage() {
 
   async function handleClaim() {
     if (!user) return;
-    setActionError(null);
     const res = await roomActions.claimSeat(undefined, identityName, identityAvatarUrl);
     if (res.ok && res.data) {
       useSessionStore.getState().setSession(code, {
         playerId: res.data.playerId,
         playerToken: res.data.playerToken,
       });
-    } else if (res.error) {
-      setActionError(res.error.message);
     }
+    return res;
   }
 
   async function handleStand() {
-    setActionError(null);
     const res = await roomActions.releaseSeat();
     if (res.ok) {
       useSessionStore
         .getState()
         .setSession(code, { playerId: undefined, playerToken: undefined });
-    } else if (res.error) {
-      setActionError(res.error.message);
     }
-  }
-
-  async function handleKick(id: string) {
-    setActionError(null);
-    return roomActions.kick(id);
+    return res;
   }
 
   if (!snapshot || snapshot.code !== code) {
+    // Without a snapshot there is no room to show; a failed join must not wait forever.
+    if (notice?.type === 'join_error') {
+      return (
+        <main className="flex h-[100dvh] flex-col items-center justify-center gap-6 px-6 text-center">
+          <GameIcon name="crest" className="h-16 w-16 opacity-50 grayscale" />
+          <p role="alert" className="max-w-xs text-parchment/80">{joinErrorText(notice, t)}</p>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              disconnectRoom();
+              useRoomStore.getState().reset();
+              router.push('/');
+            }}
+          >
+            {t('common.backHome')}
+          </Button>
+        </main>
+      );
+    }
     return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="animate-pulse text-parchment/60">
+      <main className="flex h-[100dvh] flex-col items-center justify-center gap-5">
+        <GameIcon name="crest" className="lobby-waiting-crest h-16 w-16" />
+        <p className="text-sm tracking-wide text-parchment/60">
           {notice?.type === 'session_replaced' ? t('common.sessionReplaced') : conn === 'disconnected' ? t('common.reconnecting') : t('lobby.enteringHall')}
         </p>
       </main>
     );
   }
 
+  const count = Math.max(5, Math.min(10, seatedCount || 5));
+  const config = resolveRoomConfig(snapshot.config, count);
+  const canConfigure = isHost && connected;
+  /** Any hand-made change leaves the recommended setup. */
+  const customize = (patch: Partial<GameOptions>) => {
+    if (!canConfigure) return;
+    const options = { ...config.options, ...patch };
+    if (patch.morgana !== undefined) options.percival = patch.morgana;
+    void handleConfig({ ...config, useRecommended: false, options });
+  };
+  const notices = notice?.type === 'session_replaced'
+    ? t('common.sessionReplaced')
+    : actionError ?? (notice?.type === 'join_error' ? joinErrorText(notice, t) : null);
+
   return (
-    <main className="mx-auto max-w-2xl space-y-4 px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-      <ReconnectOverlay active={conn !== 'connected' && notice?.type !== 'session_replaced' && notice?.type !== 'join_error'} />
-      <div className="flex items-center justify-between gap-4">
-        <button
-          className="inline-flex min-h-10 items-center gap-2 text-sm text-parchment/60 transition-colors hover:text-parchment"
-          onClick={() => void handleLeave()}
-        >
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m12 5-7 7 7 7M5 12h14" />
-          </svg>
-          {t('common.leave')}
-        </button>
-        <PreferencesButton />
+    <main className="table-screen lobby-screen">
+      <ReconnectOverlay active={!connected && notice?.type !== 'session_replaced' && notice?.type !== 'join_error'} />
+      <header className="table-header">
+        <div className="flex min-w-0 items-center">
+          <button
+            type="button"
+            className="table-tool -ml-2.5 shrink-0"
+            aria-label={t('common.leave')}
+            title={t('common.leave')}
+            onClick={() => void handleLeave()}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m12 5-7 7 7 7M5 12h14" />
+            </svg>
+          </button>
+          <RoomTitle
+            code={code}
+            name={snapshot.name ?? ''}
+            visibility={snapshot.visibility ?? 'private'}
+            isHost={isHost}
+            disabled={!connected}
+            onError={setActionError}
+          />
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className={`table-latency ${connected ? latencyTextClass(selfLatency) : 'text-amber-300'}`}>
+            {connected ? `● ${formatLatency(selfLatency)}` : t('game.reconnecting')}
+          </span>
+          <PreferencesButton />
+        </div>
+      </header>
+
+      {/* Only the host configures; everyone else reads the whole setup off the table. */}
+      <div className={cn('table-workspace', !isHost && 'is-solo')} data-view={isHost && view === 'setup' ? 'report' : 'table'}>
+        <div className="table-play" role="region" aria-label={t('table.tabTable')}>
+          <div className="table-progress">
+            <LobbyProgress count={count} options={config.options} />
+          </div>
+          <div className="lobby-stage">
+            <LobbyTable
+              code={code}
+              seated={seated}
+              hostPlayerId={snapshot.hostPlayerId}
+              myPlayerId={myPlayerId}
+              isHost={isHost}
+              busy={busy}
+              deck={<DeckPreview count={count} options={config.options} onOpen={isHost ? () => setView('setup') : undefined} />}
+              onClaim={() => void act(handleClaim)}
+              onKick={(id) => void act(() => roomActions.kick(id))}
+              onTransferHost={(id) => void act(() => roomActions.transferHost(id))}
+            />
+          </div>
+          <footer className="table-footer">
+            <div className="table-actions">
+              {isHost ? (
+                <button
+                  type="button"
+                  className="table-action lobby-begin"
+                  onClick={() => void act(roomActions.start)}
+                  disabled={!canStart || busy}
+                >
+                  {canStart ? t('lobby.beginQuest') : t('lobby.needPlayers', { count: seatedCount })}
+                </button>
+              ) : !hasSeat ? (
+                <button type="button" className="table-action lobby-begin" disabled={busy} onClick={() => void act(handleClaim)}>
+                  {t('seat.sitDown')}
+                </button>
+              ) : (
+                <p className="table-action-placeholder gap-2.5">
+                  <span className="lobby-pulse" aria-hidden="true" />
+                  {t('lobby.waitingHost')}
+                </p>
+              )}
+            </div>
+          </footer>
+        </div>
+
+        {isHost && <aside className="table-report lobby-setup" role="region" aria-label={t('lobby.configuration')}>
+          <div className="lobby-setup-scroll">
+            <RoleDeck
+              count={count}
+              options={config.options}
+              useRecommended={config.useRecommended === true}
+              disabled={!canConfigure}
+              onRecommended={(value) => {
+                if (canConfigure) void handleConfig(resolveRoomConfig({ ...config, useRecommended: value }, count));
+              }}
+              onToggle={(key, value) => customize({ [key]: value })}
+            />
+            <TableRules options={config.options} disabled={!canConfigure} onChange={customize} />
+          </div>
+          <button
+            type="button"
+            className="table-report-close"
+            aria-label={t('table.returnToTable')}
+            title={t('table.returnToTable')}
+            onClick={() => {
+              setView('table');
+              viewToggle.current?.focus();
+            }}
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </aside>}
+
+        {(isHost || hasSeat) && <div className="table-bottom-tools">
+          <div className="table-tools">
+            {isHost && seatedCount < 10 && (
+              <button type="button" className="table-tool" disabled={busy} onClick={() => void act(roomActions.addBot)}>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="5" y="7" width="14" height="13" rx="3" />
+                  <path d="M12 3v4M2 12v4m20-4v4M9 16h6" />
+                </svg>
+                <span>{t('seat.addBot')}</span>
+              </button>
+            )}
+            {hasSeat && (
+              <button type="button" className="table-tool" disabled={busy} onClick={() => void act(handleStand)}>
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M10 15V4m0 0L6 8m4-4 4 4M4 17h12" />
+                </svg>
+                <span>{t('seat.standUp')}</span>
+              </button>
+            )}
+            {isHost && <button
+              ref={viewToggle}
+              type="button"
+              className="table-tool table-view-toggle"
+              onClick={() => setView(view === 'table' ? 'setup' : 'table')}
+            >
+              {view === 'table' ? (
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="6" height="9" rx="1.2" transform="rotate(-8 6 8.5)" />
+                  <rect x="10" y="5" width="6" height="9" rx="1.2" transform="rotate(8 13 9.5)" />
+                </svg>
+              ) : (
+                <span aria-hidden="true">◉</span>
+              )}
+              <span>{view === 'table' ? t('lobby.configuration') : t('table.tabTable')}</span>
+            </button>}
+          </div>
+        </div>}
       </div>
-      <RoomHeader
-        code={code}
-        connected={conn === 'connected'}
-        latency={selfLatency}
-      />
 
-      {(notice?.type === 'join_error' || notice?.type === 'session_replaced' || actionError) && (
-        <div className="rounded-lg border border-crimson/50 bg-crimson/20 px-4 py-2 text-sm text-parchment">
-          {notice?.type === 'session_replaced' ? t('common.sessionReplaced') : actionError ?? notice?.message}
+      {notices && (
+        <div role="alert" className="table-error">
+          <span>{notices}</span>
+          {actionError && notices === actionError && (
+            <button type="button" onClick={() => setActionError(null)} aria-label={t('mission.close')}>✕</button>
+          )}
         </div>
       )}
-
-      <SeatPicker
-        members={snapshot.members}
-        hostPlayerId={snapshot.hostPlayerId}
-        myPlayerId={myPlayerId}
-        isHost={isHost}
-        disabled={conn !== 'connected'}
-        onClaim={handleClaim}
-        onStand={handleStand}
-        onKick={handleKick}
-        onAddBot={roomActions.addBot}
-      />
-
-      <ConfigPanel
-        config={snapshot.config}
-        seatedCount={seatedCount}
-        isHost={isHost}
-        onChange={handleConfig}
-      />
-
-      {isHost ? (
-        <div className="space-y-1.5">
-          <Button className="w-full py-3 text-base" onClick={handleStart} disabled={!canStart || conn !== 'connected'}>
-            {canStart ? t('lobby.beginQuest') : t('lobby.needPlayers', { count: seatedCount })}
-          </Button>
-        </div>
-      ) : (
-        <p className="text-center text-sm text-parchment/50">{t('lobby.waitingHost')}</p>
-      )}
-
     </main>
   );
 }

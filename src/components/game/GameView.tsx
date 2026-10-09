@@ -31,6 +31,8 @@ import {
   roomActions
 } from '@/lib/socket/client';
 import type { Ack } from '@/lib/socket/types';
+import { joinErrorText } from '@/lib/socket/client/joinErrorText';
+import type { RoomNotice } from '@/lib/store/room';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { PhaseBoard } from './PhaseBoard';
@@ -47,7 +49,7 @@ export function GameView({
   conn: 'connected' | 'connecting' | 'disconnected';
   myPlayerId: string | null;
   selfLatency: number | null;
-  notice?: { type: string; message?: string } | null;
+  notice?: RoomNotice | null;
   onDismissNotice?: () => void;
   actions?: typeof gameActions;
   onRestart?: () => Promise<Ack>;
@@ -80,11 +82,10 @@ export function GameView({
   if (!game)
     return (
       <main className="table-screen items-center justify-center">
+        <ReconnectOverlay active={notice?.type === 'session_replaced'} sessionReplaced />
         <p role={notice?.type === 'join_error' ? 'alert' : 'status'}>
-          {notice?.type === 'session_replaced'
-            ? t('common.sessionReplaced')
-            : notice?.type === 'join_error'
-              ? notice.message
+          {notice?.type === 'join_error'
+              ? joinErrorText(notice, t)
               : t(
                 conn === 'disconnected'
                   ? 'common.reconnecting'
@@ -275,7 +276,7 @@ export function GameView({
         : '';
   return (
     <>
-      <ReconnectOverlay active={conn !== 'connected' && notice?.type !== 'session_replaced' && notice?.type !== 'join_error'} />
+      <ReconnectOverlay active={notice?.type === 'session_replaced' || (conn !== 'connected' && notice?.type !== 'join_error')} sessionReplaced={notice?.type === 'session_replaced'} />
       <TableFrame
         code={code}
         onOpenReport={() => setLogChannel('public')}
@@ -310,7 +311,7 @@ export function GameView({
         latency={selfLatency}
         error={
           action.error ??
-          (notice?.type === 'session_replaced' ? t('common.sessionReplaced') : notice?.type === 'join_error' ? notice.message : null)
+          (notice?.type === 'join_error' ? joinErrorText(notice, t) ?? null : null)
         }
         onDismissError={() => {
           action.clearError();

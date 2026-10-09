@@ -1,4 +1,4 @@
-import { IdentityPanel } from '@/components/home/IdentityPanel';
+import { AccountSettings } from '@/components/home/AccountMenu';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter,Route,Routes } from 'react-router-dom';
@@ -59,7 +59,7 @@ describe('account-required UI', () => {
     expect(signedOut).not.toContain('animate-spin');
     expect(signedOut).not.toContain('<input');
     expect(signedOut).not.toContain('<form');
-    const signedIn = renderToStaticMarkup(<IdentityPanel {...props} user={{ id: 'account', username: 'Player', alias: 'Alias' }} />);
+    const signedIn = renderToStaticMarkup(<AccountSettings {...props} user={{ id: 'account', username: 'Player', alias: 'Alias' }} />);
     expect(signedIn).toContain('home.saveAlias');
     expect(signedIn).toContain('value="Alias"');
   });

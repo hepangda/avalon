@@ -4,12 +4,14 @@ import type { RoomSnapshot, PlayerLatency } from '../socket/types';
 import type { ViewSnapshot } from '../socket/stateIntegrity';
 
 export type ConnStatus = 'connecting' | 'connected' | 'disconnected';
+/** A server notice; join failures keep the server's error code so the UI can translate it. */
+export type RoomNotice = { type: string; code?: string; message?: string };
 const initialRoom = {
   conn: 'connecting' as ConnStatus, syncing: true, recoveryRevision: 0,
   roomCode: null as string | null, myPlayerId: null as string | null,
   isHost: false, isReferee: false,
   snapshot: null as RoomSnapshot | null, game: null as ClientGameState | null,
-  notice: null as { type: string; message?: string } | null,
+  notice: null as RoomNotice | null,
   selfLatency: null as number | null,
 };
 

@@ -1,13 +1,16 @@
-import type { RoomConfig } from '../types';
+import type { RoomConfig, RoomDetails } from '../types';
 import { emitWithAck } from './socket';
 
 /** Thin typed wrappers around emitWithAck for room/game actions. */
 export const roomActions = {
+  details: (details: RoomDetails) => emitWithAck('room:details', details),
   config: (config: RoomConfig) =>
     emitWithAck('room:config', { config }),
   rename: (name: string) =>
     emitWithAck('room:rename', { name }),
   addBot: () => emitWithAck('room:addBot', {}),
+  transferHost: (targetPlayerId: string) =>
+    emitWithAck('room:transferHost', { targetPlayerId }),
   kick: (targetPlayerId: string) =>
     emitWithAck('room:kick', { targetPlayerId }),
   claimSeat: (seatId?: string, name?: string, avatarUrl?: string) =>
