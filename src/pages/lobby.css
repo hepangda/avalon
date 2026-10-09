@@ -514,21 +514,22 @@ button.lobby-chair-seat:focus-visible .lobby-chair-ring { outline: 2px solid #e6
 .lobby-switch input:focus-visible { outline: 2px solid #e6c14a; outline-offset: 2px; }
 .lobby-switch input:disabled { cursor: not-allowed; opacity: 0.5; }
 
-/* Deck editor: one card per role, duplicates stacked. */
-.lobby-deck-team { --team: #9fcbe0; }
-.lobby-deck-team[data-team="evil"] { --team: #e7a39c; }
-.lobby-deck-team + .lobby-deck-team { margin-top: 16px; }
-.lobby-deck-team-label {
+/* Setup: labelled groups — the two teams, the extras, then the two scales. */
+.lobby-group { --tone: #d0b264; }
+.lobby-group[data-tone="good"] { --tone: #9fcbe0; }
+.lobby-group[data-tone="evil"] { --tone: #e7a39c; }
+.lobby-group + .lobby-group { margin-top: 18px; }
+.lobby-group-label {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
-  color: var(--team);
+  color: var(--tone);
   font-size: 12px;
   letter-spacing: 0.12em;
 }
-.lobby-deck-team-label .tabular-nums { opacity: 0.65; }
-.lobby-deck-team-label::after {
+.lobby-group-label .tabular-nums { opacity: 0.65; }
+.lobby-group-label::after {
   content: "";
   flex: 1;
   height: 1px;
@@ -631,50 +632,46 @@ button.lobby-chair-seat:focus-visible .lobby-chair-ring { outline: 2px solid #e6
   color: #e6c14a;
 }
 
-/* Rules: label on the left, its instrument on the right. */
-.lobby-rule {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 56px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgb(201 162 39 / 0.1);
+/* The Lady of the Lake as a card: her emblem rising from a lake-blue field. */
+.role-card.lobby-lady-card {
+  --role-shade: 8 33 42;
+  background: radial-gradient(120% 75% at 50% 62%, #2f7684, #0f2730 72%);
 }
-.lobby-rule:last-child { border-bottom: 0; }
-.lobby-rule dt {
-  min-width: 0;
-  color: rgb(232 220 192 / 0.85);
-  font-size: 14px;
+.lobby-lady-card .role-card-art {
+  padding: 6% 4% 24%;
+  object-fit: contain;
 }
-.lobby-rule dd { flex: none; }
-.lobby-rule-icon {
-  width: 34px;
-  height: 34px;
-  margin: -4px 0;
+
+/* A short scale chosen with one tap. */
+.lobby-choices {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid rgb(201 162 39 / 0.25);
+  border-radius: 12px;
+  background: rgb(18 13 8 / 0.55);
 }
-.lobby-stepper {
-  display: inline-flex;
-  align-items: center;
+.lobby-choices button {
   height: 36px;
-  border: 1px solid rgb(201 162 39 / 0.3);
-  border-radius: 999px;
-  background: rgb(18 13 8 / 0.5);
-}
-.lobby-stepper button {
-  width: 36px;
-  height: 100%;
-  border-radius: 999px;
-  color: #e6c14a;
-  font-size: 18px;
-  line-height: 1;
-}
-.lobby-stepper button:hover:not(:disabled) { background: rgb(201 162 39 / 0.12); }
-.lobby-stepper button:focus-visible { outline: 2px solid #e6c14a; outline-offset: -2px; }
-.lobby-stepper button:disabled { cursor: not-allowed; opacity: 0.3; }
-.lobby-stepper output {
-  min-width: 62px;
-  color: #e8dcc0;
+  min-width: 0;
+  border-radius: 9px;
+  color: rgb(232 220 192 / 0.6);
+  font-family: var(--font-numbers);
   font-size: 14px;
-  text-align: center;
+  font-variant-numeric: tabular-nums;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.lobby-choices button[aria-checked="true"] {
+  background: linear-gradient(to bottom, #3d3427, #2a241b);
+  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 0.6), 0 2px 6px -2px #000;
+  color: #e6c14a;
+  font-weight: 600;
+}
+.lobby-choices button:focus-visible { outline: 2px solid #e6c14a; outline-offset: -2px; }
+.lobby-choices button:disabled { cursor: not-allowed; }
+.lobby-choices button:disabled:not([aria-checked="true"]) { opacity: 0.45; }
+@media (hover: hover) {
+  .lobby-choices button:hover:not(:disabled):not([aria-checked="true"]) { color: #e8dcc0; background: rgb(201 162 39 / 0.08); }
 }

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils/cn';
 import type { CardArtStyle } from '@/lib/preferences';
 
 /** Rough width of the longest unbreakable run, in em: CJK glyphs are square, Latin about half. */
-function nameEms(name: string) {
+export function nameEms(name: string) {
   return Math.max(...name.split(/\s+/).map((word) =>
     [...word].reduce((sum, ch) => sum + (/[\u2E80-\uFFEF]/.test(ch) ? 1 : 0.5), 0)));
 }

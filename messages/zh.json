@@ -71,8 +71,6 @@
   "lobby": {
     "rejectionCount": "{count} 次",
     "rejectionLimit": "讨论轮数上限",
-    "decreaseDiscussionLimit": "减少讨论轮数上限",
-    "increaseDiscussionLimit": "增加讨论轮数上限",
     "roomCode": "房间码",
     "inviteLink": "邀请链接",
     "copied": "已复制！",
@@ -92,13 +90,13 @@
     "seconds": "{seconds} 秒",
     "recommended": "推荐配置",
     "redSeatsFull": "红方名额已满，请先移出一个红方角色",
-    "tableRules": "牌桌规则",
-    "shorterSpeech": "缩短发言时长",
-    "longerSpeech": "延长发言时长",
     "moreNeeded": "还差 {count} 人开局",
     "readyToBegin": "人数已齐，可以开局",
     "configuration": "配置",
-    "tableSize": "{count} 人局"
+    "tableSize": "{count} 人局",
+    "setupTitle": "本局配置（{count} 人）",
+    "extras": "扩展",
+    "speechSeconds": "每人发言时长（秒）"
   },
   "roles": {
     "Merlin": {

@@ -5,9 +5,9 @@ import { useRouter } from '@/i18n/navigation';
 import { GameIcon } from '@/components/game/GameArt';
 import { LobbyProgress } from '@/components/lobby/LobbyProgress';
 import { LobbyTable } from '@/components/lobby/LobbyTable';
-import { DeckPreview, RoleDeck } from '@/components/lobby/RoleDeck';
+import { DeckPreview } from '@/components/lobby/DeckPreview';
+import { GameSetup } from '@/components/lobby/GameSetup';
 import { RoomTitle } from '@/components/lobby/RoomTitle';
-import { TableRules } from '@/components/lobby/TableRules';
 import { PreferencesButton } from '@/components/PreferencesButton';
 import { Button } from '@/components/ui/Button';
 import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
@@ -251,7 +251,7 @@ export default function LobbyPage() {
 
         {isHost && <aside className="table-report lobby-setup" role="region" aria-label={t('lobby.configuration')}>
           <div className="lobby-setup-scroll">
-            <RoleDeck
+            <GameSetup
               count={count}
               options={config.options}
               useRecommended={config.useRecommended === true}
@@ -259,9 +259,8 @@ export default function LobbyPage() {
               onRecommended={(value) => {
                 if (canConfigure) void handleConfig(resolveRoomConfig({ ...config, useRecommended: value }, count));
               }}
-              onToggle={(key, value) => customize({ [key]: value })}
+              onChange={customize}
             />
-            <TableRules options={config.options} disabled={!canConfigure} onChange={customize} />
           </div>
           <button
             type="button"

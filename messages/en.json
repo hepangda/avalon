@@ -71,8 +71,6 @@
   "lobby": {
     "rejectionCount": "{count, plural, one {# rejection} other {# rejections}}",
     "rejectionLimit": "Discussion round limit",
-    "decreaseDiscussionLimit": "Decrease discussion round limit",
-    "increaseDiscussionLimit": "Increase discussion round limit",
     "roomCode": "Room code",
     "inviteLink": "Invite Link",
     "copied": "Copied!",
@@ -92,13 +90,13 @@
     "seconds": "{seconds} seconds",
     "recommended": "Recommended",
     "redSeatsFull": "No red seats left. Remove a red role first.",
-    "tableRules": "Table rules",
-    "shorterSpeech": "Shorter speaking time",
-    "longerSpeech": "Longer speaking time",
     "moreNeeded": "{count} more to begin",
     "readyToBegin": "Ready to begin",
     "configuration": "Setup",
-    "tableSize": "{count}-player game"
+    "tableSize": "{count}-player game",
+    "setupTitle": "Game setup ({count}p)",
+    "extras": "Extras",
+    "speechSeconds": "Speaking time per player (seconds)"
   },
   "roles": {
     "Merlin": {
