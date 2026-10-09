@@ -1,4 +1,5 @@
 import { useTranslations } from 'use-intl';
+import { ProposalLimitIcon } from './ProposalLimitIcon';
 import { cn } from '@/lib/utils/cn';
 import { rejectionLimit, type ClientGameState } from '@/lib/engine';
 
@@ -45,7 +46,7 @@ export function ProposalTracker({
             {i < current ? (
               '✕'
             ) : i === limit - 1 ? (
-              '☠'
+              <ProposalLimitIcon />
             ) : i === current ? (
               <span className="h-1.5 w-1.5 rounded-full bg-gold" />
             ) : null}

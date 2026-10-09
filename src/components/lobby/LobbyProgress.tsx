@@ -1,5 +1,6 @@
 import { useTranslations } from 'use-intl';
 import { GameIcon } from '@/components/game/GameArt';
+import { ProposalLimitIcon } from '@/components/game/ProposalLimitIcon';
 import { missionSizesFor, rejectionLimit, requiredFailsFor, speechDuration, type GameOptions } from '@/lib/engine';
 import { cn } from '@/lib/utils/cn';
 
@@ -42,7 +43,7 @@ export function LobbyProgress({ count, options }: { count: number; options: Game
                       : last ? 'border-crimson-bright/50 text-crimson-bright' : 'border-gold/25',
                   )}
                 >
-                  {last ? '☠' : i === 0 ? <span className="h-1.5 w-1.5 rounded-full bg-gold" /> : null}
+                  {last ? <ProposalLimitIcon /> : i === 0 ? <span className="h-1.5 w-1.5 rounded-full bg-gold" /> : null}
                 </span>
               );
             })}
