@@ -134,6 +134,8 @@ export class RoomMembership {
     payload: unknown,
   ): Promise<Ack<{ playerId: string; playerToken: string }>> {
     if (!this.state.meta) return fail("NOT_IN_ROOM", "Not in a room");
+    if (this.state.meta.status !== "lobby")
+      return fail("WRONG_PHASE", "Game already started");
     const { seatId: requestedSeatId, name, avatarUrl } = (payload ?? {}) as {
       seatId?: string;
       name?: unknown;
@@ -141,8 +143,6 @@ export class RoomMembership {
     };
     const prevId = this.effects.attach(ws).playerId;
     const automatic = requestedSeatId === undefined;
-    if (automatic && this.state.meta.status !== "lobby")
-      return fail("WRONG_PHASE", "Choose an existing seat during a game");
     const seats = activePlayers(this.state.members);
     let target = requestedSeatId ? this.state.members.get(requestedSeatId) : undefined;
     if (automatic) {
@@ -185,15 +185,7 @@ export class RoomMembership {
     if (!this.state.members.has(seatId)) {
       this.state.meta.config.roster.push(fallbackSeatName(target.seat));
     }
-    if (prevId && prevId !== seatId) {
-      this.releaseSeat(prevId);
-      if (this.state.game)
-        await this.effects.applyEvent({
-          type: "SET_CONNECTED",
-          by: prevId,
-          connected: false,
-        });
-    }
+    if (prevId && prevId !== seatId) this.releaseSeat(prevId);
 
     const playerToken = this.playerSessionToken(seatId) ?? makeSessionToken();
     this.persistPlayerSession(seatId, playerToken);
@@ -205,14 +197,7 @@ export class RoomMembership {
     this.persistPlayer(target);
     this.effects.setAttach(ws, { playerId: seatId });
     this.bindAccount(ws, seatId);
-    if (this.state.game)
-      await this.effects.applyEvent({
-        type: "SET_CONNECTED",
-        by: seatId,
-        connected: true,
-      });
     this.effects.broadcastRoom();
-    if (this.state.game) this.effects.syncOne(seatId);
     return ok({ playerId: seatId, playerToken });
   }
 
@@ -366,9 +351,6 @@ export class RoomMembership {
       delete this.state.gameAccounts[playerId];
     if (account) {
       this.state.accounts[playerId] = account;
-      const seat = this.state.game?.players.find((player) => player.id === playerId)?.seat;
-      // A replacement or a player changing seats mid-game must also move next game.
-      if (seat !== undefined) this.state.lastGameSeats.byAccount[account] = seat;
     }
     else delete this.state.accounts[playerId];
   }

@@ -68,11 +68,26 @@ describe('self-service lobby seating', () => {
     }
   });
 
-  it('does not allocate new seats after the game starts', async () => {
+  it.each([false, true])('rejects all seat claims outside the lobby (finished: %s)', async (finished) => {
     const h = roomHarness();
     expect((await h.action(h.host, 'room:start')).ok).toBe(true);
+    if (finished) await h.finish();
+    const leaving = h.sockets.find((socket) => socket !== h.host && socket !== h.spectator
+      && socket.game.selfRole !== 'Merlin' && socket.game.selfRole !== 'Assassin')!;
+    const seatId = leaving.deserializeAttachment().playerId!;
+    expect((await h.action(leaving, 'room:releaseSeat')).ok).toBe(true);
+    h.wake();
     const before = structuredClone(h.document);
-    expect((await h.action(h.spectator, 'room:claimSeat', { name: 'Late' })).error?.code).toBe('WRONG_PHASE');
-    expect(h.document).toEqual(before);
+    for (const socket of [h.spectator, h.host, leaving]) {
+      for (const payload of [{ name: 'Late' }, { seatId, name: 'Late' }]) {
+        expect((await h.action(socket, 'room:claimSeat', payload)).error?.code).toBe('WRONG_PHASE');
+        expect(h.document).toEqual(before);
+      }
+    }
+    expect(h.spectator.deserializeAttachment().playerId).toBeUndefined();
+    expect(h.host.deserializeAttachment().playerId).toBe('p0');
+    if (!finished) await h.finish();
+    expect((await h.action(h.host, 'room:restart')).ok).toBe(true);
+    expect((await h.action(h.spectator, 'room:claimSeat', { name: 'Next' })).ok).toBe(true);
   });
 });

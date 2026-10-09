@@ -50,7 +50,7 @@ describe("private role note storage", () => {
     expect((await h.action(replacement, 'game:ackRole', { roleRevision: replacement.game.roleRevision })).ok).toBe(true);
   });
 
-  it("restores seat notes when a new device reclaims a released seat", async () => {
+  it("denies access to seat notes after the seat is released", async () => {
     const h = roomHarness();
     await h.action(h.host, "room:start");
     const scope = {
@@ -63,10 +63,8 @@ describe("private role note storage", () => {
       update: { baseRevision: 0, notes: { p2: "Merlin" }, enabled: true },
     });
     await h.action(h.host, "room:releaseSeat");
-    await h.action(h.spectator, "room:claimSeat", { seatId: "p0" });
-    expect(
-      (await h.action(h.spectator, "notes:sync", scope)).data,
-    ).toMatchObject({ notes: { p2: "Merlin" }, revision: 1 });
+    expect((await h.action(h.spectator, "room:claimSeat", { seatId: "p0" })).error?.code).toBe("WRONG_PHASE");
+    expect((await h.action(h.spectator, "notes:sync", scope)).error?.code).toBe("NOT_SEATED");
     expect((await h.action(h.host, "notes:sync", scope)).error?.code).toBe(
       "NOT_SEATED",
     );

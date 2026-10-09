@@ -33,7 +33,6 @@
     "inspect": "Inspect current view",
     "preview": "Game table preview",
     "localOnly": "Local simulation. Use the controls to switch scenes or advance the game.",
-    "claimSeat": "Claim seat {seat}",
     "disconnected": "Simulated offline. Restore the connection in Connection & errors.",
     "simulatedError": "Simulated action failure. State is unchanged; try again.",
     "groups": {
@@ -146,8 +145,8 @@
         "description": "All seats are occupied. Spectators cannot perform player actions."
       },
       "openSeat": {
-        "title": "Claim an open seat",
-        "description": "Claim the open seat, then reveal that player’s role."
+        "title": "Vacated seat",
+        "description": "Spectators remain spectators when a player leaves a seat."
       },
       "offline": {
         "title": "Player offline",

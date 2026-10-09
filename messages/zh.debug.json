@@ -33,7 +33,6 @@
     "inspect": "查看当前视角数据",
     "preview": "游戏牌桌预览",
     "localOnly": "本页为本地模拟。使用控制台切换场景或推进游戏。",
-    "claimSeat": "坐到 {seat} 号位",
     "disconnected": "当前模拟为断线状态，请在“连接与异常”中恢复连接。",
     "simulatedError": "模拟操作失败。状态未改变，可以重试。",
     "groups": {
@@ -146,8 +145,8 @@
         "description": "所有座位已有人，旁观者不可执行玩家操作。"
       },
       "openSeat": {
-        "title": "旁观者入座",
-        "description": "模拟空座，点击入座后查看该玩家的身份。"
+        "title": "玩家离座",
+        "description": "模拟玩家离座后的空座，旁观者仍保持旁观。"
       },
       "offline": {
         "title": "玩家离线",

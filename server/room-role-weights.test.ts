@@ -1,7 +1,7 @@
 import { ALL_ROLES, normalizeRoleWeights, settledRoleWeights, validRoleAssignment } from '@/lib/engine/roleWeights';
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RoomDocument } from "./persistence";
-import { Socket, roomHarness } from './test-room';
+import { roomHarness } from './test-room';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -72,17 +72,16 @@ describe('non-blocking seating and role preferences', () => {
     expect(await h.persistence.getRoleWeights(Object.keys(finalRoles))).toEqual(settled);
   });
 
-  it('settles the final account holding a seat, including a late joiner', async () => {
+  it('does not settle role weights for an account that leaves before game end', async () => {
     const h = withAccounts();
     await h.action(h.host, 'room:start');
-    await h.action(h.sockets[1]!, 'room:releaseSeat');
-    const late = new Socket({ account: 'late-weight-account', isHost: false, isAdmin: false });
-    h.sockets.push(late);
-    await h.action(late, 'room:claimSeat', { seatId: 'p2', name: 'Late' });
-    const finalRole = late.game.selfRole!;
+    const leaving = h.sockets.find((socket) => socket !== h.host && socket !== h.spectator
+      && socket.game.selfRole !== 'Merlin' && socket.game.selfRole !== 'Assassin')!;
+    const account = leaving.deserializeAttachment().account!;
+    await h.action(leaving, 'room:releaseSeat');
     await h.finish();
-    expect(h.persistence.roleWeights.has('account-2')).toBe(false);
-    expect(h.persistence.roleWeights.get('late-weight-account')).toEqual(settledRoleWeights(undefined, finalRole));
+    expect(h.persistence.roleWeights.has(account)).toBe(false);
+    expect(h.persistence.roleWeightGames.size).toBe(4);
   });
 
   it('does not count a game whose result failed to commit, then settles the retry only once', async () => {

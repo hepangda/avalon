@@ -423,30 +423,6 @@ export function GallerySession({
                 {quickActions}
               </div>
             }
-            seatClaimContent={
-              <div className="debug-actions">
-                {openSeat && (
-                  <button
-                    onClick={() => {
-                      const id = openSeat;
-                      commit({
-                        ...stateRef.current,
-                        roleAcks: stateRef.current.roleAcks.filter(
-                          (p) => p !== id,
-                        ),
-                      });
-                      setOpenSeat(undefined);
-                      changeViewer(id);
-                    }}
-                  >
-                    {t("debug.claimSeat", {
-                      seat:
-                        state.players.find((p) => p.id === openSeat)!.seat + 1,
-                    })}
-                  </button>
-                )}
-              </div>
-            }
           />
         </div>
       </section>

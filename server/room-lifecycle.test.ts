@@ -379,23 +379,12 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
     expect(h.document.sessions.p2).toBe('token-2');
   });
 
-  it("updates presence for every viewer when a player takes and releases an empty seat", async () => {
+  it("updates presence for every viewer when a player releases a seat", async () => {
     const h = roomHarness();
     await h.action(h.spectator, "room:claimSeat", { seatId: "p1" });
     await h.action(h.host, "room:start");
     await h.action(h.spectator, "room:releaseSeat");
 
-    expect(
-      (await h.action(h.spectator, "room:claimSeat", { seatId: "p1" })).ok,
-    ).toBe(true);
-    for (const socket of h.sockets) {
-      expect(socket.game.players.find((p) => p.id === "p1")).toMatchObject({
-        claimed: true,
-        connected: true,
-      });
-    }
-
-    expect((await h.action(h.spectator, "room:releaseSeat")).ok).toBe(true);
     for (const socket of h.sockets) {
       expect(socket.game.players.find((p) => p.id === "p1")).toMatchObject({
         claimed: false,
@@ -404,7 +393,7 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
     }
   });
 
-  it.each(["room:releaseSeat", "room:leave", "room:claimSeat", "admin:unbind"])(
+  it.each(["room:releaseSeat", "room:leave", "admin:unbind"])(
     "restores the seat identity for all viewers and after wake on %s",
     async (event) => {
       const h = roomHarness();
@@ -418,13 +407,7 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
       const response =
         event === "admin:unbind"
           ? await h.action(h.host, event, { targetPlayerId: "p2" })
-          : await h.action(
-            player,
-            event,
-            event === "room:claimSeat"
-              ? { seatId: "p1", name: "New name" }
-              : {},
-          );
+          : await h.action(player, event);
       expect(response.ok).toBe(true);
       for (const socket of h.sockets) {
         const seat = socket.game.players.find((p) => p.id === "p2");
@@ -437,13 +420,6 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
         expect(socket.snapshot.members.find((p) => p.id === "p2")?.name).toBe(
           "Seat 2",
         );
-        if (event === "room:claimSeat") {
-          expect(socket.game.players.find((p) => p.id === "p1")).toMatchObject({
-            name: "New name",
-            claimed: true,
-            connected: true,
-          });
-        }
       }
       expect(h.document.members.find((m) => m.id === "p2")).toMatchObject({
         name: "Seat 2",

@@ -5,7 +5,6 @@ import { GameTable } from '@/components/game/GameTable';
 import { GameTools } from '@/components/game/GameTools';
 import { HandArea, type PickConfig } from '@/components/game/HandArea';
 import { IdentityCard } from '@/components/game/IdentityCard';
-import { InGameSeatClaim } from '@/components/game/InGameSeatClaim';
 import { LadyResultReveal } from '@/components/game/LadyResultReveal';
 import { LogPanel, type LogChannel } from '@/components/game/LogPanel';
 import { MissionTrack } from '@/components/game/MissionTrack';
@@ -16,7 +15,6 @@ import { RoundHistoryModal } from '@/components/game/RoundHistoryModal';
 import { ShowKnownNotes } from '@/components/game/ShowKnownNotes';
 import { TableCard } from '@/components/game/TableCard';
 import { TableFrame } from '@/components/game/TableFrame';
-import { TableSheet } from '@/components/game/TableSheet';
 import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
 import { Link } from '@/i18n/navigation';
 import type { ClientGameState, ClientPlayer } from '@/lib/engine';
@@ -41,7 +39,7 @@ import { PhaseBoard } from './PhaseBoard';
 export function GameView({
   code, game, isHost, conn, myPlayerId,
   selfLatency, notice = null, onDismissNotice, actions = gameActions,
-  onRestart = roomActions.restart, functionsContent, seatClaimContent,
+  onRestart = roomActions.restart, functionsContent,
 }: {
   code: string;
   game: ClientGameState | null;
@@ -54,13 +52,11 @@ export function GameView({
   actions?: typeof gameActions;
   onRestart?: () => Promise<Ack>;
   functionsContent?: ReactNode;
-  seatClaimContent?: ReactNode;
 }) {
   const t = useTranslations();
   const [historyRound, setHistoryRound] = useState<number | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [ladySeen, setLadySeen] = useState<string | null>(null);
-  const [seatClaimOpen, setSeatClaimOpen] = useState(false);
   const [logChannel, setLogChannel] = useState<LogChannel>('public');
   const [noteTarget, setNoteTarget] = useState<{ id: string; anchor: HTMLButtonElement } | null>(null);
   const notePopoverId = useId();
@@ -386,18 +382,9 @@ export function GameView({
                   )}
                 </>
               ) : game.isSpectator ? (
-                game.players.some((p) => p.claimed === false) ? (
-                  <button
-                    className="table-action"
-                    onClick={() => setSeatClaimOpen(true)}
-                  >
-                    {t('seat.claimToJoin')}
-                  </button>
-                ) : (
-                  <div className="table-action-placeholder">
-                    {t('game.spectating')}
-                  </div>
-                )
+                <div className="table-action-placeholder">
+                  {t('game.spectating')}
+                </div>
               ) : (
                 <HandArea
                   game={game}
@@ -481,13 +468,6 @@ export function GameView({
         game={game}
         onClose={() => setHistoryRound(null)}
       />
-      <TableSheet
-        open={seatClaimOpen}
-        title={t('seat.sitTitle')}
-        onClose={() => setSeatClaimOpen(false)}
-      >
-        {seatClaimOpen && (seatClaimContent ?? <InGameSeatClaim code={code} game={game} />)}
-      </TableSheet>
     </>
   );
 }
