@@ -1,3 +1,5 @@
+import { publicRoom, publicRoomPage } from './public-rooms';
+import type { PublicRoom } from '@/lib/socket/types';
 import { ALL_ROLES,settledRoleWeights,type RoleWeights } from '@/lib/engine/roleWeights';
 import type { ReplayData } from "@/lib/game/replayTypes";
 import { randomUUID } from "node:crypto";
@@ -78,6 +80,19 @@ export class PostgresPersistence implements Persistence {
     await this.pool.query("SELECT 1");
   }
 
+  async listRoomCodes(): Promise<string[]> {
+    if (!this.available) throw new Error("Database ownership unavailable");
+    const result = await this.pool.query<{ code: string }>('SELECT code FROM avalon_rooms ORDER BY code');
+    return result.rows.map((row) => row.code);
+  }
+
+  async listPublicRooms(page: number) {
+    if (!this.available) throw new Error("Database ownership unavailable");
+    const result = await this.pool.query<{ public_listing: PublicRoom }>(
+      'SELECT public_listing FROM avalon_rooms WHERE public_listing IS NOT NULL ORDER BY code');
+    return publicRoomPage(result.rows.map((row) => row.public_listing), page);
+  }
+
   async loadRoom(code: string): Promise<RoomRecord | null> {
     if (!this.available) throw new Error("Database ownership unavailable");
     // One statement uses one MVCC snapshot, including concurrent checkpoint compaction.
@@ -123,6 +138,22 @@ export class PostgresPersistence implements Persistence {
     } finally { client.release(); }
   }
 
+  async deleteRoom(code: string, version: number): Promise<void> {
+    if (!this.available) throw new Error("Database ownership unavailable");
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const owner = await client.query<{ token: string }>('SELECT token FROM avalon_runtime WHERE id = 1 FOR SHARE');
+      if (owner.rows[0]?.token !== this.token) throw new Error('Database ownership lost');
+      const result = await client.query('DELETE FROM avalon_rooms WHERE code = $1 AND version = $2 RETURNING code', [code, version]);
+      if (!result.rowCount) throw new RoomConflict();
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    } finally { client.release(); }
+  }
+
   async saveRoom(
     code: string,
     version: number,
@@ -157,6 +188,9 @@ export class PostgresPersistence implements Persistence {
               snapshot_hash = $5, state_hash = $5, updated_at = now() WHERE code = $1 AND version = $4 RETURNING version`,
               [code, next, JSON.stringify(document), version, hash]);
       if (!result.rowCount) throw new RoomConflict();
+      // Update discovery in the same transaction as the journal, never from a stale checkpoint.
+      await client.query('UPDATE avalon_rooms SET public_listing = $2 WHERE code = $1',
+        [code, publicRoom(document)]);
       if (version > 0 && !change) {
         await client.query('DELETE FROM avalon_room_journal WHERE code = $1 AND version <= $2', [code, next]);
       }

@@ -32,7 +32,9 @@ describe('account device handoff', () => {
     const next = new Socket({ account: 'account-0', isHost: false, isAdmin: false });
     expect(await h.action(next, 'room:join')).toMatchObject({ ok: true, data: { playerId: id, isHost: true } });
     await h.action(next, 'room:leave');
-    expect((await h.action(next, 'room:join')).data).not.toHaveProperty('playerId');
+    expect(await h.room.preview()).toBeNull();
+    const newcomer = new Socket({ account: 'account-0', isHost: false, isAdmin: false });
+    expect((await h.action(newcomer, 'room:join')).error?.code).toBe('ROOM_NOT_FOUND');
   });
 
   it('does not let another account reuse seat or host tokens', async () => {

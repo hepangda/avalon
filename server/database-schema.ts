@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS avalon_rooms (
   document jsonb NOT NULL,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE avalon_rooms ADD COLUMN IF NOT EXISTS public_listing jsonb;
 ALTER TABLE avalon_rooms ADD COLUMN IF NOT EXISTS snapshot_version integer;
 ALTER TABLE avalon_rooms ADD COLUMN IF NOT EXISTS snapshot_hash text;
 ALTER TABLE avalon_rooms ADD COLUMN IF NOT EXISTS state_hash text;

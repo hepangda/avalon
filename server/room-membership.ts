@@ -251,6 +251,20 @@ export class RoomMembership {
   }
 
 
+  handleDetails(ws: RoomSocket, payload: unknown): Ack {
+    if (!this.state.meta) return fail("NOT_IN_ROOM", "Not in a room");
+    if (!this.effects.attach(ws).isHost) return fail("NOT_HOST", "Only host");
+    const { name, visibility } = (payload ?? {}) as { name?: unknown; visibility?: unknown };
+    if (typeof name !== 'string' || name.trim().length > 40 || /[\x00-\x1f\x7f]/.test(name)
+      || (visibility !== 'public' && visibility !== 'private')) {
+      return fail("INVALID", "Invalid room name or visibility");
+    }
+    this.state.meta.name = name.trim();
+    this.state.meta.visibility = visibility;
+    this.effects.broadcastRoom();
+    return ok();
+  }
+
   handleConfig(ws: RoomSocket, payload: unknown): Ack {
     if (!this.state.meta) return fail("NOT_IN_ROOM", "Not in a room");
     if (!this.effects.attach(ws).isHost) return fail("NOT_HOST", "Only host");

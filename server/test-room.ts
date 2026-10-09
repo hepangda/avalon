@@ -135,6 +135,7 @@ export function roomHarness(seedRoom = true) {
     archives,
     finish,
     wake: () => {
+      room.stop();
       room = new Room("1234", persistence);
       for (const socket of sockets) room.addSocket(socket);
     },

@@ -38,6 +38,8 @@ export function snapshot(
 ): RoomSnapshot {
   return {
     code: meta.code,
+    name: meta.name ?? "",
+    visibility: meta.visibility ?? "private",
     hostPlayerId,
     status: meta.status,
     config: meta.status === 'lobby'

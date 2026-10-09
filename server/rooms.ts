@@ -5,6 +5,18 @@ export class RoomRegistry {
   private rooms = new Map<string, Room>();
   constructor(private persistence: Persistence) {}
 
+  /** Restore deadlines even for rooms nobody reconnects to after a restart. */
+  async restore(): Promise<void> {
+    for (const code of await this.persistence.listRoomCodes()) {
+      try {
+        await this.get(code).maintainPresence();
+      } catch (error) {
+        // A damaged room must not prevent other rooms from accepting reconnects.
+        console.error('[room] restore presence', code, error);
+      }
+    }
+  }
+
   get(code: string): Room {
     let room = this.rooms.get(code);
     if (!room) {
@@ -23,6 +35,7 @@ export class RoomRegistry {
   }
 
   async drain(): Promise<void> {
-    await Promise.all([...this.rooms.values()].map((room) => room.drain()));
+    for (const room of this.rooms.values()) room.stop();
+    await Promise.all([...this.rooms.values()].map((room) => room.shutdown()));
   }
 }

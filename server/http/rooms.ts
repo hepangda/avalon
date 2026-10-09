@@ -60,6 +60,13 @@ app.post('/api/rooms', async (c) => {
   return c.json({ error: 'Failed to create room' }, 500);
 });
 
+app.get('/api/rooms', requireAccount, async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const page = Number(c.req.query('page') ?? 1);
+  if (!Number.isSafeInteger(page) || page < 1) return c.json({ error: 'Invalid page' }, 400);
+  return c.json(await c.env.persistence.listPublicRooms(page));
+});
+
 app.use('/api/rooms/:code', requireAccount);
 
 app.use('/api/games/*', requireAccount);

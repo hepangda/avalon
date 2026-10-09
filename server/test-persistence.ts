@@ -1,3 +1,4 @@
+import { publicRoom, publicRoomPage } from './public-rooms';
 import type { DisplayPreferences } from '@/lib/preferences';
 import type { RoomChange } from './room-journal';
 import { claimDaily, completeGame, emptyCards, type RerollCards } from "./reroll-cards";
@@ -27,8 +28,19 @@ export class MemoryPersistence implements Persistence {
   aliases = new Map<string, string>();
   roleWeights = new Map<string, RoleWeights>();
   roleWeightGames = new Set<string>();
+  async listRoomCodes() { return [...this.rooms.keys()]; }
+  async listPublicRooms(page: number) {
+    return publicRoomPage([...this.rooms.values()].flatMap(({ document }) => {
+      const room = publicRoom(document);
+      return room ? [room] : [];
+    }), page);
+  }
   async loadRoom(code: string) {
     return structuredClone(this.rooms.get(code) ?? null);
+  }
+  async deleteRoom(code: string, version: number) {
+    if (this.rooms.get(code)?.version !== version) throw new RoomConflict();
+    this.rooms.delete(code);
   }
   async saveRoom(code: string, version: number, document: RoomDocument, spendAccount?: string, _change?: RoomChange) {
     if ((this.rooms.get(code)?.version ?? 0) !== version)

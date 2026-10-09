@@ -42,9 +42,11 @@ describe('server-controlled bots', () => {
   it('completes a game through automatic speeches, team votes and mission cards', async () => {
     vi.useFakeTimers();
     const h = roomHarness();
-    // Make every occupied seat a bot to exercise consecutive automatic phases.
-    for (const member of h.document.members) if (member.claimed) member.isBot = true;
     await h.action(h.host, 'room:start');
+    // Seed an already-started bot-only game: a bot-only lobby now dissolves.
+    for (const member of h.document.members) if (member.claimed) member.isBot = true;
+    h.wake();
+    await h.action(h.spectator, 'room:join');
     for (let step = 0; step < 200 && h.document.game!.phase !== 'GameOver'; step++) {
       await vi.advanceTimersToNextTimerAsync();
       await h.room.drain();
@@ -53,6 +55,11 @@ describe('server-controlled bots', () => {
     expect(h.document.events.some(({ event }) => event.type === 'END_SPEECH')).toBe(true);
     expect(h.document.events.some(({ event }) => event.type === 'CAST_MISSION_CARD')).toBe(true);
     expect(h.document.archive?.replay.outcome).toBeTruthy();
+    // Only unattended-room cleanup remains; bot actions are finished.
+    expect(vi.getTimerCount()).toBe(1);
+    await vi.advanceTimersByTimeAsync(60 * 60_000);
+    expect(await h.persistence.loadRoom('1234')).toBeNull();
+    expect(h.archives.size).toBe(1);
     expect(vi.getTimerCount()).toBe(0);
   });
 

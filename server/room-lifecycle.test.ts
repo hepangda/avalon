@@ -704,7 +704,9 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
     expect(h.document.archive!.revision).toBeGreaterThan(first);
     const saved = structuredClone(h.archives.get(gameId));
     await h.action(h.host, "room:leave");
-    expect((await h.action(h.host, "room:restart")).ok).toBe(true);
+    const nextHost = h.sockets.find((socket) => socket.deserializeAttachment().isHost)!;
+    expect(nextHost).not.toBe(h.host);
+    expect((await h.action(nextHost, "room:restart")).ok).toBe(true);
     expect(h.archives.get(gameId)).toEqual(saved);
   });
 });

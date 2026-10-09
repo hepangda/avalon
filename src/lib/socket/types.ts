@@ -24,6 +24,24 @@ export interface RoomConfig {
   roster: string[];
 }
 
+export interface RoomDetails {
+  name: string;
+  visibility: 'public' | 'private';
+}
+
+export interface PublicRoom {
+  code: string;
+  name: string;
+  playerCount: number;
+  maxPlayers: number;
+}
+
+export interface PublicRoomPage {
+  rooms: PublicRoom[];
+  page: number;
+  totalPages: number;
+}
+
 export type RoomStatus = 'lobby' | 'in_game' | 'finished';
 
 /** A lobby/seated member as tracked in the room (pre-game and during game). */
@@ -48,6 +66,8 @@ export interface RoomMember {
  * roles are private). Sent to everyone in the room.
  */
 export interface RoomSnapshot {
+  name?: string;
+  visibility?: RoomDetails['visibility'];
   code: string;
   /** The host's claimed seat, when the host currently occupies one. */
   hostPlayerId: PlayerId | null;
@@ -83,8 +103,10 @@ export interface ClientToServerEvents {
   ) => void;
   'room:resync': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:leave': (p: Record<string, never>, ack: (r: Ack) => void) => void;
+  'room:details': (p: RoomDetails, ack: (r: Ack) => void) => void;
   'room:config': (p: { config: RoomConfig }, ack: (r: Ack) => void) => void;
   'room:rename': (p: { name: string }, ack: (r: Ack<{ name: string }>) => void) => void;
+  'room:transferHost': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
   'room:kick': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
   'room:addBot': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:start': (p: Record<string, never>, ack: (r: Ack) => void) => void;

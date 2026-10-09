@@ -46,15 +46,17 @@ describe('self-service lobby seating', () => {
 
   it('reuses a released seat with a fresh token and the next account identity', async () => {
     const { h, created } = await setup();
+    // Another human keeps the lobby alive while the original seat is released.
+    await h.action(h.sockets[1]!, 'room:claimSeat', { name: 'Staying' });
     await h.action(h.host, 'room:releaseSeat');
     const result = await h.action(h.spectator, 'room:claimSeat', { name: 'Next', avatarUrl: 'https://example.com/next.png' });
     expect(result.ok).toBe(true);
     expect(result.data).toMatchObject({ playerId: created.playerId });
     expect((result.data as { playerToken: string }).playerToken).not.toBe(created.playerToken);
-    expect(h.document.members).toHaveLength(1);
+    expect(h.document.members).toHaveLength(2);
     expect(h.document.members[0]).toMatchObject({ name: 'Next', avatarUrl: 'https://example.com/next.png', claimed: true });
     h.wake();
-    expect(await h.room.preview()).toMatchObject({ playerCount: 1 });
+    expect(await h.room.preview()).toMatchObject({ playerCount: 2 });
   });
 
   it('does not create placeholder seats when a sit request is invalid', async () => {

@@ -32,6 +32,7 @@ await database.start(() => {
   process.exit(1);
 });
 const rooms = new RoomRegistry(database);
+await rooms.restore();
 const env: Env = { ...process.env, rooms, persistence: database };
 const serverApp = new Hono();
 serverApp.use('*', async (c, next) => {

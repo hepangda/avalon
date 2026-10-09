@@ -4,14 +4,19 @@ import type { GameEvent, GameState, Role } from "@/lib/engine";
 import type { RoleWeights } from '@/lib/engine/roleWeights';
 import type { RoleNotesDocument } from "@/lib/game/roleNotes";
 import type { ReplayData } from "@/lib/game/replayTypes";
-import type { RoomConfig, RoomMember, RoomStatus } from "@/lib/socket/types";
+import type { PublicRoomPage, RoomDetails, RoomConfig, RoomMember, RoomStatus } from "@/lib/socket/types";
 import type { RoomChange } from "./room-journal";
 import type { SeatHistory } from './seating';
 
 export interface RoomMeta {
+  name?: string;
+  visibility?: RoomDetails['visibility'];
   code: string;
   hostToken: string;
   hostAccount?: string;
+  /** Continuous absence timestamps, retained across runtime recovery. */
+  hostOfflineSince?: number;
+  allHumansOfflineSince?: number;
   status: RoomStatus;
   config: RoomConfig;
   gameId: string | null;
@@ -45,9 +50,13 @@ export interface RoomRecord {
 }
 
 export interface Persistence {
+  listRoomCodes(): Promise<string[]>;
+  listPublicRooms(page: number): Promise<PublicRoomPage>;
   getPreferences(account: string): Promise<Partial<DisplayPreferences>>;
   savePreferences(account: string, patch: Partial<DisplayPreferences>): Promise<Partial<DisplayPreferences>>;
   loadRoom(code: string): Promise<RoomRecord | null>;
+  /** Delete a room only if its committed version still matches. */
+  deleteRoom(code: string, version: number): Promise<void>;
   /** Atomic compare-and-swap of room state and completed replay. */
   saveRoom(
     code: string,

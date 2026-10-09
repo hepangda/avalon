@@ -73,6 +73,49 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
     vi.restoreAllMocks();
   });
 
+  it('deletes an empty lobby and its journal with version fencing', async () => {
+    const room = new Room('1234', db);
+    const created = await room.init({ code: '1234', creator: { name: 'Host', account: 'host' } });
+    if (!created.ok) throw new Error('init');
+    const peer = new Peer(); peer.attachment.account = 'host'; room.addSocket(peer);
+    await action(room, peer, 'room:join', created);
+    await action(room, peer, 'room:details', { name: 'Table', visibility: 'public' });
+    await action(room, peer, 'room:addBot');
+    expect(await db.listRoomCodes()).toEqual(['1234']);
+    const record = (await db.loadRoom('1234'))!;
+    await expect(db.deleteRoom('1234', record.version - 1)).rejects.toBeInstanceOf(RoomConflict);
+    expect(await db.loadRoom('1234')).not.toBeNull();
+    expect((await action(room, peer, 'room:leave')).ok).toBe(true);
+    expect(await db.loadRoom('1234')).toBeNull();
+    expect((await db.listPublicRooms(1)).rooms).toEqual([]);
+    expect((await db.pool.query('SELECT code FROM avalon_room_journal WHERE code = $1', ['1234'])).rowCount).toBe(0);
+    expect(await new Room('1234', db).preview()).toBeNull();
+    expect(await db.listRoomCodes()).toEqual([]);
+    await room.drain();
+  });
+
+  it('keeps public discovery current across journal writes, stale checkpoints and restart', async () => {
+    const room = new Room('1234', db);
+    const created = await room.init({ code: '1234', creator: { name: 'Host', account: 'host' } });
+    if (!created.ok) throw new Error('init');
+    const peer = new Peer(); peer.attachment.account = 'host'; room.addSocket(peer);
+    await action(room, peer, 'room:join', { ...created, syncVersion: 1 });
+    expect((await db.listPublicRooms(1)).rooms).toEqual([]);
+    expect((await action(room, peer, 'room:details', { name: 'Round table', visibility: 'public' })).ok).toBe(true);
+    const published = (await db.loadRoom('1234'))!;
+    expect((await db.listPublicRooms(1)).rooms).toEqual([
+      { code: '1234', name: 'Round table', playerCount: 1, maxPlayers: 10 },
+    ]);
+    expect((await action(room, peer, 'room:details', { name: 'Private table', visibility: 'private' })).ok).toBe(true);
+    await db.checkpointRoom('1234', published.version, published.document);
+    expect((await db.listPublicRooms(1)).rooms).toEqual([]);
+    await db.close();
+    db = new PostgresPersistence(url!, 4);
+    await db.start();
+    expect((await db.listPublicRooms(1)).rooms).toEqual([]);
+    expect((await db.loadRoom('1234'))!.document.meta).toMatchObject({ name: 'Private table', visibility: 'private' });
+  });
+
   it('migrates account preferences, merges concurrent changes and retains them across restart', async () => {
     await db.setAlias('account', 'Existing alias');
     // Simulate an existing installation before the additive preferences migration.

@@ -11,6 +11,7 @@ export interface RoomCommandHandlers {
   membership: RoomMembership;
   referee: RefereeCommands;
   handleNotesSync(ws: RoomSocket, payload: unknown): Ack<RoleNotesDocument>;
+  handleTransferHost(ws: RoomSocket, payload: unknown): Ack;
   handleRestart(ws: RoomSocket): Promise<Ack>;
   handleStart(ws: RoomSocket): Promise<Ack>;
   handleUseRerollCard(ws: RoomSocket, payload: unknown): Promise<Ack>;
@@ -37,10 +38,14 @@ export function dispatchRoomEvent(handlers: RoomCommandHandlers, ws: RoomSocket,
         return handlers.membership.handleRemoveSeat(ws, payload);
       case "room:restart":
         return handlers.handleRestart(ws);
+      case "room:details":
+        return handlers.membership.handleDetails(ws, payload);
       case "room:config":
         return handlers.membership.handleConfig(ws, payload);
       case "room:rename":
         return handlers.membership.handleRename(ws, payload);
+      case "room:transferHost":
+        return handlers.handleTransferHost(ws, payload);
       case "room:kick":
         return handlers.membership.handleKick(ws, payload);
       case "room:start":

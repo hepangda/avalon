@@ -51,6 +51,10 @@ sanitizeRoster
 
 /** A viewer id guaranteed not to match any seat → projects the spectator view. */
 const SPECTATOR_VIEWER = "__spectator__";
+const HOST_OFFLINE_MS = 5 * 60_000;
+function allHumansOfflineTimeout(status: RoomStatus): number {
+  return (status === 'lobby' ? 10 : 60) * 60_000;
+}
 /** One serial command queue per room; PostgreSQL owns the durable state. */
 export class Room {
   private readonly state = new RoomState();
@@ -68,6 +72,9 @@ export class Room {
   private sockets = new Set<RoomSocket>();
   private reconnectOnly = new WeakSet<RoomSocket>();
   private outgoing: Array<() => void> | null = null;
+  private presenceTimer: ReturnType<typeof setTimeout> | undefined;
+  private hostDeparted = false;
+  private stopped = false;
   private botTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly checkpoints: RoomCheckpoints;
   private readonly referee: RefereeCommands;
@@ -134,6 +141,7 @@ export class Room {
       membership: this.membership, referee: this.referee,
       handleNotesSync: (ws, payload) => this.handleNotesSync(ws, payload),
       handleRestart: (ws) => this.handleRestart(ws),
+      handleTransferHost: (ws, payload) => this.handleTransferHost(ws, payload),
       handleStart: (ws) => this.handleStart(ws),
       handleUseRerollCard: (ws, payload) => this.handleUseRerollCard(ws, payload),
       handlePing: (ws, payload) => this.handlePing(ws, payload),
@@ -142,7 +150,7 @@ export class Room {
   }
 
   get idle(): boolean {
-    return this.sockets.size === 0 && this.pending === 0 && !this.botTimer && this.checkpoints.idle;
+    return this.sockets.size === 0 && this.pending === 0 && !this.botTimer && !this.presenceTimer && this.checkpoints.idle;
   }
 
   addSocket(ws: RoomSocket): void {
@@ -152,6 +160,26 @@ export class Room {
     }
     this.sockets.add(ws);
     this.lastUsed = Date.now();
+  }
+
+  /** Stop background work when this runtime is being shut down or replaced. */
+  stop(): void {
+    this.stopped = true;
+    if (this.presenceTimer) clearTimeout(this.presenceTimer);
+    this.presenceTimer = undefined;
+    if (this.botTimer) clearTimeout(this.botTimer);
+    this.botTimer = undefined;
+  }
+
+  async shutdown(): Promise<void> {
+    this.stop();
+    await this.run(() => {
+      this.sockets.clear();
+      for (const member of this.state.members.values()) {
+        if (!member.isBot) member.connected = false;
+      }
+    });
+    await this.drain();
   }
 
   async drain(): Promise<void> {
@@ -243,8 +271,12 @@ export class Room {
         this.outgoing = [];
         this.views.dirty = false;
         this.spendAccount = undefined;
+        this.hostDeparted = false;
+        // Expired deadlines take effect before a late join can reset presence.
+        if (!readOnly) await this.reconcilePresence();
         const result = await fn();
         if (this.integrityFailure) throw this.integrityFailure;
+        if (!readOnly) await this.reconcilePresence();
         if (this.state.meta && !readOnly) {
           const document = this.document();
           const changes = diffState(this.committedDocument, document);
@@ -266,6 +298,7 @@ export class Room {
         if (this.views.dirty) this.views.publish();
         if (!readOnly) this.checkpoints.schedule();
         this.scheduleBots();
+        this.schedulePresence();
         return result;
       } catch (error) {
         // A lost COMMIT response is ambiguous: always reload PostgreSQL next time.
@@ -281,6 +314,8 @@ export class Room {
           this.reconnectOnly.add(ws);
           ws.close(1012, "Reload room state");
         }
+        // Retry presence recovery even when there are no clients left to reconnect.
+        this.schedulePresence(1_000);
         throw error;
       } finally {
         this.pending--;
@@ -291,9 +326,121 @@ export class Room {
     return operation;
   }
 
+  /** Run through the same transaction queue as joins, departures, and game actions. */
+  maintainPresence(): Promise<void> {
+    return this.run(() => {});
+  }
+
+  private schedulePresence(retryMs?: number): void {
+    if (this.presenceTimer) clearTimeout(this.presenceTimer);
+    this.presenceTimer = undefined;
+    if (this.integrityFailure || this.stopped) return;
+    const meta = this.committedDocument?.meta;
+    const hostDeadline = meta?.hostOfflineSince === undefined ? undefined : meta.hostOfflineSince + HOST_OFFLINE_MS;
+    // An unattended started game waits for its full grace period. Do not keep
+    // scheduling an already-expired host deadline while nobody can inherit it.
+    const checkHost = hostDeadline !== undefined && (hostDeadline > Date.now() || meta?.status === 'lobby' ||
+      this.onlineHumans().some(({ socket }) => this.attach(socket).account !== meta?.hostAccount));
+    const deadlines = [
+      checkHost ? hostDeadline : undefined,
+      meta?.allHumansOfflineSince === undefined ? undefined : meta.allHumansOfflineSince + allHumansOfflineTimeout(meta.status),
+    ].filter((deadline): deadline is number => deadline !== undefined);
+    if (retryMs === undefined && !deadlines.length) return;
+    this.presenceTimer = setTimeout(() => {
+      this.presenceTimer = undefined;
+      void this.maintainPresence().catch((error) => console.error('[room] presence maintenance', error));
+    }, retryMs ?? Math.max(0, Math.min(...deadlines) - Date.now()));
+    this.presenceTimer.unref?.();
+  }
+
+  private onlineHumans(): Array<{ member: RoomMember; socket: RoomSocket }> {
+    const liveSockets = [...this.sockets].filter((ws) => !this.reconnectOnly.has(ws));
+    return activePlayers(this.state.members).filter((member) => member.claimed && !member.isBot).flatMap((member) => {
+      const socket = liveSockets.find((ws) => this.attach(ws).playerId === member.id);
+      return socket ? [{ member, socket }] : [];
+    });
+  }
+
+  private async reconcilePresence(): Promise<void> {
+    const meta = this.state.meta;
+    if (!meta) return;
+    const now = Date.now();
+    const humans = activePlayers(this.state.members).filter((member) => member.claimed && !member.isBot);
+    const liveSockets = [...this.sockets].filter((ws) => !this.reconnectOnly.has(ws));
+    const online = this.onlineHumans();
+    if (online.length) delete meta.allHumansOfflineSince;
+    else meta.allHumansOfflineSince ??= now;
+
+    const hostSocket = liveSockets.find((ws) => this.attach(ws).isHost);
+    // Upgrade legacy token-owned rooms once their host has authenticated.
+    if (hostSocket && !meta.hostAccount) meta.hostAccount = this.attach(hostSocket).account;
+    if (hostSocket && !this.hostDeparted) delete meta.hostOfflineSince;
+    else meta.hostOfflineSince ??= now;
+
+    if ((meta.status === 'lobby' && !humans.length) ||
+      (meta.allHumansOfflineSince !== undefined && now - meta.allHumansOfflineSince >= allHumansOfflineTimeout(meta.status))) {
+      await this.dissolve();
+      return;
+    }
+    if (this.hostDeparted || (meta.hostOfflineSince !== undefined && now - meta.hostOfflineSince >= HOST_OFFLINE_MS)) {
+      // Seat order is deterministic; spectators and bots cannot inherit ownership.
+      const successor = online.find(({ socket }) => this.attach(socket).account !== meta.hostAccount);
+      if (!successor) {
+        if (!this.hostDeparted && meta.status !== 'lobby') return;
+        await this.dissolve();
+        return;
+      }
+      this.transferHost(successor.member.id, successor.socket);
+    }
+  }
+
+  private transferHost(playerId: string, socket: RoomSocket): void {
+    const meta = this.state.meta!;
+    meta.hostAccount = this.attach(socket).account!;
+    meta.hostToken = makeSessionToken();
+    this.state.accounts[playerId] = meta.hostAccount;
+    delete meta.hostOfflineSince;
+    for (const ws of this.sockets) {
+      this.setAttach(ws, { isHost: !this.reconnectOnly.has(ws) && this.attach(ws).account === meta.hostAccount });
+    }
+    this.broadcastRoom();
+  }
+
+  private handleTransferHost(ws: RoomSocket, payload: unknown): Ack {
+    if (!this.state.meta) return fail('NOT_IN_ROOM', 'Not in a room');
+    if (!this.attach(ws).isHost) return fail('NOT_HOST', 'Only host');
+    const targetPlayerId = (payload as { targetPlayerId?: unknown } | null)?.targetPlayerId;
+    const target = this.onlineHumans().find(({ member, socket }) =>
+      member.id === targetPlayerId && this.attach(socket).account !== this.state.meta!.hostAccount);
+    if (!target) return fail('INVALID_TARGET', 'Choose another online human player');
+    this.transferHost(target.member.id, target.socket);
+    return ok();
+  }
+
+  private async dissolve(): Promise<void> {
+    // Finish old checkpoints before deleting their underlying room and journal.
+    await this.checkpoints.drain();
+    if (this.integrityFailure) throw this.integrityFailure;
+    await this.persistence.deleteRoom(this.code, this.version);
+    Object.assign(this.state, new RoomState());
+    this.committedDocument = null;
+    this.committedHash = '';
+    this.latencies.clear();
+    this.version = 0;
+    this.checkpoints.checkpointVersion = 0;
+    this.outgoing = [];
+    this.views.invalidate();
+    for (const ws of this.sockets) {
+      this.setAttach(ws, { playerId: undefined, isHost: false, isAdmin: false });
+      this.send(ws, 'system:notice', { type: 'room_dissolved' });
+      this.outgoing.push(() => { this.reconnectOnly.add(ws); });
+    }
+    this.views.dirty = false;
+  }
+
   /** Schedule from committed action timestamps, so pings cannot postpone bots. */
   private scheduleBots(): void {
-    if (this.integrityFailure) return;
+    if (this.integrityFailure || this.stopped) return;
     if (this.botTimer) clearTimeout(this.botTimer);
     this.botTimer = undefined;
     const pending = this.state.game?.actionTimers?.filter((timer) =>
@@ -361,6 +508,8 @@ export class Room {
       if (input.creator.account) this.state.accounts[creatorSeat.id] = input.creator.account;
       this.state.meta = {
         code: input.code,
+        name: "",
+        visibility: "private",
         hostToken,
         hostAccount: input.creator.account,
         status: "lobby",
@@ -444,7 +593,13 @@ export class Room {
       const res = await this.run(async () => {
         if (this.reconnectOnly.has(ws))
           return fail("RECONNECT", "Reconnect to reload room state");
-        return await dispatchRoomEvent(this.commands, ws, req.event, req.payload);
+        const hostLeaving = req.event === 'room:leave' && this.attach(ws).isHost;
+        const result = await dispatchRoomEvent(this.commands, ws, req.event, req.payload);
+        if (hostLeaving && result.ok) {
+          this.hostDeparted = true;
+          this.setAttach(ws, { isHost: false });
+        }
+        return result;
       }, req.event === 'notes:sync' && (req.payload as { update?: unknown } | null)?.update === undefined);
       this.sendAck(ws, req.id, res);
     } catch (e) {
