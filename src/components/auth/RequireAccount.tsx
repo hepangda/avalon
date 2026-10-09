@@ -13,7 +13,9 @@ export function RequireAccount() {
   if (user) return <Outlet key={user.id} />;
   return (
     <main className="relative flex min-h-screen items-center justify-center px-4 py-8">
-      <div className="absolute right-4 top-4"><PreferencesButton /></div>
+      <header className="absolute inset-x-0 top-0 mx-auto flex w-full max-w-5xl justify-end px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pt-5">
+        <PreferencesButton variant="chip" />
+      </header>
       <div className="w-full max-w-md">
         <AccountLogin
           loading={loading}

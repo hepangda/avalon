@@ -11,6 +11,7 @@ import './styles/identity.css';
 import './styles/assassination.css';
 import './styles/timing.css';
 import './styles/reconnect.css';
+import './styles/preferences.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,0 +1,302 @@
+/* Settings: the player's nameplate, the decks laid on the cloth, and the language toggle. */
+.table-sheet.prefs-sheet {
+  width: min(calc(100% - 16px), 480px);
+  background:
+    radial-gradient(120% 50% at 50% 0%, rgb(201 162 39 / 0.07), transparent 70%),
+    #221c14;
+}
+.prefs > * + * { margin-top: 26px; }
+
+/* Home's settings entry: the account chip, or just the settings mark while signed out. */
+.prefs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(16rem, 100%);
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgb(201 162 39 / 0.25);
+  border-radius: 999px;
+  background: rgb(22 16 10 / 0.55);
+  box-shadow: inset 0 1px 0 rgb(232 220 192 / 0.05);
+  color: rgb(232 220 192 / 0.85);
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+.prefs-chip.is-account { padding-left: 4px; }
+.prefs-chip-avatar { width: 30px; height: 30px; font-size: 13px; }
+.prefs-chip-rule {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  background: rgb(201 162 39 / 0.25);
+}
+.prefs-chip-icon { flex: none; width: 16px; height: 16px; color: rgb(201 162 39 / 0.85); }
+.prefs-chip:focus-visible { outline: 2px solid #e6c14a; outline-offset: 2px; }
+@media (hover: hover) {
+  .prefs-chip:hover { border-color: rgb(201 162 39 / 0.55); background: rgb(34 26 18 / 0.75); color: #e8dcc0; }
+}
+
+.prefs-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgb(201 162 39 / 0.4);
+  border-radius: 50%;
+  background: rgb(201 162 39 / 0.12);
+  color: #e6c14a;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  line-height: 1;
+  object-fit: cover;
+}
+
+/* Nameplate: a small felt panel with the seat's gilt ring around the avatar. */
+.prefs-plate {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 84px;
+  padding: 14px 10px 14px 16px;
+  border: 1px solid rgb(201 162 39 / 0.32);
+  border-radius: 16px;
+  background:
+    radial-gradient(90% 120% at 0% 50%, rgb(201 162 39 / 0.1), transparent 60%),
+    linear-gradient(155deg, #342c21, #1f1b15);
+  box-shadow:
+    inset 0 0 0 4px rgb(18 13 8 / 0.45),
+    inset 0 0 0 5px rgb(201 162 39 / 0.12),
+    inset 0 1px 0 rgb(232 220 192 / 0.06);
+}
+.prefs-plate-avatar {
+  width: 52px;
+  height: 52px;
+  border-color: #e6c14a;
+  box-shadow: 0 0 0 3px #261f17, 0 0 0 4.5px rgb(230 193 74 / 0.6), 0 0 20px rgb(230 193 74 / 0.25);
+  font-size: 22px;
+}
+.prefs-plate-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+}
+.prefs-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  min-height: 36px;
+  color: #e6c14a;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 18px;
+  letter-spacing: 0.03em;
+  text-align: left;
+}
+button.prefs-name svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: rgb(201 162 39 / 0.5);
+  transition: color 150ms ease;
+}
+button.prefs-name:focus-visible { outline: 2px solid #e6c14a; outline-offset: 2px; border-radius: 6px; }
+button.prefs-name:disabled { cursor: default; }
+@media (hover: hover) {
+  button.prefs-name:hover:not(:disabled) svg { color: #e6c14a; }
+}
+.prefs-name-form { display: flex; min-width: 0; }
+.prefs-name-input {
+  width: 100%;
+  min-width: 0;
+  margin-left: -9px;
+  padding: 0 8px;
+  border: 1px solid rgb(201 162 39 / 0.55);
+  border-radius: 8px;
+  background: rgb(18 13 8 / 0.75);
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.prefs-name-input:focus { border-color: #e6c14a; box-shadow: 0 0 0 3px rgb(201 162 39 / 0.18); }
+.prefs-name-input[aria-invalid] { border-color: #b23a2e; box-shadow: 0 0 0 3px rgb(178 58 46 / 0.2); }
+.prefs-plate-meta {
+  overflow: hidden;
+  color: rgb(232 220 192 / 0.5);
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prefs-plate-meta.is-error { color: #d0574b; white-space: normal; }
+.prefs-plate-action {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: rgb(232 220 192 / 0.5);
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.prefs-plate-action svg { width: 20px; height: 20px; }
+.prefs-plate-action:focus-visible { outline: 2px solid #e6c14a; outline-offset: -2px; }
+.prefs-plate-action:disabled { cursor: default; opacity: 0.6; }
+.prefs-plate-action.is-confirm {
+  width: 38px;
+  height: 38px;
+  margin: 3px;
+  background: linear-gradient(to bottom, #e6c14a, #c9a227);
+  box-shadow: 0 0 16px -4px rgb(201 162 39 / 0.6);
+  color: #16100a;
+}
+@media (hover: hover) {
+  .prefs-plate-action:not(.is-confirm):hover:not(:disabled) { background: rgb(255 255 255 / 0.05); color: #e8dcc0; }
+}
+
+/* Section captions: small engraved labels trailing a gilt rule. */
+.prefs-section { min-width: 0; margin-inline: 0; padding: 0; border: 0; }
+.prefs-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 0;
+  color: rgb(232 220 192 / 0.6);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+.prefs-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgb(201 162 39 / 0.32), transparent);
+}
+
+/* Decks: each style is a squared-up stack; the chosen one lifts and fans open. */
+.prefs-decks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 6vw, 30px);
+  padding: 8px 10px 0;
+}
+.prefs-deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  cursor: pointer;
+}
+.prefs-section:disabled .prefs-deck { cursor: wait; }
+.prefs-deck-stack {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  max-width: 116px;
+  aspect-ratio: 2 / 3;
+}
+.prefs-deck-stack::before,
+.prefs-deck-stack::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid #6d5a37;
+  border-radius: 10px;
+  background: linear-gradient(155deg, #3a2f20, #1b160f);
+  box-shadow:
+    inset 0 0 0 4px #1b160f,
+    inset 0 0 0 5px rgb(201 162 39 / 0.22),
+    0 6px 14px -8px #000;
+  filter: brightness(0.7);
+  transform-origin: 50% 100%;
+  transition: transform 420ms cubic-bezier(0.3, 0.7, 0.2, 1), filter 300ms ease;
+}
+.prefs-deck-stack::before { z-index: 1; transform: translate(3px, 3px); }
+.prefs-deck-stack::after { z-index: 0; transform: translate(6px, 6px); }
+.prefs-deck-stack img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 1px solid #8f7848;
+  border-radius: 10px;
+  background: #10141d;
+  box-shadow: 0 12px 22px -14px #000;
+  object-fit: cover;
+  filter: brightness(0.5) saturate(0.75);
+  user-select: none;
+  transition:
+    transform 420ms cubic-bezier(0.3, 0.7, 0.2, 1),
+    filter 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease;
+}
+.prefs-deck input:checked + .prefs-deck-stack img {
+  border-color: #e6c14a;
+  box-shadow:
+    0 0 0 1px rgb(230 193 74 / 0.45),
+    0 0 26px rgb(230 193 74 / 0.32),
+    0 18px 26px -14px #000;
+  filter: none;
+  transform: translateY(-6px);
+}
+.prefs-deck input:checked + .prefs-deck-stack::before,
+.prefs-deck input:checked + .prefs-deck-stack::after { filter: none; }
+.prefs-deck input:checked + .prefs-deck-stack::before { transform: translateY(-3px) rotate(-7deg); }
+.prefs-deck input:checked + .prefs-deck-stack::after { transform: translateY(-3px) rotate(7deg); }
+.prefs-deck input:focus-visible + .prefs-deck-stack img { outline: 2px solid #e6c14a; outline-offset: 5px; }
+@media (hover: hover) {
+  .prefs-deck:hover input:not(:checked) + .prefs-deck-stack img { filter: brightness(0.78) saturate(0.9); }
+}
+.prefs-deck-name {
+  color: rgb(232 220 192 / 0.5);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  transition: color 300ms ease;
+}
+.prefs-deck input:checked ~ .prefs-deck-name { color: #e6c14a; }
+
+/* Language: one engraved slot with a gilt tab for the current language. */
+.prefs-locale {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 3px;
+  border: 1px solid rgb(201 162 39 / 0.28);
+  border-radius: 12px;
+  background: rgb(18 13 8 / 0.6);
+  box-shadow: inset 0 2px 6px #0006;
+}
+.prefs-locale button {
+  min-height: 42px;
+  border-radius: 9px;
+  color: rgb(232 220 192 / 0.6);
+  font-size: 15px;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.prefs-locale button[aria-pressed="true"] {
+  background: linear-gradient(to bottom, #e6c14a, #c9a227);
+  box-shadow: 0 0 18px -6px rgb(201 162 39 / 0.6);
+  color: #16100a;
+  font-weight: 600;
+}
+.prefs-locale button:focus-visible { outline: 2px solid #e6c14a; outline-offset: 2px; }
+.prefs-locale button:disabled { cursor: wait; }
+@media (hover: hover) {
+  .prefs-locale button:not([aria-pressed="true"]):not(:disabled):hover { color: #e8dcc0; }
+}
+
+.prefs > .prefs-status {
+  margin-top: 14px;
+  color: rgb(232 220 192 / 0.5);
+  font-size: 12px;
+  text-align: center;
+}
+.prefs > .prefs-status.is-error { color: #d0574b; }
+/* Kept in the tree so screen readers hear it fill in, but takes no room while idle. */
+.prefs > .prefs-status:empty { margin-top: 0; }

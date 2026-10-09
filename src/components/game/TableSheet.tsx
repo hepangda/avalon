@@ -1,6 +1,7 @@
 import { useLayoutEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'use-intl';
+import { cn } from '@/lib/utils/cn';
 
 /** Native modal keeps focus and keyboard interaction inside the active sheet. */
 export function TableSheet({
@@ -10,6 +11,7 @@ export function TableSheet({
   children,
   error,
   busy = false,
+  className,
 }: {
   open: boolean;
   title: string;
@@ -17,6 +19,7 @@ export function TableSheet({
   children: ReactNode;
   error?: string | null;
   busy?: boolean;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -31,7 +34,7 @@ export function TableSheet({
   return createPortal(
     <dialog
       ref={ref}
-      className="table-sheet"
+      className={cn('table-sheet', className)}
       aria-labelledby={titleId}
       onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}
       onClick={(e) => {

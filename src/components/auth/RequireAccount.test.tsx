@@ -1,4 +1,4 @@
-import { AccountSettings } from '@/components/home/AccountMenu';
+import { AccountSettings } from '@/components/AccountSettings';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter,Route,Routes } from 'react-router-dom';
@@ -60,7 +60,10 @@ describe('account-required UI', () => {
     expect(signedOut).not.toContain('<input');
     expect(signedOut).not.toContain('<form');
     const signedIn = renderToStaticMarkup(<AccountSettings {...props} user={{ id: 'account', username: 'Player', alias: 'Alias' }} />);
-    expect(signedIn).toContain('home.saveAlias');
-    expect(signedIn).toContain('value="Alias"');
+    expect(signedIn).toContain('>Alias</span>');
+    expect(signedIn).toContain('aria-label="home.accountAlias: Alias"');
+    expect(signedIn).toContain('home.signedInAs');
+    expect(signedIn).toContain('aria-label="home.signOut"');
+    expect(signedIn).not.toContain('<input');
   });
 });

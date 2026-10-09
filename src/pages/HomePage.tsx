@@ -5,7 +5,6 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/Button';
 import { PreferencesButton } from '@/components/PreferencesButton';
 import { AccountLogin } from '@/components/auth/AccountLogin';
-import { AccountMenu } from '@/components/home/AccountMenu';
 import { HeroCards } from '@/components/home/HeroCards';
 import { PublicRooms } from '@/components/home/PublicRooms';
 import { RoomCodeInput } from '@/components/home/RoomCodeInput';
@@ -18,7 +17,7 @@ export default function HomePage() {
   const t = useTranslations();
   const router = useRouter();
   const location = useLocation();
-  const { user: authUser, loading: authLoading, login, logout, saveAlias } = useAuthIdentity();
+  const { user: authUser, loading: authLoading, login, logout } = useAuthIdentity();
   const canJoin = !authLoading && Boolean(authUser);
   const isLocalhost = typeof window !== 'undefined'
     && ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname);
@@ -121,19 +120,8 @@ export default function HomePage() {
   return (
     // Clip sideways only: cards sliding out past the fan must not widen a phone screen.
     <div className="flex min-h-[100dvh] flex-col overflow-x-clip">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pt-5">
-        <div className="min-w-0">
-          {authUser && (
-            <AccountMenu
-              key={authUser.id}
-              user={authUser}
-              loading={authLoading}
-              onLogout={logout}
-              onSaveAlias={saveAlias}
-            />
-          )}
-        </div>
-        <div className="shrink-0 whitespace-nowrap"><PreferencesButton /></div>
+      <header className="mx-auto flex w-full max-w-5xl justify-end px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pt-5">
+        <PreferencesButton variant="chip" />
       </header>
 
       <main className="mx-auto flex w-full max-w-[34rem] flex-1 flex-col px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] sm:px-6">

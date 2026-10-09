@@ -51,13 +51,11 @@
     "signInRequiredToCreate": "Sign in above before creating a room.",
     "signOut": "Sign out",
     "nameEmpty": "Name cannot be empty",
-    "identityTitle": "Your account and alias",
     "signIn": "Sign in",
     "signingIn": "Signing in…",
     "accountAlias": "Alias",
     "saveAlias": "Set alias",
     "savingAlias": "Saving…",
-    "aliasSaved": "Alias saved for future sign-ins",
     "aliasSaveFailed": "Could not save your alias. Please try again.",
     "authDenied": "Sign-in was cancelled or not authorized.",
     "authLoginRequired": "Your sign-in session expired. Please sign in again.",
@@ -68,7 +66,6 @@
     "errCreateFailed": "Failed to create room",
     "orJoinWithCode": "or join with a room code",
     "signInHint": "Sign in to create a room or join your friends.",
-    "aliasHint": "The name other players see at the table.",
     "signedInAs": "Signed in as {name}"
   },
   "lobby": {
@@ -281,11 +278,9 @@
     "waitingRestart": "Waiting for the host to start another game"
   },
   "preferences": {
-    "accountHint": "Saved to your account and synced across devices.",
     "saving": "Saving…",
     "saveFailed": "Could not save. Previous settings restored. Check your connection and try again.",
-    "title": "Settings",
-    "hint": "Saved automatically for this browser."
+    "title": "Settings"
   },
   "locale": {
     "switch": "Language",

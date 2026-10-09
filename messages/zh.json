@@ -51,13 +51,11 @@
     "signInRequiredToCreate": "请先在上方登录，再创建房间。",
     "signOut": "退出登录",
     "nameEmpty": "名字不能为空",
-    "identityTitle": "您的账号和别名",
     "signIn": "账号登录",
     "signingIn": "正在登录…",
     "accountAlias": "别名",
     "saveAlias": "设置别名",
     "savingAlias": "正在保存…",
-    "aliasSaved": "别名已保存，以后登录将自动使用",
     "aliasSaveFailed": "别名保存失败，请稍后重试。",
     "authDenied": "登录已取消或未获授权。",
     "authLoginRequired": "登录会话已失效，请重新登录。",
@@ -68,7 +66,6 @@
     "errCreateFailed": "房间创建失败，请再试一次",
     "orJoinWithCode": "或输入房间码加入",
     "signInHint": "登录后即可创建房间，或加入朋友的对局",
-    "aliasHint": "在牌桌上显示给其他玩家的名字",
     "signedInAs": "登录账号：{name}"
   },
   "lobby": {
@@ -281,11 +278,9 @@
     "waitingRestart": "等待房主开启下一局"
   },
   "preferences": {
-    "accountHint": "自动保存到账号，在不同设备登录后同步。",
     "saving": "正在保存…",
     "saveFailed": "保存失败，已恢复原设置。请检查网络后重新选择。",
-    "title": "设置",
-    "hint": "自动保存，仅影响当前浏览器中的显示。"
+    "title": "设置"
   },
   "locale": {
     "switch": "语言",
