@@ -1,0 +1,161 @@
+/* The opening deal, staged over the live table (see RoleReveal). */
+.role-deal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+  outline: none;
+  background: radial-gradient(ellipse 80% 70% at 50% 50%, #080d1800 45%, #080d1880 100%);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.role-deal-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  perspective: 900px;
+  will-change: transform;
+}
+.role-deal-rotor {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+.role-deal-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.role-deal-face .role-card {
+  box-shadow: 0 10px 22px -10px #000d;
+}
+.role-deal-back {
+  display: grid;
+  place-items: center;
+  transform: rotateY(180deg);
+  border: 1px solid #8f7848;
+  border-radius: 6px;
+  background: linear-gradient(145deg, #34425d, #10141d);
+  box-shadow: 0 10px 22px -10px #000d;
+}
+.role-deal-back::before {
+  content: '';
+  position: absolute;
+  inset: 6%;
+  border: 1px solid #c9a22755;
+  border-radius: 4px;
+}
+.role-deal-crest {
+  width: 46%;
+  filter: drop-shadow(0 0 10px #c9a22759);
+}
+
+/* The viewer's own card waits at their seat, warm and lifted, until opened. */
+.role-deal[data-stage="dealt"] .role-deal-card.is-mine {
+  cursor: pointer;
+  outline: none;
+}
+.role-deal[data-stage="dealt"] .role-deal-card.is-mine .role-deal-back {
+  border-color: #e6c14a;
+  animation: role-deal-call 1.8s ease-in-out infinite;
+}
+.role-deal[data-stage="dealt"] .role-deal-card.is-mine:focus-visible .role-deal-back {
+  outline: 3px solid #e6c14a;
+  outline-offset: 4px;
+}
+@keyframes role-deal-call {
+  0%, 100% { box-shadow: 0 0 0 1px #e6c14a66, 0 0 14px 2px #e6c14a40, 0 10px 22px -10px #000d; translate: 0 0; }
+  50% { box-shadow: 0 0 0 2px #e6c14a, 0 0 30px 8px #e6c14a8c, 0 18px 26px -10px #000d; translate: 0 -5%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .role-deal[data-stage="dealt"] .role-deal-card.is-mine .role-deal-back {
+    animation: none;
+    box-shadow: 0 0 0 2px #e6c14a, 0 0 24px 6px #e6c14a8c;
+  }
+}
+
+/* Seats that have already read their card. */
+.role-deal-ready {
+  position: absolute;
+  top: -9%;
+  right: -12%;
+  display: grid;
+  width: 34%;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: #c9a227;
+  color: #16100a;
+  box-shadow: 0 2px 6px #000a;
+  opacity: 0;
+  scale: 0.4;
+  transition: opacity 0.2s, scale 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.role-deal-ready svg { width: 70%; height: 70%; }
+.role-deal-card[data-ready] .role-deal-ready {
+  opacity: 1;
+  scale: 1;
+}
+.role-deal-card[data-ready] .role-deal-back { filter: brightness(0.8); }
+
+.role-deal-caption {
+  position: absolute;
+  translate: -50% 0;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  white-space: nowrap;
+  color: #dfc878;
+  text-shadow: 0 2px 8px #000c;
+  pointer-events: none;
+  z-index: 11;
+}
+
+/* The opened card, lifted off the table. */
+.role-deal-scrim {
+  position: absolute;
+  inset: 0;
+  /* Above every dealt card (each stacks by its deck position, at most 10). */
+  z-index: 20;
+  background: #080d18eb;
+  backdrop-filter: blur(6px);
+}
+.role-deal-reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  color: #f5ecda;
+  user-select: text;
+}
+.role-deal-timer {
+  flex: none;
+}
+.role-deal-frame {
+  display: grid;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  place-items: center;
+  container-type: size;
+}
+.role-deal-pop {
+  width: min(380px, 100cqw, calc(100cqh * 2 / 3));
+  aspect-ratio: 2 / 3;
+  perspective: 1200px;
+}
+.role-deal-details {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 400px);
+  text-align: center;
+}

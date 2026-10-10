@@ -1,0 +1,140 @@
+/* Lobby → match gate (see SceneGate). */
+.scene-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  overflow: hidden;
+  pointer-events: auto;
+  user-select: none;
+}
+.scene-gate[data-phase="opening"] { pointer-events: none; }
+.scene-gate-shade {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, #080d1866, #080d18d9);
+}
+.scene-gate-doors {
+  position: absolute;
+  inset: 0;
+}
+.scene-gate-leaf {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 50%;
+  overflow: hidden;
+  background:
+    /* Iron bands across the boards. */
+    linear-gradient(to bottom,
+      transparent 16%, #c9a2272e 16%, #c9a2272e calc(16% + 1px), transparent calc(16% + 1px),
+      transparent 84%, #c9a2272e 84%, #c9a2272e calc(84% + 1px), transparent calc(84% + 1px)),
+    repeating-linear-gradient(90deg, #ffffff05 0 1px, transparent 1px 11px),
+    radial-gradient(ellipse 140% 60% at 50% 50%, #2a2116, #150f0a 70%, #0b0805);
+  box-shadow: inset 0 0 90px #000b;
+}
+.scene-gate-leaf[data-side="left"] {
+  left: 0;
+  border-right: 1px solid #c9a22799;
+}
+.scene-gate-leaf[data-side="right"] {
+  right: 0;
+  border-left: 1px solid #c9a22799;
+}
+/* Gilt panel frame, open toward the seam so the seal reads as one piece. */
+.scene-gate-leaf::before {
+  content: '';
+  position: absolute;
+  top: max(20px, 4%);
+  bottom: max(20px, 4%);
+  border: 1px solid #c9a22740;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 5px #0b080566, inset 0 0 0 6px #c9a2271f;
+}
+.scene-gate-leaf[data-side="left"]::before { left: max(18px, 6%); right: 14px; }
+.scene-gate-leaf[data-side="right"]::before { right: max(18px, 6%); left: 14px; }
+
+.scene-gate-medal {
+  position: absolute;
+  top: 50%;
+  display: block;
+  width: var(--medal);
+  height: var(--medal);
+  margin-top: calc(var(--medal) / -2);
+}
+.scene-gate-leaf[data-side="left"] .scene-gate-medal { right: calc(var(--medal) / -2); }
+.scene-gate-leaf[data-side="right"] .scene-gate-medal { left: calc(var(--medal) / -2); }
+.scene-gate-ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #e6c14a;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 38%, #3a2d1c, #160f09 72%);
+  box-shadow:
+    0 0 0 7px #120d08,
+    0 0 0 8px #c9a22766,
+    0 0 46px 6px #c9a2273d,
+    inset 0 0 18px #000c;
+}
+.scene-gate-crest-wrap {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.scene-gate-crest {
+  width: 60%;
+  filter: drop-shadow(0 0 12px #e6c14a73);
+}
+.scene-gate-code {
+  position: absolute;
+  top: calc(50% + var(--medal) / 2 + 22px);
+  padding-left: 0.42em;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 15px;
+  letter-spacing: 0.42em;
+  line-height: 1;
+  white-space: nowrap;
+  color: #c9a227b3;
+  text-shadow: 0 1px 0 #000;
+}
+.scene-gate-leaf[data-side="left"] .scene-gate-code { right: 0; translate: 50% 0; }
+.scene-gate-leaf[data-side="right"] .scene-gate-code { left: 0; translate: -50% 0; }
+
+/* Light through the crack where the leaves meet. */
+.scene-gate-seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  margin-left: -2px;
+  background: linear-gradient(to bottom, transparent, #ffe9a8 30%, #fff6d6 50%, #ffe9a8 70%, transparent);
+  box-shadow: 0 0 24px 6px #e6c14a8c;
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+/* The engraved crest rising off the felt; it becomes the seal once the gate is shut. */
+.scene-gate-fly {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  width: var(--medal);
+  height: var(--medal);
+  margin: calc(var(--medal) / -2) 0 0 calc(var(--medal) / -2);
+}
+.scene-gate-fly .scene-gate-medal {
+  top: 0;
+  margin: 0;
+}
+.scene-gate[data-phase="closed"] .scene-gate-fly .scene-gate-ring {
+  animation: scene-gate-breathe 1.8s ease-in-out infinite;
+}
+@keyframes scene-gate-breathe {
+  0%, 100% { box-shadow: 0 0 0 7px #120d08, 0 0 0 8px #c9a22766, 0 0 46px 6px #c9a2273d, inset 0 0 18px #000c; }
+  50% { box-shadow: 0 0 0 7px #120d08, 0 0 0 8px #e6c14acc, 0 0 64px 14px #e6c14a59, inset 0 0 18px #000c; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-gate[data-phase="closed"] .scene-gate-fly .scene-gate-ring { animation: none; }
+}

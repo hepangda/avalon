@@ -19,6 +19,7 @@ import { disconnectRoom } from '@/lib/socket/client/socket';
 import { resolveRoomConfig } from '@/lib/socket/roomConfig';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
+import { useSceneGate } from '@/lib/store/sceneGate';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { accountDisplayName } from '@/lib/auth/types';
 import { cn } from '@/lib/utils/cn';
@@ -62,10 +63,16 @@ export default function LobbyPage() {
   // the room store is a global singleton that can briefly still hold a previous
   // room's snapshot right after navigation, and acting on its stale 'finished'
   // status would wrongly bounce us into that old game's end screen.
+  // Only a start watched from this lobby closes the gate; arriving at a running game just goes in.
+  const sawLobby = useRef<string | null>(null);
   useEffect(() => {
     if (snapshot?.code !== code) return;
+    if (snapshot.status === 'lobby') sawLobby.current = code;
     if (snapshot.status === 'in_game' || snapshot.status === 'finished') {
-      router.replace(`/game/${code}`);
+      const enter = () => router.replace(`/game/${code}`);
+      const crest = document.querySelector('.lobby-felt-crest')?.getBoundingClientRect();
+      const origin = crest ? { x: crest.left + crest.width / 2, y: crest.top + crest.height / 2, width: crest.width } : null;
+      if (snapshot.status !== 'in_game' || sawLobby.current !== code || !useSceneGate.getState().close(code, origin, enter)) enter();
     }
   }, [snapshot?.code, snapshot?.status, code, router]);
 

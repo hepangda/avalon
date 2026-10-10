@@ -9,6 +9,7 @@ import {
 useRoomConnection, roomActions
 } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
+import { useSceneGate } from '@/lib/store/sceneGate';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -36,6 +37,8 @@ export default function GamePage() {
   const restart = useRoomAction(`${code}:restart`, t('table.actionFailed'));
   const game = roomCode === code ? rawGame : null;
   useEffect(() => { if (game?.phase === 'GameOver') void refresh(); }, [game?.gameId, game?.phase, refresh]);
+  const ready = !!game || notice?.type === 'join_error';
+  useEffect(() => { if (ready) useSceneGate.getState().arrive(code); }, [ready, code]);
   useEffect(() => {
     if (snapshot?.code === code && snapshot.status === 'lobby')
       router.replace(`/room/${code}`);

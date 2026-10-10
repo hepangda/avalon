@@ -8,6 +8,8 @@ import './styles/role-notes.css';
 import './styles/table-elements.css';
 import './styles/role-cards.css';
 import './styles/identity.css';
+import './styles/role-deal.css';
+import './styles/scene-gate.css';
 import './styles/assassination.css';
 import './styles/timing.css';
 import './styles/reconnect.css';

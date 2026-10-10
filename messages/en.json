@@ -156,8 +156,8 @@
   },
   "roleReveal": {
     "title": "Your Secret Role",
+    "dealing": "Dealing…",
     "tapToReveal": "Tap to reveal",
-    "tapWhenReady": "Tap the card when you are ready to look.",
     "shownEvil": "Red Team",
     "shownMerlinOrMorgana": "Merlin or Morgana",
     "shownAlly": "Red teammates",

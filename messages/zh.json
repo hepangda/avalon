@@ -156,8 +156,8 @@
   },
   "roleReveal": {
     "title": "你的秘密身份",
+    "dealing": "正在发牌…",
     "tapToReveal": "点击揭示",
-    "tapWhenReady": "准备好后点击卡牌查看。",
     "shownEvil": "红方",
     "shownMerlinOrMorgana": "梅林或莫甘娜",
     "shownAlly": "红方同伴",

@@ -31,6 +31,7 @@ import {
 import type { Ack } from '@/lib/socket/types';
 import { joinErrorText } from '@/lib/socket/client/joinErrorText';
 import type { RoomNotice } from '@/lib/store/room';
+import { AnimatePresence } from 'framer-motion';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { PhaseBoard } from './PhaseBoard';
@@ -351,7 +352,9 @@ export function GameView({
               <ActionTimerBadge timer={selfTimer} now={now} />
             </div>}
             <div className="table-actions">
-              {presentation ? (
+              {needsRoleReveal ? (
+                <div className="table-action-placeholder" />
+              ) : presentation ? (
                 <div className="table-action-placeholder" aria-live="polite">
                   {t('table.resolving')}
                 </div>
@@ -404,7 +407,7 @@ export function GameView({
         <GameTable
           players={tablePlayers}
           myPlayerId={myPlayerId}
-          board={<PhaseBoard game={game} presentation={presentation} isOver={isOver} isLeader={isLeader}
+          board={needsRoleReveal ? null : <PhaseBoard game={game} presentation={presentation} isOver={isOver} isLeader={isLeader}
             isHolder={isHolder} isAssassin={isAssassin} canVote={canVote} canMission={canMission}
             selected={selected} round={round} teamSize={teamSize} />}
           card={card}
@@ -424,7 +427,8 @@ export function GameView({
           roleNotes={displayedNotes}
           knownNotes={knownNotes}
           editableNoteIds={editableNoteIds}
-          onEditRoleNote={notesEnabled ? (id, anchor) => {
+          // Seat notes would name the viewer's role before their card is turned over.
+          onEditRoleNote={notesEnabled && !needsRoleReveal ? (id, anchor) => {
             if (editableNoteIds.includes(id)) setNoteTarget((current) => current?.id === id ? null : { id, anchor });
           } : undefined}
           notePlayerId={noteTarget?.id}
@@ -450,12 +454,12 @@ export function GameView({
       {presentation?.kind === 'assassination' && (
         <AssassinationReveal key={presentation.id} event={presentation} onComplete={finish} />
       )}
-      {needsRoleReveal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-ink-deep py-6">
+      <AnimatePresence>
+        {needsRoleReveal && (
           <RoleReveal key={`${game.gameId}-${myPlayerId}-${game.roleRevision ?? 0}`} game={game} myPlayerId={myPlayerId} onAck={actions.ackRole} onReroll={actions.useRerollCard} blocked={conn !== 'connected'}
             timer={selfTimer && <ActionTimerBadge timer={selfTimer} now={now} />} />
-        </div>
-      )}
+        )}
+      </AnimatePresence>
       {!presentation && ladyReveal && ladyReveal.targetId !== ladySeen && (
         <LadyResultReveal
           game={game}

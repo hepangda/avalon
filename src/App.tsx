@@ -8,6 +8,7 @@ const GamePage = lazy(() => import('./pages/GamePage'));
 const ReplayPage = lazy(() => import('./pages/ReplayPage'));
 import { AuthIdentityProvider } from '@/lib/auth/useAuthIdentity';
 import { RequireAccount } from '@/components/auth/RequireAccount';
+import { SceneGate } from '@/components/SceneGate';
 
 const DebugGalleryPage = import.meta.env.DEV
   ? lazy(() => import('./pages/DebugGalleryPage'))
@@ -40,6 +41,7 @@ export function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
+        <SceneGate />
       </AuthIdentityProvider>
     </I18nProvider>
   );
