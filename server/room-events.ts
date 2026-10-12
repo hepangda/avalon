@@ -101,8 +101,15 @@ export function dispatchRoomEvent(handlers: RoomCommandHandlers, ws: RoomSocket,
         }));
       case "game:startAssassination":
         return handlers.gameAction(ws, (pid) => ({
-          type: "START_ASSASSINATION",
+          type: "REQUEST_ASSASSINATION",
           by: pid,
+        }));
+      case "game:voteAssassination":
+        return handlers.gameAction(ws, (pid) => ({
+          type: "VOTE_ASSASSINATION",
+          by: pid,
+          proposalId: (payload as { proposalId: number } | null)?.proposalId as number,
+          value: (payload as { value: 'approve' | 'reject' } | null)?.value as 'approve' | 'reject',
         }));
       case "game:assassinate":
         return handlers.gameAction(ws, (pid) => ({

@@ -195,6 +195,13 @@ export interface GameState {
   } | null;
 
   assassinId: PlayerId | null;
+  /** Private consent ballot; absent in legacy snapshots. Never public. */
+  earlyAssassination?: {
+    id: number;
+    initiatorId: PlayerId;
+    voterIds: PlayerId[];
+    votes: Record<PlayerId, VoteValue>;
+  } | null;
   outcome: GameOutcome | null;
   /** Server-only checkpoints for referee rollback; never sent to viewers. */
   phaseHistory?: PhaseCheckpoint[];
@@ -260,6 +267,8 @@ export type GameEvent =
   | { type: 'RETRACT_PROPOSAL' }
   | { type: 'CAST_MISSION_CARD'; by: PlayerId; card: MissionCard }
   | { type: 'USE_LADY'; by: PlayerId; target: PlayerId }
+  | { type: 'REQUEST_ASSASSINATION'; by: PlayerId }
+  | { type: 'VOTE_ASSASSINATION'; by: PlayerId; proposalId: number; value: VoteValue }
   | {
       type: 'START_ASSASSINATION';
       by: PlayerId;
@@ -451,8 +460,10 @@ export interface ClientGameState {
     pending: boolean;
   } | null;
   privateLadyResult?: { targetId: PlayerId; loyalty: Team };
-  /** Whether this viewer is the assassin and may end normal play immediately. */
+  /** Whether this viewer may request unanimous consent from known red allies. */
   canStartAssassination: boolean;
+  /** Only mutually known red teammates receive the pending ballot. */
+  earlyAssassination?: NonNullable<GameState['earlyAssassination']>;
   assassinCandidates?: PlayerId[]; // populated only for the assassin during Assassination
   outcome: GameOutcome | null;
   isSpectator: boolean;

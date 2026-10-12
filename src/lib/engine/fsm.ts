@@ -1,5 +1,6 @@
 import type { GameState, PlayerId } from './types';
 import { missionSize, requiredFails } from './config';
+import { isEvil } from './roles';
 
 /**
  * Pure FSM helpers & guards. No mutation, no I/O.
@@ -49,6 +50,11 @@ export function canStartAssassination(s: GameState): boolean {
     default:
       return false;
   }
+}
+
+/** Oberon is outside the mutually known red team, even after a Lady inspection. */
+export function earlyAssassinationVoters(s: GameState): PlayerId[] {
+  return s.players.filter((p) => isEvil(p.role) && p.role !== 'Oberon').map((p) => p.id);
 }
 
 export function playerById(s: GameState, id: PlayerId) {

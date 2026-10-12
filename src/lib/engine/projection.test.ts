@@ -196,14 +196,14 @@ describe('projectStateForViewer — security boundary', () => {
     }
   });
 
-  it('offers early assassination only to the active assassin, never other players or spectators', () => {
+  it('offers early assassination to mutually known red teammates, never good players or spectators', () => {
     const state = buildStartedGame(FIVE_P);
     for (const viewer of [
       ...state.players.map((player) => player.id),
       'spectator',
     ]) {
       expect(projectStateForViewer(state, viewer).canStartAssassination).toBe(
-        viewer === state.assassinId,
+        viewer === 'p3' || viewer === 'p4',
       );
     }
     for (const phase of ['Lobby', 'Assassination', 'GameOver'] as const) {

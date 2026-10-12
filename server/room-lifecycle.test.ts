@@ -552,7 +552,7 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
       "NOT_ADMIN",
     );
     const ordinaryPlayer = h.sockets.find(
-      (s) => s !== h.spectator && s.game.selfRole !== "Assassin",
+      (s) => s !== h.spectator && !s.game.canStartAssassination,
     )!;
     expect(
       (

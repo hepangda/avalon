@@ -8,7 +8,7 @@ import type {
   Role,
 } from './types';
 import { missionSizesFor, requiredFailsFor, rejectionLimit } from './config';
-import { canRerollOpening, canStartAssassination } from './fsm';
+import { canRerollOpening, canStartAssassination, earlyAssassinationVoters } from './fsm';
 import { teamOf } from './roles';
 import { computeKnownPlayers } from './visibility';
 import { roleVariants } from './roleVariants';
@@ -189,8 +189,11 @@ export function projectStateForViewer(
     ...(privateLadyResult ? { privateLadyResult } : {}),
     canStartAssassination:
       self !== null &&
-      state.assassinId === self.id &&
+      earlyAssassinationVoters(state).includes(self.id) &&
+      !state.earlyAssassination &&
       canStartAssassination(state),
+    ...(state.earlyAssassination?.voterIds.includes(viewerId)
+      ? { earlyAssassination: structuredClone(state.earlyAssassination) } : {}),
     ...(assassinCandidates ? { assassinCandidates } : {}),
     outcome: isGameOver ? state.outcome : null,
     isSpectator,

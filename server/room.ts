@@ -438,6 +438,12 @@ export class Room {
     this.views.dirty = false;
   }
 
+  private assassinationBotVoters(): string[] {
+    const ballot = this.state.game?.earlyAssassination;
+    return ballot?.voterIds.filter((id) => !ballot.votes[id] &&
+      this.state.members.get(id)?.isBot && this.state.members.get(id)?.claimed) ?? [];
+  }
+
   /** Schedule from committed action timestamps, so pings cannot postpone bots. */
   private scheduleBots(): void {
     if (this.integrityFailure || this.stopped) return;
@@ -446,11 +452,19 @@ export class Room {
     const pending = this.state.game?.actionTimers?.filter((timer) =>
       timer.pausedAt === undefined && this.state.members.get(timer.playerId)?.isBot && this.state.members.get(timer.playerId)?.claimed,
     ) ?? [];
-    if (!pending.length) return;
-    const due = Math.min(...pending.map((timer) => timer.startedAt + BOT_DELAY_MS));
+    const consentPending = this.assassinationBotVoters().length > 0;
+    if (!pending.length && !consentPending) return;
+    const due = Math.min(...pending.map((timer) => timer.startedAt + BOT_DELAY_MS), consentPending ? Date.now() : Infinity);
     this.botTimer = setTimeout(() => {
       this.botTimer = undefined;
       void this.run(async () => {
+        // Private consent is never an action timer: public timers would expose red seats.
+        for (const by of this.assassinationBotVoters()) {
+          const ballot = this.state.game?.earlyAssassination;
+          if (!ballot) break;
+          const result = await this.applyEvent({ type: 'VOTE_ASSASSINATION', by, proposalId: ballot.id, value: 'approve' });
+          if (!result.ok) throw new Error(`Bot consent failed: ${result.error?.code}`);
+        }
         // Re-read after entering the serial queue: a referee may have changed phase.
         const ready = this.state.game?.actionTimers?.filter((timer) => timer.pausedAt === undefined &&
           this.state.members.get(timer.playerId)?.isBot && this.state.members.get(timer.playerId)?.claimed &&

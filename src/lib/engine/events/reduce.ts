@@ -6,7 +6,7 @@ import type {
   GameState
 } from '../types';
 import { ackRole, rerollOpening, startGame, useRerollCard } from './deal';
-import { assassinate, startAssassination } from './ending';
+import { assassinate, requestAssassination, startAssassination, voteAssassination } from './ending';
 import { applyLadyOfLake, castMissionCard } from './mission';
 import { castVote, endSpeech, proposeTeam, retractProposal, retractVotes, setTimersPaused, startDiscussion } from './proposal';
 import { phaseCheckpoint, previousPhase, setConnected } from './referee';
@@ -23,6 +23,11 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
   if (result.ok) {
     // ACK_ROLE may be idempotent; avoid modifying the input state in that case.
     if (result.state === state) result.state = clone(state);
+    // Ballots never survive a finished game, natural assassination, or referee rollback.
+    if (event.type === 'PREVIOUS_PHASE' || event.type === 'REROLL_LEADER' ||
+      result.state.roleRevision !== state.roleRevision ||
+      result.state.phase === 'Assassination' || result.state.phase === 'GameOver')
+      result.state.earlyAssassination = null;
     if (event.type !== 'PREVIOUS_PHASE' && state.phase !== 'Lobby' && result.state.phase !== state.phase) {
       result.state.phaseHistory = [...(state.phaseHistory ?? []), phaseCheckpoint(state)];
     }
@@ -71,6 +76,10 @@ export function dispatch(state: GameState, event: GameEvent, ctx: EngineContext)
       return applyLadyOfLake(state, event.by, event.target);
     case 'START_ASSASSINATION':
       return startAssassination(state, event.by, event.admin, event.actor);
+    case 'REQUEST_ASSASSINATION':
+      return requestAssassination(state, event.by);
+    case 'VOTE_ASSASSINATION':
+      return voteAssassination(state, event.by, event.proposalId, event.value);
     case 'PREVIOUS_PHASE':
       return previousPhase(state, event.actor);
     case 'ASSASSINATE':

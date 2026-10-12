@@ -255,12 +255,21 @@
     "strike": "Strike",
     "contemplating": "The Assassin contemplates their fateful choice…",
     "identitiesPublic": "All red team roles, including Oberon, are now public. Blue team roles stay hidden.",
-    "startEarly": "Start assassination early",
-    "earlyConsequences": "Stop all quests now and reveal every red team role, including Oberon, to everyone. Blue team roles will stay hidden.",
-    "earlyOutcome": "You will then choose a target: hit Merlin and the red team wins; miss Merlin and the blue team wins, regardless of the quest results.",
+    "startEarly": "Propose early assassination",
+    "earlyConsequences": "Start a private vote, with your own approval included. Only unanimous consent from all known red teammates ends quests and reveals every red role, including Oberon. Blue roles stay hidden.",
+    "earlyOutcome": "If approved, the Assassin chooses a target: hit Merlin and red wins; miss and blue wins, regardless of quest results.",
     "irreversible": "Revealed red team roles cannot be hidden again. A referee can restore the previous phase.",
-    "confirmStart": "Stop quests & start assassination",
-    "starting": "Starting assassination…"
+    "confirmStart": "Propose & approve",
+    "starting": "Starting vote…",
+    "voteTitle": "Early assassination vote",
+    "voteRequested": "{player} proposes early assassination.",
+    "voteRules": "Visible only to known red teammates; Oberon does not vote. Everyone must agree. Any rejection cancels this proposal. Play continues while waiting; approval reveals all red roles.",
+    "voteProgress": "Early assassination: {count}/{total} agree · View vote",
+    "agreed": "Agreed",
+    "awaitingVote": "Awaiting vote",
+    "waitingAllies": "You agreed. Waiting for the remaining teammates.",
+    "approveEarly": "Approve assassination",
+    "rejectEarly": "Reject & continue quests"
   },
   "gameOver": {
     "reasonRejectionLimit": "Consecutive rejections reached the discussion round limit",
@@ -360,7 +369,9 @@
     "teamFinalized": "{leader} finalized the team: {team}. Voting begins.",
     "speechBegins": "It is {player}’s turn to speak.",
     "discussionFinished": "Everyone has spoken. {leader} may now revise the team.",
-    "rerollCardUsed": "{player} used a reroll card. All roles have been redealt; confirm your new identity."
+    "rerollCardUsed": "{player} used a reroll card. All roles have been redealt; confirm your new identity.",
+    "assassinationRequested": "{player} proposes early assassination, awaiting all known teammates",
+    "assassinationRejected": "{player} rejects early assassination; the proposal is cancelled"
   },
   "proposal": {
     "hammerWarnLast": "Final proposal — one more rejection and the red team wins!"

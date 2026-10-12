@@ -155,7 +155,8 @@ export function GallerySession({
       dispatch({ type: "CAST_MISSION_CARD", by: viewerId, card }),
     useLady: (target) => dispatch({ type: "USE_LADY", by: viewerId, target }),
     startAssassination: () =>
-      dispatch({ type: "START_ASSASSINATION", by: viewerId }),
+      dispatch({ type: "REQUEST_ASSASSINATION", by: viewerId }),
+    voteAssassination: (proposalId, value) => dispatch({ type: 'VOTE_ASSASSINATION', by: viewerId, proposalId, value }),
     assassinate: (target) =>
       dispatch({ type: "ASSASSINATE", by: viewerId, target }),
   };

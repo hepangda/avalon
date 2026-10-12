@@ -255,12 +255,21 @@
     "strike": "刺杀",
     "contemplating": "刺客正在思忖这命运攸关的抉择…",
     "identitiesPublic": "所有红方身份（包括奥伯伦）现已公开，蓝方身份仍然保密。",
-    "startEarly": "提前进入刺杀",
-    "earlyConsequences": "立即终止所有任务，并向所有人公开每位红方成员的身份（包括奥伯伦）。蓝方身份仍然保密。",
-    "earlyOutcome": "随后由你选择刺杀目标：刺中梅林则红方获胜，刺错则蓝方获胜，不再按任务结果判定胜负。",
+    "startEarly": "提议提前刺杀",
+    "earlyConsequences": "发起私有投票，你的发起计为同意。所有已知红方队友全部同意后，才会终止任务，并向所有人公开红方身份（包括奥伯伦）；蓝方身份仍然保密。",
+    "earlyOutcome": "通过后由刺客选择目标：刺中梅林则红方获胜，刺错则蓝方获胜，不再按任务结果判定胜负。",
     "irreversible": "已公开的红方身份无法撤回；若需纠正阶段，请使用裁判功能。",
-    "confirmStart": "终止任务并进入刺杀",
-    "starting": "正在进入刺杀…"
+    "confirmStart": "发起投票（我同意）",
+    "starting": "正在发起投票…",
+    "voteTitle": "提前刺杀投票",
+    "voteRequested": "{player} 提议提前进入刺杀。",
+    "voteRules": "仅已知红方队友可见，奥伯伦不参与。必须全员同意；一票反对即取消本次提议。等待期间游戏继续，通过后将公开所有红方身份。",
+    "voteProgress": "提前刺杀：{count}/{total} 人同意 · 查看投票",
+    "agreed": "已同意",
+    "awaitingVote": "等待投票",
+    "waitingAllies": "你已同意，正在等待其余队友。",
+    "approveEarly": "同意提前刺杀",
+    "rejectEarly": "反对，继续任务"
   },
   "gameOver": {
     "reasonRejectionLimit": "提名连续被否决，达到讨论轮数上限",
@@ -360,7 +369,9 @@
     "teamFinalized": "{leader} 确认最终队形：{team}，开始投票。",
     "speechBegins": "轮到 {player} 发言。",
     "discussionFinished": "全员发言完毕，由 {leader} 调整最终队形。",
-    "rerollCardUsed": "{player} 使用了重随卡，全桌身份已重新发放，请重新确认"
+    "rerollCardUsed": "{player} 使用了重随卡，全桌身份已重新发放，请重新确认",
+    "assassinationRequested": "{player} 提议提前刺杀，等待所有已知队友同意",
+    "assassinationRejected": "{player} 反对提前刺杀，本次提议已取消"
   },
   "proposal": {
     "hammerWarnLast": "这是最后一次提名，再被否决红方将获胜！"

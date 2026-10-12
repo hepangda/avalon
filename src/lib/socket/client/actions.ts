@@ -56,6 +56,8 @@ export const gameActions = {
     }),
   startAssassination: () =>
     emitWithAck('game:startAssassination', {}),
+  voteAssassination: (proposalId: number, value: 'approve' | 'reject') =>
+    emitWithAck('game:voteAssassination', { proposalId, value }),
   assassinate: (targetPlayerId: string) =>
     emitWithAck('game:assassinate', {
       targetPlayerId,

@@ -35,6 +35,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { PhaseBoard } from './PhaseBoard';
+import { EarlyAssassinationVote } from './EarlyAssassinationVote';
 
 /** Shared table: live rooms supply socket actions; the gallery supplies a local engine. */
 export function GameView({
@@ -316,6 +317,9 @@ export function GameView({
         }}
         progress={
           <>
+            {!needsRoleReveal && game.earlyAssassination && <EarlyAssassinationVote
+              key={game.earlyAssassination.id} ballot={game.earlyAssassination} game={game}
+              myPlayerId={myPlayerId} connected={conn === 'connected'} vote={actions.voteAssassination} />}
             <div className={`table-status${showProposals && !presentation ? ' has-discussion' : ''}`}>
               <span className="table-status-label">
                 <span className="table-status-full">
