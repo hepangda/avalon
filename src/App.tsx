@@ -9,6 +9,7 @@ const ReplayPage = lazy(() => import('./pages/ReplayPage'));
 import { AuthIdentityProvider } from '@/lib/auth/useAuthIdentity';
 import { RequireAccount } from '@/components/auth/RequireAccount';
 import { SceneGate } from '@/components/SceneGate';
+import { RoomSession } from '@/components/RoomSession';
 
 const DebugGalleryPage = import.meta.env.DEV
   ? lazy(() => import('./pages/DebugGalleryPage'))
@@ -31,8 +32,10 @@ export function App() {
             <Route path="/debug/gallery" element={<Suspense fallback={<div className="p-6">Debug gallery…</div>}><DebugGalleryPage /></Suspense>} />
           )}
           <Route element={<RequireAccount />}>
-            <Route path="/room/:code" element={<LobbyPage />} />
-            <Route path="/game/:code" element={<GamePage />} />
+            <Route element={<RoomSession />}>
+              <Route path="/room/:code" element={<LobbyPage />} />
+              <Route path="/game/:code" element={<GamePage />} />
+            </Route>
             <Route path="/replay/:gameId" element={<ReplayPage />} />
           </Route>
           {routing.locales.map((locale) => (

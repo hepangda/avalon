@@ -6,7 +6,7 @@ import { wouldDissolveRoom } from '@/lib/game/roomDissolution';
 import { useRouter } from '@/i18n/navigation';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import {
-useRoomConnection, roomActions
+roomActions
 } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
 import { useSceneGate } from '@/lib/store/sceneGate';
@@ -21,7 +21,6 @@ export default function GamePage() {
   const code = useParams().code ?? '';
   const { refresh } = useAuthIdentity();
   const router = useRouter();
-  useRoomConnection(code);
   const {
     snapshot,
     isHost,

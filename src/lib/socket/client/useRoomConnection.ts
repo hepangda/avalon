@@ -7,7 +7,7 @@ import { gameImageUrls,preloadImages } from '@/lib/game/preloadImages';
 import { useCardArtStore } from '@/lib/store/cardArt';
 import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { PlayerLatency } from '../types';
 import { createLatencyHeartbeat } from './heartbeat';
 import { connectRoom,emitWithAck,getConnection,type ConnState } from './socket';
@@ -20,6 +20,9 @@ import { connectRoom,emitWithAck,getConnection,type ConnState } from './socket';
  */
 export function useRoomConnection(code: string | null) {
   const router = useRouter();
+  const routerRef = useRef(router);
+  // React Router changes navigate's identity on route changes, not the room session.
+  useLayoutEffect(() => { routerRef.current = router; }, [router]);
   const { user, loading, refresh } = useAuthIdentity();
   const cardArtStyle = useCardArtStore((state) => state.style);
   useEffect(() => {
@@ -116,7 +119,7 @@ export function useRoomConnection(code: string | null) {
         getConnection()?.close();
         useSessionStore.getState().setSession(roomCode, { playerId: undefined, playerToken: undefined, hostToken: undefined });
         store.reset();
-        router.replace('/');
+        routerRef.current.replace('/');
         return;
       }
       // Being kicked (host) or unbound (referee) frees our seat server-side; drop
@@ -207,5 +210,5 @@ export function useRoomConnection(code: string | null) {
       // lobby → game reuse it); the next consumer re-attaches via connectRoom.
       getConnection()?.setHandlers({});
     };
-  }, [code, loading, user?.id, refresh, router]);
+  }, [code, loading, user?.id, refresh]);
 }

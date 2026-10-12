@@ -13,7 +13,7 @@ import { RoomTitle } from '@/components/lobby/RoomTitle';
 import { PreferencesButton } from '@/components/PreferencesButton';
 import { Button } from '@/components/ui/Button';
 import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
-import { useRoomConnection, roomActions } from '@/lib/socket/client';
+import { roomActions } from '@/lib/socket/client';
 import { joinErrorText } from '@/lib/socket/client/joinErrorText';
 import { disconnectRoom } from '@/lib/socket/client/socket';
 import { resolveRoomConfig } from '@/lib/socket/roomConfig';
@@ -33,8 +33,6 @@ export default function LobbyPage() {
   const params = useParams();
   const code = params.code ?? '';
   const router = useRouter();
-
-  useRoomConnection(code);
 
   const conn = useRoomStore((s) => s.syncing && s.conn === 'connected' ? 'connecting' : s.conn);
   const snapshot = useRoomStore((s) => s.snapshot);
