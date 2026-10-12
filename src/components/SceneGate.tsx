@@ -32,7 +32,6 @@ function Medal() {
 /** Lobby → match: gilded gates close over the room, its crest seals them, and they open on the table. */
 export function SceneGate() {
   const phase = useSceneGate((s) => s.phase);
-  const code = useSceneGate((s) => s.code);
   const origin = useSceneGate((s) => s.origin);
   const arrived = useSceneGate((s) => s.arrived);
   const reduce = !!useReducedMotion();
@@ -97,11 +96,9 @@ export function SceneGate() {
       >
         <motion.div className="scene-gate-leaf" data-side="left" {...leaf(-1)}>
           <Medal />
-          <span className="scene-gate-code">{code}</span>
         </motion.div>
         <motion.div className="scene-gate-leaf" data-side="right" {...leaf(1)}>
           <Medal />
-          <span className="scene-gate-code">{code}</span>
         </motion.div>
         {!reduce && (
           <motion.span

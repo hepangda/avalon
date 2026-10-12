@@ -85,20 +85,6 @@
   width: 60%;
   filter: drop-shadow(0 0 12px #e6c14a73);
 }
-.scene-gate-code {
-  position: absolute;
-  top: calc(50% + var(--medal) / 2 + 22px);
-  padding-left: 0.42em;
-  font-family: var(--font-cinzel), "Songti SC", serif;
-  font-size: 15px;
-  letter-spacing: 0.42em;
-  line-height: 1;
-  white-space: nowrap;
-  color: #c9a227b3;
-  text-shadow: 0 1px 0 #000;
-}
-.scene-gate-leaf[data-side="left"] .scene-gate-code { right: 0; translate: 50% 0; }
-.scene-gate-leaf[data-side="right"] .scene-gate-code { left: 0; translate: -50% 0; }
 
 /* Light through the crack where the leaves meet. */
 .scene-gate-seam {
