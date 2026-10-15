@@ -16,6 +16,8 @@ import { roleVariants } from '@/lib/engine/roleVariants';
 interface SeatedPlayer {
   id: string;
   name: string;
+  avatarUrl?: string;
+  isBot?: boolean;
 }
 
 interface EventInput {
@@ -66,10 +68,20 @@ class ReplayBuilder {
     const votes = record.votes;
     const leader = record.leaderId;
 
-    const round = this.ensureRound(roundIndex, leader, proposalTeam.length, proposalTeam);
+    const round = this.ensureRound(roundIndex, leader, proposalTeam.length);
     const proposalIndex = record.proposalIndex;
     for (const [playerId, value] of Object.entries(votes)) {
       round.votes.push({ proposalIndex, playerId, value });
+    }
+    (round.proposals ??= []).push({
+      proposalIndex,
+      leaderPlayerId: leader,
+      team: proposalTeam,
+      approved: record.approved,
+    });
+    if (record.approved) {
+      round.approved = true;
+      round.finalTeam = proposalTeam;
     }
   }
 
@@ -81,7 +93,7 @@ class ReplayBuilder {
     const leaderSeat = (prev ?? s).leaderIndex;
     const leader = (prev ?? s).players.find((p) => p.seat === leaderSeat)?.id ?? '';
 
-    const round = this.ensureRound(result.roundIndex, leader, result.teamSize, result.team);
+    const round = this.ensureRound(result.roundIndex, leader, result.teamSize);
     round.approved = true;
     round.missionSuccess = result.success;
     round.failCount = result.failCount;
@@ -123,7 +135,6 @@ class ReplayBuilder {
     roundIndex: number,
     leaderPlayerId: string,
     teamSize: number,
-    finalTeam: string[],
   ): ReplayRound {
     let round = this.rounds.get(roundIndex);
     if (!round) {
@@ -131,11 +142,12 @@ class ReplayBuilder {
         roundIndex,
         leaderPlayerId,
         teamSize,
-        finalTeam,
+        finalTeam: null,
         approved: null,
         missionSuccess: null,
         failCount: null,
         votes: [],
+        proposals: [],
         missionCards: [],
       };
       this.rounds.set(roundIndex, round);
@@ -143,8 +155,14 @@ class ReplayBuilder {
     return round;
   }
 
-  build(gameId: string, finalState: GameState): ReplayData {
+  build(
+    gameId: string,
+    finalState: GameState,
+    seated: SeatedPlayer[],
+    span: { startedAt?: number; endedAt?: number },
+  ): ReplayData {
     const variants = roleVariants(finalState);
+    const profiles = new Map(seated.map((p) => [p.id, p]));
     return {
       gameId,
       outcome: finalState.outcome,
@@ -156,10 +174,24 @@ class ReplayBuilder {
       players: finalState.players
         .slice()
         .sort((a, b) => a.seat - b.seat)
-        .map((p) => ({ id: p.id, name: p.name, seat: p.seat })),
+        .map((p) => {
+          const profile = profiles.get(p.id);
+          return {
+            id: p.id,
+            name: p.name,
+            seat: p.seat,
+            ...(profile?.avatarUrl ? { avatarUrl: profile.avatarUrl } : {}),
+            ...(profile?.isBot ? { isBot: true } : {}),
+          };
+        }),
       rounds: [...this.rounds.values()].sort((a, b) => a.roundIndex - b.roundIndex),
       ladyChecks: this.ladyChecks,
       assassination: this.assassination,
+      options: finalState.config.options,
+      ...span,
+      log: finalState.logs
+        .filter((entry) => entry.channel === 'public')
+        .map(({ audience: _audience, ...entry }) => entry),
     };
   }
 }
@@ -183,6 +215,7 @@ export function buildReplayFromEvents(
 
   let state = created.state;
   let builder = new ReplayBuilder();
+  let startedAt: number | undefined;
   const history: ReplayBuilder[] = [];
   for (const { seq, event, createdAt } of events) {
     const ctx = { now: createdAt, rng: createRng(`${seed}:${seq}`) };
@@ -196,11 +229,12 @@ export function buildReplayFromEvents(
     } else if (state.phase !== 'Lobby' && result.state.phase !== state.phase) {
       history.push(builder.copy());
     }
+    if (event.type === 'START_GAME') startedAt = createdAt;
     const prev = state;
     state = result.state;
     for (const effect of result.effects) {
       if (effect.kind === 'PERSIST_CHECKPOINT') builder.onCheckpoint(effect.checkpoint, prev, state);
     }
   }
-  return builder.build(gameId, state);
+  return builder.build(gameId, state, seatedPlayers, { startedAt, endedAt: events.at(-1)?.createdAt });
 }

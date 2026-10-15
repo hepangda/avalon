@@ -847,6 +847,8 @@ export class Room {
     const seated = activePlayers(this.state.members).map((m) => ({
       id: m.id,
       name: m.name,
+      ...(m.avatarUrl ? { avatarUrl: m.avatarUrl } : {}),
+      ...(m.isBot ? { isBot: true } : {}),
     }));
     const replay = buildReplayFromEvents(
       this.state.meta.gameId,

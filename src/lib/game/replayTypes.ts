@@ -1,4 +1,4 @@
-import type { GameOutcome, Role, Team, VoteValue, MissionCard } from '@/lib/engine';
+import type { ClientLogEntry, GameOptions, GameOutcome, Role, Team, VoteValue, MissionCard } from '@/lib/engine';
 
 /**
  * Shape returned by GET /api/games/:id/replay and consumed by the replay page.
@@ -9,12 +9,22 @@ export interface ReplayPlayer {
   id: string;
   name: string;
   seat: number;
+  avatarUrl?: string;
+  isBot?: boolean;
 }
 
 export interface ReplayVote {
   proposalIndex: number;
   playerId: string;
   value: VoteValue;
+}
+
+/** One nomination and its result. Absent in replays archived before it was recorded. */
+export interface ReplayProposal {
+  proposalIndex: number;
+  leaderPlayerId: string;
+  team: string[];
+  approved: boolean;
 }
 
 export interface ReplayMissionCard {
@@ -31,6 +41,7 @@ export interface ReplayRound {
   missionSuccess: boolean | null;
   failCount: number | null;
   votes: ReplayVote[];
+  proposals?: ReplayProposal[];
   missionCards: ReplayMissionCard[];
 }
 
@@ -61,4 +72,10 @@ export interface ReplayData {
   rounds: ReplayRound[];
   ladyChecks: ReplayLadyCheck[];
   assassination: ReplayAssassination | null;
+  /** Fields below are absent in replays archived before they were recorded. */
+  options?: GameOptions;
+  startedAt?: number;
+  endedAt?: number;
+  /** Public table log, in order. */
+  log?: ClientLogEntry[];
 }

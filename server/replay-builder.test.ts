@@ -41,6 +41,39 @@ describe('replays with referee rollback', () => {
     }
     expect(buildReplayFromEvents('legacy-game', 'legacy', DEFAULT_OPTIONS, players, events)?.outcome).toEqual(state.outcome);
   });
+  it('keeps rejected teams, the public log, timing and seat profiles', () => {
+    const players = Array.from({ length: 5 }, (_, i) => ({ id: `p${i}`, name: `P${i}` }));
+    const created = createGame({ hostId: 'p0', players, options: DEFAULT_OPTIONS, seed: 'full' });
+    if (!created.ok) throw new Error(created.error.message);
+    let state = created.state;
+    const events: Array<{ seq: number; event: GameEvent; createdAt: number }> = [];
+    const apply = (event: GameEvent) => {
+      const seq = events.length + 1;
+      const result = reduce(state, event, { now: 1000 * seq, rng: createRng(`full:${seq}`) });
+      if (!result.ok) throw new Error(result.error.message);
+      events.push({ seq, event, createdAt: 1000 * seq });
+      state = result.state;
+    };
+    apply({ type: 'START_GAME', by: 'p0', flowVersion: 1 });
+    const firstLeader = leaderId(state);
+    for (let i = 0; i < 5; i++) {
+      apply({ type: 'PROPOSE_TEAM', by: leaderId(state), team: ['p0', 'p1'] });
+      for (const p of players) apply({ type: 'CAST_VOTE', by: p.id, value: 'reject' });
+    }
+    const replay = buildReplayFromEvents('full', 'full', DEFAULT_OPTIONS,
+      players.map((p, i) => (i === 1 ? { ...p, avatarUrl: 'https://example.com/a.png', isBot: true } : p)), events)!;
+    const round = replay.rounds[0]!;
+    expect(round.finalTeam).toBeNull();
+    expect(round.proposals).toHaveLength(5);
+    expect(round.proposals![0]).toEqual({ proposalIndex: 0, leaderPlayerId: firstLeader, team: ['p0', 'p1'], approved: false });
+    expect(replay.options).toEqual(DEFAULT_OPTIONS);
+    expect(replay.startedAt).toBe(1000);
+    expect(replay.endedAt).toBe(1000 * events.length);
+    expect(replay.log!.length).toBeGreaterThan(0);
+    expect(replay.log!.every((entry) => entry.channel === 'public' && !('audience' in entry))).toBe(true);
+    expect(replay.players[1]).toMatchObject({ avatarUrl: 'https://example.com/a.png', isBot: true });
+    expect(replay.players[0]).toEqual({ id: 'p0', name: 'P0', seat: 0 });
+  });
   it('excludes abandoned votes, mission results and Lady checks from the final replay', () => {
     const players = Array.from({ length: 5 }, (_, i) => ({
       id: `p${i}`,
@@ -114,6 +147,9 @@ describe('replays with referee rollback', () => {
     expect(replay.rounds[0]!.votes).toHaveLength(5); // includes the last deciding vote
     expect(replay.rounds[0]!.votes.every((v) => v.value === 'approve')).toBe(true);
     expect(replay.rounds[0]!.missionCards).toHaveLength(2);
+    expect(replay.rounds[0]!.proposals).toEqual([
+      { proposalIndex: 0, leaderPlayerId: replay.rounds[0]!.leaderPlayerId, team: ['p0', 'p1'], approved: true },
+    ]);
     expect(replay.rounds[1]!.missionSuccess).toBeNull();
     expect(replay.rounds[1]!.missionCards).toEqual([]);
   });
