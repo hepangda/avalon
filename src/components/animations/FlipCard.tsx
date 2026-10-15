@@ -12,6 +12,7 @@ export function FlipCard({
   className,
   onClick,
   ariaLabel,
+  duration = 0.6,
 }: {
   revealed: boolean;
   front: ReactNode;
@@ -19,6 +20,7 @@ export function FlipCard({
   className?: string;
   onClick?: () => void;
   ariaLabel?: string;
+  duration?: number;
 }) {
   const reduceMotion = useReducedMotion();
   return (
@@ -38,7 +40,7 @@ export function FlipCard({
     >
       <motion.div
         animate={{ rotateY: revealed ? 180 : 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.6, ease: 'easeInOut' }}
+        transition={{ duration: reduceMotion ? 0 : duration, ease: 'easeInOut' }}
         style={{ transformStyle: 'preserve-3d', position: 'relative', width: '100%', height: '100%' }}
       >
         <div
