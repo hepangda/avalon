@@ -22,6 +22,10 @@
     "legalCards": "保留已交的牌；仅邪恶玩家可出失败，实际张数受队伍阵营限制。",
     "viewHolder": "切到湖中仙女持有者",
     "viewAssassin": "切到刺客视角",
+    "requestAssassination": "提议提前刺杀",
+    "viewAssassinationVoter": "切到待表决队友",
+    "approveAssassinationRest": "其余红方全部同意刺杀",
+    "rejectAssassination": "模拟队友反对刺杀",
     "startAssassination": "提前进入刺杀",
     "connection": "连接与异常",
     "connected": "模拟连接正常",
@@ -119,6 +123,10 @@
       "assassination": {
         "title": "三次成功后的刺杀",
         "description": "三次任务成功，刺客从好人中选择梅林。"
+      },
+      "earlyAssassinationProposal": {
+        "title": "提议提前刺杀",
+        "description": "从红方视角发起私有提议，切换队友同意或反对；全员同意后进入刺杀。"
       },
       "earlyAssassination": {
         "title": "提前刺杀",

@@ -8,7 +8,9 @@ import { useSessionStore } from '@/lib/store/session';
 import { wouldDissolveRoom } from '@/lib/game/roomDissolution';
 import { useRoomAction } from '@/lib/game/useRoomAction';
 import type { ClientGameState } from '@/lib/engine';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { AdminPanel } from './AdminPanel';
+import { EarlyAssassinationProposal, pactSigners } from './EarlyAssassinationPact';
 import { GameIcon } from './GameArt';
 import { TableSheet } from './TableSheet';
 
@@ -48,10 +50,15 @@ export function FunctionsPanel({ code, game, onAssassinationStarted }: {
   return (
     <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
       {game.canStartAssassination && (
-        <button type="button" disabled={action.busy} onClick={() => setConfirm('assassination')}
-          className="flex w-full items-center gap-3 rounded-lg border border-crimson/40 bg-ink/30 px-4 py-3 text-left transition-colors hover:border-crimson hover:bg-crimson/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/70 disabled:opacity-50">
-          <GameIcon name="assassinate" className="h-8 w-8" />
-          <span className="min-w-0 flex-1 text-sm font-semibold text-parchment">{t('assassin.startEarly')}</span>
+        <button type="button" disabled={action.busy} onClick={() => setConfirm('assassination')} className="pact-entry">
+          <GameIcon name="assassinate" className="pact-entry-dagger" />
+          <span className="pact-entry-title">{t('assassin.startEarly')}</span>
+          <span className="pact-ribbon-seals" aria-hidden="true">
+            {pactSigners(game, myPlayerId).map((id) => {
+              const player = game.players.find((p) => p.id === id);
+              return <PlayerAvatar key={id} playerId={id} avatarUrl={player?.avatarUrl} name={player?.name ?? id} />;
+            })}
+          </span>
         </button>
       )}
       {!game.isSpectator && <AdminPanel game={game} />}
@@ -77,19 +84,16 @@ export function FunctionsPanel({ code, game, onAssassinationStarted }: {
         <span className="flex w-8 shrink-0 justify-center text-2xl" aria-hidden="true">🚪</span>
         <span className="min-w-0 flex-1 text-sm font-semibold text-crimson">{t('game.leaveSeat')}</span>
       </button>
-      <TableSheet open={confirm !== null} title={t(confirm === 'assassination' ? 'assassin.startEarly' : willDissolve ? 'common.dissolveRoomTitle' : 'game.leaveSeat')}
+      <EarlyAssassinationProposal open={confirm === 'assassination'} game={game} myPlayerId={myPlayerId}
+        busy={action.busy} error={action.error} onClose={() => setConfirm(null)} onConfirm={() => void startAssassination()} />
+      <TableSheet open={confirm === 'leave'} title={t(willDissolve ? 'common.dissolveRoomTitle' : 'game.leaveSeat')}
         onClose={() => setConfirm(null)} busy={action.busy} error={action.error}>
         <div className="space-y-4">
-          {confirm === 'assassination' ? (
-            <div className="space-y-3 text-sm text-parchment/80">
-              <p>{t('assassin.earlyConsequences')}</p><p>{t('assassin.earlyOutcome')}</p>
-              <p className="font-semibold text-parchment">{t('assassin.irreversible')}</p>
-            </div>
-          ) : <p className="text-sm text-parchment/80">{t(willDissolve ? 'common.confirmDissolveRoom' : 'game.confirmLeave')}</p>}
+          <p className="text-sm text-parchment/80">{t(willDissolve ? 'common.confirmDissolveRoom' : 'game.confirmLeave')}</p>
           <div className="flex gap-2">
             <Button variant="ghost" autoFocus disabled={action.busy} onClick={() => setConfirm(null)}>{t('common.cancel')}</Button>
-            <Button variant="danger" disabled={action.busy} onClick={() => void (confirm === 'assassination' ? startAssassination() : leave())}>
-              {t(confirm === 'assassination' ? (action.busy ? 'assassin.starting' : 'assassin.confirmStart') : willDissolve ? 'common.confirmDissolve' : 'game.leaveSeat')}
+            <Button variant="danger" disabled={action.busy} onClick={() => void leave()}>
+              {t(willDissolve ? 'common.confirmDissolve' : 'game.leaveSeat')}
             </Button>
           </div>
         </div>

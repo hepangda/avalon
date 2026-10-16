@@ -33,7 +33,7 @@ function button(text: string) {
   return [...document.querySelectorAll('button')].find((el) => el.textContent === text)!;
 }
 
-it.each([['同意提前刺杀', 'approve'], ['反对，继续任务', 'reject']])('submits %s against the visible proposal', async (label, value) => {
+it.each([['同意', 'approve'], ['反对', 'reject']])('submits %s against the visible proposal', async (label, value) => {
   await render();
   expect(document.querySelector('dialog')?.open).toBe(true);
   await act(async () => button(label).click());
@@ -42,11 +42,16 @@ it.each([['同意提前刺杀', 'approve'], ['反对，继续任务', 'reject']]
 
 it('disables voting while disconnected and shows submitted consent after recovery', async () => {
   await render(false);
-  expect(button('同意提前刺杀').disabled).toBe(true);
+  expect(button('同意').disabled).toBe(true);
   await render(true);
-  expect(button('同意提前刺杀').disabled).toBe(false);
+  expect(button('同意').disabled).toBe(false);
+  await act(async () => root.unmount());
+  root = createRoot(container);
   await render(true, 'p3');
-  expect(document.querySelector('[role="status"]')?.textContent).toBe('你已同意，正在等待其余队友。');
-  expect(button('同意提前刺杀')).toBeUndefined();
+  expect(document.querySelector('dialog')?.open).toBe(false);
+  const waiting = state.earlyAssassination!.voterIds.filter((id) => id !== 'p3')
+    .map((id) => state.players.find((p) => p.id === id)!.name);
+  expect(document.querySelector('[role="status"]')?.textContent).toBe(`等待 ${new Intl.ListFormat('zh').format(waiting)}`);
+  expect(button('同意')).toBeUndefined();
   expect(vote).not.toHaveBeenCalled();
 });

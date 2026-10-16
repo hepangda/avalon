@@ -22,6 +22,10 @@
     "legalCards": "Keeps submitted cards. Only evil players can fail, so the team limits the final count.",
     "viewHolder": "View as Lady holder",
     "viewAssassin": "View as assassin",
+    "requestAssassination": "Propose early assassination",
+    "viewAssassinationVoter": "View as a pending voter",
+    "approveAssassinationRest": "Remaining allies approve assassination",
+    "rejectAssassination": "Simulate an ally rejecting assassination",
     "startAssassination": "Start early assassination",
     "connection": "Connection & errors",
     "connected": "Simulate connected",
@@ -119,6 +123,10 @@
       "assassination": {
         "title": "Assassination after three successes",
         "description": "Three successful missions. The assassin chooses a good player to strike."
+      },
+      "earlyAssassinationProposal": {
+        "title": "Propose early assassination",
+        "description": "Start a private red-team proposal, then switch allies to approve or reject. Unanimous consent starts assassination."
       },
       "earlyAssassination": {
         "title": "Early assassination",

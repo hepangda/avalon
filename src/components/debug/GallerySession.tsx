@@ -1,9 +1,11 @@
 import { PreferencesButton } from "@/components/PreferencesButton";
+import { EarlyAssassinationProposal } from "@/components/game/EarlyAssassinationPact";
 import { GameView } from "@/components/game/GameView";
 import { Link } from "@/i18n/navigation";
 import {
 applyEvent,
 buildScenario,
+completeAssassinationVotes,
 completeMission,
 completeVotes,
 propose,
@@ -54,6 +56,7 @@ export function GallerySession({
   const [openSeat, setOpenSeat] = useState(initial.openSeatId);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [proposing, setProposing] = useState(false);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -173,6 +176,10 @@ export function GallerySession({
       })),
     };
   }, [state, viewerId, openSeat, latency]);
+  const assassinationBallot = state.earlyAssassination;
+  const nextAssassinationVoter = assassinationBallot?.voterIds.find(
+    (id) => assassinationBallot.votes[id] === undefined,
+  );
   const quickActions = (
     <div className="debug-actions">
       {state.phase === "TeamBuilding" && (
@@ -230,17 +237,49 @@ export function GallerySession({
           {t("debug.viewAssassin")}
         </button>
       )}
-      {canStartAssassination(state) && (
-        <button
-          disabled={!connected}
-          onClick={() =>
-            run((s) =>
-              applyEvent(s, { type: "START_ASSASSINATION", by: s.assassinId! }),
-            )
-          }
-        >
-          {t("debug.startAssassination")}
-        </button>
+      {canStartAssassination(state) && !assassinationBallot && (
+        <>
+          <button
+            disabled={!connected}
+            onClick={() => {
+              if (!game.canStartAssassination) changeViewer(state.assassinId!);
+              setProposing(true);
+            }}
+          >
+            {t("debug.requestAssassination")}
+          </button>
+          <button
+            disabled={!connected}
+            onClick={() =>
+              run((s) =>
+                applyEvent(s, { type: "START_ASSASSINATION", by: s.assassinId! }),
+              )
+            }
+          >
+            {t("debug.startAssassination")}
+          </button>
+        </>
+      )}
+      {assassinationBallot && (
+        <>
+          {nextAssassinationVoter && (
+            <button onClick={() => changeViewer(nextAssassinationVoter)}>
+              {t("debug.viewAssassinationVoter")}
+            </button>
+          )}
+          <button
+            disabled={!connected}
+            onClick={() => run((s) => completeAssassinationVotes(s, "approve"))}
+          >
+            {t("debug.approveAssassinationRest")}
+          </button>
+          <button
+            disabled={!connected}
+            onClick={() => run((s) => completeAssassinationVotes(s, "reject"))}
+          >
+            {t("debug.rejectAssassination")}
+          </button>
+        </>
       )}
       {state.phase === "GameOver" && (
         <button onClick={reset}>{t("debug.reset")}</button>
@@ -424,6 +463,15 @@ export function GallerySession({
                 {quickActions}
               </div>
             }
+          />
+          <EarlyAssassinationProposal
+            open={proposing && game.canStartAssassination}
+            game={game}
+            myPlayerId={viewerId}
+            busy={false}
+            error={null}
+            onClose={() => setProposing(false)}
+            onConfirm={() => void actions.startAssassination().then((r) => r.ok && setProposing(false))}
           />
         </div>
       </section>

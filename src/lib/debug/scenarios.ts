@@ -33,6 +33,7 @@ export const SCENARIOS = [
   { id: "ladyGood", group: "special" },
   { id: "ladyEvil", group: "special" },
   { id: "assassination", group: "special" },
+  { id: "earlyAssassinationProposal", group: "special" },
   { id: "earlyAssassination", group: "special" },
   { id: "assassinHit", group: "ending" },
   { id: "assassinMiss", group: "ending" },
@@ -93,6 +94,26 @@ export function completeVotes(state: GameState, value: VoteValue): GameState {
   for (const p of state.players) {
     if (next.phase === "Voting" && next.votes[p.id] === undefined)
       next = applyEvent(next, { type: "CAST_VOTE", by: p.id, value });
+  }
+  return next;
+}
+
+/** Keep existing consent and stop as soon as the proposal passes or is rejected. */
+export function completeAssassinationVotes(
+  state: GameState,
+  value: VoteValue,
+): GameState {
+  let next = state;
+  for (const by of state.earlyAssassination?.voterIds ?? []) {
+    const ballot = next.earlyAssassination;
+    if (!ballot) break;
+    if (ballot.votes[by] !== undefined) continue;
+    next = applyEvent(next, {
+      type: "VOTE_ASSASSINATION",
+      by,
+      proposalId: ballot.id,
+      value,
+    });
   }
   return next;
 }
@@ -173,6 +194,9 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
   if (id === "role") return { state, viewerId: leader() };
   for (const p of state.players)
     state = applyEvent(state, { type: "ACK_ROLE", by: p.id });
+
+  if (id === "earlyAssassinationProposal")
+    return { state, viewerId: state.assassinId! };
 
   if (['announcement', 'discussion', 'finalizing', 'overdue'].includes(id)) {
     state = propose(state, false);

@@ -8,6 +8,7 @@ import {
 import {
   applyEvent,
   buildScenario,
+  completeAssassinationVotes,
   completeMission,
   completeVotes,
   SCENARIOS,
@@ -36,6 +37,7 @@ const expectedPhases: Record<string, string> = {
   ladyGood: "TeamBuilding",
   ladyEvil: "TeamBuilding",
   assassination: "Assassination",
+  earlyAssassinationProposal: "TeamBuilding",
   earlyAssassination: "Assassination",
   assassinHit: "Assassination",
   assassinMiss: "Assassination",
@@ -147,6 +149,37 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
     expect(afterMission.missionResults.at(-1)!.cards[mission.viewerId]).toBe(
       "success",
     );
+  });
+
+  it("lets the proposal scene enter assassination through private unanimous consent", () => {
+    const { state, viewerId } = buildScenario("earlyAssassinationProposal", count);
+    expect(projectStateForViewer(state, viewerId).canStartAssassination).toBe(true);
+    expect(state.roleAcks).toHaveLength(count);
+    const pending = applyEvent(state, { type: "REQUEST_ASSASSINATION", by: viewerId });
+    expect(pending.phase).toBe("TeamBuilding");
+    expect(pending.earlyAssassination?.votes).toEqual({ [viewerId]: "approve" });
+    const voterIds = pending.earlyAssassination!.voterIds;
+    expect(voterIds.length).toBeGreaterThan(1);
+    for (const player of state.players) {
+      const view = projectStateForViewer(pending, player.id);
+      expect(!!view.earlyAssassination).toBe(voterIds.includes(player.id));
+    }
+    expect(projectStateForViewer(pending, "spectator").earlyAssassination).toBeUndefined();
+    const approved = completeAssassinationVotes(pending, "approve");
+    expect(approved.phase).toBe("Assassination");
+    expect(approved.earlyAssassination).toBeNull();
+    expect(pending.earlyAssassination?.votes).toEqual({ [viewerId]: "approve" });
+  });
+
+  it("cancels a proposal on rejection without losing the current mission", () => {
+    const { state } = buildScenario("submitted", count);
+    const pending = applyEvent(state, { type: "REQUEST_ASSASSINATION", by: state.assassinId! });
+    const rejected = completeAssassinationVotes(pending, "reject");
+    expect(rejected.earlyAssassination).toBeNull();
+    expect(rejected.phase).toBe(state.phase);
+    expect(rejected.proposedTeam).toEqual(state.proposedTeam);
+    expect(rejected.missionCards).toEqual(state.missionCards);
+    expect(projectStateForViewer(rejected, state.assassinId!).canStartAssassination).toBe(true);
   });
 
   it("previews confirmed assassination hits and misses", () => {

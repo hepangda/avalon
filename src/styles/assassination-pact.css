@@ -1,0 +1,254 @@
+/* Early assassination: a blood pact among known red teammates. Each ally's
+   portrait is a seal; the blade is drawn only once every seal is pressed. */
+
+.table-sheet.pact-sheet {
+  border-color: #6b2a22;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 0%, #3d1511 0%, #22140e 55%, #18110c 100%);
+}
+.pact-sheet .table-sheet-header { border-bottom-color: rgb(178 58 46 / 0.25); }
+
+.pact {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.pact-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #c98e7e;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+}
+.pact-eyebrow::before, .pact-eyebrow::after {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(to var(--side, right), transparent, #b23a2e99);
+}
+.pact-eyebrow::after { --side: left; }
+
+/* Seals, strung on one red thread through the portraits. */
+.pact-seals {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 14px;
+  max-width: 100%;
+}
+.pact-seals::before {
+  content: '';
+  position: absolute;
+  top: 31px;
+  left: 38px;
+  right: 38px;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, #b23a2ecc 0 6px, transparent 6px 10px);
+}
+.pact-seal {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  width: 76px;
+}
+.pact-seal-ring {
+  position: relative;
+  display: block;
+  width: 62px;
+  height: 62px;
+  padding: 3px;
+  border-radius: 50%;
+  background: #18110c;
+  border: 2px dashed #8a6f1c99;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.pact-seal-avatar { width: 100%; height: 100%; }
+.pact-seal[data-state="pending"] .pact-seal-avatar img { filter: grayscale(0.85) brightness(0.55); }
+.pact-seal[data-state="signed"] .pact-seal-ring {
+  border: 2px solid #c2463a;
+  box-shadow: 0 0 20px #b23a2e66, inset 0 0 10px #0008;
+}
+.pact-seal-wax {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px dashed #8a6f1c;
+  background: #1a130d;
+  color: #f6dca4;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.pact-seal[data-state="signed"] .pact-seal-wax {
+  border: 0;
+  background: radial-gradient(circle at 35% 30%, #e0604c, #9b2b22 58%, #5a1510);
+  box-shadow: 0 2px 5px #000a, inset 0 -2px 3px #0007, inset 0 1px 1px #fff3;
+  text-shadow: 0 1px 1px #0009;
+  animation: pact-stamp 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.pact-seal-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  max-width: 100%;
+  overflow: hidden;
+  color: #e8dcc0;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.pact-seal-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pact-seal-you {
+  flex: none;
+  padding: 0 3px;
+  border: 1px solid #c9a22766;
+  border-radius: 3px;
+  color: #e6c14a;
+  font-size: 10px;
+}
+.pact-seal-tag {
+  min-height: 1.4em;
+  color: #c98e7e;
+  font-size: 11px;
+}
+
+/* The stakes: one blade between two endings. */
+.pact-stakes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+}
+.pact-dagger {
+  height: 104px;
+  width: auto;
+  filter: drop-shadow(0 8px 14px #000) drop-shadow(0 0 18px #b23a2e40);
+}
+.pact-outcome {
+  display: grid;
+  gap: 4px;
+  padding: 12px 6px;
+  border: 1px solid;
+  border-radius: 10px;
+}
+.pact-outcome[data-team="evil"] {
+  border-color: #b23a2e66;
+  background: linear-gradient(180deg, #5a151040, #2a0d0a80);
+}
+.pact-outcome[data-team="good"] {
+  border-color: #7dd3fc40;
+  background: linear-gradient(180deg, #1a2a4040, #0d152480);
+}
+.pact-outcome-cause {
+  color: #c8bca0;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.pact-outcome strong {
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+}
+.pact-outcome[data-team="evil"] strong { color: #f87171; }
+.pact-outcome[data-team="good"] strong { color: #7dd3fc; }
+
+.pact-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+}
+.pact-waiting {
+  padding: 10px 0 2px;
+  color: #c8bca0;
+  font-size: 13px;
+}
+
+/* Compact pact ribbon above the table status, private to known allies. */
+.pact-ribbon, .pact-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 1px solid #8b282099;
+  background: linear-gradient(90deg, #4a120e, #2a0f0b 60%, #1e140d);
+  color: #e8dcc0;
+  text-align: left;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pact-ribbon {
+  align-self: center;
+  width: min(100%, 460px);
+  min-height: 32px;
+  padding: 3px 10px 3px 6px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.pact-ribbon[data-owed] { animation: pact-beckon 2.4s ease-in-out infinite; }
+.pact-ribbon:hover, .pact-entry:hover:not(:disabled) { border-color: #c2463a; box-shadow: 0 0 16px #b23a2e44; }
+.pact-ribbon:focus-visible, .pact-entry:focus-visible { outline: 2px solid #c9a227b3; outline-offset: 2px; }
+.pact-ribbon-dagger { width: 24px; height: 24px; transform: rotate(-38deg); }
+.pact-ribbon-title, .pact-entry-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pact-ribbon-seals { display: flex; flex: none; padding-left: 5px; }
+.pact-ribbon-seals > span {
+  width: 20px;
+  height: 20px;
+  margin-left: -5px;
+  box-shadow: 0 0 0 1.5px #1e140d;
+}
+.pact-ribbon .pact-ribbon-seals > span img { filter: grayscale(0.9) brightness(0.5); }
+.pact-ribbon .pact-ribbon-seals > span.is-signed { box-shadow: 0 0 0 1.5px #1e140d, 0 0 0 3px #c2463a; }
+.pact-ribbon .pact-ribbon-seals > span.is-signed img { filter: none; }
+.pact-ribbon-count {
+  flex: none;
+  color: #f0b0a0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pact-entry {
+  min-height: 58px;
+  padding: 10px 14px 10px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.pact-entry:disabled { opacity: 0.5; }
+.pact-entry-dagger { width: 38px; height: 38px; transform: rotate(-38deg); }
+.pact-entry .pact-ribbon-seals > span { width: 26px; height: 26px; margin-left: -7px; }
+
+@keyframes pact-stamp {
+  0% { opacity: 0; transform: scale(2.2) rotate(-25deg); }
+  60% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes pact-beckon {
+  0%, 100% { box-shadow: 0 0 0 #b23a2e00; }
+  50% { box-shadow: 0 0 14px #b23a2e66; border-color: #c2463a; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pact-seal[data-state="signed"] .pact-seal-wax, .pact-ribbon[data-owed] { animation: none; }
+}
