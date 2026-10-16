@@ -540,7 +540,7 @@
     "using": "重随中…",
     "empty": "重随卡不足",
     "unavailable": "已过重随时机：仅限首个组队提案提交前使用",
-    "button": "重随卡 ({count}/2)",
+    "button": "重随卡 ({count}/1)",
     "confirm": "确认重随",
     "loginShort": "请先登录",
     "unavailableShort": "暂时无法重随",

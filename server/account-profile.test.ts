@@ -245,7 +245,7 @@ describe('daily reroll card session claims', () => {
     expect(await read()).toMatchObject({ user: { rerollCards: { cards: 1, lastDailyDay: '2026-09-29' } } });
     expect(await read()).toMatchObject({ user: { rerollCards: { cards: 1 } } });
     now.mockReturnValue(Date.parse('2026-09-29T20:00:00.000Z'));
-    expect(await read()).toMatchObject({ user: { rerollCards: { cards: 2, lastDailyDay: '2026-09-30' } } });
+    expect(await read()).toMatchObject({ user: { rerollCards: { cards: 1, lastDailyDay: '2026-09-30' } } });
     const signedOut = await app.request(`${origin}/api/auth/session`, {}, env);
     expect(await signedOut.json()).toEqual({ user: null });
   });
@@ -292,13 +292,13 @@ describe('account-only room access', () => {
 });
 
 describe('local debug card grant', () => {
-  it('grants exactly one card per visit to the authenticated account, capped at two', async () => {
+  it('grants exactly one card per visit to the authenticated account, capped at one', async () => {
     const { env } = harness();
     env.ENVIRONMENT = 'development';
     const cookie = await sessionCookie();
     const wallet = accountProfile(env, 'user-a');
     expect((await wallet.getCards()).cards).toBe(0);
-    for (const count of [1, 2, 2]) {
+    for (const count of [1, 1, 1]) {
       const response = await app.request('http://localhost:5173/debug/addRandomCard?account=user-b', {
         headers: { Cookie: cookie, 'Sec-Fetch-Site': 'none' },
       }, env);

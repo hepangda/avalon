@@ -1,7 +1,7 @@
 import { publicRoom, publicRoomPage } from './public-rooms';
 import type { DisplayPreferences } from '@/lib/preferences';
 import type { RoomChange } from './room-journal';
-import { claimDaily, completeGame, emptyCards, type RerollCards } from "./reroll-cards";
+import { claimDaily, completeGame, qualifiesForGameReward, emptyCards, type RerollCards } from "./reroll-cards";
 import type { ReplayData } from "@/lib/game/replayTypes";
 import { normalizeRoleWeights, settledRoleWeights, type RoleWeights } from '@/lib/engine/roleWeights';
 import {
@@ -50,7 +50,7 @@ export class MemoryPersistence implements Persistence {
       if (!wallet.cards) throw new Error('No reroll cards remaining');
       this.wallets.set(spendAccount, { ...wallet, cards: wallet.cards - 1 });
     }
-    for (const account of document.archive?.rewardAccounts ?? []) {
+    for (const account of document.archive && qualifiesForGameReward(document.archive.replay) ? document.archive.rewardAccounts ?? [] : []) {
       const key = JSON.stringify([document.archive!.replay.gameId, account]);
       if (this.rewards.has(key)) continue;
       this.rewards.add(key);
@@ -86,7 +86,7 @@ export class MemoryPersistence implements Persistence {
   }
   async grantDebugCard(account: string) {
     const wallet = this.wallets.get(account) ?? emptyCards();
-    const next = { ...wallet, cards: Math.min(2, wallet.cards + 1) };
+    const next = { ...wallet, cards: Math.min(1, wallet.cards + 1) };
     this.wallets.set(account, next);
     return structuredClone(next);
   }

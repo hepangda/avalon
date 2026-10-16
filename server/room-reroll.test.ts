@@ -53,6 +53,7 @@ describe('account reroll cards', () => {
 
   it('counts completion once even after rollback and a second settlement of the same game', async () => {
     const h = await setup();
+    vi.spyOn(Date, 'now').mockReturnValue(h.document.events[0]!.createdAt + 600_001);
     await h.finish();
     expect((await h.persistence.getCards('account-a')).completedGames).toBe(1);
     expect((await h.action(h.host, 'admin:previousPhase')).ok).toBe(true);
@@ -60,6 +61,20 @@ describe('account reroll cards', () => {
     const merlin = h.document.game!.players.find((p) => p.role === 'Merlin')!;
     expect((await h.action(assassin, 'game:assassinate', { targetPlayerId: merlin.id })).ok).toBe(true);
     expect((await h.persistence.getCards('account-a')).completedGames).toBe(1);
+  });
+
+  it.each([0, 599_999, 600_000, 600_001])('counts only finished games longer than ten minutes (%i ms)', async (duration) => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+    const h = await setup();
+    h.persistence.wallets.set('account-a', { cards: 0, completedGames: 4, lastDailyDay: null });
+    now.mockReturnValue(1_800_000_000_000 + duration);
+    h.wake();
+    expect((await h.persistence.getCards('account-a')).completedGames).toBe(4);
+    await h.finish();
+    expect(await h.persistence.getCards('account-a')).toMatchObject({
+      completedGames: duration > 600_000 ? 5 : 4,
+      cards: duration > 600_000 ? 1 : 0,
+    });
   });
 
   it('does not credit an account that releases its seat before settlement', async () => {

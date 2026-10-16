@@ -23,7 +23,7 @@ export class AccountRepository {
       VALUES ($1, CASE WHEN $2::text IS NULL THEN 0 ELSE 1 END, $2)
       ON CONFLICT(account) DO UPDATE SET
         cards = CASE WHEN $2::text IS NOT NULL AND (avalon_cards.last_daily_day IS NULL OR avalon_cards.last_daily_day < $2)
-          THEN LEAST(2, avalon_cards.cards + 1) ELSE avalon_cards.cards END,
+          THEN LEAST(1, avalon_cards.cards + 1) ELSE avalon_cards.cards END,
         last_daily_day = CASE WHEN $2::text IS NOT NULL AND (avalon_cards.last_daily_day IS NULL OR avalon_cards.last_daily_day < $2)
           THEN $2 ELSE avalon_cards.last_daily_day END
       RETURNING cards, completed_games AS "completedGames", last_daily_day AS "lastDailyDay"`, [account, day]);
@@ -33,7 +33,7 @@ export class AccountRepository {
 
   async grantDebugCard(account: string): Promise<RerollCards> {
     const result = await this.pool.query<RerollCards>(`INSERT INTO avalon_cards (account, cards)
-      VALUES ($1, 1) ON CONFLICT(account) DO UPDATE SET cards = LEAST(2, avalon_cards.cards + 1)
+      VALUES ($1, 1) ON CONFLICT(account) DO UPDATE SET cards = LEAST(1, avalon_cards.cards + 1)
       RETURNING cards, completed_games AS "completedGames", last_daily_day AS "lastDailyDay"`, [account]);
     return result.rows[0]!;
   }

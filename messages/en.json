@@ -540,7 +540,7 @@
     "using": "Redealing…",
     "empty": "No reroll cards remaining",
     "unavailable": "Too late to reroll: only available before the first team proposal.",
-    "button": "Reroll cards ({count}/2)",
+    "button": "Reroll cards ({count}/1)",
     "confirm": "Confirm reroll",
     "loginShort": "Sign in first",
     "unavailableShort": "Reroll unavailable",

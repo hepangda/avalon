@@ -12,7 +12,7 @@ type Persistence,
 type RoomDocument,
 type RoomRecord,
 } from "./persistence";
-import { type RerollCards } from "./reroll-cards";
+import { qualifiesForGameReward, type RerollCards } from "./reroll-cards";
 import { documentHash,replayJournalAsync,type JournalEntry,type RoomChange } from "./room-journal";
 
 import type { DisplayPreferences } from '@/lib/preferences';
@@ -216,13 +216,13 @@ export class PostgresPersistence implements Persistence {
         );
         archiveChanged = !!archived.rowCount;
       }
-      if (archive && archiveChanged) {
+      if (archive && archiveChanged && qualifiesForGameReward(archive.replay)) {
         for (const account of [...new Set(archive.rewardAccounts ?? [])].sort()) {
           const awarded = await client.query('INSERT INTO avalon_game_rewards (game_id, account) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING account', [archive.replay.gameId, account]);
           if (awarded.rowCount) {
             await client.query(`INSERT INTO avalon_cards (account, completed_games) VALUES ($1, 1)
               ON CONFLICT(account) DO UPDATE SET completed_games = avalon_cards.completed_games + 1,
-              cards = LEAST(2, avalon_cards.cards + CASE WHEN (avalon_cards.completed_games + 1) % 5 = 0 THEN 1 ELSE 0 END)`, [account]);
+              cards = LEAST(1, avalon_cards.cards + CASE WHEN (avalon_cards.completed_games + 1) % 5 = 0 THEN 1 ELSE 0 END)`, [account]);
           }
         }
       }

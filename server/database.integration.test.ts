@@ -192,7 +192,7 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
     const before = await db.getCards('debug-account');
     expect(await db.grantDebugCard('debug-account')).toEqual({ ...before, cards: 1 });
     await Promise.all(Array.from({ length: 5 }, () => db.grantDebugCard('debug-account')));
-    expect(await db.getCards('debug-account')).toEqual({ ...before, cards: 2 });
+    expect(await db.getCards('debug-account')).toEqual({ ...before, cards: 1 });
     expect(await db.grantDebugCard('new-debug-account')).toEqual({ cards: 1, completedGames: 0, lastDailyDay: null });
   });
 
@@ -338,10 +338,10 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
     await Promise.all(Array.from({ length: 12 }, () => db.getCards('account-a', before)));
     expect((await db.getCards('account-a')).cards).toBe(1);
     await db.getCards('account-a', before + 1);
-    expect((await db.getCards('account-a')).cards).toBe(2);
+    expect((await db.getCards('account-a')).cards).toBe(1);
     await db.getCards('account-a', before + 86400001);
-    await db.pool.query("UPDATE avalon_cards SET cards = 1 WHERE account = 'account-a'");
-    expect((await db.getCards('account-a', before + 86400001)).cards).toBe(1);
+    await db.pool.query("UPDATE avalon_cards SET cards = 0 WHERE account = 'account-a'");
+    expect((await db.getCards('account-a', before + 86400001)).cards).toBe(0);
     expect((await db.getCards('account-b')).cards).toBe(0);
   });
 
@@ -365,12 +365,46 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
     expect((await db.getCards('account-a')).cards).toBe(0);
   });
 
+  it('migrates existing two-card balances and enforces the new database cap', async () => {
+    await db.pool.query('ALTER TABLE avalon_cards DROP CONSTRAINT avalon_cards_cards_check');
+    await db.pool.query("INSERT INTO avalon_cards (account, cards) VALUES ('legacy-account', 2)");
+    await db.close();
+    db = new PostgresPersistence(url!, 4);
+    await db.start();
+    expect((await db.getCards('legacy-account')).cards).toBe(1);
+    await expect(db.pool.query("UPDATE avalon_cards SET cards = 2 WHERE account = 'legacy-account'"))
+      .rejects.toThrow('avalon_cards_cards_check');
+  });
+
+  it.each([599_999, 600_000, 600_001])('enforces the game reward duration in PostgreSQL (%i ms)', async (duration) => {
+    const start = Date.now();
+    const now = vi.spyOn(Date, 'now').mockReturnValue(start);
+    const { room, peers } = await setup('account-a');
+    await db.getCards('account-a');
+    await db.pool.query("UPDATE avalon_cards SET completed_games = 4 WHERE account = 'account-a'");
+    now.mockReturnValue(start + duration);
+    await action(room, peers[0]!, 'admin:auth');
+    await action(room, peers[0]!, 'admin:startAssassination');
+    const assassin = peers.find((p) => p.game.selfRole === 'Assassin')!;
+    const merlin = peers.find((p) => p.game.selfRole === 'Merlin')!;
+    expect((await action(room, assassin, 'game:assassinate', { targetPlayerId: merlin.attachment.playerId })).ok).toBe(true);
+    expect(await db.getCards('account-a')).toMatchObject({
+      completedGames: duration > 600_000 ? 5 : 4,
+      cards: duration > 600_000 ? 1 : 0,
+    });
+    await action(room, peers[0]!, 'admin:close');
+    expect((await db.getCards('account-a')).completedGames).toBe(duration > 600_000 ? 5 : 4);
+  });
+
   it("awards one card per five settled games, deduplicates resaves, and survives a database restart", async () => {
+    let time = Date.now();
+    vi.spyOn(Date, 'now').mockImplementation(() => time);
     const prepared = await setup('account-a');
     let room = prepared.room;
     const { peers } = prepared;
     let previousSeats: Record<string, number> = {};
     for (let game = 1; game <= 5; game++) {
+      time += 600_001;
       for (const player of peers[0]!.game.players) expect(player.seat).not.toBe(previousSeats[player.id]);
       previousSeats = Object.fromEntries(peers[0]!.game.players.map((player) => [player.id, player.seat]));
       await action(room, peers[0]!, 'admin:auth');

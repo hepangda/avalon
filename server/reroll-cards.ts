@@ -1,3 +1,5 @@
+import type { ReplayData } from '@/lib/game/replayTypes';
+
 export interface RerollCards {
   cards: number;
   completedGames: number;
@@ -16,10 +18,18 @@ export function emptyCards(): RerollCards {
 export function claimDaily(wallet: RerollCards, now: number): RerollCards {
   const day = rewardDay(now);
   if (wallet.lastDailyDay !== null && wallet.lastDailyDay >= day) return wallet;
-  return { ...wallet, cards: Math.min(2, wallet.cards + 1), lastDailyDay: day };
+  return { ...wallet, cards: Math.min(1, wallet.cards + 1), lastDailyDay: day };
 }
 
 export function completeGame(wallet: RerollCards): RerollCards {
   const completedGames = wallet.completedGames + 1;
-  return { ...wallet, completedGames, cards: Math.min(2, wallet.cards + (completedGames % 5 === 0 ? 1 : 0)) };
+  return { ...wallet, completedGames, cards: Math.min(1, wallet.cards + (completedGames % 5 === 0 ? 1 : 0)) };
+}
+
+/** Only completed games strictly longer than ten minutes count toward rewards. */
+export function qualifiesForGameReward(replay: Pick<ReplayData, 'outcome' | 'startedAt' | 'endedAt'>): boolean {
+  const { startedAt, endedAt } = replay;
+  return !!replay.outcome && startedAt !== undefined && endedAt !== undefined
+    && Number.isFinite(startedAt) && Number.isFinite(endedAt)
+    && endedAt - startedAt > 10 * 60 * 1000;
 }

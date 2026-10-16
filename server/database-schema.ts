@@ -7,9 +7,12 @@ CREATE TABLE IF NOT EXISTS avalon_role_weight_games (
   game_id text NOT NULL, account text NOT NULL, PRIMARY KEY (game_id, account)
 );
 CREATE TABLE IF NOT EXISTS avalon_cards (
-  account text PRIMARY KEY, cards integer NOT NULL DEFAULT 0 CHECK (cards BETWEEN 0 AND 2),
+  account text PRIMARY KEY, cards integer NOT NULL DEFAULT 0 CHECK (cards BETWEEN 0 AND 1),
   completed_games integer NOT NULL DEFAULT 0, last_daily_day text
 );
+ALTER TABLE avalon_cards DROP CONSTRAINT IF EXISTS avalon_cards_cards_check;
+UPDATE avalon_cards SET cards = 1 WHERE cards > 1;
+ALTER TABLE avalon_cards ADD CONSTRAINT avalon_cards_cards_check CHECK (cards BETWEEN 0 AND 1);
 CREATE TABLE IF NOT EXISTS avalon_game_rewards (
   game_id text NOT NULL, account text NOT NULL, PRIMARY KEY (game_id, account)
 );
