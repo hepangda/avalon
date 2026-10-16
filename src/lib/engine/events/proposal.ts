@@ -54,20 +54,34 @@ export function proposeTeam(s: GameState, by: PlayerId, team: PlayerId[], admin 
   return ok(next);
 }
 
+/**
+ * Who speaks, in turn, when the leader opens the discussion in a direction.
+ * The client uses it to name the first speaker on the leader's two buttons.
+ */
+export function speakingOrder(
+  players: ReadonlyArray<{ id: PlayerId; seat: number }>,
+  leader: PlayerId,
+  direction: 'clockwise' | 'counterclockwise',
+  // Required: games stored before versions existed have none, and must keep their order.
+  flowVersion: GameState['flowVersion'],
+): PlayerId[] {
+  const seats = [...players].sort((a, b) => a.seat - b.seat);
+  // Start with the next seat so the leader closes the discussion. Older logs
+  // retain their original order when restored or replayed.
+  const offset = flowVersion === 2 || flowVersion === 3 ? 0 : 1;
+  // Seats increase left-to-right along the bottom row: decreasing seats
+  // move clockwise, starting at the leader's left hand.
+  const step = flowVersion === 5 && direction === 'clockwise' ? -1 : 1;
+  const start = seats.findIndex((p) => p.id === leader) + offset * step;
+  return seats.map((_, i) => seats[((start + i * step) % seats.length + seats.length) % seats.length]!.id);
+}
+
 export function startDiscussion(s: GameState, by: PlayerId, direction: 'clockwise' | 'counterclockwise' = 'clockwise'): EngineResult {
   if (direction !== 'clockwise' && direction !== 'counterclockwise') return err('INVALID_DIRECTION', 'Invalid speaking direction');
   if (s.phase !== 'TeamAnnouncement') return err('WRONG_PHASE', 'Not in TeamAnnouncement');
   if (by !== leaderId(s)) return err('NOT_LEADER', 'Only the leader may start discussion');
   const next = clone(s);
-  const seats = [...s.players].sort((a, b) => a.seat - b.seat);
-  // Start with the next seat so the leader closes the discussion. Older logs
-  // retain their original order when restored or replayed.
-  const offset = s.flowVersion === 2 || s.flowVersion === 3 ? 0 : 1;
-  // Seats increase left-to-right along the bottom row: decreasing seats
-  // move clockwise, starting at the leader's left hand.
-  const step = s.flowVersion === 5 && direction === 'clockwise' ? -1 : 1;
-  const start = seats.findIndex((p) => p.id === by) + offset * step;
-  next.discussion = { order: seats.map((_, i) => seats[((start + i * step) % seats.length + seats.length) % seats.length]!.id), speakerIndex: 0 };
+  next.discussion = { order: speakingOrder(s.players, by, direction, s.flowVersion), speakerIndex: 0 };
   next.phase = 'Discussion';
   pushPublic(next, 'speechBegins', { player: next.discussion.order[0]! });
   return ok(next);

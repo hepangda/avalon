@@ -48,3 +48,4 @@ export {
   evilSpecialsCount,
   maxEvil,
 } from './presets';
+export { speakingOrder } from './events/proposal';
