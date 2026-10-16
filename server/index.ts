@@ -8,6 +8,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import app from "./app";
 import { PostgresPersistence } from "./database";
 import { RoomRegistry } from "./rooms";
+import { withPublicOrigin } from "./request-origin";
 import { DEFAULT_ATTACHMENT, type Env, type RoomSocket, type SocketAttachment } from "./env";
 
 const port = Number(process.env.PORT ?? 3000);
@@ -48,15 +49,7 @@ serverApp.get("/api/health", async (c) => {
   }
 });
 function forwardApi(request: Request) {
-  // Use a configured origin, never arbitrary forwarded headers, for OIDC callbacks/cookies.
-  const incoming = new URL(request.url);
-  return app.fetch(
-    new Request(
-      `${publicOrigin}${incoming.pathname}${incoming.search}`,
-      request,
-    ),
-    env,
-  );
+  return app.fetch(withPublicOrigin(request, publicOrigin), env);
 }
 serverApp.all("/api/*", (c) => forwardApi(c.req.raw));
 serverApp.get("/debug/addRandomCard", (c) => forwardApi(c.req.raw));
