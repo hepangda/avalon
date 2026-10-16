@@ -6,14 +6,16 @@
   --seat-max-diameter: 56px;
   --seat-name-height: 18px;
   --seat-meta-height: 14px;
-  --seat-card-gap: 8px;
+  /* Room between a portrait and anything stacked on it: the timer ring reaches 6px out. */
+  --ring-clearance: 8px;
+  --seat-card-gap: 12px;
   /* Card frames grow from this floor into spare table height (see .game-table). */
   --card-min-height: 52px;
   --card-max-height: 72px;
   --center-space: 170px;
   --reveal-space: 140px;
-  /* Height plus margin of the footer's own-timer line. */
-  --timing-status-space: 22px;
+  /* The own-timer is a fuse on the dock now, so it costs no height. */
+  --timing-status-space: 0px;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -145,7 +147,7 @@
   border-bottom: 0;
 }
 @container match (min-width: 1080px) {
-  .table-tools > .table-view-toggle,
+  .table-tool.table-view-toggle,
   .table-report-close {
     display: none;
   }
@@ -186,6 +188,52 @@
   color: #d7ba65;
   letter-spacing: 0.03em;
 }
+/* Header title: crest, room name and the code chip that copies the invitation. */
+.table-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+}
+.table-title-crest {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  filter: drop-shadow(0 0 8px rgb(201 162 39 / 0.3));
+}
+.table-title-name {
+  min-width: 0;
+  overflow: hidden;
+  color: #d7ba65;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 16px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.table-title-name.is-brand { letter-spacing: 0.12em; }
+.table-code-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px 0 8px;
+  border: 1px solid rgb(201 162 39 / 0.3);
+  border-radius: 999px;
+  color: rgb(232 220 192 / 0.75);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+.table-code-chip svg { width: 12px; height: 12px; flex: none; }
+.table-code-chip:focus-visible { outline: 2px solid #e6c14a; outline-offset: 2px; }
+@media (hover: hover) {
+  .table-code-chip:hover { border-color: #e6c14a; color: #e6c14a; }
+}
 .table-latency {
   font-size: 12px;
   white-space: nowrap;
@@ -211,45 +259,114 @@
   color: #bdb29c;
   font-size: 12px;
 }
+/* The quest board: five medallions strung on one gilt line. */
 .table-missions {
+  --medal: clamp(28px, 8.5cqw, 38px);
+  position: relative;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
-}
-.table-mission {
-  min-width: 0;
-  min-height: 30px;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border-radius: 5px;
-  font-size: 12px;
-  background: rgb(58 54 49 / 0.65);
+  height: calc(var(--medal) + 8px);
+}
+.table-missions::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(to right, rgb(201 162 39 / 0.1), rgb(201 162 39 / 0.45) 20%, rgb(201 162 39 / 0.45) 80%, rgb(201 162 39 / 0.1));
+}
+.table-missions > li { display: grid; place-items: center; min-width: 0; }
+.table-mission {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: calc(var(--medal) + 8px);
+  border-radius: 999px;
   color: #c8bca0;
 }
-.table-mission.is-current {
-  background: rgb(201 162 39 / 0.2);
-  color: #ecd9a3;
+button.table-mission:enabled { cursor: pointer; }
+.table-mission:focus-visible { outline: none; }
+.table-mission:focus-visible .table-mission-token { outline: 2px solid #e6c14a; outline-offset: 3px; }
+.table-mission-token {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--medal);
+  height: var(--medal);
+  border: 1px solid rgb(201 162 39 / 0.38);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3a3226, #1d1812 75%);
+  box-shadow: 0 0 0 3px #1a140e, inset 0 1px 0 rgb(232 220 192 / 0.08), 0 6px 12px -6px #000;
+  transition: transform 200ms cubic-bezier(0.3, 0.7, 0.3, 1), box-shadow 200ms ease;
 }
-.table-mission.is-success {
-  background: rgb(2 132 199 / 0.25);
-  color: #bae6fd;
+.table-mission-size {
+  font-family: var(--font-numbers);
+  font-size: calc(var(--medal) * 0.42);
+  font-weight: 600;
+  line-height: 1;
 }
-.table-mission.is-fail {
-  background: rgb(178 58 46 / 0.35);
-  color: #fecaca;
+.table-mission.is-current { color: #1b140c; }
+.table-mission.is-current .table-mission-token {
+  border-color: #f6dc85;
+  background: radial-gradient(circle at 35% 30%, #f6dc85, #c9a227 60%, #8a6f1c);
+  box-shadow: 0 0 0 3px #1a140e, 0 0 0 4.5px rgb(230 193 74 / 0.6), 0 0 22px rgb(230 193 74 / 0.45);
+  animation: mission-current 2.6s ease-in-out infinite;
+}
+@keyframes mission-current {
+  50% { box-shadow: 0 0 0 3px #1a140e, 0 0 0 4.5px rgb(230 193 74 / 0.3), 0 0 10px rgb(230 193 74 / 0.2); }
+}
+@media (prefers-reduced-motion: reduce) { .table-mission.is-current .table-mission-token { animation: none; } }
+.table-mission.is-success .table-mission-token {
+  border-color: #74b6c5;
+  background: radial-gradient(circle at 35% 30%, #3a7a96, #173445 72%);
+  box-shadow: 0 0 0 3px #1a140e, 0 0 16px -2px rgb(116 182 197 / 0.5);
+}
+.table-mission.is-fail .table-mission-token {
+  border-color: #d0574b;
+  background: radial-gradient(circle at 35% 30%, #a3423a, #4a1a16 72%);
+  box-shadow: 0 0 0 3px #1a140e, 0 0 16px -2px rgb(208 87 75 / 0.5);
+}
+.table-mission-seal {
+  width: 74%;
+  height: 74%;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.6));
+}
+.table-mission-fails {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #16100a;
+  box-shadow: inset 0 0 0 1px #d0574b;
+  color: #ffc3b9;
+  font-family: var(--font-numbers);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
 }
 .table-mission-protection {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  color: #ecd9a3;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  color: #e6c14a;
   line-height: 1;
 }
 .table-mission-protection svg {
-  width: 10px;
-  height: 12px;
+  width: 13px;
+  height: 15px;
+}
+@media (hover: hover) {
+  button.table-mission:enabled:hover .table-mission-token { transform: translateY(-2px); }
 }
 .table-stage {
   container: stage / size;
@@ -301,7 +418,7 @@
   grid-template-rows: var(--end-height) minmax(0, 1fr) var(--end-height);
 }
 .game-table.has-seat-labels {
-  --seat-note-space: 18px;
+  --seat-note-space: calc(16px + var(--ring-clearance));
 }
 /* The final reveal has no timed prompts, so its role cards may use the
    spare height that results leave free and stay readable. */
@@ -319,13 +436,29 @@
 .table-felt {
   position: absolute;
   inset: var(--table-edge) 0;
-  border: 1px solid rgb(201 162 39 / 0.4);
-  border-radius: 18px;
-  background: linear-gradient(155deg, #312b20, #211d16);
+  overflow: hidden;
+  border: 1px solid rgb(201 162 39 / 0.42);
+  border-radius: 24px;
+  background:
+    radial-gradient(110% 80% at 50% 45%, rgb(201 162 39 / 0.08), transparent 62%),
+    linear-gradient(155deg, #342c21, #1f1b15);
   box-shadow:
-    inset 0 1px 0 rgb(232 220 192 / 0.05),
-    inset 0 0 42px rgb(0 0 0 / 0.18);
+    inset 0 0 0 6px rgb(18 13 8 / 0.5),
+    inset 0 0 0 7px rgb(201 162 39 / 0.16),
+    inset 0 1px 0 rgb(232 220 192 / 0.06),
+    inset 0 0 70px rgb(0 0 0 / 0.35),
+    0 30px 60px -34px #000;
   pointer-events: none;
+}
+.table-felt-crest {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(52%, 46cqh, 240px);
+  height: auto;
+  transform: translate(-50%, -50%);
+  opacity: 0.05;
+  filter: grayscale(1);
 }
 .table-end {
   position: relative;

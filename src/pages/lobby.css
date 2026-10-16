@@ -388,11 +388,8 @@ button.lobby-chair-seat:focus-visible .lobby-chair-ring { outline: 2px solid #e6
 }
 
 /* Footer: the one call to action, gilt where the match uses its brass. */
+/* Shares the match's burnished call to action, set a touch larger. */
 .table-action.lobby-begin {
-  border-color: #e6c14a;
-  background: linear-gradient(to bottom, #e6c14a, #b8921f);
-  box-shadow: 0 0 28px -6px rgb(201 162 39 / 0.45);
-  color: #1b140c;
   font-family: var(--font-cinzel), "Songti SC", serif;
   font-size: 16px;
   font-weight: 600;
@@ -408,20 +405,9 @@ button.lobby-chair-seat:focus-visible .lobby-chair-ring { outline: 2px solid #e6
   font-weight: 400;
   letter-spacing: 0;
 }
-.lobby-pulse {
-  width: 7px;
-  height: 7px;
-  flex: none;
-  border-radius: 50%;
-  background: #e6c14a;
-  animation: lobby-breathe 1.8s ease-in-out infinite;
-}
 .lobby-waiting-crest {
   filter: drop-shadow(0 0 18px rgb(201 162 39 / 0.35));
   animation: lobby-breathe 2.4s ease-in-out infinite;
-}
-@keyframes lobby-breathe {
-  50% { opacity: 0.4; }
 }
 
 @media (max-height: 570px) {

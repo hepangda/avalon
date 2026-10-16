@@ -247,28 +247,62 @@ export default function LobbyPage() {
               onTransferHost={(id) => void act(() => roomActions.transferHost(id))}
             />
           </div>
-          <footer className="table-footer">
-            <div className="table-actions">
-              {isHost ? (
-                <button
-                  type="button"
-                  className="table-action lobby-begin"
-                  onClick={() => void act(roomActions.start)}
-                  disabled={!canStart || busy}
-                >
-                  {canStart ? t('lobby.beginQuest') : t('lobby.needPlayers', { count: seatedCount })}
-                </button>
-              ) : !hasSeat ? (
-                <button type="button" className="table-action lobby-begin" disabled={busy} onClick={() => void act(handleClaim)}>
-                  {t('seat.sitDown')}
-                </button>
-              ) : (
-                <p className="table-action-placeholder gap-2.5">
-                  <span className="lobby-pulse" aria-hidden="true" />
-                  {t('lobby.waitingHost')}
-                </p>
-              )}
+          <footer className="table-footer table-dock">
+            <div className="table-dock-main">
+              <div className="table-actions">
+                {isHost ? (
+                  <button
+                    type="button"
+                    className="table-action lobby-begin"
+                    onClick={() => void act(roomActions.start)}
+                    disabled={!canStart || busy}
+                  >
+                    {canStart ? t('lobby.beginQuest') : t('lobby.needPlayers', { count: seatedCount })}
+                  </button>
+                ) : !hasSeat ? (
+                  <button type="button" className="table-action lobby-begin" disabled={busy} onClick={() => void act(handleClaim)}>
+                    {t('seat.sitDown')}
+                  </button>
+                ) : (
+                  <p className="table-action-placeholder gap-2.5">
+                    <span className="lobby-pulse" aria-hidden="true" />
+                    {t('lobby.waitingHost')}
+                  </p>
+                )}
+              </div>
             </div>
+            {(isHost || hasSeat) && <div className="table-dock-end">
+              {isHost && seatedCount < 10 && (
+                <button type="button" className="table-tool" title={t('seat.addBot')} aria-label={t('seat.addBot')} disabled={busy} onClick={() => void act(roomActions.addBot)}>
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="5" y="7" width="14" height="13" rx="3" />
+                    <path d="M12 3v4M2 12v4m20-4v4M9 16h6" />
+                  </svg>
+                  <span className="table-tool-label">{t('seat.addBotShort')}</span>
+                </button>
+              )}
+              {hasSeat && (
+                <button type="button" className="table-tool" title={t('seat.standUp')} disabled={busy} onClick={() => requestDeparture(handleStand, myPlayerId)}>
+                  <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M10 15V4m0 0L6 8m4-4 4 4M4 17h12" />
+                  </svg>
+                  <span className="table-tool-label">{t('seat.standUp')}</span>
+                </button>
+              )}
+              {isHost && <button
+                ref={viewToggle}
+                type="button"
+                className="table-tool table-view-toggle"
+                title={t('lobby.configuration')}
+                onClick={() => setView('setup')}
+              >
+                <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="4" width="6" height="9" rx="1.2" transform="rotate(-8 6 8.5)" />
+                  <rect x="10" y="5" width="6" height="9" rx="1.2" transform="rotate(8 13 9.5)" />
+                </svg>
+                <span className="table-tool-label">{t('lobby.configuration')}</span>
+              </button>}
+            </div>}
           </footer>
         </div>
 
@@ -292,50 +326,14 @@ export default function LobbyPage() {
             title={t('table.returnToTable')}
             onClick={() => {
               setView('table');
-              viewToggle.current?.focus();
+              // The toggle is hidden with the table until this render lands.
+              requestAnimationFrame(() => viewToggle.current?.focus());
             }}
           >
             <span aria-hidden="true">×</span>
           </button>
         </aside>}
 
-        {(isHost || hasSeat) && <div className="table-bottom-tools">
-          <div className="table-tools">
-            {isHost && seatedCount < 10 && (
-              <button type="button" className="table-tool" disabled={busy} onClick={() => void act(roomActions.addBot)}>
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="5" y="7" width="14" height="13" rx="3" />
-                  <path d="M12 3v4M2 12v4m20-4v4M9 16h6" />
-                </svg>
-                <span>{t('seat.addBot')}</span>
-              </button>
-            )}
-            {hasSeat && (
-              <button type="button" className="table-tool" disabled={busy} onClick={() => requestDeparture(handleStand, myPlayerId)}>
-                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M10 15V4m0 0L6 8m4-4 4 4M4 17h12" />
-                </svg>
-                <span>{t('seat.standUp')}</span>
-              </button>
-            )}
-            {isHost && <button
-              ref={viewToggle}
-              type="button"
-              className="table-tool table-view-toggle"
-              onClick={() => setView(view === 'table' ? 'setup' : 'table')}
-            >
-              {view === 'table' ? (
-                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="3" y="4" width="6" height="9" rx="1.2" transform="rotate(-8 6 8.5)" />
-                  <rect x="10" y="5" width="6" height="9" rx="1.2" transform="rotate(8 13 9.5)" />
-                </svg>
-              ) : (
-                <span aria-hidden="true">◉</span>
-              )}
-              <span>{view === 'table' ? t('lobby.configuration') : t('table.tabTable')}</span>
-            </button>}
-          </div>
-        </div>}
       </div>
 
       <TableSheet open={dissolutionAction !== null} title={t('common.dissolveRoomTitle')}

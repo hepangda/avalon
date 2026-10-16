@@ -14,7 +14,7 @@
 .table-end-top .table-seat-labels {
   bottom: 1px;
 }
-.table-role-note, .table-self-label, .seat-number-tag {
+.table-role-note, .table-self-label {
   height: 16px;
   width: max-content;
   max-width: min(100%, calc(var(--seat-diameter) + 8px));
@@ -33,12 +33,11 @@
 .table-role-note {
   min-width: 0;
 }
-.seat-number-tag {
-  flex-shrink: 0;
-  min-width: 15px;
-  padding: 0 3px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
+/* Not marked yet: a dashed tag, waiting for a tap. */
+.table-role-note:not([data-team]) {
+  border-style: dashed;
+  color: rgb(223 200 120 / 0.7);
+  background: rgb(25 21 16 / 0.85);
 }
 .table-self-label {
   flex-shrink: 0;

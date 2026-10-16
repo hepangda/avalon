@@ -1,71 +1,63 @@
 .game-table.is-proposal {
   --seat-meta-height: 0px;
-  --seat-card-gap: 4px;
 }
-/* Keep timer cards clear of the speaking outline and avatar corner badges. */
-.game-table:has(.action-timer-bar) {
-  --seat-meta-height: 0px;
-  --seat-card-gap: var(--timed-seat-card-gap);
+/* Timers ring the portrait, so cards keep their own slots. */
+.seat-timer {
+  position: absolute;
+  z-index: 1;
+  inset: -6px;
+  pointer-events: none;
 }
-.discussion-turn { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; }
-.action-timer {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  color: #dfc878;
-  font-size: 12px;
-  line-height: 1.4;
+.seat-timer-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
 }
-.action-timer[data-overdue="true"] { color: #fbbf24; }
-.action-timer-bar {
-  position: relative;
+.seat-timer-ring circle {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-dasharray: 100;
+}
+.seat-timer-track { stroke: rgb(18 13 8 / 0.75); }
+.seat-timer-arc {
+  stroke: #e6c14a;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgb(230 193 74 / 0.6));
+  transition: stroke-dashoffset 250ms linear;
+}
+.seat-timer[data-paused="true"] .seat-timer-arc { transition: none; opacity: 0.55; }
+.seat-timer[data-overdue="true"] .seat-timer-arc {
+  stroke: #e0574b;
+  filter: drop-shadow(0 0 4px rgb(224 87 75 / 0.7));
+}
+/* The count sits on the ring at three o'clock, clear of cards above and labels below. */
+.seat-timer-value {
+  position: absolute;
+  top: 50%;
+  left: 100%;
   display: grid;
   place-items: center;
-  overflow: hidden;
-  border: 1px solid #3f8060;
-  border-radius: 6px;
-  background: #14231b;
-  color: #f0fdf4;
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  min-width: 20px;
+  height: 15px;
+  padding: 0 4px;
+  border: 1px solid rgb(230 193 74 / 0.7);
+  border-radius: 999px;
+  background: #16100a;
+  color: #f3da8a;
+  font-family: var(--font-numbers);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+  transform: translate(-55%, -50%);
 }
-.action-timer-bar-fill {
-  position: absolute;
-  inset: 0;
-  background: #257a47;
-  transform-origin: bottom;
-  transition: transform 250ms linear;
+.seat-timer[data-overdue="true"] .seat-timer-value { border-color: #e0574b; color: #ffc3b9; }
+.table-player[data-speaking="true"] .table-seat-number {
+  box-shadow: 0 0 0 3px #231e16, 0 0 30px 4px rgb(230 193 74 / 0.45);
+  animation: seat-speaking 2.2s ease-in-out infinite;
 }
-.action-timer-bar-value { position: relative; font-family: var(--font-numbers); }
-.action-timer-bar[data-paused="true"] .action-timer-bar-fill { transition: none; }
-.action-timer-paused { position: absolute; top: 1px; right: 3px; font-size: 8px; line-height: 1; }
-.action-timer-bar[data-overdue="true"] {
-  border-color: #d85a52;
-  background: #281616;
-  color: #fff1f2;
-}
-.action-timer-bar[data-overdue="true"] .action-timer-bar-fill {
-  background: #842d2b;
-}
-.table-player[data-speaking="true"] .table-seat-number { outline: 2px solid #dfc878; outline-offset: 4px; }
-.table-timing-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  min-height: 17px;
-  margin-bottom: 5px;
-  color: #ac9e7f;
-  font-size: 10px;
-}
-/* Size cards as if the timer line were shown, so they hold still when it comes and goes. */
-.table-play:not(:has(> .table-footer > .table-timing-status)) {
-  --timing-slack: var(--timing-status-space);
-}
+@keyframes seat-speaking { 50% { box-shadow: 0 0 0 3px #231e16, 0 0 14px 1px rgb(230 193 74 / 0.25); } }
+@media (prefers-reduced-motion: reduce) { .table-player[data-speaking="true"] .table-seat-number { animation: none; } }
 .discussion-steps, .discussion-order { display: flex; justify-content: center; gap: 6px; }
 .discussion-steps { color: #a89b7e; font-size: 10px; }
 .discussion-steps li + li::before { content: '›'; margin-right: 6px; color: #786b51; }
@@ -110,24 +102,21 @@
     --seat-label-height: clamp(20px, 2.5cqw, 24px);
   }
   .game-table.has-seat-labels {
-    --seat-note-space: calc(var(--seat-label-height) + 2px);
+    --seat-note-space: calc(var(--seat-label-height) + var(--ring-clearance));
   }
   .table-seat-name {
     max-width: 200px;
     font-size: 14px;
     line-height: 1.3;
   }
-  .table-role-note, .table-self-label, .seat-number-tag {
+  .table-role-note, .table-self-label {
     height: var(--seat-label-height);
     font-size: clamp(12px, 1.5cqw, 14px);
     line-height: calc(var(--seat-label-height) - 2px);
   }
   .table-role-note { max-width: min(100%, 8em); }
-  .seat-number-tag {
-    min-width: var(--seat-label-height);
-    font-size: clamp(14px, 1.8cqw, 16px);
-  }
-  .table-status, .table-mission { font-size: 14px; }
+  .seat-number-tag { min-width: 20px; height: 20px; font-size: 12px; }
+  .table-status { font-size: 14px; }
   .table-status-detail, .table-action-placeholder {
     font-size: 13px;
   }
@@ -140,16 +129,47 @@
     text-wrap: balance;
     overflow-wrap: anywhere;
   }
-  .table-phase-detail, .table-team-chip {
+  .table-phase-detail {
     font-size: clamp(14px, min(2cqw, 10cqh), 16px);
   }
-  .table-team-chip { max-width: 160px; }
+  .table-team-name { font-size: 12.5px; }
 }
 
-.discussion-arrow {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  margin-inline: 6px;
-}
 .table-phase-title.is-team-changed { color: #e6a27d; }
+
+/* A short felt keeps the faces and drops the captions. */
+@container table-center (max-height: 170px) {
+  .table-team-name { display: none; }
+  .table-team-chips { --token: clamp(24px, 22cqh, 34px); }
+  .discussion-turn > .table-phase-detail { display: none; }
+}
+@container table-center (max-height: 120px) {
+  .discussion-order { display: none; }
+  .table-center { gap: 3px; }
+}
+
+/* The player's own clock: a fuse along the dock's top edge. */
+.dock-timer {
+  position: absolute;
+  top: -7px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(201 162 39 / 0.12);
+  pointer-events: none;
+}
+.dock-timer-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, #b8921f, #f6dc85);
+  box-shadow: 0 0 8px rgb(230 193 74 / 0.7);
+  transform-origin: left;
+  transition: transform 250ms linear;
+}
+.dock-timer[data-paused="true"] .dock-timer-fill { transition: none; opacity: 0.5; }
+.dock-timer[data-overdue="true"] .dock-timer-fill {
+  background: linear-gradient(to right, #8e3a31, #e0574b);
+  box-shadow: 0 0 8px rgb(224 87 75 / 0.7);
+}

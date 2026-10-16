@@ -52,28 +52,44 @@
   filter: drop-shadow(0 0 10px #c9a22759);
 }
 
-/* The viewer's own card waits at their seat, warm and lifted, until opened. */
+/* The viewer's own card lands with a glint, then is picked up (see RoleReveal). */
 .role-deal[data-stage="dealt"] .role-deal-card.is-mine {
   cursor: pointer;
   outline: none;
 }
 .role-deal[data-stage="dealt"] .role-deal-card.is-mine .role-deal-back {
   border-color: #e6c14a;
-  animation: role-deal-call 1.8s ease-in-out infinite;
+  animation: role-deal-land 0.75s ease-out both;
 }
 .role-deal[data-stage="dealt"] .role-deal-card.is-mine:focus-visible .role-deal-back {
   outline: 3px solid #e6c14a;
   outline-offset: 4px;
 }
-@keyframes role-deal-call {
-  0%, 100% { box-shadow: 0 0 0 1px #e6c14a66, 0 0 14px 2px #e6c14a40, 0 10px 22px -10px #000d; translate: 0 0; }
-  50% { box-shadow: 0 0 0 2px #e6c14a, 0 0 30px 8px #e6c14a8c, 0 18px 26px -10px #000d; translate: 0 -5%; }
+.role-deal[data-stage="dealt"] .role-deal-card.is-mine .role-deal-back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 30%, #fff3c466 48%, transparent 66%);
+  background-size: 260% 100%;
+  animation: role-deal-glint 0.75s ease-out both;
+  pointer-events: none;
+}
+@keyframes role-deal-land {
+  0% { box-shadow: 0 0 0 1px #e6c14a00, 0 10px 22px -10px #000d; translate: 0 0; }
+  45% { box-shadow: 0 0 0 2px #e6c14a, 0 0 30px 8px #e6c14a8c, 0 18px 26px -10px #000d; translate: 0 -6%; }
+  100% { box-shadow: 0 0 0 2px #e6c14a, 0 0 22px 5px #e6c14a66, 0 16px 24px -10px #000d; translate: 0 -4%; }
+}
+@keyframes role-deal-glint {
+  from { background-position: 100% 0; }
+  to { background-position: -60% 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .role-deal[data-stage="dealt"] .role-deal-card.is-mine .role-deal-back {
     animation: none;
     box-shadow: 0 0 0 2px #e6c14a, 0 0 24px 6px #e6c14a8c;
   }
+  .role-deal[data-stage="dealt"] .role-deal-card.is-mine .role-deal-back::after { animation: none; opacity: 0; }
 }
 
 /* Seats that have already read their card. */
@@ -150,6 +166,22 @@
   width: min(380px, 100cqw, calc(100cqh * 2 / 3));
   aspect-ratio: 2 / 3;
   perspective: 1200px;
+}
+/* Held face down in hand: the back glows until the player turns it over. */
+.role-deal-pop[data-held] { cursor: pointer; outline: none; }
+.role-deal-pop[data-held] .identity-card-back {
+  animation: role-deal-held 2s ease-in-out infinite;
+}
+.role-deal-pop[data-held]:focus-visible .identity-card-back { outline: 3px solid #e6c14a; outline-offset: 6px; }
+@keyframes role-deal-held {
+  0%, 100% { box-shadow: 0 0 0 1px #e6c14a55, 0 0 24px 2px #e6c14a33, 0 30px 60px -24px #000; }
+  50% { box-shadow: 0 0 0 2px #e6c14acc, 0 0 54px 10px #e6c14a66, 0 30px 60px -24px #000; }
+}
+@media (hover: hover) {
+  .role-deal-pop[data-held]:hover .identity-card-back { border-color: #e6c14a; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .role-deal-pop[data-held] .identity-card-back { animation: none; box-shadow: 0 0 0 2px #e6c14a, 0 0 40px 6px #e6c14a66; }
 }
 .role-deal-details {
   display: flex;

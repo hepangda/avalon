@@ -27,6 +27,7 @@
 .table-end-top .table-seat-meta {
   grid-row: 1;
 }
+/* Portraits sit in the same dark-ringed frames as the lobby's chairs. */
 .table-seat-number {
   position: relative;
   display: grid;
@@ -34,27 +35,57 @@
   width: var(--seat-diameter);
   height: var(--seat-diameter);
   border-radius: 50%;
-  border: 1px solid #70613f;
+  border: 1px solid rgb(201 162 39 / 0.35);
   background: #29231a;
+  box-shadow: 0 0 0 3px #231e16, 0 8px 16px -6px #000;
   color: #dfc878;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
+  transition: box-shadow 200ms ease, transform 200ms cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+.table-seat-number > img { transition: filter 200ms ease; }
+.table-seat-number.is-mine {
+  border-color: #e6c14a;
+  box-shadow: 0 0 0 3px #231e16, 0 0 0 4.5px rgb(230 193 74 / 0.75), 0 0 22px rgb(230 193 74 / 0.3);
 }
 .table-seat-number.is-empty {
   border-style: dashed;
   color: #a69b84;
 }
-.table-seat-number.is-selected {
-  background: #665020;
-  border: 2px solid #e6c14a;
-  color: #fff0ba;
-}
+.table-seat-number.is-away > img { filter: grayscale(0.85) brightness(0.6); }
 .table-seat-number.is-highlighted {
-  background: #273c43;
-  border-color: #74b6c5;
+  border-color: #9fcbe0;
+  box-shadow: 0 0 0 3px #231e16, 0 0 0 5px rgb(116 182 197 / 0.85), 0 0 20px rgb(116 182 197 / 0.35);
+}
+.table-seat-number.is-selected {
+  border-color: #f6dc85;
+  box-shadow: 0 0 0 3px #231e16, 0 0 0 6px #e6c14a, 0 0 26px rgb(230 193 74 / 0.55);
+  transform: translateY(-2px);
+}
+.table-end-top .table-seat-number.is-selected { transform: translateY(2px); }
+.seat-number-tag {
+  position: absolute;
+  z-index: 2;
+  bottom: -4px;
+  left: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border: 1px solid rgb(201 162 39 / 0.6);
+  border-radius: 999px;
+  background: #16100a;
+  color: #e6c14a;
+  font-family: var(--font-numbers);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+.table-seat-number.is-mine .seat-number-tag {
+  border-color: #e6c14a;
+  background: linear-gradient(to bottom, #e6c14a, #b8921f);
+  color: #1b140c;
 }
 .table-seat-name {
   font-size: 12px;
@@ -66,9 +97,8 @@
   text-align: center;
   color: #e8dcc0;
 }
-.table-seat-name.is-leader {
-  color: #e6c14a;
-}
+.table-seat-name.is-leader { color: #ecd9a3; }
+.table-seat-name.is-mine { color: #e6c14a; font-weight: 600; }
 .table-seat-meta {
   font-size: 11px;
   color: #b4a88c;
@@ -76,6 +106,14 @@
 .table-seat.is-dimmed {
   opacity: 0.4;
 }
+.table-seat:enabled { cursor: pointer; }
+.table-seat:disabled { cursor: default; }
+@media (hover: hover) {
+  .table-seat[aria-pressed]:enabled:hover .table-seat-number:not(.is-selected) {
+    box-shadow: 0 0 0 3px #231e16, 0 0 0 5px rgb(230 193 74 / 0.45);
+  }
+}
+.game-table:has(.table-seat[aria-pressed]:enabled) .table-personal-zone { cursor: pointer; }
 .table-seat:focus-visible {
   outline: 2px solid #e6c14a;
   outline-offset: 2px;
@@ -97,6 +135,7 @@
 }
 .player-connection-dot {
   position: absolute;
+  z-index: 2;
   right: calc(14.645% - 3px);
   bottom: calc(14.645% - 3px);
   width: 6px;
@@ -124,10 +163,8 @@
   border-radius: 6px;
   background: rgb(10 8 5 / 0.12);
 }
-.table-card-empty.is-inactive {
-  border-style: dashed;
-  opacity: 0.4;
-}
+/* Seats without a card in play leave the felt clear. */
+.table-card-empty.is-inactive { visibility: hidden; }
 .table-card-flip {
   width: 100%;
   height: 100%;
@@ -204,43 +241,99 @@
 }
 .table-phase-title {
   font-family: var(--font-cinzel), "Songti SC", serif;
-  font-size: clamp(16px, 2.2vw, 23px);
+  font-size: clamp(16px, min(5.6cqw, 13cqh), 23px);
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 0 18px rgb(201 162 39 / 0.25);
   line-height: 1.25;
   color: #dfc878;
 }
-.outcome-title[data-winner="good"] { color: #7dd3fc; }
-.outcome-title[data-winner="evil"] { color: #f87171; }
+.table-phase-title.outcome-title {
+  font-size: clamp(24px, min(9cqw, 22cqh), 40px);
+  letter-spacing: 0.08em;
+}
+.outcome-title[data-winner="good"] { color: #9fdcf5; text-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 0 26px rgb(116 182 197 / 0.55); }
+.outcome-title[data-winner="evil"] { color: #f08a80; text-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 0 26px rgb(208 87 75 / 0.55); }
 .table-phase-detail {
   font-size: 12px;
   line-height: 1.4;
   color: #c5b89b;
 }
+/* The team laid out as portrait tokens; dashed places are still open. */
 .table-team-chips {
+  --token: clamp(30px, min(12cqw, 21cqh), 52px);
+  --tone: #e6c14a;
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 5px;
+  gap: 6px 8px;
   max-width: 100%;
 }
+.table-team-chips[data-tone="sky"] { --tone: #9fcbe0; }
+.table-team-chips[data-tone="crimson"] { --tone: #e0574b; }
 .table-team-chip {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
-  min-height: 32px;
-  min-width: 38px;
-  max-width: 112px;
-  padding: 4px 8px;
-  border-radius: 5px;
-  background: rgb(201 162 39 / 0.12);
-  font-size: 12px;
-  color: #e8dcc0;
+  gap: 3px;
+  width: calc(var(--token) + 14px);
+  min-width: 0;
+  animation: team-token-in 260ms cubic-bezier(0.3, 0.7, 0.3, 1);
 }
-.table-team-chip span {
+.table-team-avatar {
+  width: var(--token);
+  height: var(--token);
+  flex: none;
+  border: 1.5px solid var(--tone);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #1f1a13, 0 6px 12px -6px #000, 0 0 14px -2px color-mix(in srgb, var(--tone) 45%, transparent);
+}
+.table-team-chip.is-open { animation: none; }
+.table-team-chip.is-open .table-team-avatar {
+  border: 1.5px dashed color-mix(in srgb, var(--tone) 45%, transparent);
+  background: rgb(18 13 8 / 0.45);
+  box-shadow: none;
+}
+.table-team-seat {
+  position: absolute;
+  bottom: -3px;
+  left: -3px;
+  display: grid;
+  place-items: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 2px;
+  border-radius: 999px;
+  background: var(--tone);
+  color: #16100a;
+  font-family: var(--font-numbers);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+.table-team-name {
+  width: 100%;
+  min-height: 1.3em;
   overflow: hidden;
+  color: rgb(232 220 192 / 0.8);
+  font-size: 11px;
+  line-height: 1.3;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+@keyframes team-token-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.85); }
+}
+@media (prefers-reduced-motion: reduce) { .table-team-chip { animation: none; } }
+.table-lady-pool {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.table-lady-emblem {
+  width: clamp(36px, 22cqh, 64px);
+  height: auto;
+  filter: drop-shadow(0 0 16px rgb(116 182 197 / 0.45));
 }
 .table-public-roles {
   /* Revealed evil roles match the seat cards, shrinking only when the centre
@@ -279,34 +372,184 @@
   align-items: stretch;
   margin-bottom: 5px;
 }
+/* The match dock: your card, the actions, then the log and functions, all on one row. */
+.table-dock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 8px;
+}
+.table-dock-main {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.table-dock .table-actions { margin-bottom: 0; }
+.table-dock-start, .table-dock-end {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+.table-dock-end { gap: 2px; margin-right: -8px; }
+.table-dock-end .table-tool {
+  flex-direction: column;
+  gap: 3px;
+  min-width: 44px;
+  height: 48px;
+  padding: 0 6px;
+  border-radius: 10px;
+  color: #d4c6a9;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.table-tool-label {
+  font-size: 10.5px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.table-dock-end .table-tool:disabled { cursor: not-allowed; opacity: 0.45; }
+.table-dock-end .table-tool:focus-visible { outline: 2px solid #e6c14a; outline-offset: -2px; }
+@media (hover: hover) {
+  .table-dock-end .table-tool:hover { color: #e6c14a; background: rgb(201 162 39 / 0.08); }
+}
+/* Your own card, face down in front of you; tap to look. */
+.identity-chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 50px;
+  border: 1px solid #8e7749;
+  border-radius: 6px;
+  background: linear-gradient(145deg, #34425d, #242a37);
+  box-shadow: 0 6px 12px -6px #000, 0 0 0 1px rgb(18 13 8 / 0.6);
+  transform: rotate(-4deg);
+  transition: transform 200ms cubic-bezier(0.3, 0.7, 0.3, 1), border-color 150ms ease, background-color 150ms ease;
+}
+.identity-chip > * { transition: opacity 150ms ease; }
+.identity-chip::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgb(232 220 192 / 0.18);
+  border-radius: 3px;
+}
+/* While the card is out, only its empty place remains in the dock. */
+.identity-chip[data-out] {
+  border-style: dashed;
+  background: rgb(18 13 8 / 0.5);
+  box-shadow: none;
+}
+.identity-chip[data-out] > * { opacity: 0; }
+.identity-chip[data-out]::before { opacity: 0.4; }
+.identity-chip-crest { width: 70%; height: auto; filter: drop-shadow(0 0 6px rgb(201 162 39 / 0.35)); }
+.identity-chip:focus-visible { outline: 2px solid #e6c14a; outline-offset: 3px; }
+.identity-chip:active { transform: rotate(0deg) scale(0.96); }
+@media (hover: hover) {
+  .identity-chip:hover { border-color: #e6c14a; transform: rotate(0deg) translateY(-3px); }
+}
+/* The one call to action is gilt, as in the lobby; the two-way choices carry their tokens. */
 .table-action {
+  position: relative;
   flex: 1;
   min-width: 0;
   min-height: 44px;
-  padding: 5px 10px;
-  border: 1px solid #8c743f;
-  border-radius: 8px;
-  background: #665022;
-  color: #f1e2b9;
-  font-size: 14px;
+  padding: 5px 12px;
+  /* An engraved plaque: gilt edge and lettering on a dark face, clearly live without lighting the table. */
+  border: 1px solid #d9b54a;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #3a2f1c, #241c11);
+  box-shadow: inset 0 0 0 1px rgb(18 13 8 / 0.8), inset 0 1px 0 rgb(246 220 133 / 0.25), 0 6px 14px -10px #000;
+  color: #f0d47c;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 8px;
   text-align: center;
+  transition: transform 120ms ease, filter 150ms ease;
+}
+.table-action:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+@media (hover: hover) {
+  .table-action:hover:not(:disabled) { filter: brightness(1.15); }
+}
+.table-action:focus-visible { outline: 2px solid #f6dc85; outline-offset: 2px; }
+.table-action.is-positive,
+.table-action.is-negative {
+  color: #ece3d0;
+  font-size: 16px;
 }
 .table-action.is-positive {
-  background: #25475a;
-  border-color: #49778c;
+  border-color: #4f8496;
+  background: linear-gradient(to bottom, #245468, #173847);
+  box-shadow: inset 0 1px 0 rgb(220 240 250 / 0.12), 0 6px 14px -10px #000;
 }
 .table-action.is-negative {
-  background: #602a23;
-  border-color: #955244;
+  border-color: #9a4a40;
+  background: linear-gradient(to bottom, #6e2d26, #4a1c17);
+  box-shadow: inset 0 1px 0 rgb(255 220 210 / 0.1), 0 6px 14px -10px #000;
+}
+/* Two longer choices side by side keep to one line on a phone. */
+.table-action.is-compact {
+  padding: 5px 6px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.table-action.is-compact { gap: 4px; }
+.table-start-seat { display: inline-flex; align-items: center; gap: 3px; }
+.table-action-arrow { width: 14px; height: 14px; flex: none; }
+.table-action-arrow.is-stacked { display: none; }
+/* On a narrow phone the seat reads large, with the verb beneath it. */
+@container match (max-width: 420px) {
+  .table-action.is-compact { flex-direction: column; gap: 1px; padding: 3px 4px; line-height: 1.1; }
+  .table-action-arrow.is-stacked { display: block; }
+  .table-action-arrow.is-inline { display: none; }
+  .table-start-seat { font-size: 16px; font-weight: 600; }
+  .table-start-verb { font-size: 11px; opacity: 0.8; }
+}
+.table-action-icon {
+  width: 26px;
+  height: 26px;
+  margin: -4px 0;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.5));
+}
+.table-action.is-quiet {
+  border-color: rgb(201 162 39 / 0.45);
+  background: rgb(18 13 8 / 0.55);
+  box-shadow: none;
+  color: #e8dcc0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 .table-action:disabled {
-  background: #302a20;
-  color: #a99d85;
   border-color: #53472f;
+  background: #302a20;
+  box-shadow: none;
+  color: #a99d85;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
   cursor: not-allowed;
+}
+.table-action:disabled .table-action-icon { filter: grayscale(1) opacity(0.5); }
+/* A breathing dot for waits on someone else (shared with the lobby). */
+.lobby-pulse {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: #e6c14a;
+  animation: lobby-breathe 1.8s ease-in-out infinite;
+}
+@keyframes lobby-breathe {
+  50% { opacity: 0.4; }
 }
 .table-action-placeholder {
   width: 100%;
@@ -454,7 +697,7 @@
     --seat-name-height: 16px;
     --seat-meta-height: 12px;
     --card-min-height: 40px;
-    --seat-card-gap: 5px;
+    --seat-card-gap: 11px;
   }
   .table-header {
     height: 42px;
@@ -475,7 +718,8 @@
     --seat-max-diameter: 44px;
     --seat-meta-height: 0px;
     --card-min-height: 36px;
-    --seat-card-gap: 4px;
+    --seat-card-gap: 10px;
+    --ring-clearance: 7px;
   }
   .table-seat-meta {
     visibility: hidden;
@@ -483,13 +727,11 @@
   .table-header {
     height: 36px;
   }
-  .table-brand {
+  .table-brand, .table-title {
     min-height: 36px;
     font-size: 14px;
   }
-  .table-mission {
-    min-height: 25px;
-  }
+  .table-missions { --medal: 26px; }
   .table-center {
     gap: 4px;
     padding: 3px 6px;
@@ -503,9 +745,7 @@
     --seat-max-diameter: 40px;
     --seat-name-height: 14px;
     --card-min-height: 32px;
-    --seat-card-gap: 3px;
-    /* The footer sits beside the table here, so its timer line costs no height. */
-    --timing-status-space: 0px;
+    --seat-card-gap: 9px;
   }
   .table-play {
     padding-right: 156px;
@@ -526,12 +766,18 @@
     height: auto;
     flex-direction: column;
   }
+  .table-dock { padding: 0; }
+  .table-dock-main { flex: none; width: 100%; }
+  .table-dock-start, .table-dock-end { justify-content: center; }
+  .table-dock-end { margin-right: 0; }
   .table-action {
     min-height: 46px;
   }
   .table-latency {
     display: none;
   }
+  .table-missions { --medal: 24px; }
+  .table-phase-title.outcome-title { font-size: 18px; }
   .table-public-roles {
     gap: 4px;
   }

@@ -8,7 +8,6 @@ import { FullscreenControl } from './FullscreenControl';
 export function GameTools({
   game,
   code,
-  identity,
   viewToggle,
   functionsContent,
   notesControl,
@@ -17,7 +16,6 @@ export function GameTools({
 }: {
   game: ClientGameState;
   code: string;
-  identity: ReactNode;
   viewToggle?: ReactNode;
   functionsContent?: ReactNode;
   notesControl?: ReactNode;
@@ -28,18 +26,20 @@ export function GameTools({
   const [open, setOpen] = useState(false);
   return (
     <>
-      <div className="table-tools">
-        {identity}
-        {viewToggle}
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="table-tool"
-        >
-          <span aria-hidden="true">⚙</span>
-          <span>{t('log.tabFunctions')}</span>
-        </button>
-      </div>
+      {viewToggle}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="table-tool"
+        title={t('log.tabFunctions')}
+      >
+        <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+          <path d="M3 6h8m4 0h2M3 14h2m4 0h8" />
+          <circle cx="13" cy="6" r="2" />
+          <circle cx="7" cy="14" r="2" />
+        </svg>
+        <span className="table-tool-label">{t('log.tabFunctions')}</span>
+      </button>
       <TableSheet open={open} title={t('log.tabFunctions')} onClose={() => setOpen(false)}>
                 <div className="shrink-0 px-4 pt-3">
                   <FullscreenControl />

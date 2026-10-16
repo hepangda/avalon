@@ -152,7 +152,8 @@
     "askStandUp": "请离",
     "empty": "空位",
     "online": "在线",
-    "offline": "离线"
+    "offline": "离线",
+    "addBotShort": "机器人"
   },
   "roleReveal": {
     "title": "你的秘密身份",
@@ -205,7 +206,6 @@
     "proposalOf": "第 {n} 次提名 / 共 {total} 次",
     "youLead": "由你领导这次征程",
     "leaderChoosing": "{name} 正在选择队伍",
-    "selectKnights": "为第 {round} 个任务选择 {size} 名骑士",
     "proposeTeam": "公示拟定队形"
   },
   "vote": {
@@ -223,7 +223,6 @@
   },
   "missionVote": {
     "title": "征程展开",
-    "oneFailSpoils": "一张失败票即可破坏",
     "success": "成功",
     "fail": "失败",
     "loyalOnlySuccess": "蓝方只能提交成功牌。"
@@ -235,10 +234,8 @@
   },
   "lady": {
     "title": "湖中仙女",
-    "chooseExamine": "选择一人审视其阵营归属",
     "gazingWaters": "{name} 正凝视水面…",
     "watersReveal": "水面揭示出 {name} 的阵营为",
-    "onlyYouSeen": "只有你看到了这一结果。征程继续…",
     "examineShort": "审视"
   },
   "assassin": {
@@ -250,7 +247,6 @@
     "viewEnding": "查看结局",
     "skipAnimation": "跳过动画",
     "title": "刺客出手",
-    "nameMerlin": "指认你认为是梅林的那个人。",
     "strikeSeat": "刺杀{seat}",
     "strike": "刺杀",
     "contemplating": "刺客正在思忖这命运攸关的抉择…",
@@ -498,7 +494,8 @@
     "missionCount": "{count} / {total} 已出牌",
     "collecting": "收齐任务牌",
     "shuffling": "正在洗混…",
-    "anonymousCards": "匿名任务牌"
+    "anonymousCards": "匿名任务牌",
+    "teamSlots": "队伍 {count} / {total}"
   },
   "discussion": {
     "flow": "本轮流程",
@@ -509,7 +506,6 @@
     "speechProgress": "第 {current} / {total} 位发言",
     "order": "按队长选择的方向依次发言，队长最后发言",
     "finalizing": "队长调整最终队形",
-    "finalizingHint": "可保留或修改拟定队形，确认后全员投票。",
     "rules": "拟定队伍 → 队长陈述理由并选择顺时针（左手边）或逆时针（右手边）开始发言 → 依次讨论，队长最后发言 → 最终定队 → 投票。每位玩家自行结束发言，裁判可跳过当前玩家。",
     "steps": {
       "TeamBuilding": "拟定",
@@ -519,8 +515,9 @@
       "Voting": "投票"
     },
     "teamChanged": "队长更换了队伍",
-    "startClockwise": "顺时针开始发言",
-    "startCounterclockwise": "逆时针开始发言"
+    "startFrom": "{seat}号开始发言",
+    "startSeat": "{seat}号",
+    "startVerb": "开始发言"
   },
   "timing": {
     "role": "确认身份",

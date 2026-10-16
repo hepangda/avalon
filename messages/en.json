@@ -152,7 +152,8 @@
     "askStandUp": "Ask to leave",
     "empty": "Empty seat",
     "online": "Online",
-    "offline": "Offline"
+    "offline": "Offline",
+    "addBotShort": "Bot"
   },
   "roleReveal": {
     "title": "Your Secret Role",
@@ -205,7 +206,6 @@
     "proposalOf": "Proposal {n} of {total}",
     "youLead": "You lead this quest",
     "leaderChoosing": "{name} is choosing a team",
-    "selectKnights": "Select {size} for mission {round}",
     "proposeTeam": "Announce draft team"
   },
   "vote": {
@@ -223,7 +223,6 @@
   },
   "missionVote": {
     "title": "The Quest Unfolds",
-    "oneFailSpoils": "one fail spoils it",
     "success": "Success",
     "fail": "Fail",
     "loyalOnlySuccess": "Blue team players can only play Success."
@@ -235,10 +234,8 @@
   },
   "lady": {
     "title": "The Lady of the Lake",
-    "chooseExamine": "Choose one soul to examine their allegiance",
     "gazingWaters": "{name} gazes into the waters…",
     "watersReveal": "The waters reveal {name} to be",
-    "onlyYouSeen": "Only you have seen this. The quest continues…",
     "examineShort": "Examine"
   },
   "assassin": {
@@ -250,7 +247,6 @@
     "viewEnding": "View the ending",
     "skipAnimation": "Skip animation",
     "title": "The Assassin Strikes",
-    "nameMerlin": "Name the one you believe to be Merlin.",
     "strikeSeat": "Strike {seat}",
     "strike": "Strike",
     "contemplating": "The Assassin contemplates their fateful choice…",
@@ -498,7 +494,8 @@
     "missionCount": "{count} / {total} played",
     "collecting": "Collecting quest cards",
     "shuffling": "Shuffling…",
-    "anonymousCards": "Anonymous quest cards"
+    "anonymousCards": "Anonymous quest cards",
+    "teamSlots": "Team {count} of {total}"
   },
   "discussion": {
     "flow": "Proposal flow",
@@ -509,7 +506,6 @@
     "speechProgress": "Speaker {current} of {total}",
     "order": "Speak in the chosen direction, with the leader last",
     "finalizing": "Leader finalizes the team",
-    "finalizingHint": "Keep or change the draft team, then confirm to begin voting.",
     "rules": "Draft a team → leader explains and chooses clockwise (left) or counterclockwise (right) speaking order → discussion, with the leader last → finalize the team → vote.",
     "steps": {
       "TeamBuilding": "Draft",
@@ -519,8 +515,9 @@
       "Voting": "Vote"
     },
     "teamChanged": "The leader changed the team",
-    "startClockwise": "Speak clockwise",
-    "startCounterclockwise": "Speak counterclockwise"
+    "startFrom": "Seat {seat} first",
+    "startSeat": "Seat {seat}",
+    "startVerb": "first"
   },
   "timing": {
     "role": "View role",

@@ -1,8 +1,9 @@
 import { useTranslations } from 'use-intl';
-import type { ClientGameState } from '@/lib/engine';
+import { speakingOrder, type ClientGameState } from '@/lib/engine';
 import type { Ack } from '@/lib/socket/types';
 import { gameActions } from '@/lib/socket/client';
 import { actionAvailability } from '@/lib/game/actionAvailability';
+import { GameIcon } from './GameArt';
 
 export interface PickConfig {
   size: number;
@@ -42,7 +43,7 @@ export function HandArea({
     return (
       <button
         type="button"
-        className={`table-action ${pick.tone === 'crimson' ? 'is-negative' : ''}`}
+        className={`table-action ${pick.tone === 'crimson' ? 'is-negative' : pick.tone === 'sky' ? 'is-positive' : ''}`}
         disabled={disabled || selected.length !== pick.size}
         onClick={() => void run(pick.onConfirm)}
       >
@@ -53,25 +54,35 @@ export function HandArea({
     );
   const canStartDiscussion = game.phase === 'TeamAnnouncement' && game.players.some((p) => p.id === myPlayerId && p.isLeader);
   const canEndSpeech = game.phase === 'Discussion' && game.discussion?.order[game.discussion.speakerIndex] === myPlayerId;
-  if (canStartDiscussion)
+  if (canStartDiscussion && myPlayerId) {
+    // Name the seat that opens each way round: the leader's neighbour on either side.
+    const openers = (['clockwise', 'counterclockwise'] as const).map((direction) => ({
+      direction,
+      // The client is not told the flow version. Of the versions that wait for the leader here, only the
+      // current one (5) is still dealt; version 2 games, where the leader always spoke first, predate it.
+      player: game.players.find((p) => p.id === speakingOrder(game.players, myPlayerId, direction, 5)[0]),
+    }));
     return (
       <>
-        <button type="button" className="table-action" disabled={disabled}
-          onClick={() => void run(() => actions.startDiscussion('clockwise'))}>
-          <svg className="discussion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-            <path d="M19 12H5m7-7-7 7 7 7" />
-          </svg>
-          <span>{t('discussion.startClockwise')}</span>
-        </button>
-        <button type="button" className="table-action" disabled={disabled}
-          onClick={() => void run(() => actions.startDiscussion('counterclockwise'))}>
-          <span>{t('discussion.startCounterclockwise')}</span>
-          <svg className="discussion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-            <path d="M5 12h14m-7-7 7 7-7 7" />
-          </svg>
-        </button>
+        {openers.map(({ direction, player }) => player && (
+          <button key={direction} type="button" className="table-action is-compact" disabled={disabled}
+            title={`${player.seat + 1}. ${player.name}`}
+            aria-label={t('discussion.startFrom', { seat: player.seat + 1 })}
+            onClick={() => void run(() => actions.startDiscussion(direction))}>
+            {/* You sit mid-row with seats rising left to right, so seat X-1 is always on your left. */}
+            <span className="table-start-seat">
+              {direction === 'clockwise' && <Arrow side="left" />}
+              {t('discussion.startSeat', { seat: player.seat + 1 })}
+              {/* Stacked on a phone the arrow stays by the seat; on one line it closes the label. */}
+              {direction === 'counterclockwise' && <Arrow side="right" className="is-stacked" />}
+            </span>
+            <span className="table-start-verb">{t('discussion.startVerb')}</span>
+            {direction === 'counterclockwise' && <Arrow side="right" className="is-inline" />}
+          </button>
+        ))}
       </>
     );
+  }
   if (canEndSpeech)
     return (
       <button type="button" className="table-action" disabled={disabled}
@@ -88,6 +99,7 @@ export function HandArea({
           disabled={disabled}
           onClick={() => void run(() => actions.vote('approve'))}
         >
+          <GameIcon name="approve" className="table-action-icon" />
           {t('vote.approve')}
         </button>
         <button
@@ -96,6 +108,7 @@ export function HandArea({
           disabled={disabled}
           onClick={() => void run(() => actions.vote('reject'))}
         >
+          <GameIcon name="reject" className="table-action-icon" />
           {t('vote.reject')}
         </button>
       </>
@@ -109,6 +122,7 @@ export function HandArea({
           disabled={disabled}
           onClick={() => void run(() => actions.missionCard('success'))}
         >
+          <GameIcon name="missionSuccess" className="table-action-icon" />
           {t('missionVote.success')}
         </button>
         <button
@@ -120,8 +134,14 @@ export function HandArea({
           }
           onClick={() => void run(() => actions.missionCard('fail'))}
         >
+          <GameIcon name="missionFail" className="table-action-icon" />
           {t('missionVote.fail')}
-          {!canFail && <span aria-hidden="true"> · 🔒</span>}
+          {!canFail && (
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+              <rect x="4.5" y="9" width="11" height="8" rx="1.5" />
+              <path d="M7 9V6.5a3 3 0 0 1 6 0V9" />
+            </svg>
+          )}
         </button>
       </>
     );
@@ -133,5 +153,13 @@ export function HandArea({
           ? 'table.waitingMissionCards'
           : 'table.waiting')}
     </div>
+  );
+}
+
+function Arrow({ side, className }: { side: 'left' | 'right'; className?: string }) {
+  return (
+    <svg className={`table-action-arrow ${className ?? ''}`} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={side === 'left' ? 'M13 8H3m4-4L3 8l4 4' : 'M3 8h10M9 4l4 4-4 4'} />
+    </svg>
   );
 }

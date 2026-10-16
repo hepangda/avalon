@@ -29,7 +29,6 @@ export function LadyResultReveal({ game, result, onClose }: {
             <GameIcon name={evil ? 'reject' : 'approve'} className="h-14 w-14" />
             <span className={`font-serif text-xl ${evil ? 'text-crimson-bright' : 'text-sky-200'}`}>{t(evil ? 'team.evil' : 'team.good')}</span>
           </div>} />
-        <p className="text-xs text-parchment/40">{t('lady.onlyYouSeen')}</p>
         <button type="button" className="table-action w-full" onClick={onClose}>{t('mission.close')}</button>
       </div>
     </TableSheet>

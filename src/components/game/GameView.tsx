@@ -1,5 +1,5 @@
 import { ActionTimerBadge } from '@/components/game/ActionTimerBadge';
-import { ActionTimerBar } from '@/components/game/ActionTimerBar';
+import { DockTimer } from '@/components/game/SeatTimer';
 import { AssassinationReveal } from '@/components/game/AssassinationReveal';
 import { GameTable } from '@/components/game/GameTable';
 import { GameTools } from '@/components/game/GameTools';
@@ -39,11 +39,12 @@ import { EarlyAssassinationVote } from './EarlyAssassinationVote';
 
 /** Shared table: live rooms supply socket actions; the gallery supplies a local engine. */
 export function GameView({
-  code, game, isHost, conn, myPlayerId,
+  code, roomName, game, isHost, conn, myPlayerId,
   selfLatency, notice = null, onDismissNotice, actions = gameActions,
   onRestart = roomActions.restart, functionsContent,
 }: {
   code: string;
+  roomName?: string;
   game: ClientGameState | null;
   isHost: boolean;
   conn: 'connected' | 'connecting' | 'disconnected';
@@ -245,7 +246,7 @@ export function GameView({
       );
     return (
       <TableCard
-        state={pick ? 'empty' : 'inactive'}
+        state="inactive"
         nominee={selected.includes(p.id) ? p.seat + 1 : undefined}
         assassination={game!.phase === 'Assassination'}
       />
@@ -277,22 +278,12 @@ export function GameView({
       <ReconnectOverlay active={notice?.type === 'session_replaced' || (conn !== 'connected' && notice?.type !== 'join_error')} sessionReplaced={notice?.type === 'session_replaced'} />
       <TableFrame
         code={code}
+        title={roomName}
         onOpenReport={() => setLogChannel('public')}
         report={
           <LogPanel game={reportGame ?? game} channel={logChannel} onChannelChange={setLogChannel} />
         }
-        headerAction={(openReport) => (
-          <button
-            type="button"
-            className="table-tool"
-            onClick={() => {
-              setLogChannel('rules');
-              openReport();
-            }}
-          >
-            {t('table.rules')}
-          </button>
-        )}
+        dockStart={<IdentityCard game={game} myPlayerId={myPlayerId} />}
         tools={(viewToggle) => (
           <GameTools
             game={game}
@@ -302,7 +293,6 @@ export function GameView({
             notesControl={notesControl}
             onClearNotes={() => { clearNotes(); setNoteTarget(null); }}
             hasManualNotes={Object.keys(notes).length > 0}
-            identity={<IdentityCard game={game} myPlayerId={myPlayerId} />}
           />
         )}
         connected={conn === 'connected'}
@@ -352,9 +342,7 @@ export function GameView({
         }
         footer={
           <>
-            {!presentation && !isOver && selfTimer && <div className="table-timing-status">
-              <ActionTimerBadge timer={selfTimer} now={now} />
-            </div>}
+            {!presentation && !isOver && selfTimer && <DockTimer timer={selfTimer} now={now} />}
             <div className="table-actions">
               {needsRoleReveal ? (
                 <div className="table-action-placeholder" />
@@ -364,26 +352,32 @@ export function GameView({
                 </div>
               ) : isOver ? (
                 <>
-                  <button
-                    type="button"
-                    className="table-action"
-                    disabled={!isHost || action.busy || blocked}
-                    title={!isHost ? t('gameOver.waitingRestart') : undefined}
-                    onClick={() => void action.run(onRestart)}
-                  >
-                    {t(action.busy ? 'gameOver.restarting' : 'gameOver.playAgain')}
-                  </button>
+                  {isHost ? (
+                    <button
+                      type="button"
+                      className="table-action"
+                      disabled={action.busy || blocked}
+                      onClick={() => void action.run(onRestart)}
+                    >
+                      {t(action.busy ? 'gameOver.restarting' : 'gameOver.playAgain')}
+                    </button>
+                  ) : (
+                    <p className="table-action-placeholder gap-2.5" aria-live="polite">
+                      <span className="lobby-pulse" aria-hidden="true" />
+                      {t('gameOver.waitingRestart')}
+                    </p>
+                  )}
                   {game.gameId ? (
                     <Link
                       href={`/replay/${game.gameId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="table-action"
+                      className="table-action is-quiet"
                     >
                       {t('gameOver.viewReplay')}
                     </Link>
                   ) : (
-                    <button type="button" className="table-action" disabled>
+                    <button type="button" className="table-action is-quiet" disabled>
                       {t('gameOver.viewReplay')}
                     </button>
                   )}
@@ -417,10 +411,8 @@ export function GameView({
           card={card}
           speakerId={!presentation ? speakerId : undefined}
           proposalLayout={!presentation && showProposals && activePhase !== 'Voting'}
-          playerStatus={(p) => {
-            const timer = !presentation && game.actionTimers?.find((item) => item.playerId === p.id);
-            return timer ? <ActionTimerBar timer={timer} now={now} /> : null;
-          }}
+          seatTimer={(p) => presentation ? undefined : game.actionTimers?.find((item) => item.playerId === p.id)}
+          now={now}
           selectedIds={selected}
           selectable={!!pick && !blocked && !action.busy}
           candidateIds={candidateIds}

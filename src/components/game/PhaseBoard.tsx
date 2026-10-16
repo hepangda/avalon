@@ -4,6 +4,8 @@ import { ROLE_TEAM_UI } from '@/lib/game/roleMeta';
 import type { TablePresentation } from '@/lib/game/tablePresentation';
 import { useTranslations } from 'use-intl';
 import { TableCard } from './TableCard';
+import { GameIcon } from './GameArt';
+import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 
 export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isAssassin, canVote, canMission, selected, round, teamSize }: {
   game: ClientGameState; presentation: TablePresentation | null;
@@ -15,21 +17,27 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
   const leader = game.players.find((p) => p.seat === game.leaderIndex);
   const speakerId = game.phase === 'Discussion' ? game.discussion?.order[game.discussion.speakerIndex] : undefined;
   const speaker = game.players.find((p) => p.id === speakerId);
-  function chips(ids: string[]) {
+  /** The team as portraits on the felt; open places show how many are still to be named. */
+  function chips(ids: string[], size = ids.length, tone: 'gold' | 'sky' | 'crimson' = 'gold') {
     return (
-      <div className="table-team-chips">
-        {ids.map((id) => {
-          const p = game!.players.find((player) => player.id === id);
-          return (
-            p && (
-              <span key={id} className="table-team-chip">
-                <b className="font-medium">{p.seat + 1}</b>
-                <span>{p.name}</span>
-              </span>
-            )
+      <ol className="table-team-chips" data-tone={tone} aria-label={t('table.teamSlots', { count: ids.length, total: size })}>
+        {Array.from({ length: Math.max(size, ids.length) }, (_, index) => {
+          const p = game.players.find((player) => player.id === ids[index]);
+          return p ? (
+            <li key={p.id} className="table-team-chip" title={`${p.seat + 1}. ${p.name}`}>
+              <PlayerAvatar playerId={p.id} avatarUrl={p.claimed === false ? undefined : p.avatarUrl} name={p.name} className="table-team-avatar">
+                <b className="table-team-seat">{p.seat + 1}</b>
+              </PlayerAvatar>
+              <span className="table-team-name">{p.name}</span>
+            </li>
+          ) : (
+            <li key={`open-${index}`} className="table-team-chip is-open" aria-hidden="true">
+              <span className="table-team-avatar" />
+              <span className="table-team-name" />
+            </li>
           );
         })}
-      </div>
+      </ol>
     );
   }
   let board;
@@ -111,17 +119,7 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
               name: leader ? `${leader.seat + 1}. ${leader.name}` : '',
             })}
         </h2>
-        {game.phase === 'TeamFinalizing' && <p className="table-phase-detail">{t('discussion.finalizingHint')}</p>}
-        {game.phase === 'TeamFinalizing' && !isLeader ? chips(team) : selected.length > 0 ? (
-          chips(selected)
-        ) : (
-          <p className="table-phase-detail">
-            {t('teamBuilder.selectKnights', {
-              size: teamSize,
-              round: round + 1,
-            })}
-          </p>
-        )}
+        {chips(isLeader ? selected : game.phase === 'TeamFinalizing' ? team : [], teamSize)}
       </>
     );
   else if (game.phase === 'Voting')
@@ -139,29 +137,26 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
         <h2 className="table-phase-title" aria-live="polite">
           {t(canMission ? 'table.missionPrompt' : 'table.waitingMissionCards')}
         </h2>
-        <p className="table-phase-detail">
-          {t(
-            game.config.requiredFails[round] === 2
-              ? 'table.twoFails'
-              : 'missionVote.oneFailSpoils',
-          )}
-        </p>
+        {chips(team, team.length, 'sky')}
+        {game.config.requiredFails[round] === 2 && <p className="table-phase-detail">{t('table.twoFails')}</p>}
       </>
     );
   else if (game.phase === 'LadyOfLake')
     board = (
       <>
-        <h2 className="table-phase-title">{t('lady.title')}</h2>
-        <p className="table-phase-detail">
+        <h2 className="table-phase-title">
           {isHolder
-            ? t('lady.chooseExamine')
+            ? t('lady.title')
             : t('lady.gazingWaters', {
               name:
                 game.players.find((p) => p.id === game.lady?.holderId)
                   ?.name ?? '',
             })}
-        </p>
-        {chips(selected)}
+        </h2>
+        <div className="table-lady-pool">
+          <GameIcon name="lady" className="table-lady-emblem" />
+          {isHolder && chips(selected, 1, 'sky')}
+        </div>
       </>
     );
   else if (game.phase === 'Assassination')
@@ -183,9 +178,7 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
               </div>
             ))}
         </div>
-        <p className="table-phase-detail">
-          {t(isAssassin ? 'assassin.nameMerlin' : 'assassin.contemplating')}
-        </p>
+        {isAssassin ? chips(selected, 1, 'crimson') : <p className="table-phase-detail">{t('assassin.contemplating')}</p>}
       </>
     );
   return board;

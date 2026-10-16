@@ -50,7 +50,7 @@ export default function GamePage() {
     }
     return roomActions.restart();
   }
-  return <><GameView key={`${code}-${recoveryRevision}`} code={code} game={game} isHost={isHost} conn={syncing && conn === 'connected' ? 'connecting' : conn}
+  return <><GameView key={`${code}-${recoveryRevision}`} code={code} roomName={snapshot?.code === code ? snapshot.name : undefined} game={game} isHost={isHost} conn={syncing && conn === 'connected' ? 'connecting' : conn}
     myPlayerId={myPlayerId}
     selfLatency={selfLatency} notice={notice}
     onRestart={requestRestart}

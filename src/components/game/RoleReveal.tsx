@@ -10,6 +10,7 @@ import { useTranslations } from 'use-intl';
 import { GameIcon } from './GameArt';
 import { RoleCard } from './RoleCard';
 import { RoleKnowledge } from './RoleKnowledge';
+import { flyToChip, returnToCenter } from './cardFlight';
 
 interface RoleRevealProps {
   onAck?: typeof gameActions.ackRole;
@@ -53,6 +54,14 @@ type PoseFrames = Omit<Pose, 'x' | 'y' | 'rotate'> & Record<'x' | 'y' | 'rotate'
 const FAN_STAGGER = 0.06;
 const FLIP_STAGGER = 0.09;
 const DEAL_STAGGER = 0.1;
+/** How long the dealt card rests at its seat before the player picks it up. */
+const PICKUP_DELAY = 0.75;
+/** Lifting the card off the table into the player's hand, face down. */
+const LIFT = 0.75;
+/** Putting the read card away into the dock's identity card. */
+const STOW = 0.75;
+/** Turning it over when the player taps: peek under a corner, then flip. */
+const TURN = { duration: 1, times: [0, 0.3, 0.45, 1] };
 const EASE_OUT = [0.2, 0.8, 0.25, 1] as const;
 
 /** Card centers in the layer's own coordinates, so a transformed host (the debug gallery) still lines up. */
@@ -200,24 +209,36 @@ export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onRe
     if (stage === 'dealt') myCardRef.current?.focus({ preventScroll: true });
   }, [stage, storageKey]);
 
+  // Once the deal settles the player picks up their own card; turning it over is theirs to do.
+  useEffect(() => {
+    if (stage !== 'dealt' || !live) return;
+    const timer = setTimeout(() => setStage((current) => current === 'dealt' ? 'reveal' : current), reduceMotion ? 0 : PICKUP_DELAY * 1000);
+    return () => clearTimeout(timer);
+  }, [stage, live, reduceMotion]);
+
   useEffect(() => { layerRef.current?.focus({ preventScroll: true }); }, []);
 
   const skip = useCallback(() => {
     if (ceremony) setStage('dealt');
   }, [ceremony]);
 
-  // Lift the dealt card from its seat into the reveal frame, turning it over on the way.
+  const [faceUp, setFaceUp] = useState(false);
+  const [held, setHeld] = useState(false);
+
+  // Pick the dealt card up from its seat and hold it face down until the player turns it over.
   useLayoutEffect(() => {
     if (stage !== 'reveal') return;
     const layer = layerRef.current;
     const pop = popRef.current;
-    const rotor = rotorRef.current;
-    if (!layer || !pop || !rotor) return;
+    if (!layer || !pop) return;
     const seat = geometry?.seats[mySlot];
-    const duration = reduceMotion ? 0 : 0.7;
-    if (!geometry || !seat) {
+    const settle = () => {
+      setHeld(true);
+      pop.focus({ preventScroll: true });
+    };
+    if (reduceMotion || !geometry || !seat) {
       pop.style.opacity = '1';
-      void animate(rotor, { rotateY: [180, 0] }, { duration, ease: 'easeInOut' });
+      settle();
       return;
     }
     const origin = layer.getBoundingClientRect();
@@ -225,10 +246,51 @@ export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onRe
     const dx = seat.x - (box.left - origin.left + box.width / 2);
     const dy = seat.y - (box.top - origin.top + box.height / 2);
     const scale = (geometry.height * seat.scale) / box.height;
-    void animate(pop, { x: [dx, 0], y: [dy, 0], scale: [scale, 1], opacity: [1, 1] }, { duration, ease: EASE_OUT });
-    void animate(rotor, { rotateY: [180, 0] }, { duration: reduceMotion ? 0 : 0.6, delay: reduceMotion ? 0 : 0.12, ease: 'easeInOut' });
+    void animate(pop, {
+      x: [dx, 0, 0],
+      y: [dy, -6, 0],
+      scale: [scale, 1.03, 1],
+      rotate: [0, -5, -3],
+      opacity: [1, 1, 1],
+    }, { duration: LIFT, times: [0, 0.75, 1], ease: [EASE_OUT, 'easeInOut'] }).then(settle);
     // Only the moment of lifting matters; later resizes keep the card centered by layout.
   }, [stage]);
+
+  function turnOver() {
+    if (faceUp || !held) return;
+    setFaceUp(true);
+    const pop = popRef.current;
+    const rotor = rotorRef.current;
+    if (!pop || !rotor) return;
+    if (reduceMotion) {
+      void animate(rotor, { rotateY: 0 }, { duration: 0 });
+      return;
+    }
+    void animate(rotor, {
+      rotateY: [180, 156, 154, 0],
+      rotateX: [0, 10, 8, 0],
+    }, { ...TURN, ease: ['easeOut', 'linear', [0.3, 0, 0.2, 1]] });
+    void animate(pop, { rotate: [-3, -3, 0] }, { duration: TURN.duration, times: [0, 0.45, 1], ease: 'easeOut' });
+  }
+
+  const [stowed, setStowed] = useState(false);
+
+  /** Turn the card face down and slide it into the identity card at the dock; resolves when it lands. */
+  async function stow() {
+    setStowed(true);
+    const pop = popRef.current;
+    const rotor = rotorRef.current;
+    if (!pop || !rotor || reduceMotion) return;
+    await flyToChip(pop, rotor, document.querySelector<HTMLElement>('.identity-chip'), STOW);
+  }
+
+  /** Bring the card back out when the room did not take the acknowledgement. */
+  function unstow() {
+    setStowed(false);
+    const pop = popRef.current;
+    const rotor = rotorRef.current;
+    if (pop && rotor) returnToCenter(pop, rotor, reduceMotion ? 0 : 0.45);
+  }
 
   async function handleAck() {
     // The overlay closes when roleAcks (in projected state) includes us; no need
@@ -237,15 +299,18 @@ export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onRe
     setConfirmReroll(false);
     setAcking(true);
     setError(null);
+    await stow();
     try {
       const res = await onAck(game.roleRevision ?? 0);
       if (!res.ok) {
         setError(res.error?.message ?? t('table.actionFailed'));
         setAcking(false);
+        unstow();
       }
     } catch {
       setError(t('table.actionFailed'));
       setAcking(false);
+      unstow();
     }
   }
 
@@ -310,8 +375,17 @@ export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onRe
           flipDelay: 0,
         };
       }
-      case 'deal':
-        return { initial, animate: atSeat, transition: { delay: slot * DEAL_STAGGER, duration: 0.55, ease: EASE_OUT }, faceUp: false, flipDelay: 0 };
+      case 'deal': {
+        // Each card spins a little as it slides across the felt, as a flicked card does.
+        const spin = (slot % 2 ? 1 : -1) * (10 + (slot % 3) * 4);
+        return {
+          initial,
+          animate: { ...atSeat, x: [stack.x, atSeat.x], y: [stack.y, atSeat.y], rotate: [stack.rotate, spin, 0], scale: atSeat.scale },
+          transition: { delay: slot * DEAL_STAGGER, duration: 0.55, ease: EASE_OUT, rotate: { delay: slot * DEAL_STAGGER, duration: 0.55, times: [0, 0.55, 1], ease: 'easeOut' } },
+          faceUp: false,
+          flipDelay: 0,
+        };
+      }
       default:
         return { initial, animate: atSeat, transition: { duration: reduceMotion ? 0 : 0.3, ease: 'easeOut' }, faceUp: false, flipDelay: 0 };
     }
@@ -414,13 +488,28 @@ export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onRe
             className="role-deal-scrim"
             aria-hidden="true"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: reduceMotion ? 0 : 0.4 }}
+            animate={{ opacity: stowed ? 0 : 1 }}
+            transition={{ duration: reduceMotion ? 0 : stowed ? STOW * 0.8 : 0.4 }}
           />
           <div className="role-deal-reveal" onClick={(event) => event.stopPropagation()}>
-            {timer && <div className="role-deal-timer">{timer}</div>}
+            {timer && <motion.div className="role-deal-timer" animate={{ opacity: stowed ? 0 : 1 }} transition={{ duration: 0.2 }}>{timer}</motion.div>}
             <div className="role-deal-frame">
-              <div ref={popRef} className="role-deal-pop" style={{ opacity: 0 }}>
+              <div
+                ref={popRef}
+                className="role-deal-pop"
+                style={{ opacity: 0 }}
+                data-held={held && !faceUp ? '' : undefined}
+                role={faceUp ? undefined : 'button'}
+                tabIndex={faceUp ? undefined : 0}
+                aria-label={faceUp ? undefined : t('roleReveal.tapToReveal')}
+                onClick={turnOver}
+                onKeyDown={(event) => {
+                  if (!faceUp && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    turnOver();
+                  }
+                }}
+              >
                 <div ref={rotorRef} className="identity-card-rotor" style={{ transform: 'rotateY(180deg)' }}>
                   <div className="identity-card-face">
                     {role && <RoleCard role={role} variant={variant} />}
@@ -433,9 +522,10 @@ export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onRe
             </div>
             <motion.div
               className="role-deal-details"
+              style={{ visibility: faceUp ? undefined : 'hidden', pointerEvents: stowed ? 'none' : undefined }}
               initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: reduceMotion ? 0 : 0.6, duration: 0.3 }}
+              animate={faceUp && !stowed ? { opacity: 1, y: 0 } : { opacity: 0, y: reduceMotion ? 0 : 10 }}
+              transition={{ delay: faceUp && !stowed && !reduceMotion ? TURN.duration * 0.8 : 0, duration: stowed ? 0.18 : 0.3 }}
             >
               <RoleKnowledge game={game} knownPlayers={knownPlayers} />
               <div className="flex w-full items-stretch gap-2">

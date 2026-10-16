@@ -10,7 +10,8 @@ import {
 } from '@/lib/game/tablePresentation';
 import { MissionTableReveal } from './MissionTableReveal';
 import { TableCard } from './TableCard';
-import type { ClientPlayer } from '@/lib/engine';
+import type { ActionTimer, ClientPlayer } from '@/lib/engine';
+import { SeatTimer } from './SeatTimer';
 import { roleNoteTone, type RoleNotes } from '@/lib/game/roleNotes';
 import { useRoleText } from '@/lib/game/useRoleText';
 
@@ -25,7 +26,8 @@ interface GameTableProps {
   highlightIds?: string[];
   board: ReactNode;
   card?: (player: ClientPlayer) => ReactNode;
-  playerStatus?: (player: ClientPlayer) => ReactNode;
+  seatTimer?: (player: ClientPlayer) => ActionTimer | undefined;
+  now?: number;
   speakerId?: string;
   proposalLayout?: boolean;
   missionReveal?: Extract<TablePresentation, { kind: 'mission' }> | null;
@@ -50,7 +52,8 @@ export function GameTable({
   highlightIds = [],
   board,
   card,
-  playerStatus,
+  seatTimer,
+  now = Date.now(),
   speakerId,
   proposalLayout = false,
   missionReveal,
@@ -80,6 +83,10 @@ export function GameTable({
         : note === 'good' || note === 'evil' ? roleText.teamShort(note) : roleText.shortName(note)
       : t('roleNotes.unknown');
     const noteTeam = note ? roleNoteTone(note) : undefined;
+    // Notes are edited from the tag under each portrait, so a tap on a face never opens them by accident.
+    const canNote = !!onEditRoleNote && !isMe && !!editableNoteIds?.includes(p.id);
+    const timer = seatTimer?.(p);
+    const noteAria = t('roleNotes.editPlayer', { seat: p.seat + 1, name: p.name, note: noteLabel });
     return (
       <div key={p.id} className="table-player" data-speaking={speakerId === p.id}>
         <div className="table-seat-wrap">
@@ -101,11 +108,14 @@ export function GameTable({
               empty={p.claimed === false}
               className={cn(
                 'table-seat-number',
+                isMe && 'is-mine',
                 selected && 'is-selected',
                 highlightIds.includes(p.id) && 'is-highlighted',
                 p.claimed === false && 'is-empty',
+                !connected && p.claimed !== false && 'is-away',
               )}
             >
+              {timer && <SeatTimer timer={timer} now={now} />}
               {p.isLeader && (
                 <GameIcon
                   name="leader"
@@ -120,6 +130,7 @@ export function GameTable({
                   title={t('lady.title')}
                 />
               )}
+              <span className="seat-number-tag" aria-hidden="true">{p.seat + 1}</span>
               <span
                 className={`player-connection-dot ${latencyDotClass(connected, p.latency)}`}
                 title={connected && p.latency !== undefined ? `${p.latency} ms` : t(
@@ -134,7 +145,7 @@ export function GameTable({
             <span
               className={cn(
                 'table-seat-name',
-                isMe && 'text-gold',
+                isMe && 'is-mine',
                 p.isLeader && 'is-leader',
               )}
             >
@@ -142,17 +153,15 @@ export function GameTable({
             </span>
             <span className="table-seat-meta" aria-hidden="true" />
           </button>
-          <div className="table-seat-labels">
-            <span className="seat-number-tag" title={`${p.seat + 1}. ${p.name}`}>{p.seat + 1}</span>
-            {onEditRoleNote && (isMe || (editableNoteIds && !editableNoteIds.includes(p.id)) ? (
-              <span className="table-role-note" data-team={noteTeam} data-fixed={isKnownNote || undefined}>{noteLabel}</span>
-            ) : (
+          {/* With notes on, every seat carries its tag, unknown until the player marks it. */}
+          {onEditRoleNote && <div className="table-seat-labels">
+            {canNote ? (
               <button
                 type="button"
                 className="table-role-note"
                 data-team={noteTeam}
                 data-fixed={isKnownNote || undefined}
-                aria-label={t('roleNotes.editPlayer', { seat: p.seat + 1, name: p.name, note: noteLabel })}
+                aria-label={noteAria}
                 aria-haspopup="dialog"
                 aria-expanded={notePlayerId === p.id}
                 aria-controls={notePlayerId === p.id ? notePopoverId : undefined}
@@ -161,9 +170,10 @@ export function GameTable({
               >
                 {noteLabel}
               </button>
-            ))}
-            {isMe && <span className="table-self-label">{t('common.you')}</span>}
-          </div>
+            ) : (
+              <span className="table-role-note" data-team={noteTeam} data-fixed={isKnownNote || undefined}>{noteLabel}</span>
+            )}
+          </div>}
         </div>
         <div
           className="table-personal-zone"
@@ -174,15 +184,18 @@ export function GameTable({
               : undefined
           }
           aria-label={t('table.playerCards', { seat: p.seat + 1 })}
+          onClick={canSelect ? () => onToggle?.(p.id) : undefined}
         >
-          {playerStatus?.(p) ?? card?.(p) ?? <TableCard state="inactive" />}
+          {card?.(p) ?? <TableCard state="inactive" />}
         </div>
       </div>
     );
   };
   return (
     <div ref={root} className={cn('game-table has-seat-labels', proposalLayout && 'is-proposal')}>
-      <div className="table-felt" aria-hidden="true" />
+      <div className="table-felt" aria-hidden="true">
+        <GameIcon name="crest" className="table-felt-crest" />
+      </div>
       <div
         className="table-end table-end-top"
         style={{

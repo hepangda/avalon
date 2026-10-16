@@ -1,6 +1,7 @@
 import { useTranslations } from 'use-intl';
 import { GameIcon } from '@/components/game/GameArt';
 import { ProposalLimitIcon } from '@/components/game/ProposalLimitIcon';
+import { MissionToken } from '@/components/game/MissionTrack';
 import { missionSizesFor, rejectionLimit, requiredFailsFor, speechDuration, type GameOptions } from '@/lib/engine';
 import { cn } from '@/lib/utils/cn';
 
@@ -56,18 +57,12 @@ export function LobbyProgress({ count, options }: { count: number; options: Game
           return (
             <li
               key={i}
-              className="table-mission"
               aria-label={`${t('lobby.missionNumber', { n: i + 1 })} · ${size}${needsTwo ? ` · ${t('table.twoFails')}` : ''}`}
               title={needsTwo ? t('table.twoFails') : undefined}
             >
-              <span aria-hidden="true">{size}</span>
-              {needsTwo && (
-                <span className="table-mission-protection" aria-hidden="true">
-                  <svg viewBox="0 0 16 18" fill="none">
-                    <path d="M8 1.5 14 4v4.5c0 3.5-2.5 6-6 8-3.5-2-6-4.5-6-8V4l6-2.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-                  </svg>
-                </span>
-              )}
+              <span className="table-mission">
+                <MissionToken size={size} needsTwo={needsTwo} />
+              </span>
             </li>
           );
         })}

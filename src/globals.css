@@ -26,7 +26,7 @@
 }
 
 .tabular-nums, .seat-number-tag, .discussion-order li,
-.table-team-chip b, .table-mission, .table-latency, .table-nominee-card > span {
+.table-team-chip b, .table-mission-size, .table-latency, .table-nominee-card > span {
   font-family: var(--font-numbers);
   font-variant-numeric: lining-nums tabular-nums;
 }
