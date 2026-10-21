@@ -307,9 +307,6 @@ export function GameView({
         }}
         progress={
           <>
-            {!needsRoleReveal && game.earlyAssassination && <EarlyAssassinationVote
-              key={game.earlyAssassination.id} ballot={game.earlyAssassination} game={game}
-              myPlayerId={myPlayerId} connected={conn === 'connected'} vote={actions.voteAssassination} />}
             <div className={`table-status${showProposals && !presentation ? ' has-discussion' : ''}`}>
               <span className="table-status-label">
                 <span className="table-status-full">
@@ -405,12 +402,17 @@ export function GameView({
         <GameTable
           players={tablePlayers}
           myPlayerId={myPlayerId}
-          board={needsRoleReveal ? null : <PhaseBoard game={game} presentation={presentation} isOver={isOver} isLeader={isLeader}
-            isHolder={isHolder} isAssassin={isAssassin} canVote={canVote} canMission={canMission}
-            selected={selected} round={round} teamSize={teamSize} />}
+          board={needsRoleReveal ? null : <>
+            {/* The ballot rides in the empty band above the title, so opening one moves nothing. */}
+            {game.earlyAssassination && <EarlyAssassinationVote
+              key={game.earlyAssassination.id} ballot={game.earlyAssassination} game={game}
+              myPlayerId={myPlayerId} connected={conn === 'connected'} vote={actions.voteAssassination} />}
+            <PhaseBoard game={game} presentation={presentation} isOver={isOver} isLeader={isLeader}
+              isHolder={isHolder} isAssassin={isAssassin} canVote={canVote} canMission={canMission}
+              selected={selected} round={round} teamSize={teamSize} />
+          </>}
           card={card}
           speakerId={!presentation ? speakerId : undefined}
-          proposalLayout={!presentation && showProposals && activePhase !== 'Voting'}
           seatTimer={(p) => presentation ? undefined : game.actionTimers?.find((item) => item.playerId === p.id)}
           now={now}
           selectedIds={selected}

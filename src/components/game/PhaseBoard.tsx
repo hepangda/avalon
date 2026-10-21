@@ -2,6 +2,7 @@ import type { ClientGameState } from '@/lib/engine';
 import { outcomeReasonKey } from '@/lib/game/outcomeText';
 import { ROLE_TEAM_UI } from '@/lib/game/roleMeta';
 import type { TablePresentation } from '@/lib/game/tablePresentation';
+import type { ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { TableCard } from './TableCard';
 import { GameIcon } from './GameArt';
@@ -40,56 +41,44 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
       </ol>
     );
   }
-  let board;
-  if (presentation?.kind === 'mission' || presentation?.kind === 'assassination') board = null;
-  else if (presentation?.kind === 'vote')
-    board = (
+  // The title keeps one place on the felt in every phase; whatever follows hangs beneath it.
+  const layout = (title: ReactNode, body?: ReactNode) => (
+    <>
+      <div className="table-board-title">{title}</div>
+      <div className="table-board-body">{body}</div>
+    </>
+  );
+  if (presentation?.kind === 'mission' || presentation?.kind === 'assassination') return null;
+  if (presentation?.kind === 'vote')
+    return layout(
+      <h2 className="table-phase-title">
+        {t(presentation.record.approved ? 'cue.voteApproved' : 'cue.voteRejected')}
+      </h2>,
       <>
-        <h2 className="table-phase-title">
-          {t(
-            presentation.record.approved
-              ? 'cue.voteApproved'
-              : 'cue.voteRejected',
-          )}
-        </h2>
         {chips(presentation.record.team)}
         <p className="table-phase-detail">
           {t('vote.tally', {
-            approves: presentation.record.votes.filter(
-              (v) => v.vote === 'approve',
-            ).length,
-            rejects: presentation.record.votes.filter(
-              (v) => v.vote === 'reject',
-            ).length,
+            approves: presentation.record.votes.filter((v) => v.vote === 'approve').length,
+            rejects: presentation.record.votes.filter((v) => v.vote === 'reject').length,
           })}
         </p>
-      </>
+      </>,
     );
-  else if (isOver)
-    board = (
-      <>
-        <h1 className="table-phase-title outcome-title" data-winner={game.outcome?.winner}>
-          {t(
-            game.outcome?.winner === 'good'
-              ? 'gameOver.goodTriumphs'
-              : 'gameOver.evilPrevails',
-          )}
-        </h1>
-        {game.outcome && (
-          <p className="table-phase-detail">
-            {t(`gameOver.${outcomeReasonKey(game.outcome)}`)}
-          </p>
-        )}
-      </>
+  if (isOver)
+    return layout(
+      <h1 className="table-phase-title outcome-title" data-winner={game.outcome?.winner}>
+        {t(game.outcome?.winner === 'good' ? 'gameOver.goodTriumphs' : 'gameOver.evilPrevails')}
+      </h1>,
+      game.outcome && <p className="table-phase-detail">{t(`gameOver.${outcomeReasonKey(game.outcome)}`)}</p>,
     );
-  else if (game.phase === 'TeamAnnouncement' || game.phase === 'Discussion')
-    board = (
+  if (game.phase === 'TeamAnnouncement' || game.phase === 'Discussion')
+    return layout(
+      <h2 className="table-phase-title" aria-live="polite">
+        {game.phase === 'TeamAnnouncement' ? t('discussion.announced') : t('discussion.speaking', {
+          name: speaker ? `${speaker.seat + 1}. ${speaker.name}` : '',
+        })}
+      </h2>,
       <>
-        <h2 className="table-phase-title" aria-live="polite">
-          {game.phase === 'TeamAnnouncement' ? t('discussion.announced') : t('discussion.speaking', {
-            name: speaker ? `${speaker.seat + 1}. ${speaker.name}` : '',
-          })}
-        </h2>
         {chips(team)}
         {game.phase === 'Discussion' && (
           <div className="discussion-turn">
@@ -107,79 +96,62 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
             </ol>
           </div>
         )}
-      </>
+      </>,
     );
-  else if (game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing')
-    board = (
-      <>
-        <h2 className="table-phase-title">
-          {game.phase === 'TeamFinalizing' ? t('discussion.finalizing') : isLeader
-            ? t('teamBuilder.youLead')
-            : t('teamBuilder.leaderChoosing', {
-              name: leader ? `${leader.seat + 1}. ${leader.name}` : '',
-            })}
-        </h2>
-        {chips(isLeader ? selected : game.phase === 'TeamFinalizing' ? team : [], teamSize)}
-      </>
+  if (game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing')
+    return layout(
+      <h2 className="table-phase-title">
+        {game.phase === 'TeamFinalizing' ? t('discussion.finalizing') : isLeader
+          ? t('teamBuilder.youLead')
+          : t('teamBuilder.leaderChoosing', { name: leader ? `${leader.seat + 1}. ${leader.name}` : '' })}
+      </h2>,
+      chips(isLeader ? selected : game.phase === 'TeamFinalizing' ? team : [], teamSize),
     );
-  else if (game.phase === 'Voting')
-    board = (
-      <>
-        <h2 className={`table-phase-title${game.teamChanged ? ' is-team-changed' : ''}`} aria-live="polite">
-          {t(game.teamChanged ? 'discussion.teamChanged' : canVote ? 'table.voteQuestion' : 'table.waitingVotes')}
-        </h2>
-        {chips(team)}
-      </>
+  if (game.phase === 'Voting')
+    return layout(
+      <h2 className={`table-phase-title${game.teamChanged ? ' is-team-changed' : ''}`} aria-live="polite">
+        {t(game.teamChanged ? 'discussion.teamChanged' : canVote ? 'table.voteQuestion' : 'table.waitingVotes')}
+      </h2>,
+      chips(team),
     );
-  else if (game.phase === 'MissionVote')
-    board = (
+  if (game.phase === 'MissionVote')
+    return layout(
+      <h2 className="table-phase-title" aria-live="polite">
+        {t(canMission ? 'table.missionPrompt' : 'table.waitingMissionCards')}
+      </h2>,
       <>
-        <h2 className="table-phase-title" aria-live="polite">
-          {t(canMission ? 'table.missionPrompt' : 'table.waitingMissionCards')}
-        </h2>
         {chips(team, team.length, 'sky')}
         {game.config.requiredFails[round] === 2 && <p className="table-phase-detail">{t('table.twoFails')}</p>}
-      </>
+      </>,
     );
-  else if (game.phase === 'LadyOfLake')
-    board = (
-      <>
-        <h2 className="table-phase-title">
-          {isHolder
-            ? t('lady.title')
-            : t('lady.gazingWaters', {
-              name:
-                game.players.find((p) => p.id === game.lady?.holderId)
-                  ?.name ?? '',
-            })}
-        </h2>
-        <div className="table-lady-pool">
-          <GameIcon name="lady" className="table-lady-emblem" />
-          {isHolder && chips(selected, 1, 'sky')}
-        </div>
-      </>
+  if (game.phase === 'LadyOfLake')
+    return layout(
+      <h2 className="table-phase-title">
+        {isHolder
+          ? t('lady.title')
+          : t('lady.gazingWaters', { name: game.players.find((p) => p.id === game.lady?.holderId)?.name ?? '' })}
+      </h2>,
+      <div className="table-lady-pool">
+        <GameIcon name="lady" className="table-lady-emblem" />
+        {isHolder && chips(selected, 1, 'sky')}
+      </div>,
     );
-  else if (game.phase === 'Assassination')
-    board = (
+  if (game.phase === 'Assassination')
+    return layout(
+      <h2 className="table-phase-title">{t('assassin.title')}</h2>,
       <>
-        <h2 className="table-phase-title">{t('assassin.title')}</h2>
-        <div
-          className="table-public-roles"
-          aria-label={t('assassin.identitiesPublic')}
-        >
+        <div className="table-public-roles" aria-label={t('assassin.identitiesPublic')}>
           {game.players
             .filter((p) => p.role && ROLE_TEAM_UI[p.role] === 'evil')
             .map((p) => (
               <div className="table-public-role" key={p.id}>
                 <TableCard role={p.role} />
-                <span>
-                  {p.seat + 1}. {p.name}
-                </span>
+                <span>{p.seat + 1}. {p.name}</span>
               </div>
             ))}
         </div>
         {isAssassin ? chips(selected, 1, 'crimson') : <p className="table-phase-detail">{t('assassin.contemplating')}</p>}
-      </>
+      </>,
     );
-  return board;
+  return null;
 }

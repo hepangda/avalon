@@ -194,7 +194,8 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .pact-ribbon {
-  align-self: center;
+  grid-row: 1;
+  align-self: end;
   width: min(100%, 460px);
   min-height: 32px;
   padding: 3px 10px 3px 6px;

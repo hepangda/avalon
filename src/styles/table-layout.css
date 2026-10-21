@@ -5,7 +5,8 @@
   /* Avatars follow the table width up to this cap, then hold still. */
   --seat-max-diameter: 56px;
   --seat-name-height: 18px;
-  --seat-meta-height: 14px;
+  /* The seat's spare meta row stays shut in every phase, so seats never shift between turns. */
+  --seat-meta-height: 0px;
   /* Room between a portrait and anything stacked on it: the timer ring reaches 6px out. */
   --ring-clearance: 8px;
   --seat-card-gap: 12px;

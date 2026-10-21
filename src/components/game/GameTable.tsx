@@ -29,7 +29,6 @@ interface GameTableProps {
   seatTimer?: (player: ClientPlayer) => ActionTimer | undefined;
   now?: number;
   speakerId?: string;
-  proposalLayout?: boolean;
   missionReveal?: Extract<TablePresentation, { kind: 'mission' }> | null;
   onRevealComplete?: (id: string) => void;
   roleNotes?: RoleNotes;
@@ -55,7 +54,6 @@ export function GameTable({
   seatTimer,
   now = Date.now(),
   speakerId,
-  proposalLayout = false,
   missionReveal,
   onRevealComplete,
   roleNotes = {},
@@ -192,7 +190,7 @@ export function GameTable({
     );
   };
   return (
-    <div ref={root} className={cn('game-table has-seat-labels', proposalLayout && 'is-proposal')}>
+    <div ref={root} className="game-table has-seat-labels">
       <div className="table-felt" aria-hidden="true">
         <GameIcon name="crest" className="table-felt-crest" />
       </div>

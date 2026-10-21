@@ -60,9 +60,7 @@
 .table-seat-number.is-selected {
   border-color: #f6dc85;
   box-shadow: 0 0 0 3px #231e16, 0 0 0 6px #e6c14a, 0 0 26px rgb(230 193 74 / 0.55);
-  transform: translateY(-2px);
 }
-.table-end-top .table-seat-number.is-selected { transform: translateY(2px); }
 .seat-number-tag {
   position: absolute;
   z-index: 2;
@@ -226,18 +224,40 @@
   font-size: 13px;
 }
 .table-role-card { border-radius: 6px; }
+/* The title sits on one fixed line a little above the middle; the phase's
+   detail hangs beneath it, so neither text nor tokens move what is above. */
 .table-center {
   container: table-center / size;
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1.35fr);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
   gap: 7px;
   min-height: 0;
   padding: 8px 10px;
   text-align: center;
+}
+.table-board-title {
+  grid-row: 2;
+  max-width: 100%;
+  min-width: 0;
+}
+.table-board-title .table-phase-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.table-board-body {
+  grid-row: 3;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  min-width: 0;
 }
 .table-phase-title {
   font-family: var(--font-cinzel), "Songti SC", serif;
@@ -381,7 +401,11 @@
 }
 .table-dock-main {
   position: relative;
+  display: grid;
   flex: 1;
+  align-content: center;
+  /* As tall as the identity card, so the dock keeps one height with or without it. */
+  min-height: 50px;
   min-width: 0;
 }
 .table-dock .table-actions { margin-bottom: 0; }
@@ -695,7 +719,6 @@
   .table-screen {
     --seat-max-diameter: 52px;
     --seat-name-height: 16px;
-    --seat-meta-height: 12px;
     --card-min-height: 40px;
     --seat-card-gap: 11px;
   }
