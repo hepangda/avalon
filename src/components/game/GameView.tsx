@@ -12,7 +12,6 @@ import { MissionTrack } from '@/components/game/MissionTrack';
 import { ProposalTracker } from '@/components/game/ProposalTracker';
 import { RoleNotePopover } from '@/components/game/RoleNotePopover';
 import { RoleReveal } from '@/components/game/RoleReveal';
-import { RoundHistoryModal } from '@/components/game/RoundHistoryModal';
 import { ShowKnownNotes } from '@/components/game/ShowKnownNotes';
 import { TableCard } from '@/components/game/TableCard';
 import { TableFrame } from '@/components/game/TableFrame';
@@ -24,6 +23,7 @@ import { displayedRoleNotes, knownRoleNotes, roleNoteOptions, roleNotesKey } fro
 import { useGameClock } from '@/lib/game/useGameClock';
 import { useRoleNotes } from '@/lib/game/useRoleNotes';
 import { useRoomAction } from '@/lib/game/useRoomAction';
+import { useLadyResult } from '@/lib/game/useLadyResult';
 import { useTablePresentation } from '@/lib/game/useTablePresentation';
 import {
   gameActions,
@@ -58,9 +58,8 @@ export function GameView({
   functionsContent?: ReactNode;
 }) {
   const t = useTranslations();
-  const [historyRound, setHistoryRound] = useState<number | null>(null);
+  const [matrixFocus, setMatrixFocus] = useState<{ round: number; at: number } | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
-  const [ladySeen, setLadySeen] = useState<string | null>(null);
   const [logChannel, setLogChannel] = useState<LogChannel>('public');
   const [noteTarget, setNoteTarget] = useState<{ id: string; anchor: HTMLButtonElement } | null>(null);
   const notePopoverId = useId();
@@ -76,9 +75,9 @@ export function GameView({
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
   const { presentation, reportGame, finish } = useTablePresentation(game);
   const ending = useEndingReveal(presentation?.kind === 'gameOver' ? presentation : null, finish);
+  const lady = useLadyResult(game, myPlayerId);
   const draftKey = game?.proposedTeam?.join(',') ?? '';
   useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
-  useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
 
   if (!game)
     return (
@@ -117,7 +116,6 @@ export function GameView({
   const speakerId = game.phase === 'Discussion' ? game.discussion?.order[game.discussion.speakerIndex] : undefined;
   const selfTimer = game.actionTimers?.find((timer) => timer.playerId === myPlayerId);
   const isHolder = game.lady?.holderId === myPlayerId;
-  const ladyReveal = game.privateLadyResult;
   const isAssassin = !!game.assassinCandidates;
   const isOver = game.phase === 'GameOver' && presentation?.kind !== 'assassination';
   const activePhase =
@@ -127,13 +125,17 @@ export function GameView({
         ? 'MissionResult'
         : presentation?.kind === 'assassination'
           ? 'Assassination'
-          : game.phase;
+          : presentation?.kind === 'lady'
+            ? 'LadyOfLake'
+            : game.phase;
   const round =
     presentation?.kind === 'vote'
       ? presentation.record.roundIndex
       : presentation?.kind === 'mission'
         ? presentation.result.roundIndex
-        : game.roundIndex;
+        : presentation?.kind === 'lady'
+          ? presentation.roundIndex
+          : game.roundIndex;
   const displayGame =
     presentation?.kind === 'mission'
       ? {
@@ -283,9 +285,10 @@ export function GameView({
       <TableFrame
         code={code}
         title={roomName}
-        onOpenReport={() => setLogChannel('public')}
+        onOpenReport={() => { setMatrixFocus(null); setLogChannel('public'); }}
         report={
-          <LogPanel game={reportGame ?? game} channel={logChannel} onChannelChange={setLogChannel} />
+          <LogPanel game={reportGame ?? game} myPlayerId={myPlayerId} channel={logChannel} matrixFocus={matrixFocus}
+            onChannelChange={(channel) => { setMatrixFocus(null); setLogChannel(channel); }} />
         }
         dockStart={<IdentityCard game={game} myPlayerId={myPlayerId} />}
         tools={(viewToggle) => (
@@ -309,7 +312,7 @@ export function GameView({
           action.clearError();
           onDismissNotice?.();
         }}
-        progress={
+        progress={(openReport) => (
           <>
             <div className={`table-status${showProposals && !presentation ? ' has-discussion' : ''}`}>
               <span className="table-status-label">
@@ -336,11 +339,14 @@ export function GameView({
             </div>
             <MissionTrack
               game={displayGame}
-              onSelect={setHistoryRound}
-
+              onSelect={(round) => {
+                setLogChannel('votes');
+                setMatrixFocus({ round, at: Date.now() });
+                openReport();
+              }}
             />
           </>
-        }
+        )}
         footer={
           <>
             {!presentation && !isOver && selfTimer && <DockTimer timer={selfTimer} now={now} />}
@@ -425,6 +431,7 @@ export function GameView({
           highlightIds={displayTeam}
           onToggle={toggle}
           missionReveal={presentation?.kind === 'mission' ? presentation : null}
+          ladyFlight={presentation?.kind === 'lady' && !presentation.loyalty ? presentation : null}
           onRevealComplete={finish}
           roleNotes={displayedNotes}
           knownNotes={knownNotes}
@@ -467,18 +474,21 @@ export function GameView({
             timer={selfTimer && <ActionTimerBadge timer={selfTimer} now={now} />} />
         )}
       </AnimatePresence>
-      {!presentation && ladyReveal && ladyReveal.targetId !== ladySeen && (
+      {presentation?.kind === 'lady' && presentation.loyalty && (
         <LadyResultReveal
+          key={presentation.id}
           game={game}
-          result={ladyReveal}
-          onClose={() => setLadySeen(ladyReveal.targetId)}
+          result={{ targetId: presentation.targetId, loyalty: presentation.loyalty }}
+          onClose={() => { lady.markSeen(); finish(presentation.id); }}
         />
       )}
-      <RoundHistoryModal
-        roundIndex={historyRound}
-        game={game}
-        onClose={() => setHistoryRound(null)}
-      />
+      {!presentation && lady.unseen && (
+        <LadyResultReveal
+          game={game}
+          result={lady.unseen}
+          onClose={lady.markSeen}
+        />
+      )}
     </>
   );
 }

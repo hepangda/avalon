@@ -9,6 +9,7 @@ import {
   type TablePresentation,
 } from '@/lib/game/tablePresentation';
 import { MissionTableReveal } from './MissionTableReveal';
+import { LadyTokenFlight } from './LadyTokenFlight';
 import { TableCard } from './TableCard';
 import type { ActionTimer, ClientPlayer } from '@/lib/engine';
 import { SeatTimer } from './SeatTimer';
@@ -30,6 +31,7 @@ interface GameTableProps {
   now?: number;
   speakerId?: string;
   missionReveal?: Extract<TablePresentation, { kind: 'mission' }> | null;
+  ladyFlight?: Extract<TablePresentation, { kind: 'lady' }> | null;
   onRevealComplete?: (id: string) => void;
   roleNotes?: RoleNotes;
   knownNotes?: RoleNotes;
@@ -55,6 +57,7 @@ export function GameTable({
   now = Date.now(),
   speakerId,
   missionReveal,
+  ladyFlight,
   onRevealComplete,
   roleNotes = {},
   knownNotes = {},
@@ -121,11 +124,14 @@ export function GameTable({
                   title={t('table.leader')}
                 />
               )}
-              {p.isLadyHolder && (
+              {(p.isLadyHolder || p.id === ladyFlight?.holderId) && (
                 <GameIcon
                   name="lady"
                   className="table-lady-icon"
                   title={t('lady.title')}
+                  data-lady-icon={p.id}
+                  // Both ends stay measurable while the token is in the air.
+                  style={ladyFlight ? { visibility: 'hidden' } : undefined}
                 />
               )}
               <span className="seat-number-tag" aria-hidden="true">{p.seat + 1}</span>
@@ -215,6 +221,14 @@ export function GameTable({
         <MissionTableReveal
           key={missionReveal.id}
           event={missionReveal}
+          tableRef={root}
+          onComplete={onRevealComplete}
+        />
+      )}
+      {ladyFlight && onRevealComplete && (
+        <LadyTokenFlight
+          key={ladyFlight.id}
+          event={ladyFlight}
           tableRef={root}
           onComplete={onRevealComplete}
         />

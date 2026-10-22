@@ -1,0 +1,251 @@
+/* The war log's vote sheet: one column per seat, one row per nomination. */
+
+.vote-matrix {
+  --label-width: 30px;
+  width: calc(100% + 16px);
+  margin: 0 -8px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.vote-matrix-label-col { width: var(--label-width); }
+.vote-matrix thead th {
+  position: sticky;
+  top: -4px;
+  z-index: 2;
+  padding: 8px 0 5px;
+  border-bottom: 1px solid rgb(201 162 39 / 0.25);
+  background: rgb(26 19 12 / 0.94);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font-weight: 400;
+}
+.vote-matrix-portrait {
+  width: min(24px, calc(100% - 3px));
+  aspect-ratio: 1;
+  margin: 0 auto;
+  box-shadow: 0 0 0 1px rgb(201 162 39 / 0.35);
+}
+.vote-matrix-seat {
+  display: block;
+  margin-top: 3px;
+  color: #c8bca0;
+  font-family: var(--font-numbers);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+.vote-matrix .is-self { background-color: rgb(201 162 39 / 0.08); }
+.vote-matrix thead .is-self { background-color: rgb(42 32 19 / 0.96); }
+.vote-matrix thead .is-self .vote-matrix-seat { color: #e6c14a; }
+.vote-matrix thead .is-self .vote-matrix-portrait { box-shadow: 0 0 0 1.5px #e6c14a; }
+
+.vote-matrix tbody { scroll-margin-top: 50px; }
+.vote-matrix tbody[data-flash] th,
+.vote-matrix tbody[data-flash] td { animation: vote-matrix-flash 1.4s ease-out; }
+
+.vote-matrix-mission > th {
+  padding: 12px 4px 4px;
+  text-align: left;
+}
+.vote-matrix tbody + tbody .vote-matrix-mission > th {
+  border-top: 1px solid rgb(201 162 39 / 0.14);
+}
+.vote-matrix-mission > th > * { vertical-align: middle; }
+.vote-matrix-mission-name {
+  color: #d7ba65;
+  font-family: var(--font-cinzel);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.vote-matrix-mission-size {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  border: 1px solid rgb(201 162 39 / 0.45);
+  border-radius: 50%;
+  color: #e8dcc0;
+  font-family: var(--font-numbers);
+  font-size: 10px;
+  font-weight: 700;
+}
+.vote-matrix-shield {
+  display: inline-block;
+  width: 12px;
+  height: 14px;
+  margin-left: 4px;
+  color: #c9a227;
+}
+.vote-matrix-shield svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.vote-matrix td,
+.vote-matrix tbody th[scope="row"] {
+  height: 30px;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+}
+.vote-matrix-proposal th {
+  line-height: 1;
+}
+.vote-matrix-proposal-n {
+  display: block;
+  color: rgb(232 220 192 / 0.45);
+  font-family: var(--font-numbers);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.vote-matrix-tally {
+  display: block;
+  margin-top: 2px;
+  color: rgb(232 220 192 / 0.32);
+  font-size: 9px;
+}
+.vote-matrix-proposal[data-approved="true"] .vote-matrix-proposal-n { color: #e6c14a; }
+.vote-matrix-proposal[data-approved="true"] .vote-matrix-tally { color: rgb(230 193 74 / 0.7); }
+.vote-matrix-proposal[data-last] .vote-matrix-proposal-n { color: #e0503f; }
+.vote-matrix-proposal[data-approved="true"] td {
+  background-image: linear-gradient(rgb(201 162 39 / 0.07), rgb(201 162 39 / 0.07));
+}
+.vote-matrix-proposal[data-open] .vote-matrix-proposal-n {
+  width: 16px;
+  height: 16px;
+  margin: 0 auto;
+  border: 1px dashed rgb(201 162 39 / 0.5);
+  border-radius: 50%;
+  line-height: 14px;
+  color: #d7ba65;
+}
+
+.vote-matrix-cell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: min(24px, calc(100% - 2px));
+  height: 24px;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+.vote-matrix-cell[data-on-team] {
+  background: rgb(201 162 39 / 0.16);
+  box-shadow: inset 0 0 0 1.5px rgb(230 193 74 / 0.75);
+}
+.vote-matrix-proposal[data-open] .vote-matrix-cell[data-on-team] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px rgb(230 193 74 / 0.5);
+}
+.vote-matrix-stone {
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.7));
+}
+.vote-matrix-crown {
+  position: absolute;
+  top: -6px;
+  right: -5px;
+  width: 13px;
+  height: 13px;
+  filter: drop-shadow(0 1px 1px #000);
+}
+.vote-matrix-proposal[data-open] .vote-matrix-crown {
+  position: static;
+  width: 16px;
+  height: 16px;
+}
+
+.vote-matrix-result th,
+.vote-matrix-result td { height: 34px; }
+.vote-matrix-seal {
+  position: relative;
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+}
+.vote-matrix-seal b {
+  position: absolute;
+  right: -5px;
+  bottom: -3px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: #8b2820;
+  box-shadow: 0 0 0 1.5px #16100a;
+  color: #fde8e4;
+  font-family: var(--font-numbers);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 14px;
+}
+/* Who went on the mission, struck in the mission's colour. */
+.vote-matrix-sent {
+  display: inline-block;
+  width: min(18px, calc(100% - 6px));
+  height: 4px;
+  border-radius: 2px;
+  background: #7cc4f5;
+  box-shadow: 0 0 6px rgb(124 196 245 / 0.55);
+  vertical-align: middle;
+}
+.vote-matrix-result[data-result="fail"] .vote-matrix-sent {
+  background: #e0503f;
+  box-shadow: 0 0 6px rgb(224 80 63 / 0.55);
+}
+
+@keyframes vote-matrix-flash {
+  0%, 30% { background-color: rgb(230 193 74 / 0.2); }
+}
+
+/* A discussion's turns, folded into one line of faces. */
+.war-log-fold > summary {
+  cursor: pointer;
+  list-style: none;
+}
+.war-log-fold > summary::-webkit-details-marker { display: none; }
+.war-log-fold > summary::after {
+  content: '';
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-right: 1.5px solid rgb(201 162 39 / 0.6);
+  border-bottom: 1.5px solid rgb(201 162 39 / 0.6);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.2s;
+}
+.war-log-fold[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.war-log-speakers {
+  display: flex;
+  min-width: 0;
+  padding-left: 4px;
+}
+.war-log-speaker {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-left: -4px;
+  box-shadow: 0 0 0 1.5px #1a130c;
+}
+.war-log-speaker > b {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  z-index: 1;
+  min-width: 12px;
+  height: 12px;
+  padding: 0 2px;
+  border-radius: 6px;
+  background: #16100a;
+  color: #d7ba65;
+  font-family: var(--font-numbers);
+  font-size: 8.5px;
+  line-height: 12px;
+  text-align: center;
+}

@@ -53,6 +53,15 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
     </>
   );
   if (presentation?.kind === 'mission' || presentation?.kind === 'assassination') return null;
+  if (presentation?.kind === 'lady')
+    return layout(
+      <h2 className="table-phase-title">
+        {t('lady.examines', {
+          holder: game.players.find((p) => p.id === presentation.holderId)?.name ?? '',
+          target: game.players.find((p) => p.id === presentation.targetId)?.name ?? '',
+        })}
+      </h2>,
+    );
   if (presentation?.kind === 'vote')
     return layout(
       <h2 className="table-phase-title">

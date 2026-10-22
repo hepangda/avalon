@@ -196,10 +196,6 @@
   },
   "mission": {
     "track": "Quest track",
-    "noHistory": "No record yet this round",
-    "roundDetail": "Mission {n} Details",
-    "votesThisRound": "Votes this round",
-    "notPlayed": "Not played yet",
     "close": "Close"
   },
   "teamBuilder": {
@@ -235,8 +231,8 @@
   "lady": {
     "title": "The Lady of the Lake",
     "gazingWaters": "{name} gazes into the waters…",
-    "watersReveal": "The waters reveal {name} to be",
-    "examineShort": "Examine"
+    "examineShort": "Examine",
+    "examines": "{holder} examines {target}"
   },
   "assassin": {
     "targetLabel": "Assassination target",
@@ -309,6 +305,7 @@
     "rejectionLimitReached": "{count} teams rejected in a row — the red team wins!",
     "panelTitle": "War Log",
     "tabPublic": "Public",
+    "tabVotes": "Votes",
     "tabPrivate": "Private",
     "tabFunctions": "Functions",
     "empty": "No entries yet",
@@ -363,6 +360,7 @@
     "exitTall": "Exit fill",
     "teamAnnounced": "{leader} announced a draft team: {team}.",
     "teamFinalized": "{leader} finalized the team: {team}. Voting begins.",
+    "speeches": "Speeches in turn",
     "speechBegins": "It is {player}’s turn to speak.",
     "discussionFinished": "Everyone has spoken. {leader} may now revise the team.",
     "rerollCardUsed": "{player} used a reroll card. All roles have been redealt; confirm your new identity.",

@@ -32,6 +32,7 @@ export const SCENARIOS = [
   { id: "lady", group: "special" },
   { id: "ladyGood", group: "special" },
   { id: "ladyEvil", group: "special" },
+  { id: "voteSheet", group: "special" },
   { id: "assassination", group: "special" },
   { id: "earlyAssassinationProposal", group: "special" },
   { id: "earlyAssassination", group: "special" },
@@ -162,6 +163,14 @@ function inspect(
   });
 }
 
+/** Each seat votes its own way: `approves(seat)` decides. */
+function splitVotes(state: GameState, approves: (seat: number) => boolean): GameState {
+  let next = state;
+  for (const p of state.players)
+    next = applyEvent(next, { type: "CAST_VOTE", by: p.id, value: approves(p.seat) ? "approve" : "reject" });
+  return next;
+}
+
 function playRound(state: GameState, fails: number): GameState {
   const ready = state.phase === "LadyOfLake" ? inspect(state) : state;
   return completeMission(completeVotes(propose(ready), "approve"), fails);
@@ -232,12 +241,28 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
       ...(id === "openSeat" ? { openSeatId: "p0" } : {}),
     };
 
+  if (id === "voteSheet") {
+    // Split tables, turned-down teams and a sabotage, then a discussion under way.
+    state = splitVotes(propose(state), (seat) => seat % 3 === 0);
+    state = completeMission(splitVotes(propose(state), (seat) => seat % 4 !== 1), 0);
+    state = splitVotes(propose(state), (seat) => seat % 2 === 1);
+    state = completeMission(splitVotes(propose(state), (seat) => seat % 5 !== 2), 1);
+    if (state.phase === "LadyOfLake") state = inspect(state, "evil");
+    state = splitVotes(propose(state), (seat) => seat < 2);
+    state = splitVotes(propose(state), (seat) => seat < Math.floor(playerCount / 2));
+    state = completeMission(splitVotes(propose(state), (seat) => seat !== 3), 0);
+    if (state.phase === "LadyOfLake") state = inspect(state, "good");
+    state = propose(state, false);
+    state = applyEvent(state, { type: "START_DISCUSSION", by: leader() });
+    for (const by of state.discussion!.order.slice(0, 3)) state = applyEvent(state, { type: "END_SPEECH", by });
+    return { state, viewerId: state.players.find((p) => p.id !== leader())!.id };
+  }
   if (["lady", "ladyGood", "ladyEvil"].includes(id)) {
     state = playRound(playRound(state, 0), 1);
     const viewerId = state.ladyHolderId!;
-    if (id !== "lady")
-      state = inspect(state, id === "ladyGood" ? "good" : "evil");
-    return { state, viewerId };
+    if (id === "lady") return { state, viewerId };
+    // The result plays from the inspection itself.
+    return { state, viewerId, nextState: inspect(state, id === "ladyGood" ? "good" : "evil") };
   }
   if (
     [

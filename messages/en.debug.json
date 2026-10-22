@@ -120,6 +120,10 @@
         "title": "Lady result · Evil",
         "description": "Inspect an evil result visible only to the examiner."
       },
+      "voteSheet": {
+        "title": "Vote sheet",
+        "description": "Split votes, turned-down teams and a sabotage across rounds, with a discussion under way."
+      },
       "assassination": {
         "title": "Assassination after three successes",
         "description": "Three successful missions. The assassin chooses a good player to strike."

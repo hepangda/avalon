@@ -1,5 +1,6 @@
 export const GAME_ICON_SRC = {
   crest: '/assets/game/icons/crest.webp',
+  crestGood: '/assets/game/icons/crest-good.webp',
   approve: '/assets/game/icons/approve.webp',
   reject: '/assets/game/icons/reject.webp',
   assassinate: '/assets/game/icons/assassinate.webp',

@@ -13,6 +13,8 @@ import './styles/scene-gate.css';
 import './styles/assassination.css';
 import './styles/assassination-pact.css';
 import './styles/table-reveals.css';
+import './styles/lady.css';
+import './styles/vote-matrix.css';
 import './styles/timing.css';
 import './styles/reconnect.css';
 import './styles/preferences.css';
