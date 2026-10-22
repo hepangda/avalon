@@ -39,7 +39,6 @@ import { EarlyAssassinationVote } from './EarlyAssassinationVote';
 import { FeltAmbience, FeltObjects } from './FeltObjects';
 import { PhaseBeats } from './PhaseBeats';
 import { TableEmotes } from './TableEmotes';
-import { usePhaseBeats } from '@/lib/game/usePhaseBeats';
 
 /** Shared table: live rooms supply socket actions; the gallery supplies a local engine. */
 export function GameView({
@@ -74,6 +73,8 @@ export function GameView({
       : undefined,
   );
   useEffect(() => setNoteTarget(null), [notesKey, notesEnabled]);
+  const [emoteAnchor, setEmoteAnchor] = useState<HTMLElement | null>(null);
+  const closeEmotes = useCallback(() => setEmoteAnchor(null), []);
   const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.roleRevision}-${game?.discussion?.speakerIndex}`;
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
@@ -81,9 +82,6 @@ export function GameView({
   const draftKey = game?.proposedTeam?.join(',') ?? '';
   useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
   useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
-  const beat = usePhaseBeats(game, myPlayerId, !!presentation);
-  const [emoteAnchor, setEmoteAnchor] = useState<HTMLElement | null>(null);
-  const closeEmotes = useCallback(() => setEmoteAnchor(null), []);
 
   if (!game)
     return (
@@ -442,7 +440,7 @@ export function GameView({
           notePopoverId={notePopoverId}
           felt={<FeltAmbience game={game} />}
           overlay={<>
-            <PhaseBeats beat={beat} />
+            <PhaseBeats game={game} myPlayerId={myPlayerId} held={!!presentation} />
             <TableEmotes anchor={canEmote && !needsRoleReveal ? emoteAnchor : null} onClose={closeEmotes}
               onSend={(emote) => void actions.emote(emote)} />
           </>}

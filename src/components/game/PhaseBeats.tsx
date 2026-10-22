@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef } from 'react';
 import { useTranslations } from 'use-intl';
-import type { PhaseBeat, PhaseBeatSet } from '@/lib/game/phaseBeats';
+import type { ClientGameState } from '@/lib/engine';
+import type { PhaseBeat } from '@/lib/game/phaseBeats';
+import { usePhaseBeats } from '@/lib/game/usePhaseBeats';
 import { GameIcon } from './GameArt';
 
 const EASE_OUT = 'cubic-bezier(0.2, 0.8, 0.25, 1)';
@@ -132,9 +134,13 @@ function play(beat: PhaseBeat, layer: HTMLElement, card: HTMLElement | null, cro
   }
 }
 
-/** One layer over the table; every beat is decoration and never holds the controls. */
-export function PhaseBeats({ beat }: { beat: PhaseBeatSet | null }) {
+/**
+ * One layer over the table; every beat is decoration and never holds the controls.
+ * `held` is true while a reveal owns the table.
+ */
+export function PhaseBeats({ game, myPlayerId, held }: { game: ClientGameState; myPlayerId: string | null; held: boolean }) {
   const t = useTranslations();
+  const beat = usePhaseBeats(game, myPlayerId, held);
   const layer = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
   const crown = useRef<HTMLSpanElement>(null);
