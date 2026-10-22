@@ -300,9 +300,12 @@ export function AssassinationReveal({ event, onComplete }: {
                   />
                   <motion.span
                     className="assassination-verdict-title"
-                    initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.6, filter: 'blur(10px)' }}
-                    animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                    transition={reduceMotion ? { duration: 0.1 } : { type: 'spring', stiffness: 260, damping: 18, mass: 0.9 }}
+                    initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={reduceMotion ? { duration: 0.1 } : {
+                      type: 'spring', stiffness: 260, damping: 18, mass: 0.9,
+                      opacity: { type: 'tween', duration: 0.3, ease: 'easeOut' },
+                    }}
                   >
                     {t(hit ? 'assassin.hitTitle' : 'assassin.missTitle')}
                   </motion.span>
