@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { AccountAvatar, AccountSettings } from '@/components/AccountSettings';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
+import { SoundSettings } from '@/components/SoundSettings';
 import { TableSheet } from '@/components/game/TableSheet';
 import { CARD_ART_STYLES } from '@/lib/preferences';
 import { CARD_DECKS } from '@/lib/game/cardDecks';
@@ -89,6 +90,7 @@ export function PreferencesButton({ variant = 'tool' }: { variant?: 'tool' | 'ch
                 ))}
               </div>
             </fieldset>
+            <SoundSettings />
             <div className="prefs-section">
               <span aria-hidden="true" className="prefs-label">{t('locale.switch')}</span>
               <LocaleSwitcher disabled={loading || saving} />

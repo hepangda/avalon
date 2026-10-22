@@ -285,7 +285,28 @@
   "preferences": {
     "saving": "正在保存…",
     "saveFailed": "保存失败，已恢复原设置。请检查网络后重新选择。",
-    "title": "设置"
+    "title": "设置",
+    "sound": "声音",
+    "volume": "音量",
+    "mute": "静音",
+    "unmute": "打开声音",
+    "notifications": "后台提醒",
+    "notificationsBlocked": "浏览器已拦截通知",
+    "on": "开",
+    "off": "关"
+  },
+  "turnAlert": {
+    "title": "轮到你了",
+    "role": "查看你的身份",
+    "team": "你是队长，挑选队员",
+    "startDiscussion": "你是队长，开始发言",
+    "finalize": "你是队长，确认队伍",
+    "speech": "轮到你发言",
+    "vote": "为队伍投票",
+    "mission": "出任务牌",
+    "lady": "湖中仙女在你手中",
+    "assassinate": "刺杀时刻",
+    "assassinationBallot": "同伴提议刺杀"
   },
   "locale": {
     "switch": "语言",

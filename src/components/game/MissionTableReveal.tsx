@@ -6,6 +6,7 @@ import {
   type TablePresentation,
 } from '@/lib/game/tablePresentation';
 import { TableCard } from './TableCard';
+import { useSoundCue } from '@/lib/audio/useSoundCue';
 
 export function MissionTableReveal({
   event,
@@ -27,6 +28,9 @@ export function MissionTableReveal({
   const [paths, setPaths] = useState<
     Array<{ x: number; y: number; dx: number; dy: number }>
   >([]);
+  // Sound: the cards slide in and riffle, turn together, and the verdict lands as they settle.
+  useSoundCue(stage === 'reveal' ? 'flip' : stage, stage === 'reveal' ? { count: cards.length, interval: 0.05 } : {});
+  useSoundCue(stage === 'reveal' && (event.result.success ? 'missionSuccess' : 'missionFail'), { delay: 0.35 });
   useLayoutEffect(() => {
     const table = tableRef.current;
     if (!table) return;

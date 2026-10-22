@@ -5,6 +5,7 @@ import { FlipCard } from '@/components/animations/FlipCard';
 import { labelById } from '@/lib/game/playerLabel';
 import type { ClientGameState, Team } from '@/lib/engine';
 import { GameIcon } from './GameArt';
+import { useSoundCue } from '@/lib/audio/useSoundCue';
 import { TableSheet } from './TableSheet';
 
 /** Only the inspecting player receives this private loyalty result. */
@@ -18,6 +19,7 @@ export function LadyResultReveal({ game, result, onClose }: {
     const timer = setTimeout(() => setFlipped(true), reduceMotion ? 0 : 550);
     return () => clearTimeout(timer);
   }, [reduceMotion]);
+  useSoundCue(flipped && 'lady');
   const evil = result.loyalty === 'evil';
   return (
     <TableSheet open title={t('lady.title')} onClose={onClose}>

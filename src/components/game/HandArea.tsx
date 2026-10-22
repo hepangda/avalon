@@ -45,6 +45,7 @@ export function HandArea({
         type="button"
         className={`table-action ${pick.tone === 'crimson' ? 'is-negative' : pick.tone === 'sky' ? 'is-positive' : ''}`}
         disabled={disabled || selected.length !== pick.size}
+        aria-keyshortcuts="Enter"
         onClick={() => void run(pick.onConfirm)}
       >
         {selected.length === pick.size
@@ -97,6 +98,7 @@ export function HandArea({
           type="button"
           className="table-action is-positive"
           disabled={disabled}
+          aria-keyshortcuts="Y"
           onClick={() => void run(() => actions.vote('approve'))}
         >
           <GameIcon name="approve" className="table-action-icon" />
@@ -106,6 +108,7 @@ export function HandArea({
           type="button"
           className="table-action is-negative"
           disabled={disabled}
+          aria-keyshortcuts="N"
           onClick={() => void run(() => actions.vote('reject'))}
         >
           <GameIcon name="reject" className="table-action-icon" />
@@ -120,6 +123,7 @@ export function HandArea({
           type="button"
           className="table-action is-positive"
           disabled={disabled}
+          aria-keyshortcuts="S"
           onClick={() => void run(() => actions.missionCard('success'))}
         >
           <GameIcon name="missionSuccess" className="table-action-icon" />
@@ -129,6 +133,7 @@ export function HandArea({
           type="button"
           className="table-action is-negative"
           disabled={disabled || !canFail}
+          aria-keyshortcuts="F"
           aria-label={
             !canFail ? t('missionVote.loyalOnlySuccess') : t('missionVote.fail')
           }

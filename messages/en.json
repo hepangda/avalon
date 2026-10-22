@@ -285,7 +285,28 @@
   "preferences": {
     "saving": "Saving…",
     "saveFailed": "Could not save. Previous settings restored. Check your connection and try again.",
-    "title": "Settings"
+    "title": "Settings",
+    "sound": "Sound",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "notifications": "Background alerts",
+    "notificationsBlocked": "Notifications are blocked by the browser",
+    "on": "On",
+    "off": "Off"
+  },
+  "turnAlert": {
+    "title": "Your turn",
+    "role": "See your role",
+    "team": "You lead: choose the team",
+    "startDiscussion": "You lead: open the discussion",
+    "finalize": "You lead: confirm the team",
+    "speech": "Your turn to speak",
+    "vote": "Vote on the team",
+    "mission": "Play your quest card",
+    "lady": "The Lady of the Lake is yours",
+    "assassinate": "Time to strike",
+    "assassinationBallot": "An ally calls for the assassination"
   },
   "locale": {
     "switch": "Language",

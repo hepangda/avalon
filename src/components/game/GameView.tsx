@@ -24,6 +24,9 @@ import { useGameClock } from '@/lib/game/useGameClock';
 import { useRoleNotes } from '@/lib/game/useRoleNotes';
 import { useRoomAction } from '@/lib/game/useRoomAction';
 import { useTablePresentation } from '@/lib/game/useTablePresentation';
+import { useTableShortcuts } from '@/lib/game/tableShortcuts';
+import { useTurnAlert } from '@/lib/game/useTurnAlert';
+import { useTableSounds } from '@/lib/audio/useTableSounds';
 import {
   gameActions,
   roomActions
@@ -73,10 +76,20 @@ export function GameView({
   const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.roleRevision}-${game?.discussion?.speakerIndex}`;
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
-  const { presentation, reportGame, finish } = useTablePresentation(game);
+  const { presentation, reportGame, finish, settled } = useTablePresentation(game);
   const draftKey = game?.proposedTeam?.join(',') ?? '';
   useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
   useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
+  useTurnAlert(game, myPlayerId, !settled || conn !== 'connected');
+  useTableShortcuts(!!game && settled && conn === 'connected');
+  const shownLeader = game?.players.find((p) => p.seat === game.leaderIndex)?.id;
+  useTableSounds({
+    game,
+    settled,
+    sealedRounds: game?.missionResults.length ?? 0,
+    leaderId: shownLeader,
+    isOver: game?.phase === 'GameOver',
+  });
 
   if (!game)
     return (
