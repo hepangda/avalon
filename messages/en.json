@@ -552,6 +552,20 @@
     "overdue": "+{time}s overdue",
     "paused": "Paused"
   },
+  "beat": {
+    "questTitle": "{n, select, 1 {The First Quest} 2 {The Second Quest} 3 {The Third Quest} 4 {The Fourth Quest} other {The Final Quest}}",
+    "questSize": "{count} ride out",
+    "twoFails": "Two fails"
+  },
+  "emote": {
+    "menu": "React",
+    "approve": "Agree",
+    "reject": "Disagree",
+    "trust": "Trust",
+    "suspect": "Suspect",
+    "question": "Question",
+    "ponder": "Thinking"
+  },
   "reroll": {
     "using": "Redealing…",
     "empty": "No reroll cards remaining",

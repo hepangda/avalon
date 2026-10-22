@@ -17,6 +17,7 @@ projectStateForViewer,
 type GameEvent,
 type GameState,
 } from "@/lib/engine";
+import { publishEmote } from "@/lib/game/emotes";
 import { useRoleText } from "@/lib/game/useRoleText";
 import type { gameActions } from "@/lib/socket/client";
 import type { Ack } from "@/lib/socket/types";
@@ -162,6 +163,11 @@ export function GallerySession({
     voteAssassination: (proposalId, value) => dispatch({ type: 'VOTE_ASSASSINATION', by: viewerId, proposalId, value }),
     assassinate: (target) =>
       dispatch({ type: "ASSASSINATE", by: viewerId, target }),
+    // The local table echoes reactions as the room would broadcast them.
+    emote: async (emote) => {
+      publishEmote({ playerId: viewerId, emote });
+      return { ok: true };
+    },
   };
   const game = useMemo(() => {
     const projected = projectStateForViewer(state, viewerId);

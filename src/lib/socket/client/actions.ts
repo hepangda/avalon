@@ -1,3 +1,4 @@
+import type { Emote } from '@/lib/game/emotes';
 import type { RoomConfig, RoomDetails } from '../types';
 import { emitWithAck } from './socket';
 
@@ -62,6 +63,8 @@ export const gameActions = {
     emitWithAck('game:assassinate', {
       targetPlayerId,
     }),
+  emote: (emote: Emote) =>
+    emitWithAck('table:emote', { emote }),
 };
 
 /** Referee (admin) action wrappers. */
