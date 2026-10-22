@@ -23,6 +23,7 @@ import { displayedRoleNotes, knownRoleNotes, roleNoteOptions, roleNotesKey } fro
 import { useGameClock } from '@/lib/game/useGameClock';
 import { useRoleNotes } from '@/lib/game/useRoleNotes';
 import { useRoomAction } from '@/lib/game/useRoomAction';
+import { useLadyResult } from '@/lib/game/useLadyResult';
 import { useTablePresentation } from '@/lib/game/useTablePresentation';
 import {
   gameActions,
@@ -59,7 +60,6 @@ export function GameView({
   const t = useTranslations();
   const [historyRound, setHistoryRound] = useState<number | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
-  const [ladySeen, setLadySeen] = useState<string | null>(null);
   const [logChannel, setLogChannel] = useState<LogChannel>('public');
   const [noteTarget, setNoteTarget] = useState<{ id: string; anchor: HTMLButtonElement } | null>(null);
   const notePopoverId = useId();
@@ -74,9 +74,9 @@ export function GameView({
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
   const { presentation, reportGame, finish } = useTablePresentation(game);
+  const lady = useLadyResult(game, myPlayerId);
   const draftKey = game?.proposedTeam?.join(',') ?? '';
   useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
-  useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
 
   if (!game)
     return (
@@ -115,7 +115,6 @@ export function GameView({
   const speakerId = game.phase === 'Discussion' ? game.discussion?.order[game.discussion.speakerIndex] : undefined;
   const selfTimer = game.actionTimers?.find((timer) => timer.playerId === myPlayerId);
   const isHolder = game.lady?.holderId === myPlayerId;
-  const ladyReveal = game.privateLadyResult;
   const isAssassin = !!game.assassinCandidates;
   const isOver = game.phase === 'GameOver' && presentation?.kind !== 'assassination';
   const activePhase =
@@ -458,11 +457,11 @@ export function GameView({
             timer={selfTimer && <ActionTimerBadge timer={selfTimer} now={now} />} />
         )}
       </AnimatePresence>
-      {!presentation && ladyReveal && ladyReveal.targetId !== ladySeen && (
+      {!presentation && lady.unseen && (
         <LadyResultReveal
           game={game}
-          result={ladyReveal}
-          onClose={() => setLadySeen(ladyReveal.targetId)}
+          result={lady.unseen}
+          onClose={lady.markSeen}
         />
       )}
       <RoundHistoryModal
