@@ -27,7 +27,8 @@ export function TableFrame({
   connected: boolean;
   latency: number | null;
   headerAction?: (openReport: () => void) => ReactNode;
-  progress?: ReactNode;
+  /** Given a way to open the report, for controls on the board that lead into it. */
+  progress?: ReactNode | ((openReport: () => void) => ReactNode);
   children: ReactNode;
   footer: ReactNode;
   report: ReactNode;
@@ -104,7 +105,7 @@ export function TableFrame({
           id={`${tabsId}-table`}
           aria-label={t('table.tabTable')}
         >
-          {progress && <div className="table-progress">{progress}</div>}
+          {progress && <div className="table-progress">{typeof progress === 'function' ? progress(() => setTab('report')) : progress}</div>}
           <div className="table-stage">{children}</div>
           <footer className="table-footer table-dock">
             {dockStart && <div className="table-dock-start">{dockStart}</div>}

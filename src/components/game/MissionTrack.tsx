@@ -33,7 +33,6 @@ export function MissionTrack({
               )}
               onClick={() => onSelect?.(idx)}
               title={needsTwo ? t('table.twoFails') : undefined}
-              aria-haspopup="dialog"
               aria-current={current ? 'step' : undefined}
               aria-label={`${t('game.missionOf', { round: idx + 1 })} · ${size}${result ? ` · ${t(result.success ? 'missionResult.succeeds' : 'missionResult.sabotaged')}` : ''}${needsTwo ? ` · ${t('table.twoFails')}` : ''}`}
             >

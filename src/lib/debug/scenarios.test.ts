@@ -36,6 +36,7 @@ const expectedPhases: Record<string, string> = {
   lady: "LadyOfLake",
   ladyGood: "LadyOfLake",
   ladyEvil: "LadyOfLake",
+  voteSheet: "Discussion",
   assassination: "Assassination",
   earlyAssassinationProposal: "TeamBuilding",
   earlyAssassination: "Assassination",

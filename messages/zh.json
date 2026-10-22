@@ -196,10 +196,6 @@
   },
   "mission": {
     "track": "任务进度",
-    "noHistory": "本轮暂无记录",
-    "roundDetail": "第 {n} 个任务详情",
-    "votesThisRound": "本轮投票",
-    "notPlayed": "尚未进行",
     "close": "关闭"
   },
   "teamBuilder": {
@@ -309,6 +305,7 @@
     "rejectionLimitReached": "连续 {count} 次提名被否决，红方获胜！",
     "panelTitle": "战报",
     "tabPublic": "公开",
+    "tabVotes": "票型",
     "tabPrivate": "私密",
     "tabFunctions": "功能",
     "empty": "暂无记录",
@@ -363,6 +360,7 @@
     "exitTall": "退出占满",
     "teamAnnounced": "{leader} 公示拟定队形：{team}。",
     "teamFinalized": "{leader} 确认最终队形：{team}，开始投票。",
+    "speeches": "依次发言",
     "speechBegins": "轮到 {player} 发言。",
     "discussionFinished": "全员发言完毕，由 {leader} 调整最终队形。",
     "rerollCardUsed": "{player} 使用了重随卡，全桌身份已重新发放，请重新确认",

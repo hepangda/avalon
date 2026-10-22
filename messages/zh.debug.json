@@ -120,6 +120,10 @@
         "title": "查验结果 · 邪恶",
         "description": "查看仅对查验者可见的邪恶阵营结果。"
       },
+      "voteSheet": {
+        "title": "票型总览",
+        "description": "多轮分歧投票、被否决的提名与一次破坏，讨论进行中。"
+      },
       "assassination": {
         "title": "三次成功后的刺杀",
         "description": "三次任务成功，刺客从好人中选择梅林。"

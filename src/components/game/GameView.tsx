@@ -11,7 +11,6 @@ import { MissionTrack } from '@/components/game/MissionTrack';
 import { ProposalTracker } from '@/components/game/ProposalTracker';
 import { RoleNotePopover } from '@/components/game/RoleNotePopover';
 import { RoleReveal } from '@/components/game/RoleReveal';
-import { RoundHistoryModal } from '@/components/game/RoundHistoryModal';
 import { ShowKnownNotes } from '@/components/game/ShowKnownNotes';
 import { TableCard } from '@/components/game/TableCard';
 import { TableFrame } from '@/components/game/TableFrame';
@@ -58,7 +57,7 @@ export function GameView({
   functionsContent?: ReactNode;
 }) {
   const t = useTranslations();
-  const [historyRound, setHistoryRound] = useState<number | null>(null);
+  const [matrixFocus, setMatrixFocus] = useState<{ round: number; at: number } | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [logChannel, setLogChannel] = useState<LogChannel>('public');
   const [noteTarget, setNoteTarget] = useState<{ id: string; anchor: HTMLButtonElement } | null>(null);
@@ -282,9 +281,10 @@ export function GameView({
       <TableFrame
         code={code}
         title={roomName}
-        onOpenReport={() => setLogChannel('public')}
+        onOpenReport={() => { setMatrixFocus(null); setLogChannel('public'); }}
         report={
-          <LogPanel game={reportGame ?? game} channel={logChannel} onChannelChange={setLogChannel} />
+          <LogPanel game={reportGame ?? game} myPlayerId={myPlayerId} channel={logChannel} matrixFocus={matrixFocus}
+            onChannelChange={(channel) => { setMatrixFocus(null); setLogChannel(channel); }} />
         }
         dockStart={<IdentityCard game={game} myPlayerId={myPlayerId} />}
         tools={(viewToggle) => (
@@ -308,7 +308,7 @@ export function GameView({
           action.clearError();
           onDismissNotice?.();
         }}
-        progress={
+        progress={(openReport) => (
           <>
             <div className={`table-status${showProposals && !presentation ? ' has-discussion' : ''}`}>
               <span className="table-status-label">
@@ -335,11 +335,14 @@ export function GameView({
             </div>
             <MissionTrack
               game={displayGame}
-              onSelect={setHistoryRound}
-
+              onSelect={(round) => {
+                setLogChannel('votes');
+                setMatrixFocus({ round, at: Date.now() });
+                openReport();
+              }}
             />
           </>
-        }
+        )}
         footer={
           <>
             {!presentation && !isOver && selfTimer && <DockTimer timer={selfTimer} now={now} />}
@@ -477,11 +480,6 @@ export function GameView({
           onClose={lady.markSeen}
         />
       )}
-      <RoundHistoryModal
-        roundIndex={historyRound}
-        game={game}
-        onClose={() => setHistoryRound(null)}
-      />
     </>
   );
 }
