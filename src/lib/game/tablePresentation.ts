@@ -172,10 +172,38 @@ export function endingHasTitleCard(outcome: Pick<GameOutcome, 'reason'>) {
   return outcome.reason !== 'assassinated_merlin' && outcome.reason !== 'assassin_missed';
 }
 
+/** How a seat's identity card is marked when the ending turns it over. */
+export type EndingMark =
+  /** Merlin, struck down by the assassin. */
+  | 'slain'
+  /** The assassin whose blade found Merlin. */
+  | 'killer'
+  /** The loyal seat the assassin mistook for Merlin. */
+  | 'spared'
+  /** The assassin whose blade missed. */
+  | 'foiled'
+  /** Merlin, unrecognized to the end. */
+  | 'survivor';
+
+/** Marks only an assassination earns; other endings turn every seat the same way. */
+export function endingMarks(outcome: Pick<GameOutcome, 'reason' | 'assassinTargetId' | 'revealedRoles'>) {
+  const marks: Record<string, EndingMark> = {};
+  if (endingHasTitleCard(outcome)) return marks;
+  const hit = outcome.reason === 'assassinated_merlin';
+  for (const { playerId, role } of outcome.revealedRoles) {
+    if (playerId === outcome.assassinTargetId) marks[playerId] = hit ? 'slain' : 'spared';
+    else if (role === 'Assassin') marks[playerId] = hit ? 'killer' : 'foiled';
+    else if (role === 'Merlin' && !hit) marks[playerId] = 'survivor';
+  }
+  return marks;
+}
+
 /**
  * When each part of the ending happens, in ms. `title` is measured from the start,
  * `flips` and `settle` from the moment the seats start turning, `done` from the settle.
  * Each turn waits a beat; the change of side waits longer, and Merlin longest of all.
+ * After an assassination the dagger's seat and the assassin come first and get the long
+ * beats, and the losing side then goes over in a quick cascade.
  */
 export function endingTimeline(
   event: Pick<Extract<TablePresentation, { kind: 'gameOver' }>, 'order' | 'outcome'>,
@@ -184,22 +212,42 @@ export function endingTimeline(
   if (reduceMotion)
     return { title: endingHasTitleCard(event.outcome) ? 1600 : 0, flips: [], settle: 0, done: 400 };
   const roles = new Map(event.outcome.revealedRoles.map((r) => [r.playerId, r]));
+  const marks = endingMarks(event.outcome);
+  const assassination = !endingHasTitleCard(event.outcome);
   const flips: number[] = [];
   let at = 350;
   event.order.forEach((id, i) => {
     const role = roles.get(id);
     const before = i > 0 ? roles.get(event.order[i - 1]!) : undefined;
-    if (i > 0) at += role?.role === 'Merlin' ? 1100 : before?.team !== role?.team ? 800 : 380;
+    if (i > 0) {
+      const sideChange = before?.team !== role?.team;
+      if (assassination) {
+        at += marks[id] === 'survivor' ? 1500
+          : marks[id] === 'killer' || marks[id] === 'foiled' ? 1050
+          : marks[event.order[i - 1]!] ? 750
+          : sideChange ? 650
+          : role?.team !== event.outcome.winner ? 240 : 380;
+      } else at += role?.role === 'Merlin' ? 1100 : sideChange ? 800 : 380;
+    }
     flips.push(at);
   });
-  return { title: 2900, flips, settle: at + 900, done: 1500 };
+  return { title: 2900, flips, settle: at + (marks[event.order.at(-1) ?? ''] === 'survivor' ? 1400 : 900), done: 1500 };
 }
 
-/** Red seats first, then blue, and Merlin last of all; seat order within each. */
+/**
+ * Red seats first, then blue, and Merlin last of all; seat order within each.
+ * After an assassination the story starts at the dagger: its target, then the assassin.
+ * A hit then shows the rest of the red side before the fallen blue side; a miss keeps
+ * Merlin, who was never found, for last.
+ */
 export function endingRevealOrder(game: Pick<ClientGameState, 'players' | 'outcome'>): string[] {
-  const roles = new Map(game.outcome?.revealedRoles.map((r) => [r.playerId, r]));
+  const outcome = game.outcome;
+  const roles = new Map(outcome?.revealedRoles.map((r) => [r.playerId, r]));
+  const marks = outcome ? endingMarks(outcome) : {};
   const rank = (id: string, role = roles.get(id)) =>
-    role?.role === 'Merlin' ? 2 : role?.team === 'evil' ? 0 : 1;
+    marks[id] === 'slain' || marks[id] === 'spared' ? -2
+      : marks[id] === 'killer' || marks[id] === 'foiled' ? -1
+      : role?.role === 'Merlin' ? 2 : role?.team === 'evil' ? 0 : 1;
   return [...game.players]
     .sort((a, b) => rank(a.id) - rank(b.id) || a.seat - b.seat)
     .map((p) => p.id);

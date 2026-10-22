@@ -4,6 +4,7 @@ import { GameIcon } from './GameArt';
 import { RoleCard } from './RoleCard';
 import { useRoleText } from '@/lib/game/useRoleText';
 import type { MissionCard, Role, VoteValue } from '@/lib/engine';
+import type { EndingMark } from '@/lib/game/tablePresentation';
 
 export type TableCardState =
   'empty' | 'inactive' | 'back' | VoteValue | MissionCard;
@@ -17,12 +18,18 @@ export function TableCard({
   assassination = false,
   revealId,
   faceDown,
+  mark,
+  lost,
 }: {
   state?: TableCardState;
   role?: Role;
   variant?: number;
   /** An identity still waiting its turn in the ending reveal; omitted, the card simply lies face up. */
   faceDown?: boolean;
+  /** What the assassination did to this seat, shown once the card is face up. */
+  mark?: EndingMark;
+  /** The seat's side lost; its card sinks back once turned. */
+  lost?: boolean;
   nominee?: number;
   assassination?: boolean;
   /** A new result starts face down, even if the previous phase removed this card. */
@@ -37,6 +44,8 @@ export function TableCard({
         className="table-card-slot table-role-card"
         aria-label={roleText.name(role)}
         data-face-down={faceDown}
+        data-mark={mark}
+        data-lost={lost || undefined}
       >
         {faceDown === undefined ? (
           <RoleCard role={role} variant={variant} size="table" />
@@ -55,6 +64,7 @@ export function TableCard({
             </div>
           </motion.div>
         )}
+        {mark && !faceDown && <EndingMarkArt mark={mark} />}
       </div>
     );
   if (nominee !== undefined)
@@ -127,5 +137,26 @@ export function TableCard({
         </div>
       </motion.div>
     </div>
+  );
+}
+
+/** The dagger's mark on an ending card: driven in, glancing off, broken, or a halo for the one it never found. */
+function EndingMarkArt({ mark }: { mark: EndingMark }) {
+  return (
+    <span className="table-role-mark" data-mark={mark} aria-hidden="true">
+      {mark === 'survivor' ? (
+        <span className="table-role-halo" />
+      ) : (
+        <>
+          {mark === 'slain' && <span className="table-role-wound" />}
+          <GameIcon name="assassinate" className="table-role-dagger" />
+          {mark === 'foiled' && (
+            <svg className="table-role-break" viewBox="0 0 20 20">
+              <path d="M2 11 L7 8 L10 12 L13 7 L18 10" pathLength={1} />
+            </svg>
+          )}
+        </>
+      )}
+    </span>
   );
 }

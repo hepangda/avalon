@@ -10,6 +10,7 @@ import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
 import {
   anonymousMissionCards,
   arrangeSeats,
+  endingMarks,
   endingRevealOrder,
   endingTimeline,
   missionRevealTimeline,
@@ -78,6 +79,44 @@ describe('table presentation across server transitions', () => {
     expect(newTablePresentations(after, after)).toEqual([]);
     expect(newTablePresentations(null, after)).toEqual([]);
     expect(newTablePresentations(before, { ...after, phaseRevision: 1 })).toEqual([]);
+  });
+
+  it.each([
+    ['p0', 'hit'],
+    ['p1', 'miss'],
+  ] as const)('starts an assassination ending at the dagger (%s, a %s)', (target, kind) => {
+    const before = apply(buildStartedGame(FIVE_P), { type: 'START_ASSASSINATION', by: 'p4' });
+    const over = project(apply(before, { type: 'ASSASSINATE', by: 'p4', target }));
+    const outcome = over.outcome!;
+    const roleOf = (id: string) => outcome.revealedRoles.find((r) => r.playerId === id)!;
+    const order = endingRevealOrder(over);
+    const marks = endingMarks(outcome);
+    expect(new Set(order).size).toBe(over.players.length);
+    // The struck seat, then the assassin who struck it.
+    expect(order.slice(0, 2)).toEqual([target, 'p4']);
+    const merlin = outcome.revealedRoles.find((r) => r.role === 'Merlin')!.playerId;
+    if (kind === 'hit') {
+      expect(marks).toEqual({ [target]: 'slain', p4: 'killer' });
+      // The winning side, then the fallen one.
+      const teams = order.slice(2).map((id) => roleOf(id).team);
+      expect(teams).toEqual([...teams].sort((a, b) => Number(a === 'good') - Number(b === 'good')));
+    } else {
+      expect(marks).toEqual({ [target]: 'spared', p4: 'foiled', [merlin]: 'survivor' });
+      expect(order.at(-1)).toBe(merlin);
+    }
+    const { flips, settle } = endingTimeline({ outcome, order });
+    const gaps = flips.slice(1).map((ms, i) => ms - flips[i]!);
+    // The assassin waits longest of the losers' side; a missed Merlin waits longest of all.
+    expect(gaps[0]).toBe(Math.max(...gaps.slice(0, kind === 'hit' ? undefined : -1)));
+    if (kind === 'miss') expect(gaps.at(-1)).toBe(Math.max(...gaps));
+    expect(settle).toBeGreaterThan(flips.at(-1)!);
+  });
+
+  it('marks nothing when no assassination decided the game', () => {
+    expect(endingMarks({
+      reason: 'three_missions', assassinTargetId: undefined,
+      revealedRoles: [{ playerId: 'a', role: 'Assassin', team: 'evil' }, { playerId: 'b', role: 'Merlin', team: 'good' }],
+    })).toEqual({});
   });
 
   it('turns red seats first, then blue, and Merlin last', () => {

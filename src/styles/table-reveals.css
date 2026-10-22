@@ -163,6 +163,148 @@
 .table-role-card:has(.role-card[data-team="evil"]) { --turn-light: rgb(224 80 63 / 0.95); }
 .table-role-card[data-face-down="false"] { animation: role-lift 0.6s ease-out both; }
 
+/* ---- After an assassination: what the dagger did, written on the seats it touched ---- */
+/* Base rules are the resting state (the finished table); the turned card plays them in. */
+.table-role-card[data-lost] .table-role-face,
+.table-role-card[data-lost]:not([data-face-down]) > .role-card {
+  filter: saturate(0.5) brightness(0.72);
+}
+.table-role-card[data-lost][data-face-down="false"] .table-role-face { animation: role-sink 0.9s ease-out 0.55s both; }
+.table-role-mark {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.table-role-dagger {
+  position: absolute;
+  /* The art is a square with the blade standing in its middle; size it by height. */
+  height: 92%;
+  width: auto;
+  aspect-ratio: 1;
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 0.75));
+}
+
+/* Merlin, struck: the blade stands in the card, which bleeds and greys. */
+.table-role-card[data-mark="slain"] { --turn-light: rgb(232 52 40 / 1); }
+.table-role-card[data-mark="slain"] .table-role-face,
+.table-role-card[data-mark="slain"]:not([data-face-down]) > .role-card { filter: grayscale(0.85) brightness(0.62) sepia(0.35) hue-rotate(-18deg); }
+.table-role-mark[data-mark="slain"] .table-role-dagger { left: -6%; top: -34%; rotate: 20deg; }
+.table-role-wound {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 55% 44%, rgb(200 20 14 / 0.75), rgb(120 0 0 / 0.35) 34%, transparent 62%),
+    linear-gradient(transparent, rgb(90 0 0 / 0.5));
+  mix-blend-mode: multiply;
+}
+.table-role-card[data-mark="slain"][data-face-down="false"] { animation: role-struck 0.5s ease-out 0.62s both; }
+.table-role-card[data-mark="slain"][data-face-down="false"] .table-role-face { animation: role-drain 1s ease-out 0.6s both; }
+.table-role-card[data-face-down="false"] .table-role-mark[data-mark="slain"] .table-role-dagger { animation: dagger-plunge 0.32s cubic-bezier(0.55, 0, 1, 0.45) 0.45s both; }
+.table-role-card[data-face-down="false"] .table-role-wound { animation: wound-bloom 0.9s ease-out 0.72s both; }
+
+/* The assassin who found Merlin: a raised blade and a crimson pulse. */
+.table-role-card[data-mark="killer"] { --turn-light: rgb(255 70 50 / 1); }
+.table-role-mark[data-mark="killer"] .table-role-dagger,
+.table-role-mark[data-mark="foiled"] .table-role-dagger { height: 62%; right: -34%; top: -22%; rotate: 32deg; }
+.table-role-card[data-mark="killer"]:not([data-face-down="true"]) { box-shadow: 0 0 0 1.5px rgb(255 90 60 / 0.8), 0 0 18px rgb(220 40 30 / 0.55); }
+.table-role-card[data-mark="killer"][data-face-down="false"] { animation: role-lift 0.6s ease-out both, killer-pulse 1.6s ease-in-out 0.6s 2; }
+.table-role-card[data-face-down="false"] .table-role-mark[data-mark="killer"] .table-role-dagger { animation: dagger-raise 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) 0.5s both; }
+
+/* The seat mistaken for Merlin: the blade glances off and a blue glint crosses the card. */
+.table-role-mark[data-mark="spared"] .table-role-dagger { left: -6%; top: -34%; rotate: 20deg; opacity: 0; }
+.table-role-card[data-face-down="false"] .table-role-mark[data-mark="spared"] .table-role-dagger { animation: dagger-glance 0.95s cubic-bezier(0.3, 0, 0.4, 1) 0.45s both; }
+.table-role-mark[data-mark="spared"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: linear-gradient(115deg, transparent 30%, rgb(190 235 255 / 0.85) 48%, transparent 64%) no-repeat;
+  background-size: 260% 100%;
+  background-position: 120% 0;
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+.table-role-card[data-face-down="false"] .table-role-mark[data-mark="spared"]::after { animation: spared-glint 0.7s ease-out 0.62s both; }
+
+/* The assassin who missed: the blade lies broken and the card sinks with its side. */
+.table-role-mark[data-mark="foiled"] .table-role-dagger { filter: grayscale(1) brightness(0.6) drop-shadow(0 2px 3px rgb(0 0 0 / 0.8)); }
+.table-role-break {
+  position: absolute;
+  width: 40%;
+  right: -10%;
+  top: 2%;
+  rotate: 32deg;
+  fill: none;
+  stroke: #d8d0c0;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 2px #000);
+}
+.table-role-card[data-face-down="false"] .table-role-mark[data-mark="foiled"] .table-role-dagger { animation: dagger-drop 0.7s cubic-bezier(0.5, 0, 0.75, 0) 0.5s both; }
+.table-role-card[data-face-down="false"] .table-role-break path { stroke-dasharray: 1; animation: break-draw 0.25s ease-out 1.05s both; }
+
+/* Merlin, never found: last to turn, lifted into a gold halo. */
+.table-role-card[data-mark="survivor"] { --turn-light: rgb(255 214 120 / 1); z-index: 1; }
+.table-role-halo {
+  position: absolute;
+  inset: -55% -70%;
+  z-index: -1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgb(255 220 140 / 0.55), rgb(255 190 90 / 0.18) 38%, transparent 64%),
+    repeating-conic-gradient(from 0deg, rgb(255 225 150 / 0.22) 0deg 4deg, transparent 4deg 16deg);
+  mask-image: radial-gradient(circle, #000 30%, transparent 66%);
+  -webkit-mask-image: radial-gradient(circle, #000 30%, transparent 66%);
+  opacity: 0.55;
+}
+.table-role-mark[data-mark="survivor"] { inset: 0; z-index: -1; }
+.table-role-card[data-mark="survivor"][data-face-down="false"] { animation: survivor-rise 1.1s cubic-bezier(0.2, 0.9, 0.3, 1.1) 0.3s both; }
+.table-role-card[data-face-down="false"] .table-role-halo { animation: halo-in 1.2s ease-out 0.45s both, ending-spin 40s linear infinite; }
+
+@keyframes role-sink { from { filter: none; } }
+@keyframes role-drain { from { filter: none; } }
+@keyframes role-struck {
+  0%, 100% { translate: 0 0; }
+  20% { translate: -3px 2px; }
+  45% { translate: 3px -1px; }
+  70% { translate: -1px 1px; }
+}
+@keyframes dagger-plunge {
+  from { translate: 0 -90%; opacity: 0; scale: 1.35; }
+  60% { opacity: 1; }
+  to { translate: 0 0; opacity: 1; scale: 1; }
+}
+@keyframes wound-bloom { from { opacity: 0; scale: 0.3; } to { opacity: 1; scale: 1; } }
+@keyframes dagger-raise { from { opacity: 0; translate: -30% 40%; rotate: 70deg; } }
+@keyframes killer-pulse {
+  50% { box-shadow: 0 0 0 2px rgb(255 110 80 / 1), 0 0 30px 6px rgb(230 40 30 / 0.8); }
+}
+@keyframes dagger-glance {
+  0% { translate: 0 -90%; opacity: 0; scale: 1.35; rotate: 18deg; }
+  32% { translate: 0 0; opacity: 1; scale: 1; rotate: 18deg; }
+  100% { translate: 95% 60%; opacity: 0; scale: 0.8; rotate: 140deg; }
+}
+@keyframes spared-glint {
+  0% { opacity: 0; background-position: 120% 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; background-position: -30% 0; }
+}
+@keyframes dagger-drop {
+  from { opacity: 0; translate: 0 -60%; }
+  70% { opacity: 1; translate: 0 6%; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes break-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes survivor-rise {
+  0% { translate: 0 0; scale: 1; }
+  45% { translate: 0 -10px; scale: 1.12; }
+  100% { translate: 0 -3px; scale: 1.06; }
+}
+@keyframes halo-in { from { opacity: 0; scale: 0.3; } }
+
 /* The felt holds its title back until the seats have turned, then takes it from the title card. */
 .outcome-title[data-ending="title"], .outcome-title[data-ending="flip"],
 .outcome-reason[data-ending="title"], .outcome-reason[data-ending="flip"] { opacity: 0; }
@@ -409,6 +551,9 @@
   .proposal-slot[data-stamped]::after,
   .table-role-card[data-face-down="false"],
   .table-role-card[data-face-down="false"]::after,
+  .table-role-card[data-face-down="false"] .table-role-face,
+  .table-role-card[data-face-down="false"] .table-role-mark *,
+  .table-role-card[data-face-down="false"] .table-role-mark::after,
   .outcome-title[data-ending],
   .outcome-reason[data-ending],
   .ending-emblem-pool,

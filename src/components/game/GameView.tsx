@@ -25,6 +25,7 @@ import { useRoleNotes } from '@/lib/game/useRoleNotes';
 import { useRoomAction } from '@/lib/game/useRoomAction';
 import { useLadyResult } from '@/lib/game/useLadyResult';
 import { useTablePresentation } from '@/lib/game/useTablePresentation';
+import { endingMarks } from '@/lib/game/tablePresentation';
 import { useTableShortcuts } from '@/lib/game/tableShortcuts';
 import { useTurnAlert } from '@/lib/game/useTurnAlert';
 import { useEndingSounds, useTableSounds } from '@/lib/audio/useTableSounds';
@@ -95,7 +96,7 @@ export function GameView({
     sealedRounds: game?.missionResults.length ?? 0,
     leaderId: shownLeader,
   });
-  useEndingSounds(game, presentation?.kind === 'gameOver' ? presentation.id : null, ending.stage, ending.revealed.size);
+  useEndingSounds(game, presentation?.kind === 'gameOver' ? presentation : null, ending.stage, ending.revealed.size);
 
   if (!game)
     return (
@@ -136,6 +137,9 @@ export function GameView({
   const isHolder = game.lady?.holderId === myPlayerId;
   const isAssassin = !!game.assassinCandidates;
   const isOver = game.phase === 'GameOver' && presentation?.kind !== 'assassination';
+  const endingMarksById = game.outcome ? endingMarks(game.outcome) : {};
+  const lostSide = (id: string) =>
+    !!game.outcome && game.outcome.revealedRoles.find((r) => r.playerId === id)?.team !== game.outcome.winner;
   const canEmote = !!myPlayerId && !game.isSpectator && conn === 'connected';
   const activePhase =
     presentation?.kind === 'vote'
@@ -245,8 +249,9 @@ export function GameView({
         />
       );
     if (presentation?.kind === 'gameOver' && p.role)
-      return <TableCard role={p.role} variant={p.roleVariant} faceDown={!ending.revealed.has(p.id)} />;
-    if (isOver && p.role) return <TableCard role={p.role} variant={p.roleVariant} />;
+      return <TableCard role={p.role} variant={p.roleVariant} faceDown={!ending.revealed.has(p.id)}
+        mark={endingMarksById[p.id]} lost={lostSide(p.id)} />;
+    if (isOver && p.role) return <TableCard role={p.role} variant={p.roleVariant} mark={endingMarksById[p.id]} lost={lostSide(p.id)} />;
     if (game!.phase === 'Voting')
       return (
         <TableCard
