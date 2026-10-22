@@ -41,12 +41,12 @@ export function MissionTableReveal({
 }) {
   const t = useTranslations();
   const reduce = !!useReducedMotion();
-  const [timeline] = useState(() => missionRevealTimeline(event.result.teamSize, reduce));
-  const [stage, setStage] = useState<Stage>(reduce ? 'verdict' : 'gather');
-  const [flipped, setFlipped] = useState(reduce ? event.result.teamSize : 0);
   const [cards] = useState(() =>
     anonymousMissionCards(event.result.teamSize, event.result.failCount),
   );
+  const [timeline] = useState(() => missionRevealTimeline(cards, event.requiredFails, reduce));
+  const [stage, setStage] = useState<Stage>(reduce ? 'verdict' : 'gather');
+  const [flipped, setFlipped] = useState(reduce ? event.result.teamSize : 0);
   const [paths, setPaths] = useState<
     Array<{ x: number; y: number; dx: number; dy: number }>
   >([]);

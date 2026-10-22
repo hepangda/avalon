@@ -15,6 +15,8 @@ export type TablePresentation =
       kind: 'mission';
       result: ClientMissionResult;
       team: string[];
+      /** Fail cards this quest needed to fall. */
+      requiredFails: number;
     }
   | {
       id: string;
@@ -109,6 +111,7 @@ export function newTablePresentations(
       id: `${prefix}-mission-${result.roundIndex}`,
       kind: 'mission',
       result,
+      requiredFails: next.config.requiredFails[result.roundIndex] ?? 1,
       team:
         vote?.team ??
         (previous.roundIndex === result.roundIndex
@@ -253,22 +256,35 @@ export function endingRevealOrder(game: Pick<ClientGameState, 'players' | 'outco
     .map((p) => p.id);
 }
 
+/** The index of the card whose turn settles the quest, judged only from cards already face up. */
+export function missionDecidedAt(cards: MissionCard[], requiredFails: number) {
+  let fails = 0;
+  for (let i = 0; i < cards.length; i++) {
+    if (cards[i] === 'fail') fails++;
+    if (fails >= requiredFails || fails + (cards.length - 1 - i) < requiredFails) return i;
+  }
+  return cards.length - 1;
+}
+
 /**
  * When each beat of a mission reveal happens, in ms from its start. Cards turn one
- * at a time, each wait a little longer than the last, the final one longest; the
- * verdict follows, then its seal flies to the quest board. `complete` is a backstop
- * for the flight, which normally ends the reveal when it lands.
+ * at a time, each wait a little longer than the last, the deciding one longest. Once
+ * the table can see the outcome, the rest turn over in a quick run. The verdict
+ * follows, then its seal flies to the quest board. `complete` is a backstop for the
+ * flight, which normally ends the reveal when it lands.
  */
-export function missionRevealTimeline(teamSize: number, reduceMotion = false) {
+export function missionRevealTimeline(cards: MissionCard[], requiredFails: number, reduceMotion = false) {
   if (reduceMotion)
     return { shuffle: 0, reveal: 0, flips: [] as number[], verdict: 0, seal: 0, complete: 1800 };
   const reveal = 1850;
+  const decided = missionDecidedAt(cards, requiredFails);
   const flips: number[] = [];
-  for (let i = 0, at = reveal + 450; i < teamSize; i++) {
-    if (i > 0) at += 480 + 140 * (i - 1) + (i === teamSize - 1 ? 520 : 0);
+  for (let i = 0, at = reveal + 450; i < cards.length; i++) {
+    if (i > decided) at += 140;
+    else if (i > 0) at += 480 + 140 * (i - 1) + (i === decided ? 520 : 0);
     flips.push(at);
   }
-  const verdict = (flips.at(-1) ?? reveal) + 800;
+  const verdict = (flips.at(-1) ?? reveal) + (decided === cards.length - 1 ? 800 : 550);
   const seal = verdict + 1150;
   return { shuffle: 650, reveal, flips, verdict, seal, complete: seal + 1600 };
 }

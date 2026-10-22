@@ -13,6 +13,7 @@ import {
   endingMarks,
   endingRevealOrder,
   endingTimeline,
+  missionDecidedAt,
   missionRevealTimeline,
   newTablePresentations,
   tablePresentationReducer,
@@ -305,9 +306,10 @@ describe('war report reveal timing', () => {
 });
 
 describe('reveal pacing', () => {
-  it('turns mission cards one at a time, each wait longer and the last longest', () => {
+  it('turns mission cards one at a time, each wait longer and the deciding card longest', () => {
     for (let size = 2; size <= 5; size++) {
-      const { flips, verdict, seal, complete } = missionRevealTimeline(size);
+      const cards = Array.from({ length: size }, () => 'success' as const);
+      const { flips, verdict, seal, complete } = missionRevealTimeline(cards, 1);
       expect(flips).toHaveLength(size);
       const gaps = flips.slice(1).map((ms, i) => ms - flips[i]!);
       gaps.forEach((gap, i) => i && expect(gap).toBeGreaterThan(gaps[i - 1]!));
@@ -315,7 +317,22 @@ describe('reveal pacing', () => {
       expect(seal).toBeGreaterThan(verdict);
       expect(complete).toBeGreaterThan(seal);
     }
-    expect(missionRevealTimeline(3, true)).toMatchObject({ flips: [], complete: 1800 });
+    expect(missionRevealTimeline(['success', 'fail', 'success'], 1, true)).toMatchObject({ flips: [], complete: 1800 });
+  });
+
+  it('runs through the remaining cards once the outcome is on the table', () => {
+    expect(missionDecidedAt(['fail', 'success', 'success'], 1)).toBe(0);
+    expect(missionDecidedAt(['success', 'fail', 'fail', 'success'], 2)).toBe(2);
+    // Two fails needed and too few cards left to reach them.
+    expect(missionDecidedAt(['success', 'success', 'success', 'fail'], 2)).toBe(2);
+    expect(missionDecidedAt(['success', 'success', 'fail'], 1)).toBe(2);
+    const cards = ['success', 'fail', 'success', 'success'] as const;
+    const { flips } = missionRevealTimeline([...cards], 1);
+    const gaps = flips.slice(1).map((ms, i) => ms - flips[i]!);
+    // The fail settles it at card 2; cards 3 and 4 follow quickly.
+    expect(gaps[0]).toBeGreaterThan(gaps[1]!);
+    expect(gaps[1]).toBe(gaps[2]);
+    expect(gaps[1]).toBeLessThan(200);
   });
 
   it('pauses before blue turns and longest before Merlin; reduced motion goes straight to the end', () => {
