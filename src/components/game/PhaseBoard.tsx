@@ -8,7 +8,7 @@ import { TableCard } from './TableCard';
 import { GameIcon } from './GameArt';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import type { EndingStage } from './GameOverReveal';
-import { RejectionFlight } from './SealFlight';
+import { VoteTally } from './VoteTally';
 
 export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isAssassin, canVote, canMission, selected, round, teamSize, endingStage }: {
   game: ClientGameState; presentation: TablePresentation | null;
@@ -63,21 +63,7 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
       </h2>,
     );
   if (presentation?.kind === 'vote')
-    return layout(
-      <h2 className="table-phase-title">
-        {t(presentation.record.approved ? 'cue.voteApproved' : 'cue.voteRejected')}
-        {!presentation.record.approved && <RejectionFlight key={presentation.id} slot={presentation.record.proposalIndex} />}
-      </h2>,
-      <>
-        {chips(presentation.record.team)}
-        <p className="table-phase-detail">
-          {t('vote.tally', {
-            approves: presentation.record.votes.filter((v) => v.vote === 'approve').length,
-            rejects: presentation.record.votes.filter((v) => v.vote === 'reject').length,
-          })}
-        </p>
-      </>,
-    );
+    return <VoteTally key={presentation.id} id={presentation.id} record={presentation.record} game={game} team={chips(presentation.record.team)} />;
   if (isOver)
     return layout(
       <h1 className="table-phase-title outcome-title" data-winner={game.outcome?.winner} data-ending={endingStage ?? undefined}>

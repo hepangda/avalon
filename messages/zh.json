@@ -310,6 +310,7 @@
     "en": "English"
   },
   "cue": {
+    "voteCount": "开票",
     "voteApproved": "提名通过",
     "voteRejected": "提名被否决",
     "missionSuccess": "任务成功",
@@ -322,6 +323,10 @@
     "myRole": "我的身份"
   },
   "log": {
+    "short": {
+      "teamAnnounced": "公示",
+      "teamFinalized": "定稿"
+    },
     "channels": "战报频道",
     "rejectionLimitReached": "连续 {count} 次提名被否决，红方获胜！",
     "panelTitle": "战报",

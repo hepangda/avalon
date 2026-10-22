@@ -310,6 +310,7 @@
     "en": "English"
   },
   "cue": {
+    "voteCount": "The Count",
     "voteApproved": "Team Approved",
     "voteRejected": "Team Rejected",
     "missionSuccess": "Quest Succeeded",
@@ -322,6 +323,10 @@
     "myRole": "My Role"
   },
   "log": {
+    "short": {
+      "teamAnnounced": "Proposes",
+      "teamFinalized": "Finalizes"
+    },
     "channels": "Log channels",
     "rejectionLimitReached": "{count} teams rejected in a row — the red team wins!",
     "panelTitle": "War Log",

@@ -256,6 +256,19 @@ export function endingRevealOrder(game: Pick<ClientGameState, 'players' | 'outco
     .map((p) => p.id);
 }
 
+/**
+ * When each beat of a vote reveal happens, in ms from its start. The ballots turn over
+ * together, then one stone after another leaves its card for its pan, seat by seat from
+ * the leader; the verdict waits until the last stone is down.
+ */
+export function voteRevealTimeline(count: number, reduceMotion = false) {
+  if (reduceMotion) return { stones: Array.from({ length: count }, () => 0), flight: 0, verdict: 0, done: 1600 };
+  const flight = 420;
+  const stones = Array.from({ length: count }, (_, i) => 760 + i * 75);
+  const verdict = (stones.at(-1) ?? 760) + flight + 110;
+  return { stones, flight, verdict, done: verdict + 1150 };
+}
+
 /** The index of the card whose turn settles the quest, judged only from cards already face up. */
 export function missionDecidedAt(cards: MissionCard[], requiredFails: number) {
   let fails = 0;

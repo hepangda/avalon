@@ -87,6 +87,80 @@
 .mission-verdict-seal[data-result="success"], .seal-flight.is-success { --seal-light: 120 200 230; }
 .mission-verdict-seal[data-result="fail"], .seal-flight.is-fail { --seal-light: 230 90 70; }
 
+/* ---- The count: stones lifted off the ballots into two pans ---- */
+.table-phase-title.vote-verdict {
+  font-size: clamp(20px, min(7cqw, 15cqh), 30px);
+  letter-spacing: 0.08em;
+}
+.vote-verdict[data-result="approve"] { color: #9fdcf5; text-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 0 24px rgb(116 182 197 / 0.6); }
+.vote-verdict[data-result="reject"] { color: #f08a80; text-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 0 24px rgb(208 87 75 / 0.6); }
+.vote-tally {
+  --stone: clamp(18px, min(6.5cqw, 10cqh), 28px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.vote-pan {
+  --pan: 120 190 220;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: calc(var(--stone) + 12px);
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: radial-gradient(120% 140% at 50% 0%, rgb(var(--pan) / 0.12), rgb(0 0 0 / 0.38) 70%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), inset 0 -2px 6px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(var(--pan) / 0.22);
+  transition: opacity 0.45s ease, filter 0.45s ease, box-shadow 0.45s ease, transform 0.45s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.vote-pan[data-side="reject"] { --pan: 224 96 82; flex-direction: row-reverse; }
+.vote-pan-stones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1px 0;
+  max-width: calc(var(--stone) * 5 - 16px);
+}
+.vote-pan[data-side="reject"] .vote-pan-stones { flex-direction: row-reverse; }
+/* An empty pan still shows where its stones would have gone. */
+.vote-pan-stones:empty {
+  width: var(--stone);
+  height: var(--stone);
+  border-radius: 50%;
+  border: 1px dashed rgb(var(--pan) / 0.35);
+}
+.vote-pan-stone {
+  display: block;
+  width: var(--stone);
+  height: var(--stone);
+  margin-inline: -2px;
+  filter: drop-shadow(0 2px 2px #000a);
+  will-change: transform;
+}
+.vote-pan-count {
+  min-width: 1ch;
+  font-family: var(--font-cinzel), serif;
+  font-size: calc(var(--stone) * 1.05);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: rgb(var(--pan));
+  text-shadow: 0 1px 0 #000, 0 0 10px rgb(var(--pan) / 0.5);
+  animation: vote-count-tick 0.32s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.vote-tally[data-verdict] .vote-pan { opacity: 0.38; filter: saturate(0.4); }
+.vote-tally[data-verdict="approve"] .vote-pan[data-side="approve"],
+.vote-tally[data-verdict="reject"] .vote-pan[data-side="reject"] {
+  opacity: 1;
+  filter: none;
+  transform: scale(1.08);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), inset 0 -2px 6px rgb(0 0 0 / 0.5), 0 0 0 1px rgb(var(--pan) / 0.6), 0 0 22px rgb(var(--pan) / 0.4);
+}
+@keyframes vote-count-tick {
+  from { transform: scale(1.7); opacity: 0.4; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 /* ---- Tokens in flight ---- */
 .seal-flight {
   position: fixed;
@@ -559,6 +633,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .vote-pan-count { animation: none; }
+  .vote-pan { transition: none; }
   .mission-reveal-card,
   .table-mission[data-stamped] .table-mission-token,
   .table-mission[data-stamped] .table-mission-token::after,

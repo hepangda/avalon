@@ -495,6 +495,34 @@
   text-align: center;
   transition: transform 120ms ease, filter 150ms ease;
 }
+/* The moment a choice is the player's to make, the plaque rises into the dock and light runs over its gilt. */
+.table-action:not(:disabled):not(.is-quiet) {
+  animation: action-arrive 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) backwards;
+}
+.table-action:not(:disabled):not(.is-quiet) + .table-action:not(:disabled) { animation-delay: 80ms; }
+.table-action:not(:disabled):not(.is-quiet)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 240 190 / 0.32) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%;
+  background-position: 130% 0;
+  animation: action-sheen 0.9s ease-out 0.25s backwards;
+}
+.table-action:not(:disabled):not(.is-quiet) + .table-action:not(:disabled)::after { animation-delay: 0.33s; }
+@keyframes action-arrive {
+  from { transform: translateY(14px) scale(0.94); opacity: 0; filter: brightness(1.6); }
+}
+@keyframes action-sheen {
+  from { background-position: -30% 0; }
+  to { background-position: 130% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .table-action:not(:disabled):not(.is-quiet),
+  .table-action:not(:disabled):not(.is-quiet)::after { animation: none; }
+}
 .table-action:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
 @media (hover: hover) {
   .table-action:hover:not(:disabled) { filter: brightness(1.15); }
