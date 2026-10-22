@@ -15,6 +15,7 @@ import './styles/assassination-pact.css';
 import './styles/timing.css';
 import './styles/reconnect.css';
 import './styles/preferences.css';
+import './styles/table-life.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -8,6 +8,7 @@ import type {
   VisibilityInfo,
 } from '@/lib/engine';
 import type { RoleNotesDocument, RoleNotesSyncRequest } from '@/lib/game/roleNotes';
+import type { Emote, EmoteEvent } from '@/lib/game/emotes';
 
 /**
  * Room-level configuration the host sets in the lobby. Superset of engine
@@ -140,6 +141,8 @@ export interface ClientToServerEvents {
    * player's self-measured latency with the rest of the room.
    */
   'net:ping': (p: { rtt?: number }, ack: (r: Ack<HeartbeatState>) => void) => void;
+  /** A seated player's quick reaction; rate limited and broadcast, never stored. */
+  'table:emote': (p: { emote: Emote }, ack: (r: Ack) => void) => void;
   // -------------------------------------------------------------------------
   // Referee (admin) actions. Authorized per-socket — anyone may enable the
   // referee panel; there is no password. The server performs every "act as
@@ -174,6 +177,7 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
   'view:sync': (snapshot: ViewSnapshot) => void;
   'net:latency': (update: PlayerLatency) => void;
+  'table:emote': (event: EmoteEvent) => void;
   'state:sync': (state: ClientGameState) => void;
   'room:snapshot': (snapshot: RoomSnapshot) => void;
   'private:reveal': (p: { selfRole: Role; knownPlayers: VisibilityInfo[] }) => void;

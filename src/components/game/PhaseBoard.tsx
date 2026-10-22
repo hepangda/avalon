@@ -25,7 +25,7 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
         {Array.from({ length: Math.max(size, ids.length) }, (_, index) => {
           const p = game.players.find((player) => player.id === ids[index]);
           return p ? (
-            <li key={p.id} className="table-team-chip" title={`${p.seat + 1}. ${p.name}`}>
+            <li key={p.id} className="table-team-chip" data-player-id={p.id} title={`${p.seat + 1}. ${p.name}`}>
               <PlayerAvatar playerId={p.id} avatarUrl={p.claimed === false ? undefined : p.avatarUrl} name={p.name} className="table-team-avatar">
                 <b className="table-team-seat">{p.seat + 1}</b>
               </PlayerAvatar>

@@ -37,6 +37,7 @@ import { diffState,documentHash } from './room-journal';
 import { RoomMembership } from './room-membership';
 import { syncRoleNotes } from './room-notes';
 import { RefereeCommands } from './room-referee';
+import { EmoteLimiter, readEmote } from './room-emotes';
 import { fail,ok } from './room-result';
 import { RoomState } from './room-state';
 import { RoomViews } from './room-views';
@@ -67,6 +68,7 @@ export class Room {
   private committedHash = '';
   private integrityFailure: Error | null = null;
   private latencies = new Map<string, number>();
+  private readonly emotes = new EmoteLimiter();
   private queue: Promise<unknown> = Promise.resolve();
   private pending = 0;
   private sockets = new Set<RoomSocket>();
@@ -592,6 +594,20 @@ export class Room {
       const sync = committed ? { epoch: committed.epoch, revision: committed.revision, hash: committed.hash } : null;
       this.sendAck(ws, req.id, ok<HeartbeatState>({ sync }));
       this.handlePing(ws, req.payload);
+      return;
+    }
+    // Reactions are broadcast as they come and never touch the room's state or journal.
+    if (req.event === 'table:emote') {
+      this.lastUsed = Date.now();
+      if (this.integrityFailure || this.reconnectOnly.has(ws)) {
+        this.sendAck(ws, req.id, fail('RECONNECT', 'Reconnect to reload room state'));
+        return;
+      }
+      const res = readEmote(this.views.get(ws)?.view, req.payload, this.emotes, Date.now());
+      this.sendAck(ws, req.id, res.ok ? ok() : res);
+      if (res.ok)
+        for (const socket of this.sockets)
+          if (!this.reconnectOnly.has(socket) && this.views.get(socket)) this.sendImmediate(socket, 'table:emote', res.data);
       return;
     }
     if (req.event === 'room:resync') {

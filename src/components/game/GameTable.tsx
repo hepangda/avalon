@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, type PointerEvent, type MouseEvent, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
@@ -37,6 +37,13 @@ interface GameTableProps {
   onEditRoleNote?: (id: string, anchor: HTMLButtonElement) => void;
   notePlayerId?: string;
   notePopoverId?: string;
+  /** Layers drawn over the whole table (phase beats, reactions); they must not take pointer input. */
+  overlay?: ReactNode;
+  /** Decoration laid into the felt itself. */
+  felt?: ReactNode;
+  /** The viewer's own portrait opens their reactions whenever it is not being picked. */
+  onSelfMenu?: (anchor: HTMLElement) => void;
+  selfMenuOpen?: boolean;
 }
 
 /** Full-height match table. Player avatars straddle the two table edges. */
@@ -62,11 +69,33 @@ export function GameTable({
   onEditRoleNote,
   notePlayerId,
   notePopoverId,
+  overlay,
+  felt,
+  onSelfMenu,
+  selfMenuOpen = false,
 }: GameTableProps) {
   const t = useTranslations();
   const roleText = useRoleText();
   const root = useRef<HTMLDivElement>(null);
+  const press = useRef<{ timer?: ReturnType<typeof setTimeout>; opened: boolean }>({ opened: false });
   const { top, bottom } = arrangeSeats(players, myPlayerId);
+  const portraitOf = (seat: HTMLElement) => seat.querySelector<HTMLElement>('.table-seat-number') ?? seat;
+  // While the viewer's portrait is being picked, holding it (or the context menu) still opens their reactions.
+  const holdForMenu = onSelfMenu ? {
+    onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
+      const seat = event.currentTarget;
+      clearTimeout(press.current.timer);
+      press.current = { opened: false, timer: setTimeout(() => { press.current.opened = true; onSelfMenu(portraitOf(seat)); }, 450) };
+    },
+    onPointerUp: () => clearTimeout(press.current.timer),
+    onPointerLeave: () => clearTimeout(press.current.timer),
+    onPointerCancel: () => clearTimeout(press.current.timer),
+    onContextMenu: (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      if (!press.current.opened) onSelfMenu(portraitOf(event.currentTarget));
+      press.current.opened = true;
+    },
+  } : {};
   const renderSeat = (p: ClientPlayer) => {
     const candidate = !candidateIds || candidateIds.includes(p.id);
     const canSelect = selectable && candidate && !!onToggle;
@@ -85,6 +114,7 @@ export function GameTable({
     const canNote = !!onEditRoleNote && !isMe && !!editableNoteIds?.includes(p.id);
     const timer = seatTimer?.(p);
     const noteAria = t('roleNotes.editPlayer', { seat: p.seat + 1, name: p.name, note: noteLabel });
+    const selfMenu = isMe && !canSelect && !!onSelfMenu;
     return (
       <div key={p.id} className="table-player" data-speaking={speakerId === p.id}>
         <div className="table-seat-wrap">
@@ -94,10 +124,21 @@ export function GameTable({
               'table-seat',
               dimNonCandidates && selectable && !candidate && 'is-dimmed',
             )}
-            disabled={!canSelect}
-            aria-pressed={selectable ? selected : undefined}
+            disabled={!canSelect && !selfMenu}
+            aria-pressed={selectable && !selfMenu ? selected : undefined}
+            aria-haspopup={selfMenu ? 'menu' : undefined}
+            aria-expanded={selfMenu ? selfMenuOpen : undefined}
             aria-label={`${p.seat + 1}. ${p.name}${isMe ? ` · ${t('common.you')}` : ''}`}
-            onClick={() => { if (canSelect) onToggle?.(p.id); }}
+            {...(isMe ? holdForMenu : {})}
+            onClick={(event) => {
+              // The click that ends a hold has already opened the reactions.
+              if (isMe && press.current.opened) {
+                press.current.opened = false;
+                return;
+              }
+              if (canSelect) onToggle?.(p.id);
+              else if (selfMenu) onSelfMenu(portraitOf(event.currentTarget));
+            }}
           >
             <PlayerAvatar
               playerId={p.id}
@@ -192,6 +233,7 @@ export function GameTable({
   return (
     <div ref={root} className="game-table has-seat-labels">
       <div className="table-felt" aria-hidden="true">
+        {felt}
         <GameIcon name="crest" className="table-felt-crest" />
       </div>
       <div
@@ -211,6 +253,7 @@ export function GameTable({
       >
         {bottom.map(renderSeat)}
       </div>
+      {overlay}
       {missionReveal && onRevealComplete && (
         <MissionTableReveal
           key={missionReveal.id}

@@ -32,10 +32,14 @@ import type { Ack } from '@/lib/socket/types';
 import { joinErrorText } from '@/lib/socket/client/joinErrorText';
 import type { RoomNotice } from '@/lib/store/room';
 import { AnimatePresence } from 'framer-motion';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { PhaseBoard } from './PhaseBoard';
 import { EarlyAssassinationVote } from './EarlyAssassinationVote';
+import { FeltAmbience, FeltObjects } from './FeltObjects';
+import { PhaseBeats } from './PhaseBeats';
+import { TableEmotes } from './TableEmotes';
+import { usePhaseBeats } from '@/lib/game/usePhaseBeats';
 
 /** Shared table: live rooms supply socket actions; the gallery supplies a local engine. */
 export function GameView({
@@ -77,6 +81,9 @@ export function GameView({
   const draftKey = game?.proposedTeam?.join(',') ?? '';
   useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
   useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
+  const beat = usePhaseBeats(game, myPlayerId, !!presentation);
+  const [emoteAnchor, setEmoteAnchor] = useState<HTMLElement | null>(null);
+  const closeEmotes = useCallback(() => setEmoteAnchor(null), []);
 
   if (!game)
     return (
@@ -118,6 +125,7 @@ export function GameView({
   const ladyReveal = game.privateLadyResult;
   const isAssassin = !!game.assassinCandidates;
   const isOver = game.phase === 'GameOver' && presentation?.kind !== 'assassination';
+  const canEmote = !!myPlayerId && !game.isSpectator && conn === 'connected';
   const activePhase =
     presentation?.kind === 'vote'
       ? 'Voting'
@@ -403,6 +411,7 @@ export function GameView({
           players={tablePlayers}
           myPlayerId={myPlayerId}
           board={needsRoleReveal ? null : <>
+            {!presentation && !isOver && !game.earlyAssassination && <FeltObjects game={game} />}
             {/* The ballot rides in the empty band above the title, so opening one moves nothing. */}
             {game.earlyAssassination && <EarlyAssassinationVote
               key={game.earlyAssassination.id} ballot={game.earlyAssassination} game={game}
@@ -431,6 +440,14 @@ export function GameView({
           } : undefined}
           notePlayerId={noteTarget?.id}
           notePopoverId={notePopoverId}
+          felt={<FeltAmbience game={game} />}
+          overlay={<>
+            <PhaseBeats beat={beat} />
+            <TableEmotes anchor={canEmote && !needsRoleReveal ? emoteAnchor : null} onClose={closeEmotes}
+              onSend={(emote) => void actions.emote(emote)} />
+          </>}
+          onSelfMenu={canEmote && !needsRoleReveal ? (anchor) => setEmoteAnchor((current) => current ? null : anchor) : undefined}
+          selfMenuOpen={canEmote && !!emoteAnchor}
         />
       </TableFrame>
       {notesEnabled && noteTarget && notePlayer && noteOptions.length > 0 && <RoleNotePopover

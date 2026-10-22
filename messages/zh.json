@@ -533,6 +533,20 @@
     "overdue": "超时 {time} 秒",
     "paused": "已暂停"
   },
+  "beat": {
+    "questTitle": "{n, select, 1 {第一个任务} 2 {第二个任务} 3 {第三个任务} 4 {第四个任务} other {最终任务}}",
+    "questSize": "{count} 人出征",
+    "twoFails": "两张失败牌"
+  },
+  "emote": {
+    "menu": "表情",
+    "approve": "赞同",
+    "reject": "反对",
+    "trust": "信任",
+    "suspect": "怀疑",
+    "question": "疑问",
+    "ponder": "思考"
+  },
   "reroll": {
     "using": "重随中…",
     "empty": "重随卡不足",

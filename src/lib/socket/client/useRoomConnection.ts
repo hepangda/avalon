@@ -3,6 +3,7 @@ import { ViewSynchronizer } from './viewSync';
 
 import { useRouter } from '@/i18n/navigation';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
+import { isEmoteEvent, publishEmote } from '@/lib/game/emotes';
 import { gameImageUrls,preloadImages } from '@/lib/game/preloadImages';
 import { useCardArtStore } from '@/lib/store/cardArt';
 import { useRoomStore } from '@/lib/store/room';
@@ -157,6 +158,9 @@ export function useRoomConnection(code: string | null) {
           break;
         case 'net:latency':
           store.setPlayerLatency(payload as PlayerLatency);
+          break;
+        case 'table:emote':
+          if (isEmoteEvent(payload)) publishEmote(payload);
           break;
         case 'system:notice':
           onNotice(payload as { type: string; message?: string });
