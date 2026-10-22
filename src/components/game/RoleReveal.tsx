@@ -1,4 +1,6 @@
 import { Button } from '@/components/ui/Button';
+import { playSound, type SoundName } from '@/lib/audio/engine';
+import { useSoundCue } from '@/lib/audio/useSoundCue';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import type { ClientGameState } from '@/lib/engine';
 import { gameActions } from '@/lib/socket/client';
@@ -63,6 +65,7 @@ const STOW = 0.75;
 /** Turning it over when the player taps: peek under a corner, then flip. */
 const TURN = { duration: 1, times: [0, 0.3, 0.45, 1] };
 const EASE_OUT = [0.2, 0.8, 0.25, 1] as const;
+const DEAL_SOUNDS: Partial<Record<Stage, SoundName>> = { fan: 'deal', flip: 'flip', gather: 'gather', shuffle: 'shuffle', deal: 'deal' };
 
 /** Card centers in the layer's own coordinates, so a transformed host (the debug gallery) still lines up. */
 function measure(layer: HTMLElement, seatIds: string[]): Geometry | null {
@@ -187,6 +190,12 @@ export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onRe
   const live = watching && gateOpen;
 
   const hasGeometry = !!geometry;
+  // A flick for every card laid out, turned or dealt, timed to the same staggers as the cards.
+  useSoundCue(hasGeometry && live ? DEAL_SOUNDS[stage] : null, {
+    count: stage === 'fan' || stage === 'flip' || stage === 'deal' ? n : 1,
+    interval: stage === 'fan' ? FAN_STAGGER : stage === 'flip' ? FLIP_STAGGER : DEAL_STAGGER,
+    delay: stage === 'fan' ? 0.15 : stage === 'flip' ? 0.12 : 0,
+  });
   useEffect(() => {
     if (!hasGeometry || !ceremony || !live) return;
     const fanIn = 0.15 + (n - 1) * FAN_STAGGER + 0.5 + 0.5;
@@ -259,6 +268,7 @@ export function RoleReveal({ game, myPlayerId, onAck = gameActions.ackRole, onRe
   function turnOver() {
     if (faceUp || !held) return;
     setFaceUp(true);
+    playSound('flip');
     const pop = popRef.current;
     const rotor = rotorRef.current;
     if (!pop || !rotor) return;

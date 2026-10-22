@@ -6,6 +6,8 @@ import { FlipCard } from '@/components/animations/FlipCard';
 import { seatLabel } from '@/lib/game/playerLabel';
 import type { TablePresentation } from '@/lib/game/tablePresentation';
 import { GameIcon } from './GameArt';
+import type { SoundName } from '@/lib/audio/engine';
+import { useSoundCue } from '@/lib/audio/useSoundCue';
 import { RoleCard } from './RoleCard';
 
 /**
@@ -22,6 +24,8 @@ const TIMELINE: Array<[Stage, number]> = [
   ['reveal', 2950],
   ['result', 4000],
 ];
+/** The heart races in the dark; the stab carries its own wind-up to the impact. */
+const SOUNDS: Partial<Record<Stage, SoundName>> = { dark: 'heartbeat', strike: 'stab', reveal: 'flip' };
 /** When the blade lands, measured from the start of the strike. */
 const IMPACT = 0.15;
 const FLIP = 0.95;
@@ -150,6 +154,8 @@ export function AssassinationReveal({ event, onComplete }: {
   const struck = at >= ORDER.indexOf('strike');
   const revealed = at >= ORDER.indexOf('reveal');
   const resolved = stage === 'result';
+
+  useSoundCue(watching && (resolved ? (hit ? 'assassinHit' : 'assassinMiss') : SOUNDS[stage]));
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;

@@ -6,6 +6,7 @@ import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { seatLabel } from '@/lib/game/playerLabel';
 import type { ClientGameState, Team } from '@/lib/engine';
 import { GameIcon } from './GameArt';
+import { useSoundCue } from '@/lib/audio/useSoundCue';
 
 /**
  * Only the inspecting player sees this. The lake stirs, the inspected player rises from
@@ -42,6 +43,7 @@ export function LadyResultReveal({ game, result, onClose }: {
   const at = ORDER.indexOf(stage);
   const risen = at >= ORDER.indexOf('rise');
   const resolved = stage === 'crest';
+  useSoundCue(resolved && 'lady');
 
   useLayoutEffect(() => {
     const dialog = dialogRef.current;

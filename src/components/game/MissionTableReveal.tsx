@@ -9,6 +9,7 @@ import {
 import { GameIcon } from './GameArt';
 import { SealFlight } from './SealFlight';
 import { TableCard } from './TableCard';
+import { useSoundCue } from '@/lib/audio/useSoundCue';
 
 type Stage = 'gather' | 'shuffle' | 'reveal' | 'verdict' | 'seal';
 const ORDER: Stage[] = ['gather', 'shuffle', 'reveal', 'verdict', 'seal'];
@@ -55,6 +56,10 @@ export function MissionTableReveal({
     document.querySelector(`[data-mission-round="${event.result.roundIndex}"] .table-mission-token`));
   const at = ORDER.indexOf(stage);
   const success = event.result.success;
+  // Sound: the cards slide in and riffle, each turns with its own flip, and the verdict lands with its sting.
+  useSoundCue(stage === 'gather' || stage === 'shuffle' ? stage : null);
+  useSoundCue(flipped > 0 && !reduce && 'flip', { key: flipped });
+  useSoundCue(at >= ORDER.indexOf('verdict') && (success ? 'missionSuccess' : 'missionFail'));
   useLayoutEffect(() => {
     const table = tableRef.current;
     if (!table) return;

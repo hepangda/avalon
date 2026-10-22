@@ -15,6 +15,7 @@ import type { ActionTimer, ClientPlayer } from '@/lib/engine';
 import { SeatTimer } from './SeatTimer';
 import { roleNoteTone, type RoleNotes } from '@/lib/game/roleNotes';
 import { useRoleText } from '@/lib/game/useRoleText';
+import { seatShortcut } from '@/lib/game/tableShortcuts';
 
 interface GameTableProps {
   players: ClientPlayer[];
@@ -98,6 +99,7 @@ export function GameTable({
               dimNonCandidates && selectable && !candidate && 'is-dimmed',
             )}
             disabled={!canSelect}
+            aria-keyshortcuts={canSelect ? seatShortcut(p.seat) : undefined}
             aria-pressed={selectable ? selected : undefined}
             aria-label={`${p.seat + 1}. ${p.name}${isMe ? ` · ${t('common.you')}` : ''}`}
             onClick={() => { if (canSelect) onToggle?.(p.id); }}

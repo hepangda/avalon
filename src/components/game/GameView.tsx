@@ -25,6 +25,9 @@ import { useRoleNotes } from '@/lib/game/useRoleNotes';
 import { useRoomAction } from '@/lib/game/useRoomAction';
 import { useLadyResult } from '@/lib/game/useLadyResult';
 import { useTablePresentation } from '@/lib/game/useTablePresentation';
+import { useTableShortcuts } from '@/lib/game/tableShortcuts';
+import { useTurnAlert } from '@/lib/game/useTurnAlert';
+import { useEndingSounds, useTableSounds } from '@/lib/audio/useTableSounds';
 import {
   gameActions,
   roomActions
@@ -73,11 +76,21 @@ export function GameView({
   const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.roleRevision}-${game?.discussion?.speakerIndex}`;
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
-  const { presentation, reportGame, finish } = useTablePresentation(game);
+  const { presentation, reportGame, finish, settled } = useTablePresentation(game);
   const ending = useEndingReveal(presentation?.kind === 'gameOver' ? presentation : null, finish);
   const lady = useLadyResult(game, myPlayerId);
   const draftKey = game?.proposedTeam?.join(',') ?? '';
   useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
+  useTurnAlert(game, myPlayerId, !settled || conn !== 'connected');
+  useTableShortcuts(!!game && settled && conn === 'connected');
+  const shownLeader = game?.players.find((p) => p.seat === game.leaderIndex)?.id;
+  useTableSounds({
+    game,
+    settled,
+    sealedRounds: game?.missionResults.length ?? 0,
+    leaderId: shownLeader,
+  });
+  useEndingSounds(game, presentation?.kind === 'gameOver' ? presentation.id : null, ending.stage, ending.revealed.size);
 
   if (!game)
     return (
