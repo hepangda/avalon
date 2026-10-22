@@ -182,7 +182,10 @@ export function LadyResultReveal({ game, result, onClose }: {
                   className="assassination-verdict-title"
                   initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.5, filter: 'blur(10px)' }}
                   animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                  transition={reduceMotion ? { duration: 0.1 } : { delay: 0.2, type: 'spring', stiffness: 240, damping: 18 }}
+                  transition={reduceMotion ? { duration: 0.1 } : {
+                    delay: 0.2, type: 'spring', stiffness: 240, damping: 18,
+                    filter: { type: 'tween', duration: 0.4, ease: 'easeOut', delay: 0.2 },
+                  }}
                 >
                   {t(evil ? 'team.evil' : 'team.good')}
                 </motion.span>

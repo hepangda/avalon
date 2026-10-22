@@ -144,7 +144,10 @@ export function GameOverTitleCard({ event, game, onSkip }: {
             className="ending-title-text"
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 1.7, filter: 'blur(12px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            transition={reduceMotion ? { duration: 0.2 } : { type: 'spring', stiffness: 240, damping: 18, delay: 0.45 }}
+            transition={reduceMotion ? { duration: 0.2 } : {
+              type: 'spring', stiffness: 240, damping: 18, delay: 0.45,
+              filter: { type: 'tween', duration: 0.4, ease: 'easeOut', delay: 0.45 },
+            }}
           >
             {t(winner === 'good' ? 'gameOver.goodTriumphs' : 'gameOver.evilPrevails')}
           </motion.span>

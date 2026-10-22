@@ -135,7 +135,10 @@ export function MissionTableReveal({
           data-result={success ? 'success' : 'fail'}
           initial={reduce || at < ORDER.indexOf('verdict') ? false : { opacity: 0, scale: 1.5, filter: 'blur(8px)' }}
           animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          transition={{ type: 'spring', stiffness: 260, damping: 19 }}
+          transition={{
+            type: 'spring', stiffness: 260, damping: 19,
+            filter: { type: 'tween', duration: 0.4, ease: 'easeOut' },
+          }}
         >
           {title}
         </motion.h2>
