@@ -6,13 +6,15 @@ ClientVoteRecord
 } from '@/lib/engine';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { foldLog } from '@/lib/game/foldLog';
+import type { GameIconName } from '@/lib/game/gameIcons';
 import { formatGameLog } from '@/lib/game/formatGameLog';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { useEffect,useId,useLayoutEffect,useRef } from 'react';
 import { useTranslations } from 'use-intl';
+import { GameIcon } from './GameArt';
 import { MissionCardReveal } from './MissionCardReveal';
 import { VoteMatrix } from './VoteMatrix';
-import { VoteResultPanel } from './VoteResultPanel';
+import { LogFace, VoteResultPanel } from './VoteResultPanel';
 
 const CHANNELS = ['public', 'votes', 'private', 'rules'] as const;
 export type LogChannel = (typeof CHANNELS)[number];
@@ -25,6 +27,19 @@ const CHANNEL_LABELS = {
 
 const VOTE_KEYS = new Set(['voteApproved', 'voteRejected']);
 const MISSION_KEYS = new Set(['missionSucceeded', 'missionFailed']);
+const PROPOSAL_KEYS = new Set(['proposalBegins', 'teamAnnounced', 'teamFinalized']);
+
+/** The emblem each kind of entry carries in place of a timestamp; the time stays on hover. */
+function glyphOf(key: string): GameIconName {
+  if (/^(proposalBegins|teamAnnounced|teamFinalized|discussionFinished|admin\.leaderRerolled|admin\.proposedFor)$/.test(key)) return 'leader';
+  if (/^(voteApproved|youApproved)$/.test(key)) return 'approve';
+  if (/^(voteRejected|youRejected|hammerEvilWins|admin\.votesRetracted|admin\.proposalRetracted)$/.test(key)) return 'reject';
+  if (/^(missionSucceeded|youPlayedSuccess|goodWins)/.test(key)) return 'missionSuccess';
+  if (/^(missionFailed|youPlayedFail|evilWinsMissions)$/.test(key)) return 'missionFail';
+  if (/^(lady|ladyResult)/.test(key)) return 'lady';
+  if (/^(assassin|earlyAssassination|admin\.assassinationStarted)/.test(key)) return 'assassinate';
+  return 'crest';
+}
 
 function clock(at: number): string {
   if (!at) return '';
@@ -188,9 +203,11 @@ export function LogPanel({
               const speakers = item.entries.map((e) => game.players.find((p) => p.id === e.params?.player));
               return (
                 <details key={`speeches-${item.key}`} className="war-log-entry war-log-fold">
-                  <summary className="flex items-center gap-2">
-                    <span className="shrink-0 font-mono text-[11px] text-parchment/35">{clock(item.entries[0]!.at)}</span>
-                    <span className="text-parchment/85">{t('log.speeches')}</span>
+                  <summary className="war-log-line">
+                    <span className="war-log-glyph is-speech" title={clock(item.entries[0]!.at)} aria-hidden="true">
+                      <svg viewBox="0 0 20 20"><path d="M4 4.5h12a1.5 1.5 0 0 1 1.5 1.5v6.5A1.5 1.5 0 0 1 16 14H9l-3.5 3v-3H4A1.5 1.5 0 0 1 2.5 12.5V6A1.5 1.5 0 0 1 4 4.5Z" /></svg>
+                    </span>
+                    <span className="sr-only">{t('log.speeches')}</span>
                     <span className="war-log-speakers" aria-hidden="true">
                       {speakers.map((p, i) => p && (
                         <PlayerAvatar key={`${p.id}-${i}`} playerId={p.id} avatarUrl={p.claimed === false ? undefined : p.avatarUrl}
@@ -202,7 +219,7 @@ export function LogPanel({
                     </span>
                   </summary>
                   {item.entries.map((entry) => (
-                    <div key={entry.seq} className="flex items-baseline gap-2 pt-1.5">
+                    <div key={entry.seq} className="flex items-baseline gap-2 pt-1.5 pl-8">
                       <span className="shrink-0 font-mono text-[11px] text-parchment/35">{clock(entry.at)}</span>
                       <span className={entry.style === 'admin' ? 'font-semibold text-crimson' : 'text-parchment/70'}>
                         {formatGameLog(entry, game, t, roleText.name)}
@@ -213,38 +230,58 @@ export function LogPanel({
               );
             }
             const entry = item.entry;
+            const text = formatGameLog(entry, game, t, roleText.name);
+            // Each quest opens a new chapter of the log.
+            if (entry.key === 'roundBegins')
+              return (
+                <div key={entry.seq} className="war-log-chapter" title={clock(entry.at)}>
+                  <span className="war-log-chapter-medal" aria-hidden="true">{entry.params?.round}</span>
+                  <span className="sr-only">{text}</span>
+                </div>
+              );
             const voteRec = voteRecordFor(entry);
             const missionRec = missionResultFor(entry);
+            const team = typeof entry.params?.team === 'string' ? entry.params.team.split(',').filter(Boolean) : [];
             return (
-              <div key={entry.seq} className="war-log-entry">
-                <div className="flex items-baseline gap-2">
-                  <span className="shrink-0 font-mono text-[11px] text-parchment/35">
-                    {clock(entry.at)}
-                  </span>
-                  <span
-                    className={
-                      entry.style === 'admin'
-                        ? 'font-semibold text-crimson'
-                        : 'text-parchment/85'
-                    }
-                  >
-                    {formatGameLog(entry, game, t, roleText.name)}
-                  </span>
+              <div key={entry.seq} className="war-log-entry war-log-line" data-admin={entry.style === 'admin' || undefined}>
+                <span className="war-log-glyph" title={clock(entry.at)} aria-hidden="true">
+                  <GameIcon name={glyphOf(entry.key)} className="h-full w-full" />
+                </span>
+                <div className="war-log-body">
+                  {voteRec ? (
+                    <>
+                      <span className="sr-only">{text}</span>
+                      <VoteResultPanel record={voteRec} game={game} />
+                    </>
+                  ) : missionRec ? (
+                    <>
+                      <span className="sr-only">{text}</span>
+                      <MissionCardReveal teamSize={missionRec.teamSize} failCount={missionRec.failCount} />
+                    </>
+                  ) : PROPOSAL_KEYS.has(entry.key) && typeof entry.params?.leader === 'string' ? (
+                    // Who leads, which attempt it is, and whom they named: told with faces and pips.
+                    <span className="war-log-faces">
+                      <span className="sr-only">{text}</span>
+                      <LogFace game={game} id={entry.params.leader} className="is-leader">
+                        <GameIcon name="leader" className="log-face-crown" />
+                      </LogFace>
+                      {entry.key === 'proposalBegins' ? (
+                        <span className="war-log-pips" aria-hidden="true">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <i key={i} data-on={i < Number(entry.params?.proposal) || undefined} data-last={i === 4 || undefined} />
+                          ))}
+                        </span>
+                      ) : (
+                        <>
+                          <span className="war-log-tag" aria-hidden="true">{t(`log.short.${entry.key}`)}</span>
+                          {team.map((id) => <LogFace key={id} game={game} id={id} className="is-team" />)}
+                        </>
+                      )}
+                    </span>
+                  ) : (
+                    <span className={entry.style === 'admin' ? 'font-semibold text-crimson' : 'text-parchment/85'}>{text}</span>
+                  )}
                 </div>
-                {voteRec && (
-                  <div className="mt-2 rounded-lg border border-gold/15 bg-ink/40 p-2.5">
-                    <VoteResultPanel record={voteRec} game={game} />
-                  </div>
-                )}
-                {missionRec && (
-                  <div className="mt-2 rounded-lg border border-gold/15 bg-ink/40 p-2.5">
-                    <MissionCardReveal
-                      teamSize={missionRec.teamSize}
-                      failCount={missionRec.failCount}
-
-                    />
-                  </div>
-                )}
               </div>
             );
           })

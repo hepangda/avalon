@@ -3,7 +3,7 @@
  * repo carries no audio files. Pitches lean on D major for the light side and D minor for the dark.
  */
 export type SoundName =
-  | 'deal' | 'flip' | 'shuffle' | 'gather'
+  | 'deal' | 'flip' | 'shuffle' | 'gather' | 'stone'
   | 'voteApprove' | 'voteReject'
   | 'missionSuccess' | 'missionFail' | 'seal'
   | 'leader' | 'lady'
@@ -150,6 +150,15 @@ export const RECIPES: Record<SoundName, Recipe> = {
   gather: {
     length: 0.6, space: 0,
     draw: (k) => k.noise(0, { dur: 0.5, peak: 0.16, type: 'bandpass', freq: 700, freqEnd: 2600, q: 0.6, attack: 0.2, seed: 70 }),
+  },
+  stone: {
+    length: 0.3, space: 0.08,
+    draw: (k) => {
+      // A glass-hard click as the stone meets the pile, with a little wood under it.
+      k.noise(0, { dur: 0.02, peak: 0.42, type: 'highpass', freq: 3800, q: 0.8, seed: 140 });
+      k.tone(0, { freq: 2350, freqEnd: 2150, dur: 0.07, peak: 0.07 });
+      k.thump(0.004, 0.16, 260, 120, 0.06);
+    },
   },
   voteApprove: {
     length: 1.4, space: 0.35,
