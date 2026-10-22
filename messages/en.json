@@ -235,8 +235,8 @@
   "lady": {
     "title": "The Lady of the Lake",
     "gazingWaters": "{name} gazes into the waters…",
-    "watersReveal": "The waters reveal {name} to be",
-    "examineShort": "Examine"
+    "examineShort": "Examine",
+    "examines": "{holder} examines {target}"
   },
   "assassin": {
     "targetLabel": "Assassination target",

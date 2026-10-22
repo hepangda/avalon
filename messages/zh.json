@@ -235,8 +235,8 @@
   "lady": {
     "title": "湖中仙女",
     "gazingWaters": "{name} 正凝视水面…",
-    "watersReveal": "水面揭示出 {name} 的阵营为",
-    "examineShort": "审视"
+    "examineShort": "审视",
+    "examines": "{holder} 审视了 {target}"
   },
   "assassin": {
     "targetLabel": "刺杀目标",

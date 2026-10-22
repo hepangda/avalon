@@ -34,8 +34,8 @@ const expectedPhases: Record<string, string> = {
   missionFail: "MissionVote",
   twoFails: "MissionVote",
   lady: "LadyOfLake",
-  ladyGood: "TeamBuilding",
-  ladyEvil: "TeamBuilding",
+  ladyGood: "LadyOfLake",
+  ladyEvil: "LadyOfLake",
   assassination: "Assassination",
   earlyAssassinationProposal: "TeamBuilding",
   earlyAssassination: "Assassination",
@@ -88,7 +88,8 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
   }
 
   it("projects private roles and Lady results for the right viewer only", () => {
-    const { state, viewerId } = buildScenario("ladyEvil", count);
+    const { nextState: state, viewerId } = buildScenario("ladyEvil", count);
+    if (!state) throw new Error("Expected an inspection");
     expect(
       projectStateForViewer(state, viewerId).privateLadyResult?.loyalty,
     ).toBe("evil");
@@ -98,6 +99,24 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
     expect(
       projectStateForViewer(state, "spectator").players.every((p) => !p.role),
     ).toBe(true);
+  });
+
+  it("passes the Lady's token with the result for the holder alone", () => {
+    const scene = buildScenario("ladyGood", count);
+    const events = (viewerId: string) => newTablePresentations(
+      projectStateForViewer(scene.state, viewerId),
+      projectStateForViewer(scene.nextState!, viewerId),
+    );
+    const targetId = scene.nextState!.ladyHolderId!;
+    const watcher = scene.state.players.find((p) => p.id !== scene.viewerId && p.id !== targetId)!.id;
+    expect(events(scene.viewerId)).toEqual([expect.objectContaining({
+      kind: "lady", holderId: scene.viewerId, targetId, loyalty: "good",
+    })]);
+    for (const viewer of [watcher, targetId, "spectator"]) {
+      const [event] = events(viewer);
+      expect(event).toMatchObject({ kind: "lady", holderId: scene.viewerId, targetId });
+      expect(event).not.toHaveProperty("loyalty");
+    }
   });
 
   it("provides the correct mission perspective and rejects a good fail card", () => {

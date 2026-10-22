@@ -124,13 +124,17 @@ export function GameView({
         ? 'MissionResult'
         : presentation?.kind === 'assassination'
           ? 'Assassination'
-          : game.phase;
+          : presentation?.kind === 'lady'
+            ? 'LadyOfLake'
+            : game.phase;
   const round =
     presentation?.kind === 'vote'
       ? presentation.record.roundIndex
       : presentation?.kind === 'mission'
         ? presentation.result.roundIndex
-        : game.roundIndex;
+        : presentation?.kind === 'lady'
+          ? presentation.roundIndex
+          : game.roundIndex;
   const displayGame =
     presentation?.kind === 'mission'
       ? {
@@ -420,6 +424,7 @@ export function GameView({
           highlightIds={displayTeam}
           onToggle={toggle}
           missionReveal={presentation?.kind === 'mission' ? presentation : null}
+          ladyFlight={presentation?.kind === 'lady' && !presentation.loyalty ? presentation : null}
           onRevealComplete={finish}
           roleNotes={displayedNotes}
           knownNotes={knownNotes}
@@ -457,6 +462,14 @@ export function GameView({
             timer={selfTimer && <ActionTimerBadge timer={selfTimer} now={now} />} />
         )}
       </AnimatePresence>
+      {presentation?.kind === 'lady' && presentation.loyalty && (
+        <LadyResultReveal
+          key={presentation.id}
+          game={game}
+          result={{ targetId: presentation.targetId, loyalty: presentation.loyalty }}
+          onClose={() => { lady.markSeen(); finish(presentation.id); }}
+        />
+      )}
       {!presentation && lady.unseen && (
         <LadyResultReveal
           game={game}

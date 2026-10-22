@@ -232,9 +232,9 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
   if (["lady", "ladyGood", "ladyEvil"].includes(id)) {
     state = playRound(playRound(state, 0), 1);
     const viewerId = state.ladyHolderId!;
-    if (id !== "lady")
-      state = inspect(state, id === "ladyGood" ? "good" : "evil");
-    return { state, viewerId };
+    if (id === "lady") return { state, viewerId };
+    // The result plays from the inspection itself.
+    return { state, viewerId, nextState: inspect(state, id === "ladyGood" ? "good" : "evil") };
   }
   if (
     [

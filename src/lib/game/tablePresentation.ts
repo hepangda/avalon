@@ -4,6 +4,7 @@ import type {
   ClientVoteRecord,
   MissionCard,
   Role,
+  Team,
 } from '@/lib/engine';
 
 export type TablePresentation =
@@ -19,6 +20,15 @@ export type TablePresentation =
       kind: 'assassination';
       target: { id: string; seat: number; name: string; role: Role; roleVariant?: number };
       hitMerlin: boolean;
+    }
+  | {
+      id: string;
+      kind: 'lady';
+      holderId: string;
+      targetId: string;
+      roundIndex: number;
+      /** Only the holder ever learns it. */
+      loyalty?: Team;
     };
 
 export interface TablePresentationState {
@@ -73,7 +83,7 @@ export function newTablePresentations(
 ): TablePresentation[] {
   if (!previous || !sameTimeline(previous, next)) return [];
   const prefix = `${next.gameId}-${next.phaseRevision ?? 0}`;
-  const events: Exclude<TablePresentation, { kind: 'assassination' }>[] = next.voteHistory
+  const events: Extract<TablePresentation, { kind: 'vote' | 'mission' }>[] = next.voteHistory
     .slice(previous.voteHistory.length)
     .map((record) => ({
       id: `${prefix}-vote-${record.roundIndex}-${record.proposalIndex}`,
@@ -107,6 +117,20 @@ export function newTablePresentations(
       roundA - roundB || (a.kind === b.kind ? 0 : a.kind === 'vote' ? -1 : 1)
     );
   });
+  // The token changes hands the moment it is used.
+  const holderId = previous.lady?.holderId;
+  const targetId = next.lady?.holderId;
+  if (previous.phase === 'LadyOfLake' && holderId && targetId && holderId !== targetId) {
+    const result = next.privateLadyResult?.targetId === targetId ? next.privateLadyResult : undefined;
+    ordered.push({
+      id: `${prefix}-lady-${previous.roundIndex}`,
+      kind: 'lady',
+      holderId,
+      targetId,
+      roundIndex: previous.roundIndex,
+      ...(result ? { loyalty: result.loyalty } : {}),
+    });
+  }
   const outcome = next.outcome;
   if (
     !previous.outcome && next.phase === 'GameOver' && outcome &&
