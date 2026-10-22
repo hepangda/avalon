@@ -2,6 +2,7 @@ import { useTranslations } from 'use-intl';
 import { ProposalLimitIcon } from './ProposalLimitIcon';
 import { cn } from '@/lib/utils/cn';
 import { rejectionLimit, type ClientGameState } from '@/lib/engine';
+import { useArrival } from '@/lib/game/useArrival';
 
 /**
  * Proposal tracker sized to the configured rejection limit. Rejected proposals
@@ -17,11 +18,14 @@ export function ProposalTracker({
   const proposals = Array.from({ length: limit }, (_, i) => i);
   const rejected = game.rejectionCount;
   const current = rejected; // current proposal index (0-based)
+  const stamped = useArrival(rejected, `${game.gameId}-${game.phaseRevision ?? 0}-${game.roundIndex}`);
+  // One more rejection hands the game to evil.
+  const danger = current === limit - 1;
 
     const label = `${t('teamBuilder.proposalOf', { n: current + 1, total: limit })}${current === limit - 1 ? ` · ${t('proposal.hammerWarnLast')}` : ''}`;
     return (
       <span
-        className="inline-flex shrink-0 items-center gap-1"
+        className={cn('proposal-track inline-flex shrink-0 items-center gap-1', danger && 'is-danger')}
         role="img"
         aria-label={label}
         title={label}
@@ -30,8 +34,11 @@ export function ProposalTracker({
           <span
             key={i}
             aria-hidden="true"
+            data-proposal-slot={i}
+            data-stamped={i < current && stamped === i ? '' : undefined}
+            data-deciding={danger && i === current ? '' : undefined}
             className={cn(
-              'flex h-5 w-5 items-center justify-center rounded-full border text-xs',
+              'proposal-slot flex h-5 w-5 items-center justify-center rounded-full border text-xs',
               i < current
                 ? 'border-crimson-bright/70 bg-crimson/40 text-red-200'
                 : i === current

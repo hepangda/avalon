@@ -1,11 +1,33 @@
-import { useEffect, useLayoutEffect, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import {
   anonymousMissionCards,
+  missionRevealTimeline,
   type TablePresentation,
 } from '@/lib/game/tablePresentation';
+import { GameIcon } from './GameArt';
+import { SealFlight } from './SealFlight';
 import { TableCard } from './TableCard';
+
+type Stage = 'gather' | 'shuffle' | 'reveal' | 'verdict' | 'seal';
+const ORDER: Stage[] = ['gather', 'shuffle', 'reveal', 'verdict', 'seal'];
+
+/** The cracks a failed card takes when it lands face up. */
+function Cracks() {
+  return (
+    <svg className="mission-fail-cracks" viewBox="0 0 74 100" aria-hidden="true">
+      {[
+        'M37 46 L30 39 L27 30 L20 26 L16 16',
+        'M37 46 L45 50 L52 48 L58 56 L66 58',
+        'M37 46 L39 37 L36 29',
+        'M37 46 L33 57 L35 66 L30 74',
+        'M27 30 L22 33',
+        'M52 48 L55 41',
+      ].map((d) => <path key={d} d={d} pathLength={1} />)}
+    </svg>
+  );
+}
 
 export function MissionTableReveal({
   event,
@@ -17,16 +39,22 @@ export function MissionTableReveal({
   onComplete: (id: string) => void;
 }) {
   const t = useTranslations();
-  const reduce = useReducedMotion();
-  const [stage, setStage] = useState<'gather' | 'shuffle' | 'reveal'>(
-    reduce ? 'reveal' : 'gather',
-  );
+  const reduce = !!useReducedMotion();
+  const [timeline] = useState(() => missionRevealTimeline(event.result.teamSize, reduce));
+  const [stage, setStage] = useState<Stage>(reduce ? 'verdict' : 'gather');
+  const [flipped, setFlipped] = useState(reduce ? event.result.teamSize : 0);
   const [cards] = useState(() =>
     anonymousMissionCards(event.result.teamSize, event.result.failCount),
   );
   const [paths, setPaths] = useState<
     Array<{ x: number; y: number; dx: number; dy: number }>
   >([]);
+  const seal = useRef<HTMLDivElement>(null);
+  const [sealFrom, setSealFrom] = useState<DOMRect | null>(null);
+  const [sealTarget] = useState(() => () =>
+    document.querySelector(`[data-mission-round="${event.result.roundIndex}"] .table-mission-token`));
+  const at = ORDER.indexOf(stage);
+  const success = event.result.success;
   useLayoutEffect(() => {
     const table = tableRef.current;
     if (!table) return;
@@ -44,18 +72,44 @@ export function MissionTableReveal({
     );
   }, [event.team, tableRef]);
   useEffect(() => {
-    if (reduce) setStage('reveal');
+    const move = (next: Stage) => setStage((s) => (ORDER.indexOf(next) > ORDER.indexOf(s) ? next : s));
     const timers = reduce
-      ? []
+      ? [setTimeout(() => onComplete(event.id), timeline.complete)]
       : [
-          setTimeout(() => setStage('shuffle'), 650),
-          setTimeout(() => setStage('reveal'), 1850),
+          setTimeout(() => move('shuffle'), timeline.shuffle),
+          setTimeout(() => move('reveal'), timeline.reveal),
+          ...timeline.flips.map((ms, i) => setTimeout(() => {
+            setFlipped(i + 1);
+            // A failed card lands hard enough to shake the table.
+            if (cards[i] === 'fail')
+              tableRef.current?.animate(
+                [0, -7, 6, -4, 3, -1, 0].map((x, k) => ({ transform: `translate(${x}px, ${k % 2 ? 2 : 0}px)` })),
+                { duration: 420, delay: 230, easing: 'ease-out' },
+              );
+          }, ms)),
+          setTimeout(() => move('verdict'), timeline.verdict),
+          setTimeout(() => {
+            const box = seal.current?.getBoundingClientRect();
+            if (box?.width) setSealFrom(box);
+            move('seal');
+          }, timeline.seal),
+          // In case the flight never lands (the board is gone), the table still moves on.
+          setTimeout(() => onComplete(event.id), timeline.complete),
         ];
-    timers.push(setTimeout(() => onComplete(event.id), reduce ? 1800 : 4200));
     return () => timers.forEach(clearTimeout);
-  }, [event.id, onComplete, reduce]);
+  }, [event.id, onComplete, reduce, timeline, cards, tableRef]);
+  const title =
+    at >= ORDER.indexOf('verdict')
+      ? t(success ? 'missionResult.succeeds' : 'missionResult.sabotaged')
+      : t(stage === 'gather' ? 'table.collecting' : stage === 'shuffle' ? 'table.shuffling' : 'cue.missionCardsTitle');
   return (
-    <div className="table-reveal-layer" role="status" aria-live="polite">
+    <div
+      className="table-reveal-layer"
+      role="status"
+      aria-live="polite"
+      data-stage={stage}
+      style={{ '--team': event.result.teamSize } as CSSProperties}
+    >
       {stage === 'gather' &&
         paths.map((p, i) => (
           <motion.div
@@ -70,24 +124,27 @@ export function MissionTableReveal({
           </motion.div>
         ))}
       <div className="table-reveal-content">
-        <h2 className="table-phase-title">
-          {stage === 'reveal'
-            ? t(
-                event.result.success
-                  ? 'missionResult.succeeds'
-                  : 'missionResult.sabotaged',
-              )
-            : t(stage === 'gather' ? 'table.collecting' : 'table.shuffling')}
-        </h2>
+        <motion.h2
+          key={at >= ORDER.indexOf('verdict') ? 'verdict' : 'cue'}
+          className={`table-phase-title${at >= ORDER.indexOf('verdict') ? ' mission-verdict' : ''}`}
+          data-result={success ? 'success' : 'fail'}
+          initial={reduce || at < ORDER.indexOf('verdict') ? false : { opacity: 0, scale: 1.5, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          transition={{ type: 'spring', stiffness: 260, damping: 19 }}
+        >
+          {title}
+        </motion.h2>
         <div
-          className={`table-anonymous-cards ${stage !== 'reveal' ? 'is-stacked' : ''}`}
+          className={`table-anonymous-cards ${stage === 'gather' || stage === 'shuffle' ? 'is-stacked' : 'is-spread'}`}
           aria-label={t('table.anonymousCards')}
         >
           {stage !== 'gather' &&
             cards.map((value, i) => (
               <motion.div
                 key={i}
-                className="table-anonymous-card"
+                className="table-anonymous-card mission-reveal-card"
+                data-turned={i < flipped ? '' : undefined}
+                data-hit={i < flipped && value === 'fail' && !reduce ? '' : undefined}
                 // Cards mount when shuffling starts, so the entrance must animate.
                 initial={{ x: 0, rotate: 0 }}
                 animate={
@@ -102,23 +159,46 @@ export function MissionTableReveal({
                         ],
                         rotate: [0, (i - 1) * 12, 0, (1 - i) * 12, 0],
                       }
-                    : { x: 0, rotate: 0 }
+                    : { x: 0, rotate: 0, y: i === flipped && stage === 'reveal' ? -6 : 0 }
                 }
                 transition={{
-                  duration: stage === 'shuffle' ? 1.1 : 0,
+                  duration: stage === 'shuffle' ? 1.1 : 0.3,
                   ease: 'easeInOut',
                 }}
               >
-                <TableCard state={stage === 'reveal' ? value : 'back'} />
+                <TableCard state={i < flipped ? value : 'back'} />
+                {value === 'fail' && i < flipped && !reduce && <Cracks />}
               </motion.div>
             ))}
+          {at >= ORDER.indexOf('verdict') && (
+            <motion.div
+              ref={seal}
+              className="mission-verdict-seal"
+              data-result={success ? 'success' : 'fail'}
+              style={{ visibility: sealFrom ? 'hidden' : undefined }}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 2.4, rotate: success ? -8 : 12 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={reduce ? { duration: 0.2 } : { type: 'spring', stiffness: 380, damping: 17, delay: 0.1 }}
+            >
+              <GameIcon name={success ? 'missionSuccess' : 'missionFail'} className="h-full w-full" />
+            </motion.div>
+          )}
         </div>
-        {stage === 'reveal' && (
-          <p className="table-phase-detail">
-            {t('missionResult.failCards', { count: event.result.failCount })}
-          </p>
-        )}
+        <p className="table-phase-detail" style={{ visibility: at >= ORDER.indexOf('verdict') ? undefined : 'hidden' }}>
+          {t('missionResult.failCards', { count: event.result.failCount })}
+        </p>
       </div>
+      {stage === 'seal' && sealFrom && (
+        <SealFlight
+          from={sealFrom}
+          target={sealTarget}
+          duration={0.8}
+          className={success ? 'is-success' : 'is-fail'}
+          onLand={() => onComplete(event.id)}
+        >
+          <GameIcon name={success ? 'missionSuccess' : 'missionFail'} className="h-full w-full" />
+        </SealFlight>
+      )}
     </div>
   );
 }

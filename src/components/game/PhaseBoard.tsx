@@ -7,11 +7,15 @@ import { useTranslations } from 'use-intl';
 import { TableCard } from './TableCard';
 import { GameIcon } from './GameArt';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
+import type { EndingStage } from './GameOverReveal';
+import { RejectionFlight } from './SealFlight';
 
-export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isAssassin, canVote, canMission, selected, round, teamSize }: {
+export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isAssassin, canVote, canMission, selected, round, teamSize, endingStage }: {
   game: ClientGameState; presentation: TablePresentation | null;
   isOver: boolean; isLeader: boolean; isHolder: boolean; isAssassin: boolean; canVote: boolean; canMission: boolean;
   selected: string[]; round: number; teamSize: number;
+  /** While the ending plays, the felt keeps its title back until the seats have turned. */
+  endingStage?: EndingStage | null;
 }) {
   const t = useTranslations();
   const team = game.proposedTeam ?? [];
@@ -53,6 +57,7 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
     return layout(
       <h2 className="table-phase-title">
         {t(presentation.record.approved ? 'cue.voteApproved' : 'cue.voteRejected')}
+        {!presentation.record.approved && <RejectionFlight key={presentation.id} slot={presentation.record.proposalIndex} />}
       </h2>,
       <>
         {chips(presentation.record.team)}
@@ -66,10 +71,10 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
     );
   if (isOver)
     return layout(
-      <h1 className="table-phase-title outcome-title" data-winner={game.outcome?.winner}>
+      <h1 className="table-phase-title outcome-title" data-winner={game.outcome?.winner} data-ending={endingStage ?? undefined}>
         {t(game.outcome?.winner === 'good' ? 'gameOver.goodTriumphs' : 'gameOver.evilPrevails')}
       </h1>,
-      game.outcome && <p className="table-phase-detail">{t(`gameOver.${outcomeReasonKey(game.outcome)}`)}</p>,
+      game.outcome && <p className="table-phase-detail outcome-reason" data-ending={endingStage ?? undefined}>{t(`gameOver.${outcomeReasonKey(game.outcome)}`)}</p>,
     );
   if (game.phase === 'TeamAnnouncement' || game.phase === 'Discussion')
     return layout(

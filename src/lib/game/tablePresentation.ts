@@ -2,6 +2,7 @@ import type {
   ClientGameState,
   ClientMissionResult,
   ClientVoteRecord,
+  GameOutcome,
   MissionCard,
   Role,
 } from '@/lib/engine';
@@ -19,6 +20,13 @@ export type TablePresentation =
       kind: 'assassination';
       target: { id: string; seat: number; name: string; role: Role; roleVariant?: number };
       hitMerlin: boolean;
+    }
+  | {
+      id: string;
+      kind: 'gameOver';
+      outcome: GameOutcome;
+      /** Seats in the order their identities turn over. */
+      order: string[];
     };
 
 export interface TablePresentationState {
@@ -73,7 +81,7 @@ export function newTablePresentations(
 ): TablePresentation[] {
   if (!previous || !sameTimeline(previous, next)) return [];
   const prefix = `${next.gameId}-${next.phaseRevision ?? 0}`;
-  const events: Exclude<TablePresentation, { kind: 'assassination' }>[] = next.voteHistory
+  const events: Extract<TablePresentation, { kind: 'vote' | 'mission' }>[] = next.voteHistory
     .slice(previous.voteHistory.length)
     .map((record) => ({
       id: `${prefix}-vote-${record.roundIndex}-${record.proposalIndex}`,
@@ -123,7 +131,74 @@ export function newTablePresentations(
       });
     }
   }
+  // Every ending closes on the identities, after whatever decided it has played.
+  if (!previous.outcome && next.phase === 'GameOver' && outcome) {
+    ordered.push({
+      id: `${prefix}-gameOver`,
+      kind: 'gameOver',
+      outcome,
+      order: endingRevealOrder(next),
+    });
+  }
   return ordered;
+}
+
+/** Whether the ending's own title card plays; an assassination already announced the winner. */
+export function endingHasTitleCard(outcome: Pick<GameOutcome, 'reason'>) {
+  return outcome.reason !== 'assassinated_merlin' && outcome.reason !== 'assassin_missed';
+}
+
+/**
+ * When each part of the ending happens, in ms. `title` is measured from the start,
+ * `flips` and `settle` from the moment the seats start turning, `done` from the settle.
+ * Each turn waits a beat; the change of side waits longer, and Merlin longest of all.
+ */
+export function endingTimeline(
+  event: Pick<Extract<TablePresentation, { kind: 'gameOver' }>, 'order' | 'outcome'>,
+  reduceMotion = false,
+) {
+  if (reduceMotion)
+    return { title: endingHasTitleCard(event.outcome) ? 1600 : 0, flips: [], settle: 0, done: 400 };
+  const roles = new Map(event.outcome.revealedRoles.map((r) => [r.playerId, r]));
+  const flips: number[] = [];
+  let at = 350;
+  event.order.forEach((id, i) => {
+    const role = roles.get(id);
+    const before = i > 0 ? roles.get(event.order[i - 1]!) : undefined;
+    if (i > 0) at += role?.role === 'Merlin' ? 1100 : before?.team !== role?.team ? 800 : 380;
+    flips.push(at);
+  });
+  return { title: 2900, flips, settle: at + 900, done: 1500 };
+}
+
+/** Red seats first, then blue, and Merlin last of all; seat order within each. */
+export function endingRevealOrder(game: Pick<ClientGameState, 'players' | 'outcome'>): string[] {
+  const roles = new Map(game.outcome?.revealedRoles.map((r) => [r.playerId, r]));
+  const rank = (id: string, role = roles.get(id)) =>
+    role?.role === 'Merlin' ? 2 : role?.team === 'evil' ? 0 : 1;
+  return [...game.players]
+    .sort((a, b) => rank(a.id) - rank(b.id) || a.seat - b.seat)
+    .map((p) => p.id);
+}
+
+/**
+ * When each beat of a mission reveal happens, in ms from its start. Cards turn one
+ * at a time, each wait a little longer than the last, the final one longest; the
+ * verdict follows, then its seal flies to the quest board. `complete` is a backstop
+ * for the flight, which normally ends the reveal when it lands.
+ */
+export function missionRevealTimeline(teamSize: number, reduceMotion = false) {
+  if (reduceMotion)
+    return { shuffle: 0, reveal: 0, flips: [] as number[], verdict: 0, seal: 0, complete: 1800 };
+  const reveal = 1850;
+  const flips: number[] = [];
+  for (let i = 0, at = reveal + 450; i < teamSize; i++) {
+    if (i > 0) at += 480 + 140 * (i - 1) + (i === teamSize - 1 ? 520 : 0);
+    flips.push(at);
+  }
+  const verdict = (flips.at(-1) ?? reveal) + 800;
+  const seal = verdict + 1150;
+  return { shuffle: 650, reveal, flips, verdict, seal, complete: seal + 1600 };
 }
 
 export function anonymousMissionCards(

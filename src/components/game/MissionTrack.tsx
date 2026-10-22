@@ -2,6 +2,7 @@ import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
 import type { ClientGameState } from '@/lib/engine';
 import { GameIcon } from './GameArt';
+import { useArrival } from '@/lib/game/useArrival';
 
 /** The quest board's five medallions: team size until played, then the outcome's seal. */
 export function MissionTrack({
@@ -16,6 +17,7 @@ export function MissionTrack({
   const resultByRound = new Map(
     game.missionResults.map((m) => [m.roundIndex, m]),
   );
+  const stamped = useArrival(game.missionResults.length, `${game.gameId}-${game.phaseRevision ?? 0}`);
   return (
     <ol className="table-missions" aria-label={t('mission.track')}>
       {missionSizes.map((size, idx) => {
@@ -26,6 +28,8 @@ export function MissionTrack({
           <li key={idx}>
             <button
               type="button"
+              data-mission-round={idx}
+              data-stamped={result && stamped === idx ? '' : undefined}
               disabled={!onSelect}
               className={cn(
                 'table-mission',

@@ -1,0 +1,419 @@
+/* Results that land on the table: mission cards turned one by one, their seal
+   pressed into the quest board, rejections dropped onto the proposal track, and
+   the ending's identities turned seat by seat. */
+
+/* ---- Mission cards, one at a time ---- */
+/* The pile is dealt larger than a seat's card: as big as the middle of the table allows
+   with the whole team's cards side by side (--team is set by the reveal). */
+.table-reveal-layer[data-stage] .table-reveal-content {
+  --card-height: max(
+    var(--table-card-height),
+    min(19cqh, (100cqw - 32px) / (0.74 * (var(--team, 3) * 1.28 - 0.28)), 128px)
+  );
+  --card-width: calc(var(--card-height) * 0.74);
+  width: min(100%, 640px);
+}
+.table-anonymous-cards.is-spread { gap: calc(var(--card-width) * 0.28); }
+.mission-reveal-card {
+  position: relative;
+  transition: scale 0.35s cubic-bezier(0.3, 1.4, 0.5, 1), filter 0.4s ease;
+}
+.mission-reveal-card .table-card-front { font-size: clamp(9px, calc(var(--card-width) / 5), 15px); }
+.table-reveal-layer[data-stage="reveal"] .mission-reveal-card { scale: 1.05; }
+.table-reveal-layer[data-stage="verdict"] .mission-reveal-card,
+.table-reveal-layer[data-stage="seal"] .mission-reveal-card { scale: 1; filter: brightness(0.62) saturate(0.8); }
+.mission-reveal-card[data-turned] .table-card-front { box-shadow: 0 0 14px -2px rgb(116 182 197 / 0.6); }
+.mission-reveal-card[data-hit] .table-card-front {
+  box-shadow: 0 0 18px 1px rgb(224 80 63 / 0.75);
+  animation: mission-fail-flare 0.9s ease-out 0.24s both;
+}
+/* A red burst behind the card as it lands. */
+.mission-reveal-card[data-hit]::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 120 90 / 0.85) 0%, rgb(190 40 30 / 0.5) 35%, transparent 70%);
+  animation: mission-fail-burst 0.8s ease-out 0.24s both;
+  pointer-events: none;
+}
+.mission-fail-cracks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.mission-fail-cracks path {
+  fill: none;
+  stroke: #ffd9c4;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 2px #e0503f);
+  animation: mission-crack 0.32s ease-out 0.28s forwards;
+}
+.mission-fail-cracks path:nth-child(n + 5) { stroke-width: 0.7; animation-delay: 0.4s; }
+
+.table-phase-title.mission-verdict {
+  font-size: clamp(22px, min(8cqw, 17cqh), 34px);
+  letter-spacing: 0.08em;
+}
+.mission-verdict[data-result="success"] { color: #9fdcf5; text-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 0 26px rgb(116 182 197 / 0.6); }
+.mission-verdict[data-result="fail"] { color: #f08a80; text-shadow: 0 2px 0 rgb(0 0 0 / 0.5), 0 0 26px rgb(208 87 75 / 0.6); }
+/* The seal is pressed onto the cards it judged. */
+.mission-verdict-seal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--card-height) * 0.96);
+  height: calc(var(--card-height) * 0.96);
+  margin: calc(var(--card-height) * -0.48) 0 0 calc(var(--card-height) * -0.48);
+  filter: drop-shadow(0 8px 10px #000c);
+}
+.mission-verdict-seal::before {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--seal-light) / 0.55), rgb(var(--seal-light) / 0.15) 45%, transparent 70%);
+  animation: seal-halo 0.9s ease-out 0.12s both;
+}
+.mission-verdict-seal[data-result="success"], .seal-flight.is-success { --seal-light: 120 200 230; }
+.mission-verdict-seal[data-result="fail"], .seal-flight.is-fail { --seal-light: 230 90 70; }
+
+/* ---- Tokens in flight ---- */
+.seal-flight {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 12px #000b) drop-shadow(0 0 10px rgb(var(--seal-light, 230 193 74) / 0.55));
+  will-change: transform;
+}
+.seal-flight.is-stone { --seal-light: 160 40 36; }
+.rejection-anchor {
+  display: inline-block;
+  width: 0;
+  height: 1em;
+  vertical-align: middle;
+}
+
+/* ---- Pressed into the board ---- */
+.table-mission[data-stamped] .table-mission-token { animation: seal-stamp 0.7s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+.table-mission[data-stamped] .table-mission-token::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: seal-ring 0.9s ease-out both;
+  pointer-events: none;
+}
+.table-mission.is-success[data-stamped] { color: #9fdcf5; }
+.table-mission.is-fail[data-stamped] { color: #ff8b7d; }
+.proposal-slot { position: relative; }
+.proposal-slot[data-stamped] { animation: slot-stamp 0.6s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+.proposal-slot[data-stamped]::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid #ff8b7d;
+  animation: seal-ring 0.8s ease-out both;
+  pointer-events: none;
+}
+/* One rejection from defeat: the track smoulders and the deciding slot beats. */
+/* The status row clips (it scrolls on narrow screens), so the glow stays inside the track's own box. */
+.proposal-track {
+  padding: 1px 4px;
+  border-radius: 999px;
+}
+.proposal-track.is-danger { animation: track-smoulder 1.8s ease-in-out infinite; }
+.proposal-slot[data-deciding] {
+  scale: 1.1;
+  animation: deciding-beat 1.8s ease-in-out infinite;
+}
+
+/* ---- The ending: identities turned seat by seat ---- */
+.table-role-face {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.table-role-face > .role-card { width: 100%; height: 100%; }
+.table-role-card[data-face-down] .table-card-back { border-color: #8f7848; }
+.table-role-card[data-face-down="false"]::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 8px;
+  pointer-events: none;
+  box-shadow: 0 0 0 1.5px var(--turn-light), 0 0 22px 2px var(--turn-light);
+  opacity: 0;
+  animation: role-turned 1.2s ease-out 0.3s both;
+}
+.table-role-card { --turn-light: rgb(116 182 197 / 0.9); }
+.table-role-card:has(.role-card[data-team="evil"]) { --turn-light: rgb(224 80 63 / 0.95); }
+.table-role-card[data-face-down="false"] { animation: role-lift 0.6s ease-out both; }
+
+/* The felt holds its title back until the seats have turned, then takes it from the title card. */
+.outcome-title[data-ending="title"], .outcome-title[data-ending="flip"],
+.outcome-reason[data-ending="title"], .outcome-reason[data-ending="flip"] { opacity: 0; }
+.outcome-title[data-ending="settle"] { animation: outcome-land 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.outcome-reason[data-ending="settle"] { animation: outcome-reason-in 0.5s ease-out 0.45s both; }
+
+.ending-dialog {
+  position: fixed;
+  inset: 0;
+  isolation: isolate;
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: #e8dcc0;
+  --ending-accent: #f08a80;
+  --ending-light: 214 70 56;
+}
+.ending-dialog[data-winner="good"] { --ending-accent: #9fdcf5; --ending-light: 110 180 225; }
+.ending-dialog[open] { display: grid; place-items: center; }
+.ending-dialog::backdrop { background: transparent; }
+.ending-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 48% at 50% 42%, rgb(var(--ending-light) / 0.2), transparent 70%),
+    radial-gradient(ellipse 80% 70% at 50% 45%, #15111a 0%, #0a090f 55%, #030305 100%);
+  pointer-events: none;
+}
+.ending-scene {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.4dvh, 20px);
+  width: min(100%, 720px);
+  height: 100%;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+  text-align: center;
+  container-type: inline-size;
+  cursor: pointer;
+}
+.ending-rays {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  width: 180vmax;
+  height: 180vmax;
+  margin: -90vmax 0 0 -90vmax;
+  z-index: -1;
+  background: repeating-conic-gradient(from 0deg, rgb(var(--ending-light) / 0.16) 0deg 3deg, transparent 3deg 14deg);
+  mask-image: radial-gradient(circle, #000 4%, transparent 32%);
+  -webkit-mask-image: radial-gradient(circle, #000 4%, transparent 32%);
+  animation: ending-rays-in 1.4s ease-out both, ending-spin 70s linear infinite;
+  pointer-events: none;
+}
+.ending-emblem {
+  position: relative;
+  width: clamp(110px, 32cqw, 176px);
+  aspect-ratio: 1;
+}
+.ending-emblem-pool {
+  position: absolute;
+  inset: -30%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--ending-light) / 0.5), rgb(var(--ending-light) / 0.12) 45%, transparent 70%);
+  animation: seal-halo 1.2s ease-out 0.4s both;
+}
+.ending-emblem-art {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 16px 18px #000c);
+}
+.ending-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 3vw, 22px);
+  width: 100%;
+}
+.ending-title-text {
+  display: inline-block;
+  color: var(--ending-accent);
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: clamp(38px, 11cqw, 64px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-shadow: 0 0 28px rgb(var(--ending-light) / 0.75), 0 2px 2px #000;
+}
+.ending-rule {
+  flex: none;
+  width: clamp(24px, 10vw, 90px);
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--ending-accent));
+  transform-origin: right;
+}
+.ending-rule:last-child {
+  background: linear-gradient(to left, transparent, var(--ending-accent));
+  transform-origin: left;
+}
+.ending-reason {
+  color: #d9ccaa;
+  font-size: 14px;
+  letter-spacing: 0.3em;
+}
+.ending-tally {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 3cqw, 18px);
+  margin-top: 6px;
+}
+.ending-tally-mission { --medal: clamp(34px, 10cqw, 46px); }
+.ending-tally-mission > span { display: block; }
+.ending-tally-mission .is-success .table-mission-token {
+  border-color: #74b6c5;
+  background: radial-gradient(circle at 35% 30%, #3a7a96, #173445 72%);
+  box-shadow: 0 0 0 3px #1a140e, 0 0 16px -2px rgb(116 182 197 / 0.6);
+}
+.ending-tally-mission .is-fail .table-mission-token {
+  border-color: #d0574b;
+  background: radial-gradient(circle at 35% 30%, #a3423a, #4a1a16 72%);
+  box-shadow: 0 0 0 3px #1a140e, 0 0 16px -2px rgb(208 87 75 / 0.6);
+}
+.ending-tally-mission .table-mission-size { color: #8a7f68; }
+.ending-tally-stone {
+  width: clamp(30px, 9cqw, 42px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #1a140e, 0 0 0 3.5px rgb(208 87 75 / 0.75), 0 0 16px rgb(208 87 75 / 0.5);
+}
+.ending-tally-stone img { width: 100%; height: 100%; }
+.ending-motes {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(to top, transparent, #000 25%, #000 70%, transparent);
+  -webkit-mask-image: linear-gradient(to top, transparent, #000 25%, #000 70%, transparent);
+}
+.ending-motes i {
+  position: absolute;
+  bottom: 6%;
+  left: var(--x);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: var(--ending-accent);
+  box-shadow: 0 0 8px 1px var(--ending-accent);
+  opacity: 0;
+  animation: ending-rise var(--dur) ease-out var(--delay) infinite;
+}
+
+@keyframes mission-fail-flare {
+  0% { filter: brightness(1); }
+  18% { filter: brightness(2.1) saturate(1.4); }
+  100% { filter: brightness(1); }
+}
+@keyframes mission-fail-burst {
+  0% { opacity: 0; scale: 0.3; }
+  20% { opacity: 1; }
+  100% { opacity: 0; scale: 1.4; }
+}
+@keyframes mission-crack { to { stroke-dashoffset: 0; } }
+@keyframes seal-halo {
+  0% { opacity: 0; scale: 0.4; }
+  35% { opacity: 1; }
+  100% { opacity: 0.55; scale: 1; }
+}
+@keyframes seal-stamp {
+  0% { scale: 1.45; }
+  45% { scale: 0.86; }
+  100% { scale: 1; }
+}
+@keyframes slot-stamp {
+  0% { scale: 1.6; }
+  45% { scale: 0.85; }
+  100% { scale: 1; }
+}
+@keyframes seal-ring {
+  0% { opacity: 0.95; scale: 0.9; }
+  100% { opacity: 0; scale: 2; }
+}
+@keyframes track-smoulder {
+  0%, 100% { background: rgb(110 20 16 / 0.18); box-shadow: inset 0 0 0 1px rgb(208 87 75 / 0.3); }
+  50% { background: rgb(150 30 22 / 0.42); box-shadow: inset 0 0 0 1px rgb(255 120 100 / 0.7), inset 0 0 10px rgb(224 80 63 / 0.6); }
+}
+@keyframes deciding-beat {
+  0%, 24%, 100% { box-shadow: 0 0 0 1.5px rgb(255 110 90 / 0.7); filter: brightness(1); }
+  12%, 36% { box-shadow: 0 0 0 1.5px rgb(255 170 150 / 1), 0 0 6px 1px rgb(255 90 70 / 0.9); filter: brightness(1.35); }
+}
+@keyframes role-turned {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  100% { opacity: 0.35; }
+}
+@keyframes role-lift {
+  0% { translate: 0 0; }
+  40% { translate: 0 -5px; }
+  100% { translate: 0 0; }
+}
+@keyframes outcome-land {
+  0% { opacity: 0; scale: 1.8; filter: blur(8px); }
+  100% { opacity: 1; scale: 1; filter: blur(0); }
+}
+@keyframes outcome-reason-in {
+  from { opacity: 0; translate: 0 6px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes ending-rays-in {
+  from { opacity: 0; scale: 0.5; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes ending-spin { to { rotate: 360deg; } }
+@keyframes ending-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(var(--dx), -70dvh); opacity: 0; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .ending-emblem { width: 84px; }
+  .ending-title-text { font-size: 34px; }
+  .ending-tally-mission { --medal: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-reveal-card,
+  .table-mission[data-stamped] .table-mission-token,
+  .table-mission[data-stamped] .table-mission-token::after,
+  .proposal-slot[data-stamped],
+  .proposal-slot[data-stamped]::after,
+  .table-role-card[data-face-down="false"],
+  .table-role-card[data-face-down="false"]::after,
+  .outcome-title[data-ending],
+  .outcome-reason[data-ending],
+  .ending-emblem-pool,
+  .mission-verdict-seal::before { animation: none; transition: none; }
+  .table-reveal-layer[data-stage="reveal"] .mission-reveal-card { scale: 1; }
+  .proposal-track.is-danger { animation: none; background: rgb(150 30 22 / 0.35); box-shadow: inset 0 0 0 1px rgb(255 120 100 / 0.6); }
+  .proposal-slot[data-deciding] { animation: none; }
+}

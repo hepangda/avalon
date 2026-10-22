@@ -10,6 +10,9 @@ import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
 import {
   anonymousMissionCards,
   arrangeSeats,
+  endingRevealOrder,
+  endingTimeline,
+  missionRevealTimeline,
   newTablePresentations,
   tablePresentationReducer,
   type TablePresentationState,
@@ -48,7 +51,8 @@ describe('table presentation across server transitions', () => {
       const previous = projectStateForViewer(before, viewer);
       const next = projectStateForViewer(after, viewer);
       const events = newTablePresentations(previous, next);
-      expect(events).toHaveLength(1);
+      // The identities follow the dagger; the assassination itself announced the winner.
+      expect(events.map((e) => e.kind)).toEqual(['assassination', 'gameOver']);
       expect(events[0]).toMatchObject({
         kind: 'assassination', hitMerlin,
         target: { id: target, role, name: after.players.find((p) => p.id === target)!.name },
@@ -60,14 +64,36 @@ describe('table presentation across server transitions', () => {
     }
   });
 
-  it('does not invent an assassination animation for other game endings', () => {
+  it('plays other endings without inventing an assassination', () => {
     const before = project(buildStartedGame(FIVE_P));
     const after = {
       ...before,
       phase: 'GameOver' as const,
       outcome: { winner: 'evil' as const, reason: 'five_rejections' as const, missionTally: { good: 0, evil: 0 }, revealedRoles: [] },
     };
-    expect(newTablePresentations(before, after)).toEqual([]);
+    const events = newTablePresentations(before, after);
+    expect(events.map((e) => e.kind)).toEqual(['gameOver']);
+    expect(events[0]).toMatchObject({ outcome: { reason: 'five_rejections' } });
+    // Only the step into GameOver plays it: never an ending already over, a refresh or a late join.
+    expect(newTablePresentations(after, after)).toEqual([]);
+    expect(newTablePresentations(null, after)).toEqual([]);
+    expect(newTablePresentations(before, { ...after, phaseRevision: 1 })).toEqual([]);
+  });
+
+  it('turns red seats first, then blue, and Merlin last', () => {
+    let s = approved();
+    for (let round = 0; round < 2; round++)
+      s = completeVotes(propose(completeMission(s, 1)), 'approve');
+    const over = project(completeMission(s, 1));
+    const order = endingRevealOrder(over);
+    const roleOf = (id: string) => over.outcome!.revealedRoles.find((r) => r.playerId === id)!;
+    expect(order).toHaveLength(over.players.length);
+    expect(new Set(order).size).toBe(order.length);
+    expect(roleOf(order.at(-1)!).role).toBe('Merlin');
+    const teams = order.map((id) => roleOf(id).team);
+    expect(teams.indexOf('good')).toBe(teams.lastIndexOf('evil') + 1);
+    const evilSeats = order.filter((id) => roleOf(id).team === 'evil').map((id) => over.players.find((p) => p.id === id)!.seat);
+    expect(evilSeats).toEqual([...evilSeats].sort((a, b) => a - b));
   });
 
   it('shows the exact rejected proposal, even though the next leader is already active', () => {
@@ -151,6 +177,25 @@ describe('war report reveal timing', () => {
     expect(report(finish(updated)).missionResults).toHaveLength(1);
   });
 
+  it('queues the ending after the deciding mission and never replays it on refresh', () => {
+    let before = approved();
+    for (let round = 0; round < 2; round++)
+      before = completeVotes(propose(completeMission(before, 1)), 'approve');
+    const after = project(completeMission(before, 1));
+    let pending = tablePresentationReducer(start(before), { type: 'sync', game: after });
+    expect(pending.queue.map((item) => item.presentation.kind)).toEqual(['mission', 'gameOver']);
+    pending = finish(pending);
+    expect(pending.queue[0]?.presentation).toMatchObject({ kind: 'gameOver', outcome: { winner: 'evil', reason: 'three_missions' } });
+    // Later syncs of the finished game add nothing, before or after the ending plays.
+    expect(tablePresentationReducer(pending, { type: 'sync', game: { ...after } }).queue).toHaveLength(1);
+    const done = finish(pending);
+    expect(done.queue).toEqual([]);
+    expect(report(done)).toBe(after);
+    expect(tablePresentationReducer(done, { type: 'sync', game: { ...after } }).queue).toEqual([]);
+    // A refresh or a late joiner starts at the finished table.
+    expect(start(completeMission(before, 1)).queue).toEqual([]);
+  });
+
   it('also holds the winning log and revealed identities on the third failed mission', () => {
     let before = approved();
     for (let round = 0; round < 2; round++)
@@ -162,7 +207,9 @@ describe('war report reveal timing', () => {
     expect(report(pending).logs).toEqual(project(before).logs);
     expect(report(pending).outcome).toBeNull();
     expect(report(pending).players).toEqual(project(before).players);
-    expect(report(finish(pending))).toBe(after);
+    // ...through the mission, and on until the ending has turned every seat.
+    expect(report(finish(pending)).outcome).toBeNull();
+    expect(report(finish(finish(pending)))).toBe(after);
   });
 
   it.each([false, true])('keeps a mission hidden behind a queued vote (batched: %s)', (batched) => {
@@ -213,7 +260,44 @@ describe('war report reveal timing', () => {
     const pending = tablePresentationReducer(start(before), { type: 'sync', game: after });
     expect(pending.queue[0]?.presentation.kind).toBe('assassination');
     expect(report(pending).logs.some((l) => l.key === 'assassinHitMerlin')).toBe(false);
-    expect(report(finish(pending)).logs.some((l) => l.key === 'assassinHitMerlin')).toBe(true);
+    expect(finish(pending).queue[0]?.presentation.kind).toBe('gameOver');
+    expect(report(finish(finish(pending))).logs.some((l) => l.key === 'assassinHitMerlin')).toBe(true);
+  });
+});
+
+describe('reveal pacing', () => {
+  it('turns mission cards one at a time, each wait longer and the last longest', () => {
+    for (let size = 2; size <= 5; size++) {
+      const { flips, verdict, seal, complete } = missionRevealTimeline(size);
+      expect(flips).toHaveLength(size);
+      const gaps = flips.slice(1).map((ms, i) => ms - flips[i]!);
+      gaps.forEach((gap, i) => i && expect(gap).toBeGreaterThan(gaps[i - 1]!));
+      expect(verdict).toBeGreaterThan(flips.at(-1)!);
+      expect(seal).toBeGreaterThan(verdict);
+      expect(complete).toBeGreaterThan(seal);
+    }
+    expect(missionRevealTimeline(3, true)).toMatchObject({ flips: [], complete: 1800 });
+  });
+
+  it('pauses before blue turns and longest before Merlin; reduced motion goes straight to the end', () => {
+    const outcome = {
+      winner: 'evil' as const, reason: 'three_missions' as const, missionTally: { good: 0, evil: 3 },
+      revealedRoles: [
+        { playerId: 'a', role: 'Morgana' as const, team: 'evil' as const },
+        { playerId: 'b', role: 'Assassin' as const, team: 'evil' as const },
+        { playerId: 'c', role: 'Percival' as const, team: 'good' as const },
+        { playerId: 'd', role: 'LoyalServant' as const, team: 'good' as const },
+        { playerId: 'e', role: 'Merlin' as const, team: 'good' as const },
+      ],
+    };
+    const { flips, settle } = endingTimeline({ outcome, order: ['a', 'b', 'c', 'd', 'e'] });
+    const gaps = flips.slice(1).map((ms, i) => ms - flips[i]!);
+    expect(gaps[1]).toBeGreaterThan(gaps[0]!);
+    expect(gaps[3]).toBeGreaterThan(gaps[1]!);
+    expect(Math.max(...gaps)).toBe(gaps[3]);
+    expect(settle).toBeGreaterThan(flips.at(-1)!);
+    expect(endingTimeline({ outcome, order: [] }, true)).toMatchObject({ flips: [], settle: 0 });
+    expect(endingTimeline({ outcome: { ...outcome, reason: 'assassin_missed' }, order: [] }, true).title).toBe(0);
   });
 });
 

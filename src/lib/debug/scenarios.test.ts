@@ -43,8 +43,8 @@ const expectedPhases: Record<string, string> = {
   assassinMiss: "Assassination",
   goodWins: "GameOver",
   evilWins: "GameOver",
-  threeFails: "GameOver",
-  fiveRejections: "GameOver",
+  threeFails: "MissionVote",
+  fiveRejections: "Voting",
   spectator: "TeamBuilding",
   openSeat: "TeamBuilding",
   offline: "TeamBuilding",
@@ -189,8 +189,19 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
         projectStateForViewer(scene.state, scene.viewerId),
         projectStateForViewer(scene.nextState!, scene.viewerId),
       );
-      expect(events).toHaveLength(1);
+      expect(events.map((e) => e.kind)).toEqual(["assassination", "gameOver"]);
       expect(events[0]).toMatchObject({ kind: "assassination", hitMerlin: id === "assassinHit" });
+    }
+  });
+
+  it("plays the endings from the deciding result", () => {
+    for (const [id, first] of [["threeFails", "mission"], ["fiveRejections", "vote"]] as const) {
+      const scene = buildScenario(id, count);
+      const events = newTablePresentations(
+        projectStateForViewer(scene.state, scene.viewerId),
+        projectStateForViewer(scene.nextState!, scene.viewerId),
+      );
+      expect(events.map((e) => e.kind)).toEqual([first, "gameOver"]);
     }
   });
 });
@@ -208,5 +219,6 @@ it.each([
   ["threeFails", "evil", "three_missions"],
   ["fiveRejections", "evil", "five_rejections"],
 ] as const)("reaches the correct %s outcome", (id, winner, reason) => {
-  expect(buildScenario(id, 7).state.outcome).toMatchObject({ winner, reason });
+  const scene = buildScenario(id, 7);
+  expect((scene.nextState ?? scene.state).outcome).toMatchObject({ winner, reason });
 });

@@ -1,6 +1,7 @@
 import { ActionTimerBadge } from '@/components/game/ActionTimerBadge';
 import { DockTimer } from '@/components/game/SeatTimer';
 import { AssassinationReveal } from '@/components/game/AssassinationReveal';
+import { GameOverTitleCard, useEndingReveal } from '@/components/game/GameOverReveal';
 import { GameTable } from '@/components/game/GameTable';
 import { GameTools } from '@/components/game/GameTools';
 import { HandArea, type PickConfig } from '@/components/game/HandArea';
@@ -74,6 +75,7 @@ export function GameView({
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
   const { presentation, reportGame, finish } = useTablePresentation(game);
+  const ending = useEndingReveal(presentation?.kind === 'gameOver' ? presentation : null, finish);
   const draftKey = game?.proposedTeam?.join(',') ?? '';
   useEffect(() => setSelected(game?.phase === 'TeamFinalizing' && draftKey ? draftKey.split(',') : []), [phaseKey, game?.phase, draftKey]);
   useEffect(() => setLadySeen(null), [game?.phaseRevision, myPlayerId]);
@@ -221,6 +223,8 @@ export function GameView({
           }
         />
       );
+    if (presentation?.kind === 'gameOver' && p.role)
+      return <TableCard role={p.role} variant={p.roleVariant} faceDown={!ending.revealed.has(p.id)} />;
     if (isOver && p.role) return <TableCard role={p.role} variant={p.roleVariant} />;
     if (game!.phase === 'Voting')
       return (
@@ -409,7 +413,7 @@ export function GameView({
               myPlayerId={myPlayerId} connected={conn === 'connected'} vote={actions.voteAssassination} />}
             <PhaseBoard game={game} presentation={presentation} isOver={isOver} isLeader={isLeader}
               isHolder={isHolder} isAssassin={isAssassin} canVote={canVote} canMission={canMission}
-              selected={selected} round={round} teamSize={teamSize} />
+              selected={selected} round={round} teamSize={teamSize} endingStage={ending.stage} />
           </>}
           card={card}
           speakerId={!presentation ? speakerId : undefined}
@@ -452,6 +456,11 @@ export function GameView({
       {presentation?.kind === 'assassination' && (
         <AssassinationReveal key={presentation.id} event={presentation} onComplete={finish} />
       )}
+      <AnimatePresence>
+        {presentation?.kind === 'gameOver' && ending.stage === 'title' && (
+          <GameOverTitleCard key={presentation.id} event={presentation} game={game} onSkip={ending.skipTitle} />
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {needsRoleReveal && (
           <RoleReveal key={`${game.gameId}-${myPlayerId}-${game.roleRevision ?? 0}`} game={game} myPlayerId={myPlayerId} onAck={actions.ackRole} onReroll={actions.useRerollCard} blocked={conn !== 'connected'}

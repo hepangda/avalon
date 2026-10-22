@@ -211,9 +211,12 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
   }
 
   if (id === "lastProposal" || id === "fiveRejections") {
-    for (let i = 0; i < (id === "fiveRejections" ? 5 : 4); i++)
+    for (let i = 0; i < 4; i++)
       state = completeVotes(propose(state), "reject");
-    return { state, viewerId: leader() };
+    if (id === "lastProposal") return { state, viewerId: leader() };
+    // The ending plays from the fifth rejection itself.
+    state = propose(state);
+    return { state, viewerId: leader(), nextState: completeVotes(state, "reject") };
   }
   if (id === "offline") {
     state = applyEvent(state, {
@@ -252,9 +255,14 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
         type: "START_ASSASSINATION",
         by: state.assassinId!,
       });
-    else
-      for (let i = 0; i < 3; i++)
-        state = playRound(state, id === "threeFails" ? 1 : 0);
+    else if (id === "threeFails") {
+      // The ending plays from the third failed mission itself.
+      for (let i = 0; i < 2; i++) state = playRound(state, 1);
+      const ready = state.phase === "LadyOfLake" ? inspect(state) : state;
+      state = completeVotes(propose(ready), "approve");
+      return { state, viewerId: state.assassinId!, nextState: completeMission(state, 1) };
+    } else
+      for (let i = 0; i < 3; i++) state = playRound(state, 0);
     if (id === "goodWins" || id === "evilWins" || id === "assassinHit" || id === "assassinMiss") {
       const target = state.players.find((p) =>
         id === "evilWins" || id === "assassinHit"

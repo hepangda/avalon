@@ -16,10 +16,13 @@ export function TableCard({
   nominee,
   assassination = false,
   revealId,
+  faceDown,
 }: {
   state?: TableCardState;
   role?: Role;
   variant?: number;
+  /** An identity still waiting its turn in the ending reveal; omitted, the card simply lies face up. */
+  faceDown?: boolean;
   nominee?: number;
   assassination?: boolean;
   /** A new result starts face down, even if the previous phase removed this card. */
@@ -33,8 +36,25 @@ export function TableCard({
       <div
         className="table-card-slot table-role-card"
         aria-label={roleText.name(role)}
+        data-face-down={faceDown}
       >
-        <RoleCard role={role} variant={variant} size="table" />
+        {faceDown === undefined ? (
+          <RoleCard role={role} variant={variant} size="table" />
+        ) : (
+          <motion.div
+            className="table-card-flip"
+            initial={false}
+            animate={{ rotateY: faceDown ? 0 : 180 }}
+            transition={{ duration: reduce ? 0 : 0.55, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <div className="table-card-back" aria-hidden="true">
+              <GameIcon name="crest" className="table-card-icon" />
+            </div>
+            <div className="table-role-face" aria-hidden="true">
+              <RoleCard role={role} variant={variant} size="table" />
+            </div>
+          </motion.div>
+        )}
       </div>
     );
   if (nominee !== undefined)
