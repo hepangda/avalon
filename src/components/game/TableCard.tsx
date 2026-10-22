@@ -140,14 +140,18 @@ export function TableCard({
   );
 }
 
-/** The dagger's mark on an ending card: driven in, glancing off, broken, or a halo for the one it never found. */
+/**
+ * The dagger's mark on an ending card: driven in, glancing off, or broken. Whoever the
+ * dagger missed stands in a halo: Merlin, never found, and the seat that drew the blow.
+ */
 function EndingMarkArt({ mark }: { mark: EndingMark }) {
   return (
-    <span className="table-role-mark" data-mark={mark} aria-hidden="true">
-      {mark === 'survivor' ? (
-        <span className="table-role-halo" />
-      ) : (
-        <>
+    <>
+      {(mark === 'survivor' || mark === 'spared') && (
+        <span className="table-role-halo" data-mark={mark} aria-hidden="true" />
+      )}
+      {mark !== 'survivor' && (
+        <span className="table-role-mark" data-mark={mark} aria-hidden="true">
           {mark === 'slain' && <span className="table-role-wound" />}
           <GameIcon name="assassinate" className="table-role-dagger" />
           {mark === 'foiled' && (
@@ -155,8 +159,8 @@ function EndingMarkArt({ mark }: { mark: EndingMark }) {
               <path d="M2 11 L7 8 L10 12 L13 7 L18 10" pathLength={1} />
             </svg>
           )}
-        </>
+        </span>
       )}
-    </span>
+    </>
   );
 }
