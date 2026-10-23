@@ -10,9 +10,13 @@ git push origin v1.2.3
 [`release.yml`](../../.github/workflows/release.yml) then runs, in order:
 
 1. The CI checks (typecheck, lint, tests).
-2. Builds `Dockerfile` with `STATIC_ASSET_BASE_URL` and pushes `<repository>:v1.2.3`.
-3. Copies `/app/dist/client` out of the pushed digest, then uploads and verifies
-   it with `static:upload` and `static:verify` (see [static publishing](../r2/README.md)).
+2. Builds `Dockerfile` with `STATIC_ASSET_BASE_URL` and pushes it as `<repository>:v1.2.3`
+   and `<repository>:sha-<commit>`. If `sha-<commit>` already exists with the same
+   static base (a re-run, or another tag on the same commit), it only adds the
+   version tag to that image.
+3. Copies `/app/dist/client` out of that digest, then uploads the assets the CDN
+   does not have yet and verifies all of them with `static:upload` and
+   `static:verify` (see [static publishing](../r2/README.md)).
 4. Opens the Kubernetes API through Cloudflare Access with a service token and runs
    [`rollout.sh`](rollout.sh): it patches the Deployment to the image digest, waits for
    the rollout and `/api/health`, and restores the previous image if either fails.

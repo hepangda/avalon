@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { setTimeout } from "node:timers/promises";
 import { staticPublishConfig } from "./static-config.mjs";
+import { unpublishedFiles } from "./static-probe.mjs";
 
 // Publish only the build manifest, never sync/delete a shared bucket or upload HTML.
 const root = resolve(process.env.STATIC_BUILD_DIR || "dist/client");
@@ -47,7 +48,13 @@ if (!process.argv.includes("--upload")) {
   );
   process.exit(0);
 }
-for (const [index, file] of manifest.files.entries()) {
+const pending = process.argv.includes("--force")
+  ? manifest.files
+  : await unpublishedFiles(manifest.files, manifest.base);
+console.log(
+  `${manifest.files.length - pending.length} assets already published; uploading ${pending.length}`,
+);
+for (const [index, file] of pending.entries()) {
   let uploaded = false;
   for (let attempt = 1; attempt <= 3; attempt++) {
     const result = spawnSync(
@@ -80,7 +87,7 @@ for (const [index, file] of manifest.files.entries()) {
     await setTimeout(attempt * 1000);
   }
   assert.ok(uploaded, file.key);
-  console.log(`[${index + 1}/${keys.size}] ${file.key}`);
+  console.log(`[${index + 1}/${pending.length}] ${file.key}`);
 }
 console.log(
   "Upload complete. Verify the CDN before rolling out the application.",

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -40,8 +40,8 @@ test('publisher validates a custom destination and rejects mismatches before upl
       STATIC_R2_BUCKET: 'example-assets', STATIC_ASSET_BASE_URL: 'https://cdn.example.com/avalon/',
       // No real uploader may run, even if a regression reaches the upload stage.
       WRANGLER_BINARY: join(root, 'no-uploader') };
-    const run = (overrides, upload = false) => spawnSync(process.execPath,
-      ['scripts/publish-static.mjs', ...(upload ? ['--upload'] : [])],
+    const run = (overrides, upload = false, flags = []) => spawnSync(process.execPath,
+      ['scripts/publish-static.mjs', ...(upload ? ['--upload'] : []), ...flags],
       { env: { ...env, ...overrides }, encoding: 'utf8' });
     const valid = run({});
     assert.equal(valid.status, 0, valid.stderr);
@@ -56,6 +56,15 @@ test('publisher validates a custom destination and rejects mismatches before upl
       assert.match(invalid.stderr, message);
       assert.doesNotMatch(invalid.stderr, /Upload failed/);
     }
+    // --force uploads every asset without probing the CDN.
+    const uploader = join(root, 'uploader');
+    await writeFile(uploader, `#!/bin/sh\necho "$@" >> "${join(root, 'uploads')}"\n`, { mode: 0o755 });
+    const forced = run({ WRANGLER_BINARY: uploader }, true, ['--force']);
+    assert.equal(forced.status, 0, forced.stderr);
+    assert.match(forced.stdout, /0 assets already published; uploading 1/);
+    assert.equal(await readFile(join(root, 'uploads'), 'utf8'),
+      `r2 object put example-assets/avalon/assets/index-12345678.js --remote --file ${join(root, 'assets/index-12345678.js')} ` +
+      '--content-type text/javascript; charset=utf-8 --cache-control public, max-age=31536000, immutable\n');
   } finally {
     await rm(root, { recursive: true, force: true });
   }

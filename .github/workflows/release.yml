@@ -59,17 +59,35 @@ jobs:
 
       - uses: docker/setup-buildx-action@v4
 
+      # Each commit is built once. Re-runs and further tags on the same commit
+      # reuse its image if it was built for the same static base.
+      - name: Find an image built from this commit
+        id: existing
+        run: |
+          ref="$IMAGE_REPOSITORY:sha-$GITHUB_SHA"
+          if base=$(docker buildx imagetools inspect "$ref" --format '{{index .Image.Config.Labels "avalon.static-base"}}' 2>/dev/null) &&
+            [[ $base == "$STATIC_ASSET_BASE_URL" ]]; then
+            digest=$(docker buildx imagetools inspect "$ref" --format '{{.Manifest.Digest}}')
+            docker buildx imagetools create -t "$IMAGE_REPOSITORY:$VERSION" "$IMAGE_REPOSITORY@$digest"
+            echo "digest=$digest" >> "$GITHUB_OUTPUT"
+            echo "Reusing $ref ($digest)"
+          fi
+
       - name: Build and push the image
         id: build
+        if: steps.existing.outputs.digest == ''
         uses: docker/build-push-action@v7
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
+          tags: |
+            ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
+            ${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
           build-args: STATIC_ASSET_BASE_URL=${{ env.STATIC_ASSET_BASE_URL }}
           labels: |
             org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.revision=${{ github.sha }}
+            avalon.static-base=${{ env.STATIC_ASSET_BASE_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -78,7 +96,7 @@ jobs:
       - name: Extract static assets from the image
         id: image
         run: |
-          image="$IMAGE_REPOSITORY@${{ steps.build.outputs.digest }}"
+          image="$IMAGE_REPOSITORY@${{ steps.existing.outputs.digest || steps.build.outputs.digest }}"
           docker pull "$image"
           container=$(docker create "$image")
           docker cp "$container:/app/dist/client" "$RUNNER_TEMP/static"
@@ -136,14 +154,22 @@ jobs:
           current-context: production
           EOF
 
-          for attempt in {1..15}; do
-            kubectl get deployment "$K8S_DEPLOYMENT" --request-timeout=10s -o name && break
-            if [[ $attempt == 15 ]]; then
+          # --raw skips API discovery, which retries each request five times.
+          deployment_path="/apis/apps/v1/namespaces/$K8S_NAMESPACE/deployments/$K8S_DEPLOYMENT"
+          for attempt in {1..40}; do
+            kubectl get --raw "$deployment_path" --request-timeout=10s > /dev/null && break
+            # A rejected service token makes cloudflared wait for a browser login.
+            if grep -q "cdn-cgi/access/cli" "$RUNNER_TEMP/cloudflared.log"; then
+              echo "::error::Access did not accept the service token for $K8S_ACCESS_HOSTNAME. Add a Service Auth policy that includes it to that Access application."
+              cat "$RUNNER_TEMP/cloudflared.log"
+              exit 1
+            fi
+            if [[ $attempt == 40 ]]; then
               echo "::error::Could not reach the cluster through $K8S_ACCESS_HOSTNAME"
               cat "$RUNNER_TEMP/cloudflared.log"
               exit 1
             fi
-            sleep 4
+            sleep 5
           done
 
           deploy/release/rollout.sh "${{ steps.image.outputs.ref }}" "$VERSION"

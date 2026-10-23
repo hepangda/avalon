@@ -28,6 +28,10 @@ npm run static:verify
 Replace the example destinations before running. `static:check` validates local
 files only; `static:upload` writes to the selected bucket; `static:verify` fetches
 the public CDN resources and checks content, MIME, CORS, cache policy and cache hits.
+`static:upload` skips assets the CDN origin already serves with the same size, type
+and immutable cache policy; pass `-- --force` to upload all of them. Its HEAD probes
+carry a one-off query string because the CDN caches 404 responses, and a cached miss
+on an asset URL would outlive the upload.
 These scripts read exported environment variables, not `.env` files.
 
 The Vite plugin emits each image once at its content-addressed URL, plus hashed JS/CSS and a manifest
