@@ -21,7 +21,7 @@ describe('server-controlled bots', () => {
     expect((await h.action(h.host, 'room:addBot')).error?.code).toBe('WRONG_PHASE');
   });
 
-  it('acts immediately after resuming and honors timer pauses', async () => {
+  it('waits two active seconds and honors timer pauses', async () => {
     vi.useFakeTimers();
     const h = roomHarness();
     await h.action(h.host, 'room:addBot');
@@ -33,7 +33,10 @@ describe('server-controlled bots', () => {
     await vi.advanceTimersByTimeAsync(10_000);
     expect(h.document.game!.roleAcks).not.toContain('p1');
     await h.action(h.host, 'admin:setTimersPaused', { paused: false });
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(h.document.game!.roleAcks).not.toContain('p1');
+    await h.action(h.host, 'net:ping'); // Synchronization must not restart the delay.
+    await vi.advanceTimersByTimeAsync(1);
     expect(h.document.game!.roleAcks).toContain('p1');
     // Clean up any subsequent bot action in this fake-clock room.
     await h.action(h.host, 'admin:setTimersPaused', { paused: true });
@@ -73,7 +76,10 @@ describe('server-controlled bots', () => {
     await h.action(h.spectator, 'room:join');
     expect(h.spectator.snapshot.members.find((m) => m.id === 'p1')?.connected).toBe(true);
     expect(h.document.game!.roleAcks).not.toContain('p1');
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(h.document.game!.roleAcks).not.toContain('p1');
+    await h.action(h.host, 'net:ping'); // Synchronization must not restart the delay.
+    await vi.advanceTimersByTimeAsync(1);
     expect(h.document.game!.roleAcks).toContain('p1');
     vi.clearAllTimers();
   });

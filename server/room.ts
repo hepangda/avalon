@@ -446,6 +446,15 @@ export class Room {
       this.state.members.get(id)?.isBot && this.state.members.get(id)?.claimed) ?? [];
   }
 
+  private assassinationBotDue(): number {
+    const game = this.state.game;
+    const ballot = game?.earlyAssassination;
+    if (!ballot || !this.assassinationBotVoters().length) return Infinity;
+    // The ballot ID is its first private log sequence; this timestamp survives reloads.
+    const requestedAt = game.logs.find((log) => log.seq === ballot.id)?.at ?? 0;
+    return requestedAt + BOT_DELAY_MS;
+  }
+
   /** Schedule from committed action timestamps, so pings cannot postpone bots. */
   private scheduleBots(): void {
     if (this.integrityFailure || this.stopped) return;
@@ -454,14 +463,14 @@ export class Room {
     const pending = this.state.game?.actionTimers?.filter((timer) =>
       timer.pausedAt === undefined && this.state.members.get(timer.playerId)?.isBot && this.state.members.get(timer.playerId)?.claimed,
     ) ?? [];
-    const consentPending = this.assassinationBotVoters().length > 0;
-    if (!pending.length && !consentPending) return;
-    const due = Math.min(...pending.map((timer) => timer.startedAt + BOT_DELAY_MS), consentPending ? Date.now() : Infinity);
+    const consentDue = this.assassinationBotDue();
+    if (!pending.length && consentDue === Infinity) return;
+    const due = Math.min(...pending.map((timer) => timer.startedAt + BOT_DELAY_MS), consentDue);
     this.botTimer = setTimeout(() => {
       this.botTimer = undefined;
       void this.run(async () => {
         // Private consent is never an action timer: public timers would expose red seats.
-        for (const by of this.assassinationBotVoters()) {
+        for (const by of this.assassinationBotDue() <= Date.now() ? this.assassinationBotVoters() : []) {
           const ballot = this.state.game?.earlyAssassination;
           if (!ballot) break;
           const result = await this.applyEvent({ type: 'VOTE_ASSASSINATION', by, proposalId: ballot.id, value: 'approve' });

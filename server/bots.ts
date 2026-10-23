@@ -3,7 +3,7 @@ import { merlinSuspicions } from './bot-assassin';
 import { chooseNearBest, clamp, designatedSaboteurs, raceEquity, tally, voteTolerance } from './bot-policy';
 import { createRng, isEvil, projectStateForViewer, rejectionLimit, type ActionTimer, type ClientGameState, type GameEvent, type GameState } from '@/lib/engine';
 
-export const BOT_DELAY_MS = 0;
+export const BOT_DELAY_MS = 2_000;
 
 export interface BotDecision {
   event: GameEvent;

@@ -37,8 +37,11 @@ it('lets a known bot teammate consent without exposing a public action timer', a
   expect((await h.action(human!, 'game:startAssassination')).ok).toBe(true);
   expect(h.document.game!.earlyAssassination?.votes[botId]).toBeUndefined();
   expect(human!.game.actionTimers?.some((timer) => timer.action.includes('assassination'))).toBe(false);
-  await vi.advanceTimersByTimeAsync(0);
+  await vi.advanceTimersByTimeAsync(1_999);
+  expect(h.document.game!.earlyAssassination?.votes[botId]).toBeUndefined();
+  await h.action(human!, 'net:ping');
+  await vi.advanceTimersByTimeAsync(1);
   expect(h.document.game!.earlyAssassination).toBeNull();
-  expect(['Assassination', 'GameOver']).toContain(h.document.game!.phase);
+  expect(h.document.game!.phase).toBe('Assassination');
   vi.clearAllTimers();
 });
