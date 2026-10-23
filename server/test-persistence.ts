@@ -1,3 +1,4 @@
+import { archiveLinks, type GameRecord } from './game-records';
 import { publicRoom, publicRoomPage } from './public-rooms';
 import type { DisplayPreferences } from '@/lib/preferences';
 import type { RoomChange } from './room-journal';
@@ -13,6 +14,19 @@ import {
 
 /** Test double; database integration tests exercise real PostgreSQL separately. */
 export class MemoryPersistence implements Persistence {
+  /** Seat links and integrity by game id; tests may seed them beside `archives`. */
+  links = new Map<string, Pick<GameRecord, 'seats' | 'altered'>>();
+  recordsVersion = 0;
+  async listGameRecords(): Promise<GameRecord[]> {
+    return [...this.archives.values()].map((replay) => ({
+      replay: structuredClone(replay), seats: { ...this.links.get(replay.gameId)?.seats }, altered: this.links.get(replay.gameId)?.altered ?? null,
+    }));
+  }
+  /** Tests that seed the maps directly bump `recordsVersion`, as a write would. */
+  async gameRecordsVersion() { return String(this.recordsVersion); }
+  async findSeat(gameId: string, account: string) {
+    return Object.entries(this.links.get(gameId)?.seats ?? {}).find(([, seated]) => seated === account)?.[0] ?? null;
+  }
   rooms = new Map<string, RoomRecord>();
   archives = new Map<string, ReplayData>();
   revisions = new Map<string, number>();
@@ -68,6 +82,8 @@ export class MemoryPersistence implements Persistence {
     const a = document.archive;
     if (a && a.revision > (this.revisions.get(a.replay.gameId) ?? -1)) {
       this.archives.set(a.replay.gameId, structuredClone(a.replay));
+      this.links.set(a.replay.gameId, a.seats ? { seats: { ...a.seats }, altered: a.altered ?? null } : archiveLinks(document));
+      this.recordsVersion += 1;
       this.revisions.set(a.replay.gameId, a.revision);
     }
     return version + 1;

@@ -5,6 +5,7 @@ import { routing, stripLocalePrefix } from './i18n/routing';
 const HomePage = lazy(() => import('./pages/HomePage'));
 const LobbyPage = lazy(() => import('./pages/LobbyPage'));
 const GamePage = lazy(() => import('./pages/GamePage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const ReplayPage = lazy(() => import('./pages/ReplayPage'));
 import { AuthIdentityProvider } from '@/lib/auth/useAuthIdentity';
 import { RequireAccount } from '@/components/auth/RequireAccount';
@@ -36,6 +37,7 @@ export function App() {
               <Route path="/room/:code" element={<LobbyPage />} />
               <Route path="/game/:code" element={<GamePage />} />
             </Route>
+            <Route path="/history" element={<HistoryPage />} />
             <Route path="/replay/:gameId" element={<ReplayPage />} />
           </Route>
           {routing.locales.map((locale) => (

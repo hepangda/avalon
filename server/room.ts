@@ -1,3 +1,4 @@
+import { archiveLinks } from './game-records';
 import {
 buildRoleSet,
 createGame,
@@ -885,6 +886,7 @@ export class Room {
     if (!replay?.outcome)
       throw new Error("Cannot archive an incomplete replay");
     this.state.archive = {
+      ...archiveLinks(this.document()),
       replay, revision: this.state.eventSeq, rewardAccounts: [...new Set(Object.values(this.state.gameAccounts))],
       roleWeightAssignments: Object.fromEntries(this.state.game!.players.flatMap((player) => {
         const account = this.state.members.get(player.id)?.claimed ? this.state.accounts[player.id] : undefined;

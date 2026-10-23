@@ -69,8 +69,6 @@ app.get('/api/rooms', requireAccount, async (c) => {
 
 app.use('/api/rooms/:code', requireAccount);
 
-app.use('/api/games/*', requireAccount);
-
 app.get('/api/rooms/:code', async (c) => {
   const code = c.req.param('code');
   if (!/^[0-9]{4}$/.test(code)) return c.json({ error: 'Invalid room code' }, 400);
@@ -78,15 +76,6 @@ app.get('/api/rooms/:code', async (c) => {
   const preview = await stub.preview();
   if (!preview) return c.json({ error: 'Room not found' }, 404);
   return c.json(preview);
-});
-
-app.get('/api/games/:id/replay', async (c) => {
-  // Referee corrections may replace the record, so never cache an old version or 404.
-  c.header('Cache-Control', 'no-store');
-  const id = c.req.param('id');
-  const replay = await c.env.persistence.loadReplay(id);
-  if (!replay) return c.json({ error: 'Game not found' }, 404);
-  return c.json(replay);
 });
 
 app.get('/rooms/:code/ws', (c) => c.json({ error: 'Expected websocket' }, 426));

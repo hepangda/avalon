@@ -1,3 +1,4 @@
+import { archiveLinks, legacySeatLink, type GameRecord } from './game-records';
 import { publicRoom, publicRoomPage } from './public-rooms';
 import type { PublicRoom } from '@/lib/socket/types';
 import { ALL_ROLES,settledRoleWeights,type RoleWeights } from '@/lib/engine/roleWeights';
@@ -13,7 +14,7 @@ type RoomDocument,
 type RoomRecord,
 } from "./persistence";
 import { qualifiesForGameReward, type RerollCards } from "./reroll-cards";
-import { documentHash,replayJournalAsync,type JournalEntry,type RoomChange } from "./room-journal";
+import { JournalIntegrityError,documentHash,replayJournalAsync,type JournalEntry,type RoomChange } from "./room-journal";
 
 import type { DisplayPreferences } from '@/lib/preferences';
 
@@ -68,11 +69,77 @@ export class PostgresPersistence implements Persistence {
         [this.token],
       );
       this.available = true;
+      await this.linkArchivedSeats();
     } catch (error) {
+      this.available = false;
       owner.release(true);
       this.owner = null;
       throw error;
     }
+  }
+
+  async listGameRecords(): Promise<GameRecord[]> {
+    // One statement: replays and their seat links come from the same snapshot.
+    const result = await this.pool.query<{ payload: ReplayData; altered: boolean | null; seats: Record<string, string> | null }>(`
+      SELECT r.payload, r.altered,
+        (SELECT jsonb_object_agg(s.player_id, s.account) FROM avalon_game_seats s WHERE s.game_id = r.game_id) AS seats
+      FROM avalon_replays r ORDER BY r.game_id`);
+    return result.rows.map((row) => ({ replay: row.payload, altered: row.altered, seats: row.seats ?? {} }));
+  }
+
+  async gameRecordsVersion(): Promise<string> {
+    const result = await this.pool.query<{ version: string }>(`
+      SELECT concat_ws(':', (SELECT count(*) FROM avalon_replays), (SELECT max(updated_at) FROM avalon_replays),
+        (SELECT count(*) FROM avalon_game_seats)) AS version`);
+    return result.rows[0]!.version;
+  }
+
+  async findSeat(gameId: string, account: string): Promise<string | null> {
+    const result = await this.pool.query<{ player_id: string }>(
+      'SELECT player_id FROM avalon_game_seats WHERE game_id = $1 AND account = $2 LIMIT 1', [gameId, account]);
+    return result.rows[0]?.player_id ?? null;
+  }
+
+  private async writeSeats(client: PoolClient | Pool, gameId: string, seats: Record<string, string>) {
+    await client.query('DELETE FROM avalon_game_seats WHERE game_id = $1', [gameId]);
+    for (const [playerId, account] of Object.entries(seats)) {
+      await client.query('INSERT INTO avalon_game_seats (game_id, player_id, account) VALUES ($1, $2, $3)', [gameId, playerId, account]);
+    }
+  }
+
+  /**
+   * Once per database: link games archived before seats were recorded. A surviving room
+   * still holds its last game's exact seats; otherwise only an unambiguous settlement is used.
+   */
+  private async linkArchivedSeats(): Promise<void> {
+    const done = await this.pool.query("SELECT 1 FROM avalon_migrations WHERE name = 'game-seats-v1'");
+    if (done.rowCount) return;
+    for (const code of await this.listRoomCodes()) {
+      let record: RoomRecord | null;
+      try { record = await this.loadRoom(code); }
+      catch (error) {
+        // Optional recovery must not let an unrelated corrupt room prevent startup.
+        if (!(error instanceof JournalIntegrityError)) throw error;
+        console.warn('[records] skipped room with invalid journal', code);
+        continue;
+      }
+      const archive = record?.document.archive;
+      if (!archive || record!.document.meta.gameId !== archive.replay.gameId) continue;
+      const links = archive.seats ? { seats: archive.seats, altered: archive.altered ?? null } : archiveLinks(record!.document);
+      const updated = await this.pool.query(`UPDATE avalon_replays SET altered = $3 WHERE game_id = $1 AND revision = $2
+        AND NOT EXISTS (SELECT 1 FROM avalon_game_seats WHERE game_id = $1)`, [archive.replay.gameId, archive.revision, links.altered]);
+      if (updated.rowCount) await this.writeSeats(this.pool, archive.replay.gameId, links.seats);
+    }
+    const legacy = await this.pool.query<{ game_id: string; payload: ReplayData; accounts: string[] }>(`
+      SELECT r.game_id, r.payload,
+        ARRAY(SELECT account FROM avalon_role_weight_games w WHERE w.game_id = r.game_id
+              UNION SELECT account FROM avalon_game_rewards w WHERE w.game_id = r.game_id) AS accounts
+      FROM avalon_replays r WHERE NOT EXISTS (SELECT 1 FROM avalon_game_seats s WHERE s.game_id = r.game_id)`);
+    for (const row of legacy.rows) {
+      const seats = legacySeatLink(row.payload, row.accounts);
+      if (seats) await this.writeSeats(this.pool, row.game_id, seats);
+    }
+    await this.pool.query("INSERT INTO avalon_migrations (name) VALUES ('game-seats-v1') ON CONFLICT DO NOTHING");
   }
 
   async health(): Promise<void> {
@@ -203,18 +270,21 @@ export class PostgresPersistence implements Persistence {
       if (archive) {
         if (!archive.replay.outcome || !archive.replay.gameId)
           throw new Error("Cannot archive unfinished game");
+        const links = archive.seats ? { seats: archive.seats, altered: archive.altered ?? null } : archiveLinks(document);
         const archived = await client.query(
-          `INSERT INTO avalon_replays (game_id, revision, payload) VALUES ($1, $2, $3)
+          `INSERT INTO avalon_replays (game_id, revision, payload, altered) VALUES ($1, $2, $3, $4)
           ON CONFLICT(game_id) DO UPDATE SET revision = excluded.revision,
-            payload = excluded.payload, updated_at = now()
+            payload = excluded.payload, altered = excluded.altered, updated_at = now()
           WHERE excluded.revision > avalon_replays.revision`,
           [
             archive.replay.gameId,
             archive.revision,
             JSON.stringify(archive.replay),
+            links.altered,
           ],
         );
         archiveChanged = !!archived.rowCount;
+        if (archiveChanged) await this.writeSeats(client, archive.replay.gameId, links.seats);
       }
       if (archive && archiveChanged && qualifiesForGameReward(archive.replay)) {
         for (const account of [...new Set(archive.rewardAccounts ?? [])].sort()) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildReplayModel, playerStats } from './replayModel';
+import { buildReplayModel } from './replayModel';
+import { replaySteps, viewpointNotes } from './replaySteps';
 import type { ReplayData } from './replayTypes';
 
 const roles = ['Merlin', 'Assassin', 'LoyalServant', 'Morgana', 'Percival'] as const;
@@ -82,20 +83,21 @@ describe('buildReplayModel', () => {
   });
 });
 
-describe('playerStats', () => {
-  it('counts leadership, team picks, votes for teams with evil and cards', () => {
-    const model = buildReplayModel(replay({
-      rounds: [{
-        ...replay().rounds[0]!,
-        proposals: [
-          { proposalIndex: 0, leaderPlayerId: 'p3', team: ['p3', 'p4'], approved: false },
-          { proposalIndex: 1, leaderPlayerId: 'p4', team: ['p0', 'p2'], approved: true },
-        ],
-      }],
-    }));
-    expect(playerStats(model, 'p0')).toEqual({
-      led: 0, picked: 1, approves: 1, rejects: 1, approvedEvilTeams: 0, fails: 0, missions: 1,
-    });
-    expect(playerStats(model, 'p3')).toMatchObject({ led: 1, picked: 1 });
+describe('replaySteps', () => {
+  it('plays deal, every nomination, the quest, the lady, the strike and the end in order', () => {
+    const model = buildReplayModel(replay());
+    const steps = replaySteps(model);
+    expect(steps.map((s) => s.key)).toEqual(['deal', 'v0:0', 'v0:1', 'q0', 'l0', 'strike', 'end']);
+    expect(steps.map((s) => s.settled)).toEqual([0, 0, 0, 1, 1, 1, 1]);
+    expect(steps.map((s) => s.leaderId)).toEqual(['p3', 'p3', 'p4', 'p4', 'p4', 'p4', 'p4']);
+    // The lady waits with her first holder, then stays with whoever she examined.
+    expect(steps.map((s) => s.ladyId)).toEqual(['p4', 'p4', 'p4', 'p4', 'p4', 'p1', 'p1']);
+  });
+
+  it('tags every seat from above and only known seats from a viewpoint', () => {
+    const model = buildReplayModel(replay());
+    expect(viewpointNotes(model, null)).toEqual({ p0: 'Merlin', p1: 'Assassin', p2: 'LoyalServant', p3: 'Morgana', p4: 'Percival' });
+    expect(viewpointNotes(model, 'p2')).toEqual({ p2: 'LoyalServant' });
+    expect(viewpointNotes(model, 'p4')).toEqual({ p4: 'Percival', p0: 'merlin-or-morgana', p3: 'merlin-or-morgana' });
   });
 });

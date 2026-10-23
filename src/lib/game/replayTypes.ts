@@ -79,3 +79,9 @@ export interface ReplayData {
   /** Public table log, in order. */
   log?: ClientLogEntry[];
 }
+
+/** GET /api/games/:id/replay: the record and the seat the signed-in account held, if any. */
+export interface ReplayView {
+  replay: ReplayData;
+  viewerId: string | null;
+}

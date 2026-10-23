@@ -65,7 +65,7 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
     db = new PostgresPersistence(url!, 4);
     await db.start();
     await db.pool.query(
-      "TRUNCATE avalon_room_journal, avalon_rooms, avalon_replays, avalon_profiles, avalon_cards, avalon_game_rewards, avalon_role_weights, avalon_role_weight_games",
+      "TRUNCATE avalon_room_journal, avalon_rooms, avalon_game_seats, avalon_replays, avalon_migrations, avalon_profiles, avalon_cards, avalon_game_rewards, avalon_role_weights, avalon_role_weight_games",
     );
   });
   afterEach(async () => {
@@ -784,6 +784,19 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
       targetPlayerId: peers.find((p) => p.game.selfRole === "Merlin")!
         .attachment.playerId,
     });
+    const records = await db.listGameRecords();
+    expect(records).toHaveLength(1);
+    expect(records[0]!.altered).toBe(true);
+    expect(Object.keys(records[0]!.seats)).toHaveLength(5);
+    const [playerId, account] = Object.entries(records[0]!.seats)[0]!;
+    expect(await db.findSeat(records[0]!.replay.gameId, account)).toBe(playerId);
+    expect(await db.loadReplay(records[0]!.replay.gameId)).not.toHaveProperty('seats');
+    // A database from before seat links recovers them once from the surviving room.
+    await db.pool.query("DELETE FROM avalon_game_seats; UPDATE avalon_replays SET altered = NULL; DELETE FROM avalon_migrations");
+    await db.close();
+    db = new PostgresPersistence(url!, 4);
+    await db.start();
+    expect(await db.listGameRecords()).toEqual(records);
     const old = (await db.loadRoom("1234"))!;
     const corrected = structuredClone(old.document);
     corrected.archive!.revision += 10;

@@ -120,7 +120,15 @@ export default function HomePage() {
   return (
     // Clip sideways only: cards sliding out past the fan must not widen a phone screen.
     <div className="flex min-h-[100dvh] flex-col overflow-x-clip">
-      <header className="mx-auto flex w-full max-w-5xl justify-end px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pt-5">
+      <header className="mx-auto flex w-full max-w-5xl justify-end gap-2 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pt-5">
+        {authUser && (
+          <Link href="/history" className="prefs-chip">
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="prefs-chip-icon" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4ZM7 6H4.5a2.5 2.5 0 0 0 2.6 3.5M17 6h2.5a2.5 2.5 0 0 1-2.6 3.5" />
+            </svg>
+            <span>{t('history.title')}</span>
+          </Link>
+        )}
         <PreferencesButton variant="chip" />
       </header>
 

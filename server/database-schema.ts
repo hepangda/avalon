@@ -41,6 +41,17 @@ CREATE TABLE IF NOT EXISTS avalon_replays (
   payload jsonb NOT NULL,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE avalon_replays ADD COLUMN IF NOT EXISTS altered boolean;
+CREATE TABLE IF NOT EXISTS avalon_game_seats (
+  game_id text NOT NULL REFERENCES avalon_replays(game_id) ON DELETE CASCADE,
+  player_id text NOT NULL,
+  account text NOT NULL,
+  PRIMARY KEY (game_id, player_id)
+);
+CREATE INDEX IF NOT EXISTS avalon_game_seats_account ON avalon_game_seats (account);
+CREATE TABLE IF NOT EXISTS avalon_migrations (
+  name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now()
+);
 CREATE TABLE IF NOT EXISTS avalon_profiles (
   account text PRIMARY KEY, alias text NOT NULL DEFAULT ''
 );

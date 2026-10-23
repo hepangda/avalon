@@ -211,35 +211,3 @@ export function buildReplayModel(data: ReplayData): ReplayModel {
     },
   };
 }
-
-export interface ReplayPlayerStats {
-  led: number;
-  picked: number;
-  approves: number;
-  rejects: number;
-  /** Votes for a team that included evil. */
-  approvedEvilTeams: number;
-  fails: number;
-  missions: number;
-}
-
-export function playerStats(model: ReplayModel, playerId: string): ReplayPlayerStats {
-  const stats: ReplayPlayerStats = { led: 0, picked: 0, approves: 0, rejects: 0, approvedEvilTeams: 0, fails: 0, missions: 0 };
-  for (const mission of model.missions) {
-    for (const p of mission.proposals) {
-      if (p.leaderId === playerId) stats.led += 1;
-      if (p.team?.includes(playerId)) stats.picked += 1;
-      const vote = p.votes.get(playerId);
-      if (vote === 'approve') {
-        stats.approves += 1;
-        if (p.team?.some((id) => model.byId.get(id)?.team === 'evil')) stats.approvedEvilTeams += 1;
-      } else if (vote === 'reject') stats.rejects += 1;
-    }
-    const card = mission.cards.get(playerId);
-    if (card) {
-      stats.missions += 1;
-      if (card === 'fail') stats.fails += 1;
-    }
-  }
-  return stats;
-}

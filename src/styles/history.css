@@ -1,0 +1,487 @@
+/* Record: the player's plate beside the chronicle of games, one full screen like the table. */
+
+.history-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  padding: 12px 0 0;
+}
+
+/* The plate. */
+.history-dossier {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+.history-plate {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.history-medal {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 1px solid #d9b54a;
+  background:
+    radial-gradient(circle at 50% 35%, rgb(246 220 133 / 0.18), transparent 62%),
+    linear-gradient(to bottom, #3a2f1c, #1a140c);
+  box-shadow:
+    inset 0 0 0 4px #16100a,
+    inset 0 0 0 5px rgb(217 181 74 / 0.45),
+    0 0 26px -6px rgb(201 162 39 / 0.45);
+}
+.history-medal-crest {
+  position: absolute;
+  inset: 14px;
+  width: calc(100% - 28px);
+  height: calc(100% - 28px);
+  opacity: 0.16;
+}
+/* The recent score path, clipped inside the medal's inner ring. */
+.history-trend {
+  position: absolute;
+  inset: 5px;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  clip-path: circle(50%);
+}
+.history-trend-area { animation: history-trend-rise 900ms ease-out both; }
+.history-trend-line {
+  fill: none;
+  stroke: #e6c14a;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  /* Non-scaling strokes dash in screen pixels: longer than any medal's path. */
+  stroke-dasharray: 400;
+  filter: drop-shadow(0 0 3px rgb(230 193 74 / 0.6));
+  opacity: 0.9;
+  animation: history-trend-draw 1100ms cubic-bezier(0.3, 0.6, 0.2, 1) both;
+}
+@keyframes history-trend-draw { from { stroke-dashoffset: 400; } }
+@keyframes history-trend-rise { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  .history-trend-area, .history-trend-line { animation: none; }
+}
+.history-score {
+  position: relative;
+  color: #f0d47c;
+  font-family: var(--font-cinzel), serif;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 #16100a, 0 0 12px rgb(201 162 39 / 0.35);
+}
+.history-identity {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.history-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: rgb(232 220 192 / 0.8);
+  font-size: 13px;
+}
+.history-avatar { width: 22px; height: 22px; font-size: 11px; }
+.history-title {
+  color: #e6c14a;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 19px;
+  letter-spacing: 0.08em;
+}
+.history-medal[data-title="observing"] + .history-identity .history-title { color: #d4c6a9; }
+.history-confidence {
+  color: #a89d87;
+  font-size: 12px;
+}
+.history-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e0574b;
+  font-size: 13px;
+}
+.history-error button,
+.history-games-end button {
+  padding: 2px 10px;
+  border: 1px solid rgb(201 162 39 / 0.4);
+  border-radius: 999px;
+  color: #e6c14a;
+  font-size: 12px;
+}
+
+.history-record {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: 1px solid rgb(201 162 39 / 0.14);
+}
+.history-record > div {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 7px 0;
+}
+.history-record > div + div { border-left: 1px solid rgb(201 162 39 / 0.1); }
+.history-record dt { order: 2; color: #a89d87; font-size: 11px; letter-spacing: 0.08em; }
+.history-record dd {
+  color: #e8dcc0;
+  font-family: var(--font-cinzel), serif;
+  font-size: 20px;
+  line-height: 1.1;
+}
+.history-record small { margin-left: 1px; color: #a89d87; font-size: 12px; }
+
+/* The two sides as banners whose fill is the win rate. */
+.history-sides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.history-side {
+  --tone: #9fcbe0;
+  position: relative;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 8px 10px 10px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
+  border-radius: 10px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--tone) 9%, transparent), rgb(22 16 10 / 0.4));
+}
+.history-side[data-team="evil"] { --tone: #e0574b; }
+.history-side-crest { width: 26px; height: 26px; }
+.history-side-name {
+  color: var(--tone);
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+}
+.history-side-count {
+  color: #e8dcc0;
+  font-family: var(--font-cinzel), serif;
+  font-size: 17px;
+}
+.history-side-count i { margin: 0 2px; color: #7d725e; font-style: normal; font-size: 13px; }
+.history-side-count small { margin-left: 1px; color: #a89d87; font-size: 12px; }
+.history-flip { animation: history-flip 260ms ease-out both; }
+@keyframes history-flip { from { opacity: 0; transform: translateY(3px); } }
+@media (prefers-reduced-motion: reduce) { .history-flip { animation: none; } }
+.history-side-bar {
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: rgb(232 220 192 / 0.08);
+}
+.history-side-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--rate);
+  background: var(--tone);
+  box-shadow: 0 0 8px var(--tone);
+}
+
+/* Roles held, as a shelf of portraits. */
+.history-roles {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  scrollbar-width: none;
+}
+.history-roles::-webkit-scrollbar { display: none; }
+/* A strip that runs on past the edge fades there. */
+.history-roles { mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+.history-role {
+  --tone: #9fcbe0;
+  display: grid;
+  flex: none;
+  justify-items: center;
+  gap: 3px;
+  width: 52px;
+  cursor: pointer;
+}
+.history-role[data-team="evil"] { --tone: #e0574b; }
+.history-role-art {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--tone);
+  box-shadow: 0 0 0 2px #16100a, 0 4px 10px -4px #000;
+}
+.history-role-name {
+  max-width: 100%;
+  overflow: hidden;
+  color: #d4c6a9;
+  font-size: 11px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.history-role-count { color: #a89d87; font-size: 10.5px; line-height: 1; }
+.history-role-count i { font-style: normal; }
+.history-role-count small { font-size: inherit; }
+
+/* Quest seals: the chalice set in a medallion of its side's colour, as on the table's track. */
+.history-seal {
+  --tone: #9fcbe0;
+  --size: 20px;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--tone) 70%, transparent);
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--tone) 38%, #16100a), #16100a 78%);
+}
+.history-seal img { width: 72%; height: 72%; object-fit: contain; }
+.history-seal[data-result="fail"], .history-seal[data-result="strike"], .history-seal[data-result="lost"] { --tone: #e0574b; }
+.history-seal[data-result="won"] { --tone: #e6c14a; }
+.history-seal[data-result="parried"] { --tone: #a89d87; opacity: 0.7; }
+.history-seal[data-result="lost"] { opacity: 0.6; }
+
+/* Recent form, newest first. */
+.history-form {
+  display: flex;
+  gap: 5px;
+}
+.history-form .history-seal { --size: 18px; }
+
+/* The chronicle. */
+.history-chronicle {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.history-scope {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid rgb(201 162 39 / 0.18);
+  border-radius: 12px;
+  background: rgb(22 16 10 / 0.45);
+}
+.history-scope-tab {
+  flex: 1;
+  min-height: 34px;
+  border-radius: 9px;
+  color: #a89d87;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.history-scope-tab[aria-selected="true"] {
+  background: linear-gradient(to bottom, #3a2f1c, #241c11);
+  box-shadow: inset 0 0 0 1px rgb(217 181 74 / 0.6);
+  color: #f0d47c;
+}
+.history-scope-tab:focus-visible { outline: 2px solid #e6c14a; outline-offset: 1px; }
+@media (hover: hover) {
+  .history-scope-tab:not([aria-selected="true"]):hover { color: #e8dcc0; }
+}
+
+.history-games {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
+  margin-top: 10px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #665335 transparent;
+}
+.history-game {
+  --edge: rgb(201 162 39 / 0.25);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid rgb(201 162 39 / 0.12);
+  border-left: 3px solid var(--edge);
+  border-radius: 10px;
+  background: linear-gradient(to right, color-mix(in srgb, var(--edge) 12%, transparent), rgb(22 16 10 / 0.35) 40%);
+  transition: border-color 150ms ease, background-color 150ms ease, transform 120ms ease;
+}
+.history-game[data-result="win"] { --edge: #e6c14a; }
+.history-game[data-result="loss"] { --edge: rgb(168 157 135 / 0.45); }
+.history-game:not([data-result])[data-winner="good"] { --edge: rgb(159 203 224 / 0.6); }
+.history-game:not([data-result])[data-winner="evil"] { --edge: rgb(224 87 75 / 0.6); }
+.history-game:focus-visible { outline: 2px solid #e6c14a; outline-offset: 2px; }
+.history-game:active { transform: scale(0.995); }
+@media (hover: hover) {
+  .history-game:hover { border-color: rgb(201 162 39 / 0.35); border-left-color: var(--edge); background-color: rgb(201 162 39 / 0.05); }
+}
+.history-game-face {
+  --tone: #9fcbe0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--tone);
+  box-shadow: 0 0 0 2px #16100a;
+  overflow: hidden;
+}
+.history-game-face[data-team="evil"] { --tone: #e0574b; }
+.history-game-art { width: 100%; height: 100%; }
+.history-game-art.is-crest { width: 70%; height: 70%; object-fit: contain; }
+.history-game[data-result="loss"] .history-game-face { filter: grayscale(0.55) brightness(0.85); }
+.history-game-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.history-game-verdict {
+  color: #e8dcc0;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.history-game[data-result="win"] .history-game-verdict { color: #f0d47c; }
+.history-game[data-result="loss"] .history-game-verdict { color: #a89d87; }
+.history-game:not([data-result])[data-winner="good"] .history-game-verdict { color: #9fcbe0; }
+.history-game:not([data-result])[data-winner="evil"] .history-game-verdict { color: #e0574b; }
+.history-game-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  overflow: hidden;
+  color: #a89d87;
+  font-size: 11.5px;
+}
+.history-game-quests {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+[data-result="strike"].history-seal, [data-result="parried"].history-seal { margin-left: 4px; }
+.history-game-score {
+  min-width: 42px;
+  text-align: right;
+}
+.history-game-score b {
+  font-family: var(--font-cinzel), serif;
+  font-size: 16px;
+  color: #d4c6a9;
+}
+.history-game-score b[data-sign="1"] { color: #e6c14a; }
+.history-game-score b[data-sign="-1"] { color: #c98a7c; }
+.history-game-score small {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid rgb(168 157 135 / 0.3);
+  border-radius: 999px;
+  color: #a89d87;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.history-games-end {
+  display: grid;
+  place-items: center;
+  min-height: 1px;
+}
+.history-games-end p {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  color: #a89d87;
+  font-size: 13px;
+}
+.history-empty {
+  flex-direction: column;
+  padding: 10vh 0 !important;
+}
+.history-empty-crest { width: 64px; height: 64px; opacity: 0.35; }
+.history-loading {
+  width: 18px;
+  height: 18px;
+  margin: 18px 0;
+  border: 2px solid rgb(201 162 39 / 0.25);
+  border-top-color: #e6c14a;
+  border-radius: 50%;
+  animation: history-spin 0.8s linear infinite;
+}
+@keyframes history-spin { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) { .history-loading { animation-duration: 2.4s; } }
+
+/* A narrow phone: the plate tightens so the chronicle keeps most of the screen. */
+@container match (max-width: 420px) {
+  .history-medal { width: 64px; height: 64px; }
+  .history-score { font-size: 20px; }
+  .history-title { font-size: 17px; }
+  .history-record dd { font-size: 17px; }
+  .history-game { gap: 8px; padding-right: 10px; }
+  .history-game-quests .history-seal { --size: 16px; }
+  .history-game-quests { gap: 1px; }
+}
+@container match (max-height: 640px) and (max-width: 859px) {
+  .history-record, .history-form { display: none; }
+}
+
+/* Wide: the plate stands as its own column beside the chronicle. */
+@container match (min-width: 860px) {
+  .history-workspace {
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: 28px;
+    padding-top: 20px;
+    width: min(100%, 1120px);
+    margin-inline: auto;
+  }
+  .history-dossier {
+    gap: 18px;
+    align-content: start;
+    overflow-y: auto;
+    padding-bottom: 20px;
+    scrollbar-width: none;
+  }
+  .history-plate { flex-direction: column; gap: 14px; text-align: center; padding-top: 8px; }
+  .history-identity { justify-items: center; }
+  .history-medal { width: 128px; height: 128px; }
+  .history-medal-crest { inset: 22px; width: calc(100% - 44px); height: calc(100% - 44px); }
+  .history-score { font-size: 38px; }
+  .history-title { font-size: 22px; }
+  .history-roles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    gap: 12px 6px;
+    overflow: visible;
+    mask-image: none;
+  }
+  .history-role { width: auto; }
+  .history-role-art { width: 46px; height: 46px; }
+  .history-form { justify-content: center; }
+  .history-games { gap: 8px; }
+  .history-game { min-height: 68px; padding-block: 10px; gap: 14px; }
+  .history-game-face { width: 48px; height: 48px; }
+  .history-game-verdict { font-size: 16px; }
+  .history-game-meta { font-size: 12px; }
+  .history-game-quests .history-seal { --size: 22px; }
+}

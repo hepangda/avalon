@@ -7,6 +7,7 @@ import type { ReplayData } from "@/lib/game/replayTypes";
 import type { PublicRoomPage, RoomDetails, RoomConfig, RoomMember, RoomStatus } from "@/lib/socket/types";
 import type { RoomChange } from "./room-journal";
 import type { SeatHistory } from './seating';
+import type { GameRecord } from './game-records';
 
 export interface RoomMeta {
   name?: string;
@@ -38,6 +39,9 @@ export interface RoomDocument {
   lastGameSeats?: SeatHistory;
   archive: {
     replay: ReplayData;
+    /** Frozen when the game ends; absent from archives written before seats were linked. */
+    seats?: Record<string, string>;
+    altered?: boolean;
     revision: number;
     rewardAccounts?: string[];
     roleWeightAssignments?: Record<string, Role>;
@@ -50,6 +54,12 @@ export interface RoomRecord {
 }
 
 export interface Persistence {
+  /** Every archived game with its private seat links, in one consistent snapshot. */
+  listGameRecords(): Promise<GameRecord[]>;
+  /** Changes whenever an archive or its seat links change. */
+  gameRecordsVersion(): Promise<string>;
+  /** The seat an account held in an archived game. */
+  findSeat(gameId: string, account: string): Promise<string | null>;
   listRoomCodes(): Promise<string[]>;
   listPublicRooms(page: number): Promise<PublicRoomPage>;
   getPreferences(account: string): Promise<Partial<DisplayPreferences>>;
