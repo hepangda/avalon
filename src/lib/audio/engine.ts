@@ -48,6 +48,11 @@ function load(name: SoundName) {
  * and resumed again on later ones (iOS suspends it whenever the page goes to the background).
  */
 function unlock() {
+  // iOS plays Web Audio as ambient sound by default, which the ring/silent switch mutes outright.
+  const session = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+  if (session && session.type !== 'playback') {
+    try { session.type = 'playback'; } catch { /* unsupported type */ }
+  }
   if (!ctx) {
     const Context = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Context) return;
@@ -64,7 +69,14 @@ function unlock() {
     useSoundStore.subscribe(applyVolume);
     for (const name of SOUND_NAMES) void load(name);
   }
-  if (ctx.state !== 'running') void ctx.resume().catch(() => {});
+  if (ctx.state !== 'running') {
+    void ctx.resume().catch(() => {});
+    // Older iOS only opens the output once a source actually starts inside the gesture.
+    const kick = ctx.createBufferSource();
+    kick.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    kick.connect(ctx.destination);
+    kick.start();
+  }
 }
 
 if (typeof window !== 'undefined') {
