@@ -124,13 +124,19 @@ export function GameView({
     );
 
   const blocked = conn !== 'connected' || !!presentation;
+  const needsRoleReveal =
+    game.phase !== 'GameOver' &&
+    !!myPlayerId &&
+    !game.isSpectator &&
+    !game.roleAcks.includes(myPlayerId);
   const notePlayer = game.players.find((p) => p.id === noteTarget?.id);
   const noteOptions = notePlayer ? roleNoteOptions(game, myPlayerId, notePlayer.id) : [];
   const editableNoteIds = game.players.filter((p) => roleNoteOptions(game, myPlayerId, p.id).length > 0).map((p) => p.id);
   const displayedNotes = displayedRoleNotes(game, myPlayerId, notes, notesEnabled);
   const knownNotes = knownRoleNotes(game, myPlayerId);
   const automaticNotes = notesEnabled ? knownNotes : {};
-  const factions = avatarFactions(displayedNotes, knownNotes, myPlayerId);
+  // Portrait rings would tell the viewer's role before they have read their own card.
+  const factions = needsRoleReveal ? {} : avatarFactions(displayedNotes, knownNotes, myPlayerId);
   const { canVote, canMission } = actionAvailability(game, myPlayerId);
   const leader = game.players.find((p) => p.seat === game.leaderIndex);
   const isLeader = leader?.id === myPlayerId;
@@ -173,14 +179,11 @@ export function GameView({
         ),
       }
       : { ...game, roundIndex: round };
-  const needsRoleReveal =
-    game.phase !== 'GameOver' &&
-    !!myPlayerId &&
-    !game.isSpectator &&
-    !game.roleAcks.includes(myPlayerId);
   let candidateIds: string[] | undefined;
   let pick: PickConfig | null = null;
-  if ((game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing') && isLeader) {
+  if (game.rolesPending) {
+    // Nobody acts until every identity has been confirmed.
+  } else if ((game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing') && isLeader) {
     pick = {
       size: teamSize,
       tone: 'gold',
@@ -256,6 +259,7 @@ export function GameView({
       return <TableCard role={p.role} variant={p.roleVariant} faceDown={!ending.revealed.has(p.id)}
         mark={endingMarksById[p.id]} lost={lostSide(p.id)} />;
     if (isOver && p.role) return <TableCard role={p.role} variant={p.roleVariant} mark={endingMarksById[p.id]} lost={lostSide(p.id)} />;
+    if (game!.rolesPending) return <TableCard state={game!.roleAcks.includes(p.id) ? 'back' : 'empty'} />;
     if (game!.phase === 'Voting')
       return (
         <TableCard
@@ -296,6 +300,8 @@ export function GameView({
     : game.votes?.filter((v) => v.hasVoted).length ?? 0;
   const status = presentation
     ? ''
+    : game.rolesPending
+      ? t('table.roleCount', { count: game.roleAcks.length, total: game.players.length })
     : game.phase === 'Voting'
       ? t('table.voteCount', {
         count: game.votes?.filter((v) => v.hasVoted).length ?? 0,
@@ -364,7 +370,7 @@ export function GameView({
                 </li>)}
               </ol>}
               <span className="table-status-detail inline-flex items-center gap-2">
-                {showProposals ? <>
+                {showProposals && !game.rolesPending ? <>
                   {activePhase === 'Voting' && <span className="tabular-nums" aria-label={t('table.voteCount', { count: voteCount, total: game.players.length })}>{voteCount}/{game.players.length}</span>}
                   <ProposalTracker game={proposalGame} />
                 </> : status}

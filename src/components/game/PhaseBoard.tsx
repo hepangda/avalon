@@ -98,6 +98,10 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
         )}
       </>,
     );
+  if (game.rolesPending)
+    return layout(
+      <h2 className="table-phase-title" aria-live="polite">{t('table.waitingRoles')}</h2>,
+    );
   if (game.phase === 'TeamBuilding' || game.phase === 'TeamFinalizing')
     return layout(
       <h2 className="table-phase-title">

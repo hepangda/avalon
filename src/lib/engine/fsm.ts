@@ -14,6 +14,12 @@ export function evilWins(s: GameState): number {
   return s.missionResults.filter((m) => !m.success).length;
 }
 
+/** Nobody acts until every seat has confirmed their identity, unless a referee has already opened play. */
+export function rolesPending(s: GameState): boolean {
+  return !!s.awaitRoleAcks && !s.openingClosed && s.phase !== 'Lobby' &&
+    s.players.some((p) => !s.roleAcks.includes(p.id));
+}
+
 export function assassinInPlay(s: GameState): boolean {
   return s.players.some((p) => p.role === 'Assassin');
 }

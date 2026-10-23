@@ -181,6 +181,8 @@ export interface GameState {
 
   /** Players who have acknowledged seeing their role (RoleReveal gate). */
   roleAcks: PlayerId[];
+  /** Play waits until every seat has acknowledged; absent in games recorded before the gate. */
+  awaitRoleAcks?: boolean;
 
   // Lady of the Lake
   ladyEnabled: boolean;
@@ -251,7 +253,7 @@ export interface VisibilityInfo {
 // ---------------------------------------------------------------------------
 
 export type GameEvent =
-  | { type: 'START_GAME'; by: PlayerId; flowVersion?: 1 | 2 | 3 | 4 | 5; assignedRoles?: Role[] }
+  | { type: 'START_GAME'; by: PlayerId; flowVersion?: 1 | 2 | 3 | 4 | 5; assignedRoles?: Role[]; awaitRoleAcks?: boolean }
   | { type: 'ACK_ROLE'; by: PlayerId; roleRevision?: number }
   | { type: 'REROLL_LEADER'; actor: string }
   | { type: 'REROLL_ROLES'; actor: string; assignedRoles?: Role[] }
@@ -311,6 +313,7 @@ export interface EngineContext {
 
 export type EngineErrorCode =
   | 'WRONG_PHASE'
+  | 'ROLES_PENDING'
   | 'NOT_HOST'
   | 'NOT_LEADER'
   | 'NOT_SPEAKER'
@@ -438,6 +441,8 @@ export interface ClientGameState {
   /** Players who have acknowledged their role. The client shows the role-reveal
    *  overlay while the viewer's own id is absent from this list. */
   roleAcks: PlayerId[];
+  /** Someone has yet to confirm their identity, so nobody may act. */
+  rolesPending: boolean;
   proposedTeam: PlayerId[] | null;
   teamChanged?: boolean;
   votes: ClientVote[] | null;

@@ -18,7 +18,8 @@ export function usePhaseBeats(game: ClientGameState | null, myPlayerId: string |
   const lastGame = useRef<ClientGameState | null>(null);
   const serial = useRef(0);
   const [beat, setBeat] = useState<PhaseBeatSet | null>(null);
-  const opening = !!game && !!myPlayerId && !game.isSpectator && !game.roleAcks.includes(myPlayerId);
+  // The first quest opens once the whole table has confirmed, not when the viewer has.
+  const opening = !!game && (game.rolesPending || (!!myPlayerId && !game.isSpectator && !game.roleAcks.includes(myPlayerId)));
   const hold = held || opening;
   useLayoutEffect(() => {
     const previousGame = lastGame.current;

@@ -102,7 +102,17 @@ export function roomHarness(seedRoom = true) {
     return socket.messages.find((m) => m.t === "ack" && m.id === id)!.res!;
   };
   const host = sockets[0]!;
+  /** Play waits for every seated player to confirm their identity. */
+  const ackRoles = async () => {
+    for (const socket of sockets) {
+      if (socket === spectator || !socket.messages.some((m) => m.event === "state:sync")) continue;
+      const game = socket.game;
+      if (game.isSpectator || !game.players.some((p) => p.id === socket.deserializeAttachment().playerId)) continue;
+      expect((await action(socket, "game:ackRole", { roleRevision: game.roleRevision })).ok).toBe(true);
+    }
+  };
   const finish = async () => {
+    await ackRoles();
     expect((await action(host, "admin:auth")).ok).toBe(true);
     expect((await action(host, "admin:startAssassination")).ok).toBe(true);
     const assassin = sockets.find(
@@ -133,6 +143,7 @@ export function roomHarness(seedRoom = true) {
     spectator,
     action,
     archives,
+    ackRoles,
     finish,
     wake: () => {
       room.stop();

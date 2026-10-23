@@ -1,5 +1,5 @@
 import { speechDuration } from './config';
-import { leaderId } from './fsm';
+import { leaderId, rolesPending } from './fsm';
 import type { ActionTimer, GameEvent, GameState, TimedAction } from './types';
 
 function resumeTimer(timer: ActionTimer, now: number): ActionTimer {
@@ -19,7 +19,8 @@ export function syncActionTimers(previous: GameState, next: GameState, event: Ga
   };
   if (next.phase !== 'Lobby' && next.phase !== 'GameOver') {
     for (const p of next.players) if (!next.roleAcks.includes(p.id)) add(p.id, 'role');
-    switch (next.phase) {
+    // Nobody's turn starts until the whole table has seen their cards.
+    if (!rolesPending(next)) switch (next.phase) {
       case 'TeamBuilding': add(leaderId(next), 'propose'); break;
       case 'TeamAnnouncement': add(leaderId(next), 'announce'); break;
       case 'Discussion': add(next.discussion?.order[next.discussion.speakerIndex], 'speak'); break;

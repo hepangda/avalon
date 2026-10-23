@@ -507,6 +507,8 @@
     "twoFails": "This quest needs 2 fail cards to fail",
     "voteCount": "{count} / {total} voted",
     "missionCount": "{count} / {total} played",
+    "roleCount": "{count} / {total} confirmed",
+    "waitingRoles": "Waiting for everyone to confirm their identity",
     "collecting": "Collecting quest cards",
     "shuffling": "Shuffling…",
     "anonymousCards": "Anonymous quest cards",

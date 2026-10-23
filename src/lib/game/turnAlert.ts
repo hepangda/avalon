@@ -9,6 +9,7 @@ export type TurnKind =
 export function myTurn(game: ClientGameState, playerId: string | null): TurnKind | null {
   if (!playerId || game.isSpectator || game.phase === 'GameOver' || game.phase === 'Lobby') return null;
   if (!game.roleAcks.includes(playerId)) return 'role';
+  if (game.rolesPending) return null;
   const ballot = game.earlyAssassination;
   if (ballot?.voterIds.includes(playerId) && !ballot.votes[playerId]) return 'assassinationBallot';
   const leader = game.players.find((p) => p.seat === game.leaderIndex)?.id === playerId;

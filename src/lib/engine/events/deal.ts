@@ -97,7 +97,7 @@ export function createGame(input: CreateGameInput): EngineResult {
 // START_GAME → assign roles (seeded) → RoleReveal
 // ---------------------------------------------------------------------------
 
-export function startGame(s: GameState, by: PlayerId, flowVersion: 1 | 2 | 3 | 4 | 5 = 5, assignedRoles?: Role[]): EngineResult {
+export function startGame(s: GameState, by: PlayerId, flowVersion: 1 | 2 | 3 | 4 | 5 = 5, assignedRoles?: Role[], awaitRoleAcks = false): EngineResult {
   if (s.phase !== 'Lobby') return err('WRONG_PHASE', 'Game already started');
   // Host = seat 0 by convention (room layer enforces host identity too).
   if (s.players[0]?.id !== by) return err('NOT_HOST', 'Only the host can start');
@@ -112,6 +112,7 @@ export function startGame(s: GameState, by: PlayerId, flowVersion: 1 | 2 | 3 | 4
 
   const next = clone(s);
   next.flowVersion = flowVersion;
+  if (awaitRoleAcks) next.awaitRoleAcks = true;
   next.players = next.players.map((p, i) => ({ ...p, role: shuffledRoles[i]! }));
 
   // Seeded first leader.
@@ -139,9 +140,9 @@ export function startGame(s: GameState, by: PlayerId, flowVersion: 1 | 2 | 3 | 4
     evil: encodeLineup(next.config.roles, 'evil'),
   });
   logRoleKnowledge(next);
-  // Role-viewing is now a per-player client overlay (gated on roleAcks), not a
-  // global phase. The game opens directly in TeamBuilding so players who have
-  // already acked can act without waiting for the rest. Log the first round here.
+  // Role-viewing is a per-player client overlay (gated on roleAcks), not a global
+  // phase. The game opens in TeamBuilding; with awaitRoleAcks nobody acts until
+  // every seat has confirmed. Log the first round here.
   logRoundStart(next);
 
   return ok(next, [{ kind: 'PERSIST_CHECKPOINT', checkpoint: 'game_started' }]);
@@ -158,9 +159,8 @@ export function ackRole(s: GameState, by: PlayerId, roleRevision = 0): EngineRes
     return err('WRONG_PHASE', 'Roles were reassigned. View and confirm your new identity.');
   }
 
-  // Acking only records that this player has seen their role. It no longer
-  // gates a phase transition — role-viewing is a per-player client overlay, so
-  // each player enters the game independently. Idempotent.
+  // Acking records that this player has seen their role; the last one opens play
+  // (see rolesPending). Idempotent.
   if (s.roleAcks.includes(by)) return ok(s);
 
   const next = clone(s);

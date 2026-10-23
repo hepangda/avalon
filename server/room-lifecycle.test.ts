@@ -561,6 +561,7 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
     const h = roomHarness();
     await h.action(h.host, "room:removeSeat", { seatId: "p1" });
     await h.action(h.host, "room:start");
+    await h.ackRoles();
     expect(
       (await h.action(h.host, "admin:startAssassination")).error?.code,
     ).toBe("NOT_ADMIN");

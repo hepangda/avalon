@@ -6,6 +6,7 @@ afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 it('persists private consent across room recreation and authorizes votes from the socket identity', async () => {
   const h = roomHarness();
   await h.action(h.host, 'room:start');
+  await h.ackRoles();
   const reds = h.sockets.filter((s) => s !== h.spectator && s.game.canStartAssassination);
   const initiator = reds.find((s) => s.game.selfRole !== 'Assassin')!;
   const assassin = reds.find((s) => s.game.selfRole === 'Assassin')!;
@@ -27,6 +28,7 @@ it('lets a known bot teammate consent without exposing a public action timer', a
   vi.useFakeTimers();
   const h = roomHarness();
   await h.action(h.host, 'room:start');
+  await h.ackRoles();
   const reds = h.sockets.filter((s) => s !== h.spectator && s.game.canStartAssassination);
   const [human, bot] = reds;
   const botId = bot!.deserializeAttachment().playerId!;

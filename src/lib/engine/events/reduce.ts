@@ -11,6 +11,7 @@ import { applyLadyOfLake, castMissionCard } from './mission';
 import { castVote, endSpeech, proposeTeam, retractProposal, retractVotes, setTimersPaused, startDiscussion } from './proposal';
 import { phaseCheckpoint, previousPhase, setConnected } from './referee';
 import { clone, err } from './result';
+import { rolesPending } from '../fsm';
 
 // ---------------------------------------------------------------------------
 // Public reducer
@@ -41,10 +42,20 @@ export function reduce(state: GameState, event: GameEvent, ctx: EngineContext): 
   return result;
 }
 
+/** Everything that moves the game on, which must wait for every identity to be confirmed.
+ *  A referee may still override, so an abandoned seat cannot hold the table forever. */
+const PLAY_EVENTS = new Set<GameEvent['type']>([
+  'PROPOSE_TEAM', 'FINALIZE_TEAM', 'START_DISCUSSION', 'END_SPEECH', 'SKIP_SPEECH', 'CAST_VOTE',
+  'CAST_MISSION_CARD', 'USE_LADY', 'START_ASSASSINATION', 'REQUEST_ASSASSINATION', 'VOTE_ASSASSINATION', 'ASSASSINATE',
+]);
+
 export function dispatch(state: GameState, event: GameEvent, ctx: EngineContext): EngineResult {
+  const referee = ('admin' in event && !!event.admin) || event.type === 'SKIP_SPEECH';
+  if (PLAY_EVENTS.has(event.type) && !referee && rolesPending(state))
+    return err('ROLES_PENDING', 'Waiting for every player to confirm their identity');
   switch (event.type) {
     case 'START_GAME':
-      return startGame(state, event.by, event.flowVersion, event.assignedRoles);
+      return startGame(state, event.by, event.flowVersion, event.assignedRoles, event.awaitRoleAcks);
     case 'ACK_ROLE':
       return ackRole(state, event.by, event.roleRevision);
     case 'USE_REROLL_CARD':

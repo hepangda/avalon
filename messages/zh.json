@@ -507,6 +507,8 @@
     "twoFails": "本任务需要 2 张失败牌才会失败",
     "voteCount": "{count} / {total} 已投票",
     "missionCount": "{count} / {total} 已出牌",
+    "roleCount": "{count} / {total} 已确认身份",
+    "waitingRoles": "等待所有人确认身份",
     "collecting": "收齐任务牌",
     "shuffling": "正在洗混…",
     "anonymousCards": "匿名任务牌",

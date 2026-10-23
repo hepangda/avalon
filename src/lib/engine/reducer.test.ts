@@ -522,11 +522,36 @@ describe('Role reveal is per-player (no global RoleReveal gate)', () => {
     expectRefusal(freshGame(), { type: 'ACK_ROLE', by: 'p0' }, 'WRONG_PHASE');
   });
 
-  it('a player can propose a team while others have not yet acked', () => {
+  it('games recorded before the gate still let the leader propose while others have not acked', () => {
     let s = apply(freshGame(), { type: 'START_GAME', by: 'p0' });
     // Only the leader acks, then immediately proposes — no waiting on others.
     s = apply(s, { type: 'ACK_ROLE', by: leader(s) });
     s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
     expect(s.phase).toBe('TeamAnnouncement');
+  });
+
+  it('with awaitRoleAcks nobody plays, or is timed, until every identity is confirmed', () => {
+    let s = apply(freshGame(), { type: 'START_GAME', by: 'p0', awaitRoleAcks: true });
+    const others = s.players.filter((p) => p.id !== leader(s));
+    s = apply(s, { type: 'ACK_ROLE', by: leader(s) });
+    for (const p of others.slice(1)) s = apply(s, { type: 'ACK_ROLE', by: p.id });
+    expectRefusal(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) }, 'ROLES_PENDING');
+    expect(s.actionTimers?.map((t) => t.action)).toEqual(['role']);
+    expect(projectStateForViewer(s, leader(s)).rolesPending).toBe(true);
+
+    s = apply(s, { type: 'ACK_ROLE', by: others[0]!.id });
+    expect(projectStateForViewer(s, leader(s)).rolesPending).toBe(false);
+    expect(s.actionTimers?.map((t) => [t.playerId, t.action])).toEqual([[leader(s), 'propose']]);
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2) });
+    expect(s.phase).toBe('TeamAnnouncement');
+  });
+
+  it('with awaitRoleAcks a referee can still open play past an unconfirmed seat', () => {
+    let s = apply(freshGame(), { type: 'START_GAME', by: 'p0', awaitRoleAcks: true });
+    s = apply(s, { type: 'PROPOSE_TEAM', by: leader(s), team: firstK(s, 2), admin: true });
+    expect(s.phase).toBe('TeamAnnouncement');
+    expect(projectStateForViewer(s, 'p1').rolesPending).toBe(false);
+    s = apply(s, { type: 'START_DISCUSSION', by: leader(s) });
+    expect(s.phase).toBe('Discussion');
   });
 });

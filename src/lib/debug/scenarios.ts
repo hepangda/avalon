@@ -198,7 +198,7 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
     options: { ...recommendedOptions(playerCount), ladyOfTheLake: true },
   });
   if (!created.ok) throw new Error(created.error.message);
-  let state = applyEvent(created.state, { type: "START_GAME", by: "p0" });
+  let state = applyEvent(created.state, { type: "START_GAME", by: "p0", awaitRoleAcks: true });
   const leader = () => state.players[state.leaderIndex]!.id;
   if (id === "role") return { state, viewerId: leader() };
   for (const p of state.players)

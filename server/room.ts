@@ -756,6 +756,7 @@ export class Room {
       type: "START_GAME",
       by: seated[0]!.id,
       flowVersion: 5,
+      awaitRoleAcks: true,
     });
     if (!res.ok) return res;
     for (const m of seated) if (m.claimed) this.sendPrivateReveal(m.id);
