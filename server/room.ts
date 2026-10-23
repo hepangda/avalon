@@ -548,6 +548,19 @@ export class Room {
     });
   }
 
+  /**
+   * The account holding a seat, for a viewer already at this table. It is only
+   * used to look up that seat's public record and never leaves the server.
+   */
+  async seatAccount(viewer: string, playerId: string): Promise<string | null> {
+    return this.run(() => {
+      const present = [...this.sockets].some((ws) => !this.reconnectOnly.has(ws) && this.attach(ws).account === viewer);
+      const member = this.state.members.get(playerId);
+      if (!present || !member?.claimed || member.isBot) return null;
+      return this.state.accounts[playerId] ?? null;
+    }, true);
+  }
+
   /** Public, non-sensitive room preview for the join page. */
   async preview(): Promise<{
     code: string;

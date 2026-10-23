@@ -354,6 +354,72 @@ div.prefs-section > .prefs-label::after { content: none; }
   .prefs-locale button:not([aria-pressed="true"]):not(:disabled):hover { color: #e8dcc0; }
 }
 
+/* Privacy: one engraved row; the gilt knob slides over when the record is kept private. */
+.prefs-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 6px 0 10px;
+  border: 1px solid rgb(201 162 39 / 0.28);
+  border-radius: 10px;
+  background: rgb(18 13 8 / 0.6);
+  box-shadow: inset 0 2px 6px #0006;
+  color: rgb(232 220 192 / 0.7);
+  font-size: 14px;
+  text-align: left;
+  transition: color 150ms ease;
+}
+.prefs-switch[aria-checked="true"] { color: #e8dcc0; }
+.prefs-switch-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.prefs-switch[aria-checked="true"] .prefs-switch-icon { color: #e6c14a; }
+.prefs-switch-name { flex: 1; min-width: 0; }
+.prefs-switch-track {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  border-radius: 12px;
+  border: 1px solid rgb(201 162 39 / 0.3);
+  background: #120d08;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+.prefs-switch-track > span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #5a4d33;
+  box-shadow: 0 1px 3px #000a;
+  transition: transform 200ms cubic-bezier(0.3, 0.7, 0.3, 1), background 180ms ease;
+}
+.prefs-switch[aria-checked="true"] .prefs-switch-track { border-color: #c9a227; background: rgb(201 162 39 / 0.22); }
+.prefs-switch[aria-checked="true"] .prefs-switch-track > span {
+  transform: translateX(16px);
+  background: linear-gradient(to bottom, #f0d47a, #c9a227);
+  box-shadow: 0 0 10px -2px rgb(230 193 74 / 0.7);
+}
+.prefs-switch:focus-visible { outline: 2px solid #e6c14a; outline-offset: 2px; }
+.prefs-switch:disabled { cursor: wait; }
+@media (hover: hover) {
+  .prefs-switch:not(:disabled):hover { color: #e8dcc0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prefs-switch-track > span { transition: none; }
+}
+
 .prefs > .prefs-status {
   margin-top: 14px;
   color: rgb(232 220 192 / 0.5);

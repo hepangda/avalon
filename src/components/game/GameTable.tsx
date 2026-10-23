@@ -1,4 +1,4 @@
-import { useRef, type PointerEvent, type MouseEvent, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { cn } from '@/lib/utils/cn';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
@@ -16,6 +16,7 @@ import { SeatTimer } from './SeatTimer';
 import { roleNoteTone, type RoleNotes } from '@/lib/game/roleNotes';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { seatShortcut } from '@/lib/game/tableShortcuts';
+import { useSeatHold } from '@/lib/game/useSeatHold';
 
 interface GameTableProps {
   players: ClientPlayer[];
@@ -49,6 +50,9 @@ interface GameTableProps {
   /** The viewer's own portrait opens their reactions whenever it is not being picked. */
   onSelfMenu?: (anchor: HTMLElement) => void;
   selfMenuOpen?: boolean;
+  /** Right-click or a long press on any portrait opens that seat's menu. */
+  onSeatMenu?: (id: string, anchor: HTMLElement) => void;
+  seatMenuId?: string;
 }
 
 /** Full-height match table. Player avatars straddle the two table edges. */
@@ -80,29 +84,18 @@ export function GameTable({
   felt,
   onSelfMenu,
   selfMenuOpen = false,
+  onSeatMenu,
+  seatMenuId,
 }: GameTableProps) {
   const t = useTranslations();
   const roleText = useRoleText();
   const root = useRef<HTMLDivElement>(null);
-  const press = useRef<{ timer?: ReturnType<typeof setTimeout>; opened: boolean }>({ opened: false });
   const { top, bottom } = arrangeSeats(players, myPlayerId);
   const portraitOf = (seat: HTMLElement) => seat.querySelector<HTMLElement>('.table-seat-number') ?? seat;
-  // While the viewer's portrait is being picked, holding it (or the context menu) still opens their reactions.
-  const holdForMenu = onSelfMenu ? {
-    onPointerDown: (event: PointerEvent<HTMLButtonElement>) => {
-      const seat = event.currentTarget;
-      clearTimeout(press.current.timer);
-      press.current = { opened: false, timer: setTimeout(() => { press.current.opened = true; onSelfMenu(portraitOf(seat)); }, 450) };
-    },
-    onPointerUp: () => clearTimeout(press.current.timer),
-    onPointerLeave: () => clearTimeout(press.current.timer),
-    onPointerCancel: () => clearTimeout(press.current.timer),
-    onContextMenu: (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      if (!press.current.opened) onSelfMenu(portraitOf(event.currentTarget));
-      press.current.opened = true;
-    },
-  } : {};
+  // Holding a portrait (or its context menu) opens the seat's menu; without one, only the viewer's own reactions.
+  const { handlers: holdHandlers, held } = useSeatHold(!!onSeatMenu);
+  const holdForMenu = (id: string, open: (anchor: HTMLElement) => void) =>
+    holdHandlers<HTMLButtonElement>(id, (seat) => open(portraitOf(seat)));
   const renderSeat = (p: ClientPlayer) => {
     const candidate = !candidateIds || candidateIds.includes(p.id);
     const canSelect = selectable && candidate && !!onToggle;
@@ -122,6 +115,9 @@ export function GameTable({
     const timer = seatTimer?.(p);
     const noteAria = t('roleNotes.editPlayer', { seat: p.seat + 1, name: p.name, note: noteLabel });
     const selfMenu = isMe && !canSelect && !!onSelfMenu;
+    const seatMenu = !!onSeatMenu && p.claimed !== false;
+    const hold = seatMenu ? holdForMenu(p.id, (anchor) => onSeatMenu(p.id, anchor))
+      : isMe && onSelfMenu ? holdForMenu(p.id, onSelfMenu) : {};
     return (
       <div key={p.id} className="table-player" data-speaking={speakerId === p.id}>
         <div className="table-seat-wrap">
@@ -131,19 +127,17 @@ export function GameTable({
               'table-seat',
               dimNonCandidates && selectable && !candidate && 'is-dimmed',
             )}
-            disabled={!canSelect && !selfMenu}
+            data-menu-only={seatMenu && !canSelect && !selfMenu ? true : undefined}
+            disabled={!canSelect && !selfMenu && !seatMenu}
             aria-keyshortcuts={canSelect ? seatShortcut(p.seat) : undefined}
             aria-pressed={selectable && !selfMenu ? selected : undefined}
-            aria-haspopup={selfMenu ? 'menu' : undefined}
-            aria-expanded={selfMenu ? selfMenuOpen : undefined}
+            aria-haspopup={selfMenu || seatMenu ? 'menu' : undefined}
+            aria-expanded={selfMenu || seatMenu ? (selfMenu && selfMenuOpen) || seatMenuId === p.id : undefined}
             aria-label={`${p.seat + 1}. ${p.name}${isMe ? ` · ${t('common.you')}` : ''}`}
-            {...(isMe ? holdForMenu : {})}
+            {...hold}
             onClick={(event) => {
-              // The click that ends a hold has already opened the reactions.
-              if (isMe && press.current.opened) {
-                press.current.opened = false;
-                return;
-              }
+              // The click that ends a hold has already opened a menu.
+              if (held(p.id)) return;
               if (canSelect) onToggle?.(p.id);
               else if (selfMenu) onSelfMenu(portraitOf(event.currentTarget));
             }}

@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import app from './app';
 import { accountKey } from './account-profile';
 import { SESSION_COOKIE, sealSession } from './auth/session';
 import type { Env } from './env';
-import { historyGames, historyProfile, legacySeatLink, recordBook, type GameRecord } from './game-records';
+import { historyGames, historyProfile, legacySeatLink, recordBook, seatRecord, type GameRecord } from './game-records';
 import { fitRatings, publicRating } from './ratings';
 import { record } from './test-records';
 import { MemoryPersistence } from './test-persistence';
@@ -32,6 +32,23 @@ describe('game records', () => {
     expect(profile.form).toEqual([true, false, false]);
     expect(profile.rating.ratedGames).toBe(2);
     expect(JSON.stringify(profile)).not.toContain('hidden');
+  });
+
+  it('shows tablemates a plate with at most three roles and no games', async () => {
+    const db = new MemoryPersistence();
+    const roles = ['Merlin', 'Percival', 'LoyalServant', 'Morgana'] as const;
+    seed(db, ...roles.map((role, i) => {
+      const g = record(`r${i}`); g.replay.endedAt = 1000 + i;
+      g.replay.roleAssignments.find((a) => a.playerId === 'p0')!.role = role;
+      return g;
+    }));
+    const book = await recordBook(db);
+    const plate = seatRecord(book, 'account0');
+    expect(Object.keys(plate).sort()).toEqual(['form', 'rating', 'roles', 'teams', 'total']);
+    expect(!plate.hidden && plate.total.games).toBe(4);
+    expect(!plate.hidden && plate.roles).toHaveLength(3);
+    // A private record keeps only the title and score.
+    expect(seatRecord(book, 'account0', true)).toEqual({ rating: plate.rating, hidden: true });
   });
 
   it('pages newest first, marks unrated games and never exposes accounts', async () => {
@@ -139,6 +156,28 @@ describe('history HTTP', () => {
       app.request(`https://avalon.test${path}`, { headers: signedIn ? { Cookie: cookie } : {} }, env);
     return { db, env, get };
   }
+
+  it('serves a tablemate plate only through the room', async () => {
+    const { db, env, get } = await harness();
+    seed(db, record('win'));
+    const seatAccount = vi.fn(async (viewer: string, playerId: string): Promise<string | null> =>
+      viewer === accountKey(issuer, 'user') && playerId === 'p2' ? 'account0' : null);
+    env.rooms = { get: () => ({ seatAccount }) } as unknown as Env['rooms'];
+    expect((await get('/api/rooms/1234/players/p2/record', false)).status).toBe(401);
+    expect((await get('/api/rooms/abcd/players/p2/record')).status).toBe(400);
+    expect((await get('/api/rooms/1234/players/p3/record')).status).toBe(404);
+    const response = await get('/api/rooms/1234/players/p2/record');
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    const plate = await response.json();
+    expect(plate).toMatchObject({ total: { games: 1, wins: 1 }, form: [true] });
+    expect(JSON.stringify(plate)).not.toContain('account0');
+    await db.savePreferences('account0', { hideRecord: true });
+    expect(await (await get('/api/rooms/1234/players/p2/record')).json()).toEqual({ rating: plate.rating, hidden: true });
+    // The owner still sees their own record at the table.
+    seatAccount.mockImplementation(async () => accountKey(issuer, 'user'));
+    await db.savePreferences(accountKey(issuer, 'user'), { hideRecord: true });
+    expect(await (await get('/api/rooms/1234/players/p0/record')).json()).not.toHaveProperty('hidden');
+  });
 
   it('requires a session and validates queries', async () => {
     const { get } = await harness();

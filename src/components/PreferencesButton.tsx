@@ -7,6 +7,7 @@ import { CARD_ART_STYLES } from '@/lib/preferences';
 import { CARD_DECKS } from '@/lib/game/cardDecks';
 import { roleArt } from '@/lib/game/roleMeta';
 import { useCardArtStore } from '@/lib/store/cardArt';
+import { usePrivacyStore } from '@/lib/store/privacy';
 import { useAccountPreferencesStore } from '@/lib/store/accountPreferences';
 import { accountDisplayName } from '@/lib/auth/types';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
@@ -33,6 +34,7 @@ export function PreferencesButton({ variant = 'tool' }: { variant?: 'tool' | 'ch
   const style = useCardArtStore((state) => state.style);
   const { user, loading, saveAlias, logout } = useAuthIdentity();
   const { save, saving, error } = useAccountPreferencesStore();
+  const hideRecord = usePrivacyStore((state) => state.hideRecord);
 
   return (
     <>
@@ -94,6 +96,21 @@ export function PreferencesButton({ variant = 'tool' }: { variant?: 'tool' | 'ch
               <span aria-hidden="true" className="prefs-label">{t('locale.switch')}</span>
               <LocaleSwitcher disabled={loading || saving} />
             </div>
+            {user && (
+              <div className="prefs-section">
+                <span aria-hidden="true" className="prefs-label">{t('preferences.privacy')}</span>
+                <button type="button" role="switch" aria-checked={hideRecord} className="prefs-switch"
+                  disabled={loading || saving} onClick={() => void save({ hideRecord: !hideRecord })}>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="prefs-switch-icon">
+                    {hideRecord
+                      ? <><rect x="4.5" y="9" width="11" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" /></>
+                      : <><rect x="4.5" y="9" width="11" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 5.8-1.1" /></>}
+                  </svg>
+                  <span className="prefs-switch-name">{t('preferences.hideRecord')}</span>
+                  <span aria-hidden="true" className="prefs-switch-track"><span /></span>
+                </button>
+              </div>
+            )}
             {error ? (
               <p role="alert" className="prefs-status is-error">{t('preferences.saveFailed')}</p>
             ) : (

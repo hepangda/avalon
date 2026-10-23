@@ -32,6 +32,15 @@ export interface HistoryProfile {
   form: boolean[];
 }
 
+/**
+ * GET /api/rooms/:code/players/:playerId/record: another seat's public plate, without its games.
+ * An account that hides its record shows only its title and score.
+ */
+export type SeatRecord = Pick<HistoryProfile, 'rating'> & (
+  | ({ hidden?: false } & Pick<HistoryProfile, 'total' | 'teams' | 'roles' | 'form'>)
+  | { hidden: true }
+);
+
 export interface HistoryGame {
   gameId: string;
   endedAt: number | null;

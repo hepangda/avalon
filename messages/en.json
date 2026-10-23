@@ -291,7 +291,9 @@
     "effects": "Effects",
     "voice": "Voice",
     "notifications": "Background alerts",
-    "notificationsBlocked": "Notifications are blocked by the browser"
+    "notificationsBlocked": "Notifications are blocked by the browser",
+    "privacy": "Privacy",
+    "hideRecord": "Hide detailed record"
   },
   "turnAlert": {
     "title": "Your turn",
@@ -563,6 +565,18 @@
     "suspect": "Suspect",
     "question": "Question",
     "ponder": "Thinking"
+  },
+  "seatMenu": {
+    "label": "Seat {seat}, {name}",
+    "record": "Record",
+    "score": "Rating",
+    "markRole": "Mark role",
+    "emotes": "Reactions",
+    "transferHost": "Make host",
+    "confirmTransfer": "Confirm new host",
+    "bot": "Bot",
+    "noRecord": "No record yet",
+    "private": "Private"
   },
   "reroll": {
     "using": "Redealing…",

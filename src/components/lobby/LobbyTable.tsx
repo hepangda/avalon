@@ -1,8 +1,11 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { GameIcon } from '@/components/game/GameArt';
+import { SeatMenu } from '@/components/game/SeatMenu';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { useInviteLink } from '@/lib/game/useInviteLink';
+import { useSeatHold } from '@/lib/game/useSeatHold';
 import { latencyDotClass } from '@/lib/utils/latency';
 import { cn } from '@/lib/utils/cn';
 import type { RoomMember } from '@/lib/socket/types';
@@ -31,23 +34,12 @@ export function LobbyTable({ code, seated, hostPlayerId, myPlayerId, isHost, bus
   const t = useTranslations();
   const { copied, copyInvite } = useInviteLink(code, 1500);
   const hasSeat = seated.some((m) => m.id === myPlayerId);
-  const [managing, setManaging] = useState<string | null>(null);
+  const [menu, setMenu] = useState<{ id: string; anchor: HTMLElement } | null>(null);
+  const { handlers: hold, held } = useSeatHold(true);
   const missing = Math.max(0, 5 - seated.length);
-
-  useEffect(() => {
-    if (!managing) return;
-    const close = (event: Event) => {
-      if (event instanceof KeyboardEvent ? event.key === 'Escape' : !(event.target as Element).closest?.('[data-seat-menu]')) {
-        setManaging(null);
-      }
-    };
-    document.addEventListener('pointerdown', close);
-    document.addEventListener('keydown', close);
-    return () => {
-      document.removeEventListener('pointerdown', close);
-      document.removeEventListener('keydown', close);
-    };
-  }, [managing]);
+  const avatarOf = (chair: HTMLElement) => chair.querySelector<HTMLElement>('.lobby-chair-avatar') ?? chair;
+  const canManage = (member: RoomMember) => isHost && member.id !== myPlayerId && member.id !== hostPlayerId;
+  const menuMember = menu && seated.find((m) => m.id === menu.id);
 
   function chair(index: number) {
     const member = seated[index];
@@ -75,8 +67,10 @@ export function LobbyTable({ code, seated, hostPlayerId, myPlayerId, isHost, bus
 
     const isMine = member.id === myPlayerId;
     const isOwner = member.id === hostPlayerId;
-    const canKick = isHost && !isMine && !isOwner;
-    const menuOpen = managing === member.id;
+    const manage = canManage(member);
+    // Bots have no record, so only the host has anything to open on them.
+    const hasMenu = !member.isBot || manage;
+    const open = (chair: HTMLElement) => setMenu({ id: member.id, anchor: avatarOf(chair) });
     const label = [member.name, isOwner && t('lobby.host'), member.isBot && t('seat.bot'), isMine && t('common.you')]
       .filter(Boolean).join(' · ');
     const status = member.connected
@@ -114,41 +108,24 @@ export function LobbyTable({ code, seated, hostPlayerId, myPlayerId, isHost, bus
 
     return (
       <li key={member.id} className="lobby-chair">
-        {canKick ? (
-          <div className="relative" data-seat-menu>
-            <button
-              type="button"
-              className="lobby-chair-seat"
-              aria-label={label}
-              aria-expanded={menuOpen}
-              onClick={() => setManaging(menuOpen ? null : member.id)}
-            >
-              {body}
-            </button>
-            {menuOpen && (
-              <div className="lobby-chair-menu">
-                {!member.isBot && member.connected && (
-                  <button type="button" className="lobby-chair-transfer" disabled={busy}
-                    aria-label={`${t('lobby.transferHost')} ${member.name}`}
-                    onClick={() => { setManaging(null); onTransferHost(member.id); }}>
-                    {t('lobby.transferHost')}
-                  </button>
-                )}
-              <button
-                type="button"
-                className="lobby-chair-kick"
-                disabled={busy}
-                aria-label={`${t('seat.askStandUp')} ${member.name}`}
-                onClick={() => {
-                  setManaging(null);
-                  onKick(member.id);
-                }}
-              >
-                {t('seat.askStandUp')}
-              </button>
-              </div>
-            )}
-          </div>
+        {hasMenu ? (
+          <button
+            type="button"
+            className="lobby-chair-seat"
+            data-menu
+            data-host-menu={manage || undefined}
+            aria-label={label}
+            aria-haspopup="menu"
+            aria-expanded={menu?.id === member.id}
+            {...hold<HTMLButtonElement>(member.id, open)}
+            onClick={(event) => {
+              if (held(member.id)) return;
+              // The host's tap still opens the chair's menu, as before; others right-click or hold.
+              if (manage) open(event.currentTarget);
+            }}
+          >
+            {body}
+          </button>
         ) : (
           <div className="lobby-chair-seat" role="group" aria-label={label} title={label}>{body}</div>
         )}
@@ -188,6 +165,19 @@ export function LobbyTable({ code, seated, hostPlayerId, myPlayerId, isHost, bus
       </div>
 
       <ol className="lobby-side" data-side="near">{NEAR_SIDE.map(chair)}</ol>
+      <AnimatePresence>
+        {menu && menuMember && (
+          <SeatMenu key={menuMember.id} code={code} player={menuMember} anchor={menu.anchor} showSeat={false}
+            isMe={menuMember.id === myPlayerId} onClose={() => setMenu(null)}
+            actions={canManage(menuMember) ? {
+              transfer: !menuMember.isBot && menuMember.connected ? {
+                busy, error: null, run: () => { setMenu(null); onTransferHost(menuMember.id); },
+              } : undefined,
+              kick: { busy, run: () => onKick(menuMember.id) },
+            } : {}}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }

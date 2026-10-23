@@ -219,39 +219,6 @@ button.lobby-chair-seat:focus-visible .lobby-chair-ring { outline: 2px solid #e6
 @keyframes lobby-beckon {
   50% { box-shadow: 0 0 0 3px #231e16, 0 0 0 7px rgb(230 193 74 / 0.12), 0 0 24px rgb(230 193 74 / 0.3); }
 }
-.lobby-chair-menu {
-  position: absolute;
-  z-index: 3;
-  left: 50%;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 5px;
-  border: 1px solid #8e7749;
-  border-radius: 10px;
-  background: #241e19;
-  box-shadow: 0 6px 14px -4px #000;
-  transform: translateX(-50%);
-  animation: lobby-pop 160ms ease-out;
-}
-.lobby-chair-kick, .lobby-chair-transfer {
-  min-height: 32px;
-  padding: 0 11px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.lobby-chair-kick { color: #ffc3b9; }
-.lobby-chair-transfer { color: #e8cf94; }
-.lobby-chair-menu button:hover { background: #ffffff14; }
-.lobby-chair-menu button:focus-visible { outline: 2px solid #e8cf94; outline-offset: 1px; }
-.lobby-side[data-side="far"] .lobby-chair-menu { top: 100%; }
-.lobby-side[data-side="near"] .lobby-chair-menu { bottom: 100%; }
-.lobby-chair-menu button:disabled { opacity: 0.6; }
-@keyframes lobby-pop {
-  from { opacity: 0; transform: translateX(-50%) scale(0.9); }
-}
 
 /* Felt: the room code, then the dealt deck in whatever height is left. */
 .lobby-felt-center {

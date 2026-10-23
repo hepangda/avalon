@@ -19,6 +19,7 @@ import './styles/timing.css';
 import './styles/reconnect.css';
 import './styles/preferences.css';
 import './styles/table-life.css';
+import './styles/seat-menu.css';
 import './styles/functions-sheet.css';
 import './styles/popconfirm.css';
 

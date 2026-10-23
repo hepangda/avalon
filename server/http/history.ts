@@ -3,8 +3,8 @@ import type { ReplayView } from '@/lib/game/replayTypes';
 import { accountKey } from '../account-profile';
 import { getCurrentAuthUser } from '../auth';
 import type { Env } from '../env';
-import { historyGames, historyProfile, recordBook, visibleReplay } from '../game-records';
-import { authErrorResponse } from './helpers';
+import { historyGames, historyProfile, recordBook, seatRecord, visibleReplay } from '../game-records';
+import { authErrorResponse, roomObject } from './helpers';
 
 type HistoryContext = Context<{ Bindings: Env }>;
 
@@ -36,6 +36,19 @@ app.get('/api/history/games', async (c) => {
   const offset = Number(c.req.query('offset') ?? 0);
   if (!Number.isSafeInteger(offset) || offset < 0) return c.json({ error: 'Invalid query' }, 400);
   return c.json(historyGames(await recordBook(c.env.persistence, policy(c)), account, offset));
+});
+
+// Only someone at the same table may open a seat's record; the seat's account stays private.
+app.get('/api/rooms/:code/players/:playerId/record', async (c) => {
+  const account = await viewer(c);
+  if (account instanceof Response) return account;
+  const code = c.req.param('code');
+  if (!/^[0-9]{4}$/.test(code)) return c.json({ error: 'Invalid room code' }, 400);
+  const target = await roomObject(c.env, code).seatAccount(account, c.req.param('playerId'));
+  if (!target) return c.json({ error: 'Record not found' }, 404);
+  // The owner's privacy choice is enforced here; the viewer always sees their own.
+  const hidden = target !== account && (await c.env.persistence.getPreferences(target)).hideRecord === true;
+  return c.json(seatRecord(await recordBook(c.env.persistence, policy(c)), target, hidden));
 });
 
 app.get('/api/games/:id/replay', async (c) => {

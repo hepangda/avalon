@@ -4,10 +4,12 @@ import { DEFAULT_CARD_ART_STYLE, DEFAULT_SOUND_PREFERENCES, type DisplayPreferen
 import { browserLocale, useLocaleStore } from './locale';
 import { useSoundStore } from './sound';
 import { useCardArtStore } from './cardArt';
+import { usePrivacyStore } from './privacy';
 
 function currentPreferences(): DisplayPreferences {
   const { volume, muted, voice, voiceVolume, notify } = useSoundStore.getState();
-  return { volume, muted, voice, voiceVolume, notify, locale: useLocaleStore.getState().locale, cardArt: useCardArtStore.getState().style };
+  return { volume, muted, voice, voiceVolume, notify, locale: useLocaleStore.getState().locale, cardArt: useCardArtStore.getState().style,
+    hideRecord: usePrivacyStore.getState().hideRecord };
 }
 
 function apply(preferences: DisplayPreferences) {
@@ -15,6 +17,7 @@ function apply(preferences: DisplayPreferences) {
   useSoundStore.setState({ volume, muted, voice, voiceVolume, notify });
   useLocaleStore.getState().setLocale(preferences.locale);
   useCardArtStore.getState().setStyle(preferences.cardArt);
+  usePrivacyStore.setState({ hideRecord: preferences.hideRecord });
 }
 
 interface AccountPreferencesState {
@@ -45,9 +48,11 @@ export const useAccountPreferencesStore = create<AccountPreferencesState>((set, 
         ...user.preferences,
         locale: user.preferences?.locale ?? browserLocale(typeof navigator === 'undefined' ? [] : navigator.languages),
         cardArt: user.preferences?.cardArt ?? DEFAULT_CARD_ART_STYLE,
+        hideRecord: user.preferences?.hideRecord === true,
       });
     } else if (changedAccount) {
       useSoundStore.setState(DEFAULT_SOUND_PREFERENCES);
+      usePrivacyStore.setState({ hideRecord: false });
     }
   },
   save: async (patch) => {

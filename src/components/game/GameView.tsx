@@ -13,6 +13,7 @@ import { MissionTrack } from '@/components/game/MissionTrack';
 import { ProposalTracker } from '@/components/game/ProposalTracker';
 import { RoleNotePopover } from '@/components/game/RoleNotePopover';
 import { RoleReveal } from '@/components/game/RoleReveal';
+import { SeatMenu, type SeatMenuActions } from '@/components/game/SeatMenu';
 import { TableCard } from '@/components/game/TableCard';
 import { TableFrame } from '@/components/game/TableFrame';
 import { AvatarFactionProvider } from '@/components/player/AvatarFactions';
@@ -37,7 +38,7 @@ import {
 } from '@/lib/socket/client';
 import type { Ack } from '@/lib/socket/types';
 import { joinErrorText } from '@/lib/socket/client/joinErrorText';
-import type { RoomNotice } from '@/lib/store/room';
+import { useRoomStore, type RoomNotice } from '@/lib/store/room';
 import { AnimatePresence } from 'framer-motion';
 import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
@@ -81,6 +82,10 @@ export function GameView({
   useEffect(() => setNoteTarget(null), [notesKey, notesEnabled]);
   const [emoteAnchor, setEmoteAnchor] = useState<HTMLElement | null>(null);
   const closeEmotes = useCallback(() => setEmoteAnchor(null), []);
+  const [seatMenu, setSeatMenu] = useState<{ id: string; anchor: HTMLElement } | null>(null);
+  const closeSeatMenu = useCallback(() => setSeatMenu(null), []);
+  const hostPlayerId = useRoomStore((state) => state.snapshot?.hostPlayerId);
+  const transfer = useRoomAction(`${code}:seat-host:${isHost}:${seatMenu?.id}`, t('table.actionFailed'));
   const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.roleRevision}-${game?.discussion?.speakerIndex}`;
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
@@ -290,6 +295,23 @@ export function GameView({
       />
     );
   }
+  const canMarkRole = notesEnabled && !needsRoleReveal;
+  function seatMenuActions(p: ClientPlayer): SeatMenuActions {
+    const isMe = p.id === myPlayerId;
+    return {
+      onMarkRole: canMarkRole && !isMe && editableNoteIds.includes(p.id) ? () => {
+        const tag = seatMenu?.anchor.closest('.table-seat-wrap')?.querySelector<HTMLButtonElement>('button.table-role-note');
+        if (tag) setNoteTarget({ id: p.id, anchor: tag });
+      } : undefined,
+      onEmote: isMe && canEmote && !needsRoleReveal ? () => setEmoteAnchor(seatMenu?.anchor ?? null) : undefined,
+      transfer: isHost && !isMe && p.claimed && p.connected && !p.isBot && p.id !== hostPlayerId ? {
+        busy: transfer.busy,
+        error: transfer.error,
+        run: () => void transfer.run(() => roomActions.transferHost(p.id)).then((done) => done && setSeatMenu(null)),
+      } : undefined,
+    };
+  }
+  const menuPlayer = seatMenu && game.players.find((p) => p.id === seatMenu.id);
   const proposalPhases = ['TeamBuilding', 'TeamAnnouncement', 'Discussion', 'TeamFinalizing', 'Voting'] as const;
   const showProposals = proposalPhases.some((phase) => phase === activePhase);
   const proposalGame = presentation?.kind === 'vote'
@@ -490,6 +512,13 @@ export function GameView({
           </>}
           onSelfMenu={canEmote && !needsRoleReveal ? (anchor) => setEmoteAnchor((current) => current ? null : anchor) : undefined}
           selfMenuOpen={canEmote && !!emoteAnchor}
+          onSeatMenu={(id, anchor) => {
+            const player = game.players.find((p) => p.id === id);
+            const actions = player && seatMenuActions(player);
+            // A seat with neither a record nor anything to do opens nothing.
+            if (player && (!player.isBot || actions?.onMarkRole)) setSeatMenu({ id, anchor });
+          }}
+          seatMenuId={seatMenu?.id}
         />
       </TableFrame>
       {notesEnabled && noteTarget && notePlayer && noteOptions.length > 0 && <RoleNotePopover
@@ -508,6 +537,12 @@ export function GameView({
         onClose={() => setNoteTarget(null)}
         saveFailed={saveFailed}
       />}
+      <AnimatePresence>
+        {menuPlayer && seatMenu && (
+          <SeatMenu key={menuPlayer.id} code={code} player={menuPlayer} anchor={seatMenu.anchor}
+            isMe={menuPlayer.id === myPlayerId} actions={seatMenuActions(menuPlayer)} onClose={closeSeatMenu} />
+        )}
+      </AnimatePresence>
       {presentation?.kind === 'assassination' && (
         <AssassinationReveal key={presentation.id} event={presentation} onComplete={finish} />
       )}

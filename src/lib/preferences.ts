@@ -15,6 +15,8 @@ export interface DisplayPreferences {
   notify: boolean;
   locale: Locale;
   cardArt: CardArtStyle;
+  /** Tablemates see only the title and score, not games, sides, roles or form. */
+  hideRecord: boolean;
 }
 
 export function isCardArtStyle(value: unknown): value is CardArtStyle {
@@ -29,7 +31,7 @@ export function parsePreferencePatch(value: unknown): Partial<DisplayPreferences
   for (const [key, field] of entries) {
     if (key === 'locale' && typeof field === 'string' && isLocale(field)) continue;
     if (key === 'cardArt' && isCardArtStyle(field)) continue;
-    if (['muted', 'voice', 'notify'].includes(key) && typeof field === 'boolean') continue;
+    if (['muted', 'voice', 'notify', 'hideRecord'].includes(key) && typeof field === 'boolean') continue;
     if (['volume', 'voiceVolume'].includes(key) && typeof field === 'number' && Number.isFinite(field) && field >= 0 && field <= 1) continue;
     return null;
   }

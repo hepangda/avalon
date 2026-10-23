@@ -1,5 +1,5 @@
 import { teamOf, type Role } from '@/lib/engine';
-import type { HistoryGame, HistoryGamesPage, HistoryProfile, TeamRecord } from '@/lib/game/historyTypes';
+import type { HistoryGame, HistoryGamesPage, HistoryProfile, SeatRecord, TeamRecord } from '@/lib/game/historyTypes';
 import type { ReplayData } from '@/lib/game/replayTypes';
 import type { Persistence, RoomDocument } from './persistence';
 import { exclusion, fitRatings, publicRating, type RatingPolicy } from './ratings';
@@ -146,6 +146,13 @@ export function historyProfile(book: RecordBook, account: string): HistoryProfil
       .sort((a, b) => b.games - a.games || b.wins - a.wins || a.role.localeCompare(b.role)),
     form,
   };
+}
+
+/** What a tablemate may see of an account: its plate, at most three roles, and no games. */
+export function seatRecord(book: RecordBook, account: string, hidden = false): SeatRecord {
+  if (hidden) return { rating: book.rating(account), hidden: true };
+  const { rating, total, teams, roles, form } = historyProfile(book, account);
+  return { rating, total, teams, roles: roles.slice(0, 3), form };
 }
 
 export function historyGames(book: RecordBook, account: string, offset: number): HistoryGamesPage {
