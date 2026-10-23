@@ -13,7 +13,7 @@ export function staticAssets(publicDir: string, base: string): Plugin {
       if (entry.isDirectory()) walk(join(directory, entry.name), path);
       else if (
         entry.isFile() &&
-        /\.(?:webp|png|ico|svg|woff2?|jpg|jpeg|avif)$/.test(path)
+        /\.(?:webp|png|ico|svg|woff2?|jpg|jpeg|avif|wav)$/.test(path)
       ) {
         const source = readFileSync(join(directory, entry.name));
         const hash = createHash("sha256")
@@ -57,6 +57,7 @@ export function staticAssets(publicDir: string, base: string): Plugin {
         ".jpg": "image/jpeg",
         ".jpeg": "image/jpeg",
         ".avif": "image/avif",
+        ".wav": "audio/wav",
         ".woff": "font/woff",
         ".woff2": "font/woff2",
       };

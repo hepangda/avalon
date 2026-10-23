@@ -28,6 +28,30 @@ describe('account preferences synchronization', () => {
     expect(display()).toEqual({ locale: 'zh', cardArt: 'modern' });
   });
 
+  it('restores server audio preferences, saves edits, and uses defaults for another account', async () => {
+    const { store } = await harness();
+    const { useSoundStore: sound } = await import('./sound');
+    expect(sound.getState()).toMatchObject({ muted: false, voice: false, volume: 0.7, voiceVolume: 0.7, notify: false });
+    store.getState().hydrate({ id: 'a', username: 'A', preferences: { voice: true, muted: true, volume: 0.4, voiceVolume: 0.8, notify: true } });
+    expect(sound.getState()).toMatchObject({ voice: true, muted: true, volume: 0.4, voiceVolume: 0.8, notify: true });
+    const fetcher = vi.fn(async () => Response.json({ preferences: { voice: false } }));
+    vi.stubGlobal('fetch', fetcher);
+    await store.getState().save({ voice: false });
+    expect(fetcher).toHaveBeenCalledWith('/api/auth/preferences', expect.objectContaining({ body: JSON.stringify({ voice: false }) }));
+    expect(sound.getState().voice).toBe(false);
+    store.getState().hydrate({ id: 'b', username: 'B' });
+    expect(sound.getState()).toMatchObject({ muted: false, voice: false, volume: 0.7, voiceVolume: 0.7, notify: false });
+  });
+
+  it('rolls audio preferences back if the server rejects the update', async () => {
+    const { store } = await harness();
+    const { useSoundStore: sound } = await import('./sound');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 500 })));
+    await store.getState().save({ voice: true, volume: 0.2 });
+    expect(sound.getState()).toMatchObject({ voice: false, volume: 0.7 });
+    expect(store.getState().error).toBe(true);
+  });
+
   it('saves only the changed field and applies server values for other fields', async () => {
     const { store, display } = await harness();
     const fetcher = vi.fn(async () => Response.json({ preferences: { locale: 'zh', cardArt: 'furry' } }));

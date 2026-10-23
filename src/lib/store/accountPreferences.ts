@@ -1,14 +1,18 @@
 import { create } from 'zustand';
 import type { AuthUser } from '@/lib/auth/types';
-import { DEFAULT_CARD_ART_STYLE, type DisplayPreferences } from '@/lib/preferences';
+import { DEFAULT_CARD_ART_STYLE, DEFAULT_SOUND_PREFERENCES, type DisplayPreferences } from '@/lib/preferences';
 import { browserLocale, useLocaleStore } from './locale';
+import { useSoundStore } from './sound';
 import { useCardArtStore } from './cardArt';
 
 function currentPreferences(): DisplayPreferences {
-  return { locale: useLocaleStore.getState().locale, cardArt: useCardArtStore.getState().style };
+  const { volume, muted, voice, voiceVolume, notify } = useSoundStore.getState();
+  return { volume, muted, voice, voiceVolume, notify, locale: useLocaleStore.getState().locale, cardArt: useCardArtStore.getState().style };
 }
 
 function apply(preferences: DisplayPreferences) {
+  const { volume, muted, voice, voiceVolume, notify } = preferences;
+  useSoundStore.setState({ volume, muted, voice, voiceVolume, notify });
   useLocaleStore.getState().setLocale(preferences.locale);
   useCardArtStore.getState().setStyle(preferences.cardArt);
 }
@@ -37,9 +41,13 @@ export const useAccountPreferencesStore = create<AccountPreferencesState>((set, 
     set({ accountId, saving: false, error: false, revision: state.revision + 1 });
     if (user) {
       apply({
+        ...DEFAULT_SOUND_PREFERENCES,
+        ...user.preferences,
         locale: user.preferences?.locale ?? browserLocale(typeof navigator === 'undefined' ? [] : navigator.languages),
         cardArt: user.preferences?.cardArt ?? DEFAULT_CARD_ART_STYLE,
       });
+    } else if (changedAccount) {
+      useSoundStore.setState(DEFAULT_SOUND_PREFERENCES);
     }
   },
   save: async (patch) => {

@@ -215,7 +215,19 @@ describe('account display preferences', () => {
     expect(await accountProfile({ ...env, OIDC_ISSUER: 'https://auth-staging.pangda.app' }, 'user-a').getPreferences()).toEqual({});
   });
 
+  it('stores audio settings and restores them through a session on another device', async () => {
+    const { env } = harness();
+    const audio = { muted: false, volume: 0.55, voice: true, voiceVolume: 0.8, notify: true };
+    expect((await update(env, await sessionCookie(), audio)).status).toBe(200);
+    const session = await app.request(`${origin}/api/auth/session`, {
+      headers: { Cookie: await sessionCookie('user-a', 'Another device') },
+    }, env);
+    expect(await session.json()).toMatchObject({ user: { preferences: audio } });
+    expect(await accountProfile(env, 'user-b').getPreferences()).toEqual({});
+  });
+
   it.each([null, [], {}, { locale: 'fr' }, { cardArt: 'unknown' }, { locale: 3 },
+    { volume: -0.1 }, { voiceVolume: 1.1 }, { voice: 'true' }, { notify: 1 }, { muted: null },
     { cardArt: null }, { locale: 'en', id: 'user-b' }, { alias: 'not a preference' }])(
     'rejects invalid preference updates without replacing saved values: %j', async (body) => {
       const { env } = harness();

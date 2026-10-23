@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "voices:generate": "node scripts/generate-voices.mjs",
     "build": "vite build && esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server/index.js",
     "preview": "npm run start",
     "static:check": "node scripts/publish-static.mjs",

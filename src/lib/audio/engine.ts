@@ -13,7 +13,8 @@ export interface PlayOptions {
 }
 
 let ctx: AudioContext | null = null;
-let master: GainNode | null = null;
+let effects: GainNode | null = null;
+let narration: GainNode | null = null;
 const buffers = new Map<SoundName, AudioBuffer>();
 const pending = new Map<SoundName, Promise<AudioBuffer | null>>();
 const lastPlayed = new Map<SoundName, number>();
@@ -24,9 +25,10 @@ export function masterGain(volume: number, muted: boolean) {
 }
 
 function applyVolume() {
-  if (!ctx || !master) return;
-  const { volume, muted } = useSoundStore.getState();
-  master.gain.setTargetAtTime(masterGain(volume, muted), ctx.currentTime, 0.02);
+  if (!ctx || !effects || !narration) return;
+  const { volume, muted, voice, voiceVolume } = useSoundStore.getState();
+  effects.gain.setTargetAtTime(masterGain(volume, muted), ctx.currentTime, 0.02);
+  narration.gain.setTargetAtTime(masterGain(voiceVolume, !voice), ctx.currentTime, 0.02);
 }
 
 function load(name: SoundName) {
@@ -54,8 +56,10 @@ function unlock() {
     } catch {
       return;
     }
-    master = ctx.createGain();
-    master.connect(ctx.destination);
+    effects = ctx.createGain();
+    effects.connect(ctx.destination);
+    narration = ctx.createGain();
+    narration.connect(ctx.destination);
     applyVolume();
     useSoundStore.subscribe(applyVolume);
     for (const name of SOUND_NAMES) void load(name);
@@ -69,10 +73,10 @@ if (typeof window !== 'undefined') {
 }
 
 function start(buffer: AudioBuffer, at: number) {
-  if (!ctx || !master) return;
+  if (!ctx || !effects) return;
   const src = ctx.createBufferSource();
   src.buffer = buffer;
-  src.connect(master);
+  src.connect(effects);
   src.start(at);
 }
 
@@ -97,3 +101,53 @@ export function playSound(name: SoundName, { delay = 0, count = 1, interval = 0.
     if (buffer && late < 0.25) schedule(buffer, late);
   });
 }
+
+let voiceRevision = 0;
+let voiceSource: AudioBufferSourceNode | null = null;
+const voiceBuffers = new Map<string, AudioBuffer>();
+
+export function stopVoice() {
+  voiceRevision++;
+  voiceSource?.stop();
+  voiceSource = null;
+}
+
+/** One narration lane on the gesture-unlocked context, through its own switch and level. */
+export async function playVoiceSequence(urls: string[]) {
+  stopVoice();
+  const revision = voiceRevision;
+  const context = ctx;
+  const output = narration;
+  if (!context || !output || context.state !== 'running' || document.hidden) return;
+  const audible = () => revision === voiceRevision && !document.hidden &&
+    context.state === 'running' && voiceAudible(useSoundStore.getState());
+  for (const url of urls) {
+    if (!audible()) return;
+    try {
+      let buffer = voiceBuffers.get(url);
+      if (!buffer) {
+        const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
+        if (!response.ok) return;
+        buffer = await context.decodeAudioData(await response.arrayBuffer());
+        voiceBuffers.set(url, buffer);
+      }
+      if (!audible()) return;
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(output);
+      voiceSource = source;
+      await new Promise<void>((resolve) => {
+        source.onended = () => { source.disconnect(); if (voiceSource === source) voiceSource = null; resolve(); };
+        source.start();
+      });
+    } catch { return; }
+  }
+}
+
+export function voiceAudible({ voice, voiceVolume }: { voice: boolean; voiceVolume: number }) {
+  return voice && voiceVolume > 0;
+}
+
+useSoundStore.subscribe((state) => { if (!voiceAudible(state)) stopVoice(); });
+if (typeof document !== 'undefined')
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopVoice(); });

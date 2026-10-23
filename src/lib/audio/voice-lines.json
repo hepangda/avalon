@@ -1,0 +1,94 @@
+{
+  "teamBuilding": {
+    "zh": "请队长选择任务队员。",
+    "en": "Leader, choose your quest team."
+  },
+  "teamAnnouncement": {
+    "zh": "请队长说明组队理由。",
+    "en": "Leader, explain your team selection."
+  },
+  "teamFinalizing": {
+    "zh": "发言结束，请队长确认最终队伍。",
+    "en": "Discussion is over. Leader, confirm your final team."
+  },
+  "voting": {
+    "zh": "队伍已确定，请全体玩家投票。",
+    "en": "The team is ready. Everyone, cast your vote."
+  },
+  "voteApproved": {
+    "zh": "组队通过。",
+    "en": "The team is approved."
+  },
+  "voteRejected": {
+    "zh": "组队未通过。",
+    "en": "The team is rejected."
+  },
+  "missionVote": {
+    "zh": "请任务队员秘密提交任务牌。",
+    "en": "Quest members, submit your quest cards in secret."
+  },
+  "missionSuccess": {
+    "zh": "任务成功。",
+    "en": "The quest succeeds."
+  },
+  "missionFailure": {
+    "zh": "任务失败。",
+    "en": "The quest fails."
+  },
+  "ladyOfLake": {
+    "zh": "请湖中仙女持有者查验一名玩家。",
+    "en": "Holder of the Lady of the Lake, inspect a player."
+  },
+  "assassination": {
+    "zh": "进入刺杀阶段，请刺客指认梅林。",
+    "en": "The assassination begins. Assassin, identify Merlin."
+  },
+  "goodWins": {
+    "zh": "游戏结束，蓝方获胜。",
+    "en": "The game is over. Blue team wins."
+  },
+  "evilWins": {
+    "zh": "游戏结束，红方获胜。",
+    "en": "The game is over. Red team wins."
+  },
+  "discussion1": {
+    "zh": "1号玩家请发言。",
+    "en": "Player 1, please speak."
+  },
+  "discussion2": {
+    "zh": "2号玩家请发言。",
+    "en": "Player 2, please speak."
+  },
+  "discussion3": {
+    "zh": "3号玩家请发言。",
+    "en": "Player 3, please speak."
+  },
+  "discussion4": {
+    "zh": "4号玩家请发言。",
+    "en": "Player 4, please speak."
+  },
+  "discussion5": {
+    "zh": "5号玩家请发言。",
+    "en": "Player 5, please speak."
+  },
+  "discussion6": {
+    "zh": "6号玩家请发言。",
+    "en": "Player 6, please speak."
+  },
+  "discussion7": {
+    "zh": "7号玩家请发言。",
+    "en": "Player 7, please speak."
+  },
+  "discussion8": {
+    "zh": "八号玩家，请发言。",
+    "en": "Player 8, please speak."
+  },
+  "discussion9": {
+    "zh": "9号玩家请发言。",
+    "en": "Player 9, please speak."
+  },
+  "discussion10": {
+    "zh": "10号玩家请发言。",
+    "en": "Player 10, please speak."
+  }
+}

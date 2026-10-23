@@ -40,6 +40,19 @@ describe('browser display preferences', () => {
     expect(JSON.parse(storage.get('avalon-card-art')!).state.style).toBe('modern');
   });
 
+  it('defaults legacy voice settings to disabled and persists an independent voice channel', async () => {
+    const storage = browserStorage([['avalon-sound', JSON.stringify({ version: 0, state: { volume: 0.5, muted: true, notify: true } })]]);
+    let { useSoundStore, DEFAULT_VOLUME } = await import('./sound');
+    expect(useSoundStore.getState()).toMatchObject({ voice: false, voiceVolume: DEFAULT_VOLUME });
+    useSoundStore.getState().setVoice(false);
+    useSoundStore.getState().setVoiceVolume(0.3);
+    expect(useSoundStore.getState()).toMatchObject({ volume: 0.5, muted: true, notify: true, voice: false, voiceVolume: 0.3 });
+    expect(JSON.parse(storage.get('avalon-sound')!).state).toMatchObject({ voice: false, voiceVolume: 0.3 });
+    vi.resetModules();
+    ({ useSoundStore } = await import('./sound'));
+    expect(useSoundStore.getState()).toMatchObject({ volume: 0.5, muted: true, voice: false, voiceVolume: 0.3 });
+  });
+
   it('starts with modern art when no preference has been saved', async () => {
     browserStorage();
     const { useCardArtStore } = await import('./cardArt');

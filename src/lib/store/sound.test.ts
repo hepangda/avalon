@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { masterGain } from '@/lib/audio/engine';
+import { masterGain, voiceAudible } from '@/lib/audio/engine';
 import { clampVolume } from './sound';
 
 describe('sound preferences', () => {
@@ -15,5 +15,11 @@ describe('sound preferences', () => {
     expect(masterGain(0.8, true)).toBe(0);
     expect(masterGain(1, false)).toBe(1);
     expect(masterGain(0.5, false)).toBe(0.25);
+  });
+
+  it('lets narration play while effects are muted, and silences it on its own switch', () => {
+    expect(voiceAudible({ voice: true, voiceVolume: 0.6 })).toBe(true);
+    expect(voiceAudible({ voice: false, voiceVolume: 0.6 })).toBe(false);
+    expect(voiceAudible({ voice: true, voiceVolume: 0 })).toBe(false);
   });
 });
