@@ -215,10 +215,10 @@ export function GameTable({
                 title={t('roleNotes.privateLabel', { note: note === 'merlin-or-morgana' ? t('roleNotes.merlinOrMorgana') : noteLabel })}
                 onClick={(event) => onEditRoleNote(p.id, event.currentTarget)}
               >
-                {note ? noteLabel : '?'}
+                {noteLabel}
               </button>
             ) : (
-              <span className="table-role-note" data-team={noteTeam} data-fixed={isKnownNote || undefined}>{note ? noteLabel : '?'}</span>
+              <span className="table-role-note" data-team={noteTeam} data-fixed={isKnownNote || undefined}>{noteLabel}</span>
             )}
           </div>}
         </div>

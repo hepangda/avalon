@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { changeRoleNote, displayedRoleNotes, knownRoleNotes, readRoleNotes, readRoleNotesEnabled, roleNoteOptions, roleNoteTone, roleNotesKey } from './roleNotes';
+import { avatarFactions, changeRoleNote, displayedRoleNotes, knownRoleNotes, readRoleNotes, readRoleNotesEnabled, roleNoteOptions, roleNoteTone, roleNotesKey } from './roleNotes';
 import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
 import { projectStateForViewer, type Role } from '@/lib/engine';
 
@@ -219,5 +219,14 @@ describe('private identity notes', () => {
       p0: 'Merlin', p1: 'invented', p2: 'toString', p3: 12, p4: 'evil',
     }) })).toEqual({ p0: 'Merlin', p4: 'evil' });
     expect(readRoleNotes('notes', { getItem: () => { throw new Error('Storage blocked'); } })).toEqual({});
+  });
+
+  it('rings known sides red or blue, the Merlin-or-Morgana pair half and half, and guesses purple or green', () => {
+    const known = { me: 'Percival', p1: 'merlin-or-morgana', p2: 'merlin-or-morgana', p3: 'evil', p4: 'good' } as const;
+    expect(avatarFactions(
+      { ...known, p2: 'Morgana', p5: 'LoyalServant', p6: 'Assassin', p7: 'percival-claim' },
+      known,
+      'me',
+    )).toEqual({ p1: 'split', p2: 'marked-evil', p3: 'known-evil', p4: 'known-good', p5: 'marked-good', p6: 'marked-evil' });
   });
 });

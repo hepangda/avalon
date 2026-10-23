@@ -7,19 +7,20 @@ import { GameTools } from '@/components/game/GameTools';
 import { HandArea, type PickConfig } from '@/components/game/HandArea';
 import { IdentityCard } from '@/components/game/IdentityCard';
 import { LadyResultReveal } from '@/components/game/LadyResultReveal';
+import { LeaveTableButton } from '@/components/game/LeaveTableButton';
 import { LogPanel, type LogChannel } from '@/components/game/LogPanel';
 import { MissionTrack } from '@/components/game/MissionTrack';
 import { ProposalTracker } from '@/components/game/ProposalTracker';
 import { RoleNotePopover } from '@/components/game/RoleNotePopover';
 import { RoleReveal } from '@/components/game/RoleReveal';
-import { ShowKnownNotes } from '@/components/game/ShowKnownNotes';
 import { TableCard } from '@/components/game/TableCard';
 import { TableFrame } from '@/components/game/TableFrame';
+import { AvatarFactionProvider } from '@/components/player/AvatarFactions';
 import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
 import { Link } from '@/i18n/navigation';
 import type { ClientGameState, ClientPlayer } from '@/lib/engine';
 import { actionAvailability } from '@/lib/game/actionAvailability';
-import { displayedRoleNotes, knownRoleNotes, roleNoteOptions, roleNotesKey } from '@/lib/game/roleNotes';
+import { avatarFactions, displayedRoleNotes, knownRoleNotes, roleNoteOptions, roleNotesKey } from '@/lib/game/roleNotes';
 import { useGameClock } from '@/lib/game/useGameClock';
 import { useRoleNotes } from '@/lib/game/useRoleNotes';
 import { useRoomAction } from '@/lib/game/useRoomAction';
@@ -28,6 +29,7 @@ import { useTablePresentation } from '@/lib/game/useTablePresentation';
 import { endingMarks } from '@/lib/game/tablePresentation';
 import { useTableShortcuts } from '@/lib/game/tableShortcuts';
 import { useTurnAlert } from '@/lib/game/useTurnAlert';
+import { useGameVoice } from '@/lib/audio/useGameVoice';
 import { useEndingSounds, useTableSounds } from '@/lib/audio/useTableSounds';
 import {
   gameActions,
@@ -65,7 +67,7 @@ export function GameView({
   functionsContent?: ReactNode;
 }) {
   const t = useTranslations();
-  const [matrixFocus, setMatrixFocus] = useState<{ round: number; at: number } | null>(null);
+  const [logFocus, setLogFocus] = useState<{ round: number; at: number } | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [logChannel, setLogChannel] = useState<LogChannel>('public');
   const [noteTarget, setNoteTarget] = useState<{ id: string; anchor: HTMLButtonElement } | null>(null);
@@ -82,7 +84,9 @@ export function GameView({
   const phaseKey = `${code}-${game?.gameId}-${myPlayerId}-${game?.phase}-${game?.roundIndex}-${game?.rejectionCount}-${game?.phaseRevision}-${game?.roleRevision}-${game?.discussion?.speakerIndex}`;
   const now = useGameClock(game?.serverTime);
   const action = useRoomAction(phaseKey, t('table.actionFailed'));
+  const leaving = useRoomAction(`${code}:leave`, t('table.actionFailed'));
   const { presentation, reportGame, finish, settled } = useTablePresentation(game);
+  useGameVoice(game, settled, conn === 'connected');
   const ending = useEndingReveal(presentation?.kind === 'gameOver' ? presentation : null, finish);
   const lady = useLadyResult(game, myPlayerId);
   const draftKey = game?.proposedTeam?.join(',') ?? '';
@@ -126,7 +130,7 @@ export function GameView({
   const displayedNotes = displayedRoleNotes(game, myPlayerId, notes, notesEnabled);
   const knownNotes = knownRoleNotes(game, myPlayerId);
   const automaticNotes = notesEnabled ? knownNotes : {};
-  const notesControl = <ShowKnownNotes checked={notesEnabled} onChange={setNotesEnabled} saveFailed={saveFailed} />;
+  const factions = avatarFactions(displayedNotes, knownNotes, myPlayerId);
   const { canVote, canMission } = actionAvailability(game, myPlayerId);
   const leader = game.players.find((p) => p.seat === game.leaderIndex);
   const isLeader = leader?.id === myPlayerId;
@@ -304,15 +308,16 @@ export function GameView({
         })
         : '';
   return (
-    <>
+    <AvatarFactionProvider value={factions}>
       <ReconnectOverlay active={notice?.type === 'session_replaced' || (conn !== 'connected' && notice?.type !== 'join_error')} sessionReplaced={notice?.type === 'session_replaced'} />
       <TableFrame
         code={code}
         title={roomName}
-        onOpenReport={() => { setMatrixFocus(null); setLogChannel('public'); }}
+        headerStart={<LeaveTableButton code={code} busy={leaving.busy} run={leaving.run} />}
+        onOpenReport={() => { setLogFocus(null); setLogChannel('public'); }}
         report={
-          <LogPanel game={reportGame ?? game} myPlayerId={myPlayerId} channel={logChannel} matrixFocus={matrixFocus}
-            onChannelChange={(channel) => { setMatrixFocus(null); setLogChannel(channel); }} />
+          <LogPanel game={reportGame ?? game} channel={logChannel} focus={logFocus}
+            onChannelChange={(channel) => { setLogFocus(null); setLogChannel(channel); }} />
         }
         dockStart={<IdentityCard game={game} myPlayerId={myPlayerId} />}
         tools={(viewToggle) => (
@@ -321,7 +326,9 @@ export function GameView({
             code={code}
             viewToggle={viewToggle}
             functionsContent={functionsContent}
-            notesControl={notesControl}
+            notesEnabled={notesEnabled}
+            onNotesChange={setNotesEnabled}
+            notesSaveFailed={saveFailed}
             onClearNotes={() => { clearNotes(); setNoteTarget(null); }}
             hasManualNotes={Object.keys(notes).length > 0}
           />
@@ -330,10 +337,12 @@ export function GameView({
         latency={selfLatency}
         error={
           action.error ??
+          leaving.error ??
           (notice?.type === 'join_error' ? joinErrorText(notice, t) ?? null : null)
         }
         onDismissError={() => {
           action.clearError();
+          leaving.clearError();
           onDismissNotice?.();
         }}
         progress={(openReport) => (
@@ -364,8 +373,8 @@ export function GameView({
             <MissionTrack
               game={displayGame}
               onSelect={(round) => {
-                setLogChannel('votes');
-                setMatrixFocus({ round, at: Date.now() });
+                setLogChannel('public');
+                setLogFocus({ round, at: Date.now() });
                 openReport();
               }}
             />
@@ -522,6 +531,6 @@ export function GameView({
           onClose={lady.markSeen}
         />
       )}
-    </>
+    </AvatarFactionProvider>
   );
 }

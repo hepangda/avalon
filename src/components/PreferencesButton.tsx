@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { AccountAvatar, AccountSettings } from '@/components/AccountSettings';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
-import { SoundSettings } from '@/components/SoundSettings';
-import { TableSheet } from '@/components/game/TableSheet';
+import { TableSheet, useSheetPresence } from '@/components/game/TableSheet';
 import { CARD_ART_STYLES } from '@/lib/preferences';
 import { CARD_DECKS } from '@/lib/game/cardDecks';
 import { roleArt } from '@/lib/game/roleMeta';
@@ -30,6 +29,7 @@ function SettingsIcon({ className }: { className?: string }) {
 export function PreferencesButton({ variant = 'tool' }: { variant?: 'tool' | 'chip' }) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
+  const [present, onExited] = useSheetPresence(open);
   const style = useCardArtStore((state) => state.style);
   const { user, loading, saveAlias, logout } = useAuthIdentity();
   const { save, saving, error } = useAccountPreferencesStore();
@@ -54,8 +54,8 @@ export function PreferencesButton({ variant = 'tool' }: { variant?: 'tool' | 'ch
           <span>{t('preferences.title')}</span>
         </button>
       )}
-      {open && (
-        <TableSheet open={open} title={t('preferences.title')} className="prefs-sheet" onClose={() => setOpen(false)}>
+      {present && (
+        <TableSheet open={open} title={t('preferences.title')} className="prefs-sheet" onClose={() => setOpen(false)} onExited={onExited}>
           <div className="prefs">
             {user && (
               <AccountSettings
@@ -90,7 +90,6 @@ export function PreferencesButton({ variant = 'tool' }: { variant?: 'tool' | 'ch
                 ))}
               </div>
             </fieldset>
-            <SoundSettings />
             <div className="prefs-section">
               <span aria-hidden="true" className="prefs-label">{t('locale.switch')}</span>
               <LocaleSwitcher disabled={loading || saving} />

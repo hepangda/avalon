@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils/cn';
 import { playerAvatarUrl } from '@/lib/game/playerAvatar';
+import { useAvatarFaction } from './AvatarFactions';
 
 interface PlayerAvatarProps {
   playerId: string;
@@ -14,6 +15,7 @@ interface PlayerAvatarProps {
 /** Profile picture first, then a stable portrait from the shared player-ID pool. */
 export function PlayerAvatar({ playerId, avatarUrl, name, empty = false, className, children }: PlayerAvatarProps) {
   const [failedUrls, setFailedUrls] = useState<string[]>([]);
+  const faction = useAvatarFaction(playerId);
   const fallbackUrl = useMemo(() => playerAvatarUrl(playerId), [playerId]);
 
   useEffect(() => setFailedUrls([]), [avatarUrl, playerId, empty]);
@@ -24,6 +26,7 @@ export function PlayerAvatar({ playerId, avatarUrl, name, empty = false, classNa
     <span
       className={cn(
         'relative flex items-center justify-center overflow-visible rounded-full bg-gold/20 text-gold',
+        !empty && faction && `has-faction faction-${faction}`,
         className,
       )}
     >

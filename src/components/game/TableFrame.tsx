@@ -1,9 +1,11 @@
 import { useInviteLink } from '@/lib/game/useInviteLink';
-import { useId, useRef, useState, type ReactNode } from 'react';
+import { useId, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { PreferencesButton } from '@/components/PreferencesButton';
 import { GameIcon } from './GameArt';
 import { formatLatency, latencyTextClass } from '@/lib/utils/latency';
+import { PanelResizer } from './PanelResizer';
+import { useSettled, useSidePanel, useWideTable } from './useSidePanel';
 
 export function TableFrame({
   code,
@@ -11,6 +13,7 @@ export function TableFrame({
   connected,
   latency,
   headerAction,
+  headerStart,
   progress,
   children,
   footer,
@@ -27,6 +30,8 @@ export function TableFrame({
   connected: boolean;
   latency: number | null;
   headerAction?: (openReport: () => void) => ReactNode;
+  /** Leads the title in place of the crest, as the room's way out does. */
+  headerStart?: ReactNode;
   /** Given a way to open the report, for controls on the board that lead into it. */
   progress?: ReactNode | ((openReport: () => void) => ReactNode);
   children: ReactNode;
@@ -43,18 +48,34 @@ export function TableFrame({
   const { copied, copyInvite } = useInviteLink(code);
   const [tab, setTab] = useState<'table' | 'report'>('table');
   const viewToggleRef = useRef<HTMLButtonElement>(null);
+  const screenRef = useRef<HTMLElement>(null);
+  const reportRef = useRef<HTMLElement>(null);
   const tabsId = useId();
+  const wide = useWideTable(screenRef);
+  const panel = useSidePanel('avalon:report-panel', { open: true, width: 360 });
+  const settled = useSettled();
+  const reportOpen = wide && panel.open;
+  const openReport = () => {
+    if (wide) panel.setOpen(true);
+    else setTab('report');
+  };
   // The report covers the whole table on narrow screens; its own close button returns here.
+  // Beside a wide table it is a panel the same button opens and closes.
   const viewToggle = (
     <button
       ref={viewToggleRef}
       type="button"
       className="table-tool table-view-toggle"
       aria-controls={`${tabsId}-report`}
+      aria-pressed={wide ? panel.open : undefined}
       title={t('log.panelTitle')}
       onClick={() => {
+        if (reportOpen) {
+          panel.setOpen(false);
+          return;
+        }
         onOpenReport?.();
-        setTab('report');
+        openReport();
       }}
     >
       <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -64,10 +85,10 @@ export function TableFrame({
     </button>
   );
   return (
-    <main className="table-screen">
+    <main ref={screenRef} className="table-screen">
       <header className="table-header">
         <div className="table-title">
-          <GameIcon name="crest" className="table-title-crest" />
+          {headerStart ?? <GameIcon name="crest" className="table-title-crest" />}
           <span className={`table-title-name${title ? '' : ' is-brand'}`}>{title || 'AVALON'}</span>
           <button
             type="button"
@@ -94,18 +115,18 @@ export function TableFrame({
           >
             {connected ? `● ${formatLatency(latency)}` : t('game.reconnecting')}
           </span>
-          {headerAction?.(() => setTab('report'))}
+          {headerAction?.(openReport)}
           <PreferencesButton />
         </div>
       </header>
-      <div className="table-workspace" data-view={tab}>
+      <div className="table-workspace" data-view={tab} data-animate={(settled && wide) || undefined}>
         <div
           className="table-play"
           role="region"
           id={`${tabsId}-table`}
           aria-label={t('table.tabTable')}
         >
-          {progress && <div className="table-progress">{typeof progress === 'function' ? progress(() => setTab('report')) : progress}</div>}
+          {progress && <div className="table-progress">{typeof progress === 'function' ? progress(openReport) : progress}</div>}
           <div className="table-stage">{children}</div>
           <footer className="table-footer table-dock">
             {dockStart && <div className="table-dock-start">{dockStart}</div>}
@@ -114,26 +135,34 @@ export function TableFrame({
           </footer>
         </div>
         <aside
-          className="table-report"
+          ref={reportRef}
+          className="table-report table-side"
           role="region"
           id={`${tabsId}-report`}
           aria-label={t('log.panelTitle')}
+          data-open={reportOpen || undefined}
+          inert={wide && !panel.open}
+          style={{ '--side-width': `${panel.width}px` } as CSSProperties}
         >
-          {report}
-          <button
-            type="button"
-            className="table-report-close"
-            aria-label={t('table.returnToTable')}
-            title={t('table.returnToTable')}
-            aria-controls={`${tabsId}-table`}
-            onClick={() => {
-              setTab('table');
-              // The toggle is hidden with the table until this render lands.
-              requestAnimationFrame(() => viewToggleRef.current?.focus());
-            }}
-          >
-            <span aria-hidden="true">×</span>
-          </button>
+          <div className="table-side-body">
+            {wide && <PanelResizer panel={reportRef} width={panel.width} onCommit={panel.setWidth} />}
+            {report}
+            <button
+              type="button"
+              className="table-report-close"
+              aria-label={wide ? t('mission.close') : t('table.returnToTable')}
+              title={wide ? t('mission.close') : t('table.returnToTable')}
+              aria-controls={`${tabsId}-table`}
+              onClick={() => {
+                if (wide) panel.setOpen(false);
+                else setTab('table');
+                // The toggle is hidden with the table until this render lands.
+                requestAnimationFrame(() => viewToggleRef.current?.focus());
+              }}
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
         </aside>
       </div>
       {error && (

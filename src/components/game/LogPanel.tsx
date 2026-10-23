@@ -1,33 +1,23 @@
-import type {
-ClientGameState,
-ClientLogEntry,
-ClientMissionResult,
-ClientVoteRecord
-} from '@/lib/engine';
-import { PlayerAvatar } from '@/components/player/PlayerAvatar';
-import { foldLog } from '@/lib/game/foldLog';
+import { rejectionLimit, type ClientGameState, type ClientLogEntry, type GamePhase } from '@/lib/engine';
+import { chronicle, type ProposalChapter } from '@/lib/game/foldLog';
 import type { GameIconName } from '@/lib/game/gameIcons';
 import { formatGameLog } from '@/lib/game/formatGameLog';
 import { useRoleText } from '@/lib/game/useRoleText';
 import { useEffect,useId,useLayoutEffect,useRef } from 'react';
 import { useTranslations } from 'use-intl';
 import { GameIcon } from './GameArt';
-import { MissionCardReveal } from './MissionCardReveal';
-import { VoteMatrix } from './VoteMatrix';
-import { LogFace, VoteResultPanel } from './VoteResultPanel';
+import { ProposalRecord } from './ProposalRecord';
 
-const CHANNELS = ['public', 'votes', 'private', 'rules'] as const;
+const CHANNELS = ['public', 'private', 'rules'] as const;
 export type LogChannel = (typeof CHANNELS)[number];
 const CHANNEL_LABELS = {
   public: 'log.tabPublic',
-  votes: 'log.tabVotes',
   private: 'log.tabPrivate',
   rules: 'table.rules',
 } as const;
 
-const VOTE_KEYS = new Set(['voteApproved', 'voteRejected']);
-const MISSION_KEYS = new Set(['missionSucceeded', 'missionFailed']);
-const PROPOSAL_KEYS = new Set(['proposalBegins', 'teamAnnounced', 'teamFinalized']);
+/** Phases in which the latest nomination is still being played out. */
+const LIVE_PHASES = new Set<GamePhase>(['TeamBuilding', 'TeamAnnouncement', 'Discussion', 'TeamFinalizing', 'Voting', 'MissionVote']);
 
 /** The emblem each kind of entry carries in place of a timestamp; the time stays on hover. */
 function glyphOf(key: string): GameIconName {
@@ -51,17 +41,15 @@ function clock(at: number): string {
 /** Shared war log, displayed as a page on small tables and a sidebar on wide ones. */
 export function LogPanel({
   game,
-  myPlayerId = null,
   channel: tab,
   onChannelChange: setTab,
-  matrixFocus = null,
+  focus = null,
 }: {
   game: ClientGameState;
-  myPlayerId?: string | null;
   channel: LogChannel;
   onChannelChange: (channel: LogChannel) => void;
-  /** A mission to open the vote sheet at, chosen from the quest board. */
-  matrixFocus?: { round: number; at: number } | null;
+  /** A quest chosen on the quest board (0-based round); the public log opens at its chapter. */
+  focus?: { round: number; at: number } | null;
 }) {
   const t = useTranslations();
   const roleText = useRoleText();
@@ -69,35 +57,36 @@ export function LogPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const following = useRef(true);
 
-  function voteRecordFor(entry: ClientLogEntry): ClientVoteRecord | undefined {
-    if (!VOTE_KEYS.has(entry.key) || !entry.params) return undefined;
-    const round = Number(entry.params.round) - 1;
-    const proposal = Number(entry.params.proposal) - 1;
-    return game.voteHistory.find(
-      (v) => v.roundIndex === round && v.proposalIndex === proposal,
-    );
-  }
-
-  function missionResultFor(
-    entry: ClientLogEntry,
-  ): ClientMissionResult | undefined {
-    if (!MISSION_KEYS.has(entry.key) || !entry.params) return undefined;
-    const round = Number(entry.params.round) - 1;
-    return game.missionResults.find((m) => m.roundIndex === round);
-  }
-
   const entries = game.logs.filter((l) => l.channel === tab);
-  const matrixRows = game.voteHistory.length + game.missionResults.length;
-  // The sheet places itself on the chosen mission; nothing may pull it back to the end.
+  const items = chronicle(entries);
+  const format = (entry: ClientLogEntry) => formatGameLog(entry, game, t, roleText.name);
+  const limit = rejectionLimit(game.config.maxRejections);
+  const lastChapter = items.filter((i): i is ProposalChapter => i.kind === 'proposal').at(-1);
+  const liveChapter = lastChapter && lastChapter.round === game.roundIndex + 1 && !lastChapter.mission ? lastChapter : null;
+  const currentLeader = game.players.find((p) => p.seat === game.leaderIndex)?.id;
+  const records = game.voteHistory.length + game.missionResults.length;
+  // A quest picked on the board places the log on its chapter; nothing may pull it back to the end.
   useLayoutEffect(() => {
-    if (matrixFocus) following.current = false;
-  }, [matrixFocus]);
+    const el = scrollRef.current;
+    if (!focus || !el) return;
+    const chapter = el.querySelector<HTMLElement>(`.war-log-chapter[data-round="${focus.round + 1}"]`);
+    if (!chapter) {
+      following.current = true;
+      el.scrollTop = el.scrollHeight;
+      return;
+    }
+    following.current = false;
+    el.scrollTop += chapter.getBoundingClientRect().top - el.getBoundingClientRect().top;
+    chapter.dataset.flash = '';
+    const timer = setTimeout(() => delete chapter.dataset.flash, 1400);
+    return () => clearTimeout(timer);
+  }, [focus]);
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     if (tab === 'rules') el.scrollTop = 0;
     else if (following.current) el.scrollTop = el.scrollHeight;
-  }, [tab, entries.length, matrixRows]);
+  }, [tab, entries.length, records]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -173,9 +162,7 @@ export function LogPanel({
               el.scrollHeight - el.scrollTop - el.clientHeight < 48;
         }}
       >
-        {tab === 'votes' ? (
-          <VoteMatrix game={game} myPlayerId={myPlayerId} focus={matrixFocus} />
-        ) : tab === 'rules' ? (
+        {tab === 'rules' ? (
           <div className="space-y-4 pt-3 text-sm">
             <p>{t('lobby.rolesInPlay', { count: game.players.length })}</p>
             <div className="flex flex-wrap gap-2">
@@ -198,90 +185,55 @@ export function LogPanel({
             </div>
           </div>
         ) : entries.length > 0 ? (
-          foldLog(entries).map((item) => {
-            if (item.kind === 'speeches') {
-              const speakers = item.entries.map((e) => game.players.find((p) => p.id === e.params?.player));
+          items.map((item) => {
+            if (item.kind === 'proposal') {
+              const live = item === liveChapter;
+              const record = game.voteHistory
+                .filter((v) => v.roundIndex === item.round - 1 && v.proposalIndex === item.proposal - 1)
+                .at(-1);
               return (
-                <details key={`speeches-${item.key}`} className="war-log-entry war-log-fold">
-                  <summary className="war-log-line">
-                    <span className="war-log-glyph is-speech" title={clock(item.entries[0]!.at)} aria-hidden="true">
-                      <svg viewBox="0 0 20 20"><path d="M4 4.5h12a1.5 1.5 0 0 1 1.5 1.5v6.5A1.5 1.5 0 0 1 16 14H9l-3.5 3v-3H4A1.5 1.5 0 0 1 2.5 12.5V6A1.5 1.5 0 0 1 4 4.5Z" /></svg>
-                    </span>
-                    <span className="sr-only">{t('log.speeches')}</span>
-                    <span className="war-log-speakers" aria-hidden="true">
-                      {speakers.map((p, i) => p && (
-                        <PlayerAvatar key={`${p.id}-${i}`} playerId={p.id} avatarUrl={p.claimed === false ? undefined : p.avatarUrl}
-                          name={p.name} className="war-log-speaker"
-                        >
-                          <b>{p.seat + 1}</b>
-                        </PlayerAvatar>
-                      ))}
-                    </span>
-                  </summary>
-                  {item.entries.map((entry) => (
-                    <div key={entry.seq} className="flex items-baseline gap-2 pt-1.5 pl-8">
-                      <span className="shrink-0 font-mono text-[11px] text-parchment/35">{clock(entry.at)}</span>
-                      <span className={entry.style === 'admin' ? 'font-semibold text-crimson' : 'text-parchment/70'}>
-                        {formatGameLog(entry, game, t, roleText.name)}
-                      </span>
-                    </div>
-                  ))}
-                </details>
+                <ProposalRecord key={item.key} chapter={item} game={game} limit={limit}
+                  record={item.vote ? record : undefined}
+                  mission={item.mission ? game.missionResults.find((m) => m.roundIndex === item.round - 1) : undefined}
+                  leader={record && item.vote ? record.leaderId : live ? (currentLeader ?? item.leader) : item.leader}
+                  status={live && LIVE_PHASES.has(game.phase) ? t(`phase.${game.phase}`) : null}
+                  format={format} clock={clock} />
               );
             }
             const entry = item.entry;
-            const text = formatGameLog(entry, game, t, roleText.name);
-            // Each quest opens a new chapter of the log.
-            if (entry.key === 'roundBegins')
+            const text = format(entry);
+            // Each quest opens a new chapter: its number, how many go, and how it ended.
+            if (item.kind === 'round') {
+              const round = Number(entry.params?.round);
+              const result = game.missionResults.find((m) => m.roundIndex === round - 1);
+              const size = game.config.missionSizes[round - 1];
               return (
-                <div key={entry.seq} className="war-log-chapter" title={clock(entry.at)}>
-                  <span className="war-log-chapter-medal" aria-hidden="true">{entry.params?.round}</span>
-                  <span className="sr-only">{text}</span>
+                <div key={entry.seq} className="war-log-chapter" data-round={round} title={clock(entry.at)}
+                  data-result={result ? (result.success ? 'success' : 'fail') : undefined}>
+                  <span className="war-log-chapter-medal" aria-hidden="true">
+                    {result && <GameIcon name={result.success ? 'missionSuccess' : 'missionFail'} className="h-full w-full" />}
+                  </span>
+                  <span className="war-log-chapter-name">{t('lobby.missionNumber', { n: round })}</span>
+                  {size !== undefined && (
+                    <span className="war-log-chapter-size tabular-nums" aria-label={t('replay.missionSize', { size })}>{size}</span>
+                  )}
+                  {game.config.requiredFails[round - 1] === 2 && (
+                    <span className="war-log-chapter-shield" role="img" aria-label={t('table.twoFails')} title={t('table.twoFails')}>
+                      <svg viewBox="0 0 16 18" aria-hidden="true">
+                        <path d="M8 1.5 14 4v4.5c0 3.5-2.5 6-6 8-3.5-2-6-4.5-6-8V4l6-2.5Z" />
+                      </svg>
+                    </span>
+                  )}
+                  {result && <span className="sr-only">{t(result.success ? 'cue.missionSuccess' : 'cue.missionFail')}</span>}
                 </div>
               );
-            const voteRec = voteRecordFor(entry);
-            const missionRec = missionResultFor(entry);
-            const team = typeof entry.params?.team === 'string' ? entry.params.team.split(',').filter(Boolean) : [];
+            }
             return (
               <div key={entry.seq} className="war-log-entry war-log-line" data-admin={entry.style === 'admin' || undefined}>
                 <span className="war-log-glyph" title={clock(entry.at)} aria-hidden="true">
                   <GameIcon name={glyphOf(entry.key)} className="h-full w-full" />
                 </span>
-                <div className="war-log-body">
-                  {voteRec ? (
-                    <>
-                      <span className="sr-only">{text}</span>
-                      <VoteResultPanel record={voteRec} game={game} />
-                    </>
-                  ) : missionRec ? (
-                    <>
-                      <span className="sr-only">{text}</span>
-                      <MissionCardReveal teamSize={missionRec.teamSize} failCount={missionRec.failCount} />
-                    </>
-                  ) : PROPOSAL_KEYS.has(entry.key) && typeof entry.params?.leader === 'string' ? (
-                    // Who leads, which attempt it is, and whom they named: told with faces and pips.
-                    <span className="war-log-faces">
-                      <span className="sr-only">{text}</span>
-                      <LogFace game={game} id={entry.params.leader} className="is-leader">
-                        <GameIcon name="leader" className="log-face-crown" />
-                      </LogFace>
-                      {entry.key === 'proposalBegins' ? (
-                        <span className="war-log-pips" aria-hidden="true">
-                          {Array.from({ length: 5 }, (_, i) => (
-                            <i key={i} data-on={i < Number(entry.params?.proposal) || undefined} data-last={i === 4 || undefined} />
-                          ))}
-                        </span>
-                      ) : (
-                        <>
-                          <span className="war-log-tag" aria-hidden="true">{t(`log.short.${entry.key}`)}</span>
-                          {team.map((id) => <LogFace key={id} game={game} id={id} className="is-team" />)}
-                        </>
-                      )}
-                    </span>
-                  ) : (
-                    <span className={entry.style === 'admin' ? 'font-semibold text-crimson' : 'text-parchment/85'}>{text}</span>
-                  )}
-                </div>
+                <span className="war-log-text">{text}</span>
               </div>
             );
           })

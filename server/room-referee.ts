@@ -25,10 +25,6 @@ export class RefereeCommands {
   handleAdminAuth(ws: RoomSocket): Ack<{ ok: boolean }> {
     if (!this.room.meta) return fail("NOT_IN_ROOM", "Not in a room");
     this.room.setAttach(ws, { isAdmin: true });
-    if (this.room.game)
-      this.room.pushAdminLog("admin.panelOpened", {
-        actor: this.adminActorName(ws),
-      });
     return ok({ ok: true });
   }
 
@@ -36,10 +32,6 @@ export class RefereeCommands {
     if (!this.room.meta) return fail("NOT_IN_ROOM", "Not in a room");
     if (!this.room.attach(ws).isAdmin) return ok();
     this.room.setAttach(ws, { isAdmin: false });
-    if (this.room.game)
-      this.room.pushAdminLog("admin.panelClosed", {
-        actor: this.adminActorName(ws),
-      });
     return ok();
   }
 

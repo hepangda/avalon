@@ -156,6 +156,25 @@ export function displayedRoleNotes(
   return result;
 }
 
+export type AvatarFaction = 'known-good' | 'known-evil' | 'split' | 'marked-good' | 'marked-evil';
+
+/** Known sides ring a portrait red or blue (Merlin-or-Morgana splits it); the viewer's own guesses ring it purple or green. */
+export function avatarFactions(
+  notes: RoleNotes,
+  known: RoleNotes,
+  viewerId: string | null,
+): Partial<Record<string, AvatarFaction>> {
+  const result: Partial<Record<string, AvatarFaction>> = {};
+  for (const [id, note] of Object.entries(notes)) {
+    if (!note || id === viewerId) continue;
+    const tone = roleNoteTone(note);
+    const isKnown = known[id] === note;
+    if (tone === 'ambiguous' && isKnown) result[id] = 'split';
+    else if (tone === 'good' || tone === 'evil') result[id] = `${isKnown ? 'known' : 'marked'}-${tone}`;
+  }
+  return result;
+}
+
 export function readRoleNotesEnabled(
   key: string,
   storage: Pick<Storage, 'getItem'>,

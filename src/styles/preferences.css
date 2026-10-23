@@ -1,11 +1,11 @@
 /* Settings: the player's nameplate, the decks laid on the cloth, and the language toggle. */
 .table-sheet.prefs-sheet {
-  width: min(calc(100% - 16px), 480px);
+  width: min(calc(100% - 24px), 480px);
   background:
     radial-gradient(120% 50% at 50% 0%, rgb(201 162 39 / 0.07), transparent 70%),
     #221c14;
 }
-.prefs > * + * { margin-top: 26px; }
+.prefs > * + * { margin-top: 18px; }
 
 /* Home's settings entry: the account chip, or just the settings mark while signed out. */
 .prefs-chip {
@@ -56,11 +56,11 @@
 .prefs-plate {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 84px;
-  padding: 14px 10px 14px 16px;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 6px 10px 12px;
   border: 1px solid rgb(201 162 39 / 0.32);
-  border-radius: 16px;
+  border-radius: 14px;
   background:
     radial-gradient(90% 120% at 0% 50%, rgb(201 162 39 / 0.1), transparent 60%),
     linear-gradient(155deg, #342c21, #1f1b15);
@@ -70,11 +70,11 @@
     inset 0 1px 0 rgb(232 220 192 / 0.06);
 }
 .prefs-plate-avatar {
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
   border-color: #e6c14a;
-  box-shadow: 0 0 0 3px #261f17, 0 0 0 4.5px rgb(230 193 74 / 0.6), 0 0 20px rgb(230 193 74 / 0.25);
-  font-size: 22px;
+  box-shadow: 0 0 0 3px #261f17, 0 0 0 4.5px rgb(230 193 74 / 0.6), 0 0 16px rgb(230 193 74 / 0.22);
+  font-size: 18px;
 }
 .prefs-plate-body {
   display: flex;
@@ -89,10 +89,10 @@
   align-items: center;
   gap: 7px;
   max-width: 100%;
-  min-height: 36px;
+  min-height: 30px;
   color: #e6c14a;
   font-family: var(--font-cinzel), "Songti SC", serif;
-  font-size: 18px;
+  font-size: 17px;
   letter-spacing: 0.03em;
   text-align: left;
 }
@@ -163,7 +163,7 @@ button.prefs-name:disabled { cursor: default; }
   align-items: center;
   gap: 10px;
   width: 100%;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   padding: 0;
   color: rgb(232 220 192 / 0.6);
   font-size: 12px;
@@ -175,19 +175,30 @@ button.prefs-name:disabled { cursor: default; }
   height: 1px;
   background: linear-gradient(to right, rgb(201 162 39 / 0.32), transparent);
 }
+/* Single-control settings sit on one line: caption on the left, control on the right. */
+div.prefs-section {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: center;
+  column-gap: 12px;
+}
+div.prefs-section > .prefs-label { margin-bottom: 0; line-height: 1.3; letter-spacing: 0.1em; }
+div.prefs-section > .prefs-label::after { content: none; }
+.prefs > div.prefs-section + div.prefs-section { margin-top: 10px; }
 
 /* Decks: each style is a squared-up stack; the chosen one lifts and fans open. */
 .prefs-decks {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(18px, 6vw, 30px);
-  padding: 8px 10px 0;
+  grid-template-columns: repeat(3, minmax(0, 84px));
+  justify-content: center;
+  gap: clamp(18px, 7vw, 32px);
+  padding: 6px 6px 0;
 }
 .prefs-deck {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
   cursor: pointer;
 }
@@ -197,7 +208,6 @@ button.prefs-name:disabled { cursor: default; }
   isolation: isolate;
   display: block;
   width: 100%;
-  max-width: 116px;
   aspect-ratio: 2 / 3;
 }
 .prefs-deck-stack::before,
@@ -256,43 +266,13 @@ button.prefs-name:disabled { cursor: default; }
 }
 .prefs-deck-name {
   color: rgb(232 220 192 / 0.5);
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.06em;
   transition: color 300ms ease;
 }
 .prefs-deck input:checked ~ .prefs-deck-name { color: #e6c14a; }
 
-/* Sound: a gilt seal for mute beside an engraved groove that fills with gold up to the volume. */
-.prefs-sound {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 48px;
-  padding: 3px 18px 3px 3px;
-  border: 1px solid rgb(201 162 39 / 0.28);
-  border-radius: 999px;
-  background: rgb(18 13 8 / 0.6);
-  box-shadow: inset 0 2px 6px #0006;
-}
-.prefs-mute {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(to bottom, #e6c14a, #c9a227);
-  box-shadow: 0 0 18px -6px rgb(201 162 39 / 0.6), inset 0 0 0 1px rgb(255 240 190 / 0.35);
-  color: #16100a;
-  transition: background 200ms ease, color 200ms ease, box-shadow 200ms ease;
-}
-.prefs-mute svg { width: 22px; height: 22px; }
-.prefs-mute:focus-visible { outline: 2px solid #e6c14a; outline-offset: 2px; }
-.prefs-sound[data-muted] .prefs-mute {
-  background: linear-gradient(155deg, #3a2f20, #1b160f);
-  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 0.35);
-  color: rgb(232 220 192 / 0.55);
-}
+/* Volume: an engraved groove that fills with gold up to the level. */
 .prefs-volume {
   --fill: 70%;
   flex: 1;
@@ -344,23 +324,22 @@ button.prefs-name:disabled { cursor: default; }
 }
 .prefs-volume:focus-visible::-webkit-slider-thumb { outline: 2px solid #e6c14a; outline-offset: 3px; }
 .prefs-volume:active::-webkit-slider-thumb { transform: scale(1.12); }
-.prefs-sound[data-muted] .prefs-volume { filter: saturate(0.2) brightness(0.7); }
 
 /* Language: one engraved slot with a gilt tab for the current language. */
 .prefs-locale {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 3px;
+  padding: 2px;
   border: 1px solid rgb(201 162 39 / 0.28);
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgb(18 13 8 / 0.6);
   box-shadow: inset 0 2px 6px #0006;
 }
 .prefs-locale button {
-  min-height: 42px;
-  border-radius: 9px;
+  min-height: 32px;
+  border-radius: 8px;
   color: rgb(232 220 192 / 0.6);
-  font-size: 15px;
+  font-size: 14px;
   transition: color 150ms ease, background-color 150ms ease;
 }
 .prefs-locale button[aria-pressed="true"] {

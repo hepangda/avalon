@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslations } from 'use-intl';
 import type { ClientGameState, ClientVoteRecord, VoteValue } from '@/lib/engine';
@@ -31,7 +31,15 @@ export function VoteTally({ id, record, game, team }: {
   const [landed, setLanded] = useState(() => reduce ? order.length : 0);
   const [verdict, setVerdict] = useState(reduce);
   const stones = useRef(new Map<string, HTMLElement>());
+  const tallyRef = useRef<HTMLDivElement>(null);
+  const measure = useRef<HTMLSpanElement>(null);
   useSoundCue(landed > 0 && !reduce && 'stone', { key: landed });
+
+  // Where the pans flank the title, they keep clear of the verdict's full width from the start.
+  useLayoutEffect(() => {
+    const width = measure.current?.offsetWidth;
+    if (width) tallyRef.current?.style.setProperty('--title-w', `${width}px`);
+  }, []);
 
   useLayoutEffect(() => {
     if (reduce) return;
@@ -88,24 +96,33 @@ export function VoteTally({ id, record, game, team }: {
           {verdict ? t(record.approved ? 'cue.voteApproved' : 'cue.voteRejected') : t('cue.voteCount')}
           {verdict && !record.approved && <RejectionFlight key={id} slot={record.proposalIndex} />}
         </motion.h2>
+        <span ref={measure} className="table-phase-title vote-verdict vote-tally-measure" aria-hidden="true">
+          {t(record.approved ? 'cue.voteApproved' : 'cue.voteRejected')}
+        </span>
       </div>
       <div className="table-board-body">
-        {team}
-        <div className="vote-tally" data-verdict={verdict ? winner : undefined}
+        {/* The team also stands lit at its seats, so a short table can let these go. */}
+        <div className="vote-tally-team">{team}</div>
+        <div ref={tallyRef} className="vote-tally" data-verdict={verdict ? winner : undefined}
           aria-label={t('vote.tally', { approves: tally('approve'), rejects: tally('reject') })}>
-          {SIDES.map((side) => (
+          {SIDES.map((side) => {
+            const pile = order.filter((v) => v.vote === side);
+            return (
             <div key={side} className="vote-pan" data-side={side}>
-              <span className="vote-pan-stones" aria-hidden="true">
-                {order.filter((v) => v.vote === side).map((v) => (
+              {/* Both pans hold a place for every voter, so neither's size gives the count away. */}
+              <span className="vote-pan-stones" aria-hidden="true" style={{ '--n': order.length } as CSSProperties}>
+                {pile.map((v) => (
                   <span key={v.playerId} className="vote-pan-stone"
                     ref={(el) => { if (el) stones.current.set(v.playerId, el); else stones.current.delete(v.playerId); }}>
                     <GameIcon name={side} className="h-full w-full" />
                   </span>
                 ))}
+                {Array.from({ length: order.length - pile.length }, (_, i) => <span key={`open-${i}`} className="vote-pan-stone is-open" />)}
               </span>
               <b key={tally(side)} className="vote-pan-count" aria-hidden="true">{tally(side)}</b>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </>

@@ -4,7 +4,8 @@
     "resetShort": "Reset",
     "unknown": "Unknown",
     "showKnown": "Enable identity notes",
-    "clearAll": "Clear all notes",
+    "showKnownShort": "Role notes",
+    "clearAll": "Clear notes",
     "merlinOrMorgana": "Merlin / Morgana",
     "merlinOrMorganaShort": "M / M",
     "resetKnown": "Reset to known information",
@@ -43,7 +44,8 @@
     "back": "Back",
     "confirm": "Confirm",
     "roomNotFound": "This room doesn't exist or has already closed.",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "dissolveShort": "Dissolve"
   },
   "home": {
     "createRoom": "Create a Room",
@@ -53,6 +55,7 @@
     "identityRequiredToJoin": "Sign in before joining a room.",
     "signInRequiredToCreate": "Sign in above before creating a room.",
     "signOut": "Sign out",
+    "signOutConfirm": "Sign out?",
     "nameEmpty": "Name cannot be empty",
     "signIn": "Sign in",
     "signingIn": "Signing in…",
@@ -192,7 +195,9 @@
     "cardArt": "Card art",
     "cardArtClassic": "Classic",
     "cardArtModern": "Modern",
-    "cardArtFurry": "Furry"
+    "cardArtFurry": "Furry",
+    "leaveSeatAsk": "Leave your seat?",
+    "leaveShort": "Leave"
   },
   "mission": {
     "track": "Quest track",
@@ -283,13 +288,10 @@
     "saveFailed": "Could not save. Previous settings restored. Check your connection and try again.",
     "title": "Settings",
     "sound": "Sound",
-    "volume": "Volume",
-    "mute": "Mute",
-    "unmute": "Unmute",
+    "effects": "Effects",
+    "voice": "Voice",
     "notifications": "Background alerts",
-    "notificationsBlocked": "Notifications are blocked by the browser",
-    "on": "On",
-    "off": "Off"
+    "notificationsBlocked": "Notifications are blocked by the browser"
   },
   "turnAlert": {
     "title": "Your turn",
@@ -327,11 +329,19 @@
       "teamAnnounced": "Proposes",
       "teamFinalized": "Finalizes"
     },
+    "label": {
+      "leader": "Leader",
+      "team": "Team",
+      "draft": "Draft",
+      "speeches": "Talk",
+      "approve": "Yes",
+      "reject": "No"
+    },
+    "proposalOf": "Proposal {n}/{limit}",
     "channels": "Log channels",
     "rejectionLimitReached": "{count} teams rejected in a row — the red team wins!",
     "panelTitle": "War Log",
     "tabPublic": "Public",
-    "tabVotes": "Votes",
     "tabPrivate": "Private",
     "tabFunctions": "Functions",
     "empty": "No entries yet",
@@ -408,6 +418,7 @@
     "enableHint": "Enabling referee tools lets you unbind players, vote, or propose on their behalf. Every action is logged publicly in red for the whole table to see.",
     "open": "Enable referee tools",
     "close": "Disable referee tools",
+    "closeShort": "Turn off",
     "someone": "Someone",
     "unbindTitle": "Unbind a player",
     "unbindHint": "Boot the player from their seat. The seat becomes open for anyone to re-claim and take over the identity with full history.",
@@ -429,7 +440,23 @@
     "startAssassinationHint": "End the current discussion or voting and let the Assassin identify Merlin. Hitting Merlin wins for the red team; missing wins for the blue team.",
     "skipSpeech": "Skip {name}’s turn",
     "pauseTimer": "Pause current timers",
-    "resumeTimer": "Resume current timers"
+    "resumeTimer": "Resume current timers",
+    "ask": {
+      "pauseTimer": "Pause all action timers?",
+      "resumeTimer": "Resume all action timers?",
+      "unbind": "Unbind the seat of {name}?",
+      "vote": "Cast {vote} for {name}?",
+      "propose": "Submit this team for the leader: {names}?",
+      "enable": "Enable referee tools?",
+      "enableConfirm": "Enable",
+      "skipSpeech": "Skip {name}’s turn?",
+      "rerollLeader": "Randomize the starting leader?",
+      "rerollRoles": "Reassign every role?",
+      "assassination": "Call the Merlin assassination now?",
+      "previous": "Return to “{phase}”?",
+      "retractVotes": "Retract all votes?",
+      "retractProposal": "Retract this proposal?"
+    }
   },
   "replay": {
     "retry": "Retry",
@@ -493,6 +520,7 @@
   "table": {
     "tabTable": "Table",
     "returnToTable": "Return to table",
+    "resizePanel": "Resize panel",
     "rules": "Rules",
     "missionRule": "Mission {round}: requires {players} players; {fails, plural, one {# Fail card} other {# Fail cards}} will sabotage it.",
     "identity": "Identity",

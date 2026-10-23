@@ -61,6 +61,29 @@
   border-color: #f6dc85;
   box-shadow: 0 0 0 3px #231e16, 0 0 0 6px #e6c14a, 0 0 26px rgb(230 193 74 / 0.55);
 }
+/* A side ring hugs every portrait of the player, scaled to its size, over the dark halo most portraits wear. */
+.has-faction::before {
+  content: '';
+  position: absolute;
+  inset: calc(-1 * max(2px, 7%));
+  padding: max(2px, 7%);
+  border-radius: 50%;
+  background: var(--faction-ring);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+.faction-known-good { --faction-ring: #3f93c8; }
+.faction-known-evil { --faction-ring: #c9483d; }
+.faction-split { --faction-ring: linear-gradient(110deg, #3f93c8 50%, #c9483d 50%); }
+.faction-marked-good { --faction-ring: #4fb36c; }
+.faction-marked-evil { --faction-ring: #9a5fd1; }
+/* At the seats it fills the dark halo, inside the gilt rings that mark picks and highlights. */
+.table-seat-number.has-faction::before {
+  inset: -3px;
+  padding: 4px;
+}
 .seat-number-tag {
   position: absolute;
   z-index: 2;
@@ -431,6 +454,7 @@
   white-space: nowrap;
 }
 .table-dock-end .table-tool:disabled { cursor: not-allowed; opacity: 0.45; }
+.table-dock-end .table-tool[aria-pressed="true"] { color: #e6c14a; background: rgb(201 162 39 / 0.14); }
 .table-dock-end .table-tool:focus-visible { outline: 2px solid #e6c14a; outline-offset: -2px; }
 @media (hover: hover) {
   .table-dock-end .table-tool:hover { color: #e6c14a; background: rgb(201 162 39 / 0.08); }
@@ -694,20 +718,27 @@
 .table-anonymous-cards.is-stacked .table-anonymous-card {
   position: absolute;
 }
+/* Every sheet is a modal held in the middle of the table. */
 .table-sheet {
-  margin: auto auto 0;
+  margin: auto;
   padding: 0;
-  width: min(calc(100% - 16px), 720px);
-  max-height: calc(100dvh - 24px);
+  width: min(calc(100% - 24px), 560px);
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   border: 1px solid #665335;
-  border-radius: 18px 18px 0 0;
+  border-radius: 18px;
   background: #221c14;
   color: #e8dcc0;
-  box-shadow: 0 -8px 48px #0008;
+  box-shadow: 0 24px 64px #000b, 0 0 0 1px rgb(0 0 0 / 0.4), inset 0 1px 0 rgb(232 220 192 / 0.06);
 }
 .table-sheet::backdrop {
   background: rgb(0 0 0 / 0.6);
+  animation: table-sheet-dim 340ms ease-out;
 }
+/* Flying back into its control: the room brightens and the sheet takes no more input. */
+.table-sheet[data-closing] { pointer-events: none; }
+.table-sheet[data-closing]::backdrop { animation: table-sheet-undim 260ms ease-in forwards; }
+@keyframes table-sheet-dim { from { opacity: 0; } }
+@keyframes table-sheet-undim { to { opacity: 0; } }
 .table-sheet[open] {
   display: flex;
   flex-direction: column;
@@ -722,7 +753,6 @@
 }
 .table-sheet-content {
   padding: 16px;
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
   overflow: auto;
   overscroll-behavior: contain;
   min-height: 0;

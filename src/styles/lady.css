@@ -149,6 +149,7 @@
     0 18px 40px -12px #000;
   transition: box-shadow 1s ease;
 }
+.lady-reveal-scene[data-team] .lady-reveal-portrait::before { display: none; }
 .lady-reveal-scene[data-team] .lady-reveal-portrait {
   box-shadow:
     0 0 0 3px var(--assassination-accent),

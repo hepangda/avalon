@@ -4,6 +4,7 @@ import { adminActions } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
+import type { ToolArt } from './ToolIcons';
 
 type RefereeTool =
   | 'enable'
@@ -55,20 +56,20 @@ export function useRefereeTools(game: ClientGameState) {
   const entries: {
     id: RefereeTool;
     title: string;
-    icon: string;
+    art: ToolArt;
     disabled?: boolean;
   }[] = authed
       ? [
         ...(game.actionTimers?.length ? [{
           id: timersPaused ? 'resumeTimer' as const : 'pauseTimer' as const,
           title: t(timersPaused ? 'admin.resumeTimer' : 'admin.pauseTimer'),
-          icon: timersPaused ? '▶' : 'Ⅱ',
+          art: { glyph: timersPaused ? 'resume' : 'pause' } as const,
         }] : []),
-        ...(speaker ? [{ id: 'skipSpeech' as const, title: t('admin.skipSpeech', { name: seatLabel(speaker.seat, speaker.name) }), icon: '↪' }] : []),
+        ...(speaker ? [{ id: 'skipSpeech' as const, title: t('admin.skipSpeech', { name: seatLabel(speaker.seat, speaker.name) }), art: { glyph: 'skip' } as const }] : []),
         ...(game.canRerollOpening
           ? [
-            { id: 'rerollLeader' as const, title: t('admin.rerollLeader'), icon: '♛' },
-            { id: 'rerollRoles' as const, title: t('admin.rerollRoles'), icon: '↻' },
+            { id: 'rerollLeader' as const, title: t('admin.rerollLeader'), art: { emblem: 'leader' } as const },
+            { id: 'rerollRoles' as const, title: t('admin.rerollRoles'), art: { glyph: 'reroll' } as const },
           ]
           : []),
         ...(canStartAssassination
@@ -76,29 +77,29 @@ export function useRefereeTools(game: ClientGameState) {
             {
               id: 'assassination' as const,
               title: t('admin.startAssassination'),
-              icon: '⚔',
+              art: { emblem: 'assassinate' } as const,
             },
           ]
           : []),
         {
           id: 'previous',
           title: t('admin.previousPhase'),
-          icon: '↶',
+          art: { glyph: 'undo' } as const,
           disabled: !game.previousPhase,
         },
-        { id: 'unbind', title: t('admin.unbindTitle'), icon: '♙' },
+        { id: 'unbind', title: t('admin.unbindTitle'), art: { glyph: 'unbind' } as const },
         ...(game.phase === 'Voting'
           ? [
-            { id: 'vote' as const, title: t('admin.voteTitle'), icon: '☑' },
+            { id: 'vote' as const, title: t('admin.voteTitle'), art: { glyph: 'vote' } as const },
             {
               id: 'retractVotes' as const,
               title: t('admin.retractVotesTitle'),
-              icon: '↶',
+              art: { glyph: 'retractVotes' } as const,
             },
             {
               id: 'retractProposal' as const,
               title: t('admin.retractProposalTitle'),
-              icon: '↶',
+              art: { glyph: 'retractProposal' } as const,
             },
           ]
           : []),
@@ -107,13 +108,13 @@ export function useRefereeTools(game: ClientGameState) {
             {
               id: 'propose' as const,
               title: t('admin.proposeTitle'),
-              icon: '♛',
+              art: { emblem: 'leader' } as const,
             },
           ]
           : []),
-        { id: 'disable', title: t('admin.close'), icon: '✕' },
+        { id: 'disable', title: t('admin.close'), art: { glyph: 'referee' } as const },
       ]
-      : [{ id: 'enable', title: t('admin.open'), icon: '🛠' }];
+      : [{ id: 'enable', title: t('admin.open'), art: { glyph: 'referee' } as const }];
   const selectedEntry = entries.find((entry) => entry.id === activeTool && !entry.disabled &&
     (entry.id !== 'skipSpeech' || skipTarget === speakerId));
 

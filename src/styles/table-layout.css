@@ -138,38 +138,74 @@
   scrollbar-color: #665335 transparent;
 }
 .war-log-entry {
-  padding: 12px 0;
-  border-bottom: 1px solid rgb(201 162 39 / 0.1);
+  padding: 7px 0;
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
-.war-log-entry:last-child {
-  border-bottom: 0;
+/* The panel's body, which a wide table frames and sizes. */
+.table-side-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
 }
 @container match (min-width: 1080px) {
-  .table-tool.table-view-toggle,
-  .table-report-close {
-    display: none;
-  }
-  .war-log-channels {
-    padding-right: 12px;
-  }
   .table-workspace {
-    grid-template-columns: minmax(0, 1fr) clamp(320px, 28cqw, 400px);
-    column-gap: 24px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0;
   }
   .table-workspace[data-view] .table-play {
     visibility: visible;
   }
-  .table-workspace .table-report {
-    grid-area: 1 / 2 / 3 / 3;
-    visibility: visible;
+  /* Beside a wide table the war log opens out of the table's edge and folds back into it. */
+  .table-side {
+    display: flex;
+    justify-content: flex-end;
+    width: 0;
+    min-width: 0;
     margin: 12px 0;
+    overflow: hidden;
+    visibility: hidden;
+  }
+  .table-side[data-open] {
+    width: min(var(--side-width), 42cqw);
+    margin-left: 16px;
+    visibility: visible;
+  }
+  .table-workspace[data-animate] .table-side {
+    transition: width 280ms cubic-bezier(0.2, 0.8, 0.2, 1), margin-left 280ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 280ms;
+  }
+  .table-workspace[data-animate] .table-side[data-open] {
+    transition-delay: 0s;
+  }
+  .table-workspace .table-side[data-resizing] {
+    transition: none;
+  }
+  .table-workspace .table-report { grid-area: 1 / 2 / 3 / 3; }
+  .table-side .table-side-body {
+    flex: none;
+    width: min(var(--side-width), 42cqw);
+    overflow: hidden;
     border: 1px solid rgb(201 162 39 / 0.2);
     border-radius: 12px;
     background: rgb(22 16 10 / 0.55);
   }
+  .war-log-channels {
+    padding-right: 56px;
+  }
+  /* A quiet close key, like the sheets' own. */
+  .table-side .table-report-close {
+    top: 6px;
+    right: 6px;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    color: #d4c6a9;
+    font-size: 22px;
+  }
+  .table-side .table-report-close:hover { background: rgb(201 162 39 / 0.12); }
   .war-log-title {
     display: block;
   }
@@ -179,6 +215,36 @@
     padding-right: 8%;
   }
 }
+/* The grip on a panel's inner edge: a gilt notch shows where to take hold. */
+.table-side-resizer {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 3;
+  width: 16px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.table-side-resizer::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 4px;
+  height: 44px;
+  border-radius: 2px;
+  background: #c9a227;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition: opacity 150ms ease, height 150ms ease;
+}
+.table-side-body:hover > .table-side-resizer::after { opacity: 0.35; }
+.table-side-resizer:hover::after,
+.table-side-resizer:focus-visible::after,
+.table-side[data-resizing] .table-side-resizer::after {
+  height: 72px;
+  opacity: 0.9;
+}
+.table-side-resizer:focus-visible { outline: none; }
 .table-brand {
   display: flex;
   align-items: center;

@@ -4,6 +4,22 @@ import { roomHarness } from './test-room';
 afterEach(() => vi.restoreAllMocks());
 
 describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", () => {
+  it("toggles referee tools without adding battle logs, while actions remain logged", async () => {
+    const h = roomHarness();
+    await h.action(h.host, 'room:start');
+    const logs = structuredClone(h.document.game!.logs);
+    expect((await h.action(h.host, 'admin:auth')).ok).toBe(true);
+    expect(h.host.deserializeAttachment().isAdmin).toBe(true);
+    expect(h.document.game!.logs).toEqual(logs);
+    expect((await h.action(h.host, 'admin:setTimersPaused', { paused: true })).ok).toBe(true);
+    expect(h.document.game!.logs.at(-1)?.key).toBe('admin.timersPaused');
+    const actionLogs = structuredClone(h.document.game!.logs);
+    expect((await h.action(h.host, 'admin:close')).ok).toBe(true);
+    expect(h.host.deserializeAttachment().isAdmin).toBe(false);
+    expect(h.document.game!.logs).toEqual(actionLogs);
+    expect((await h.action(h.host, 'admin:setTimersPaused', { paused: false })).error?.code).toBe('NOT_ADMIN');
+  });
+
   it("requires referee authorization to pause and resume timers and preserves pauses after runtime recreation", async () => {
     const h = roomHarness();
     await h.action(h.host, "room:removeSeat", { seatId: "p1" });

@@ -14,11 +14,13 @@ import './styles/assassination.css';
 import './styles/assassination-pact.css';
 import './styles/table-reveals.css';
 import './styles/lady.css';
-import './styles/vote-matrix.css';
+import './styles/war-log.css';
 import './styles/timing.css';
 import './styles/reconnect.css';
 import './styles/preferences.css';
 import './styles/table-life.css';
+import './styles/functions-sheet.css';
+import './styles/popconfirm.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

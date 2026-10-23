@@ -35,15 +35,9 @@
 }
 /* Not marked yet: a dashed tag, waiting for a tap. */
 .table-role-note:not([data-team]) {
-  width: 16px;
-  padding: 0;
   border-style: dashed;
-  border-radius: 50%;
   color: rgb(223 200 120 / 0.7);
   background: rgb(25 21 16 / 0.85);
-  font-family: var(--font-cinzel), serif;
-  font-weight: 700;
-  text-align: center;
 }
 .table-self-label {
   flex-shrink: 0;

@@ -1,9 +1,6 @@
 /* Lobby: the table before the deal, inside the match's full-window frame
    (.table-screen, .table-header, .table-workspace, .table-play, .table-report). */
 @container match (min-width: 1080px) {
-  .lobby-screen .table-workspace {
-    grid-template-columns: minmax(0, 1fr) clamp(360px, 32cqw, 460px);
-  }
   /* Guests have no setup column; keep the table at a comfortable width. */
   .lobby-screen .table-workspace.is-solo {
     grid-template-columns: minmax(0, 1fr);
@@ -433,11 +430,8 @@ button.lobby-chair-seat:focus-visible .lobby-chair-ring { outline: 2px solid #e6
 @container match (min-width: 1080px) {
   .lobby-setup-scroll { padding: 22px 20px 32px; }
 }
-/* Clear the narrow layout's close button. */
+/* Clear the close button. */
 .lobby-setup-scroll > :first-child .lobby-section-head { padding-right: 48px; }
-@container match (min-width: 1080px) {
-  .lobby-setup-scroll > :first-child .lobby-section-head { padding-right: 0; }
-}
 
 .lobby-section-head {
   display: flex;

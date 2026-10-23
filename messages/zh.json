@@ -4,7 +4,8 @@
     "resetShort": "还原",
     "unknown": "未知",
     "showKnown": "开启身份信息标注",
-    "clearAll": "一键清除标记",
+    "showKnownShort": "身份标注",
+    "clearAll": "清除标记",
     "merlinOrMorgana": "梅林 / 莫甘娜",
     "merlinOrMorganaShort": "梅 / 莫",
     "resetKnown": "恢复已知标注",
@@ -43,7 +44,8 @@
     "back": "返回",
     "confirm": "确认",
     "roomNotFound": "房间不存在或已关闭，请检查房间码",
-    "backHome": "返回首页"
+    "backHome": "返回首页",
+    "dissolveShort": "解散"
   },
   "home": {
     "createRoom": "创建房间",
@@ -53,6 +55,7 @@
     "identityRequiredToJoin": "请先登录，再加入房间。",
     "signInRequiredToCreate": "请先在上方登录，再创建房间。",
     "signOut": "退出登录",
+    "signOutConfirm": "退出登录？",
     "nameEmpty": "名字不能为空",
     "signIn": "账号登录",
     "signingIn": "正在登录…",
@@ -192,7 +195,9 @@
     "cardArt": "卡面风格",
     "cardArtClassic": "经典",
     "cardArtModern": "现代",
-    "cardArtFurry": "兽人"
+    "cardArtFurry": "兽人",
+    "leaveSeatAsk": "离开座位？",
+    "leaveShort": "离开"
   },
   "mission": {
     "track": "任务进度",
@@ -283,13 +288,10 @@
     "saveFailed": "保存失败，已恢复原设置。请检查网络后重新选择。",
     "title": "设置",
     "sound": "声音",
-    "volume": "音量",
-    "mute": "静音",
-    "unmute": "打开声音",
+    "effects": "音效",
+    "voice": "语音",
     "notifications": "后台提醒",
-    "notificationsBlocked": "浏览器已拦截通知",
-    "on": "开",
-    "off": "关"
+    "notificationsBlocked": "浏览器已拦截通知"
   },
   "turnAlert": {
     "title": "轮到你了",
@@ -327,11 +329,19 @@
       "teamAnnounced": "公示",
       "teamFinalized": "定稿"
     },
+    "label": {
+      "leader": "队长",
+      "team": "队员",
+      "draft": "公示",
+      "speeches": "发言",
+      "approve": "赞成",
+      "reject": "反对"
+    },
+    "proposalOf": "提名 {n}/{limit}",
     "channels": "战报频道",
     "rejectionLimitReached": "连续 {count} 次提名被否决，红方获胜！",
     "panelTitle": "战报",
     "tabPublic": "公开",
-    "tabVotes": "票型",
     "tabPrivate": "私密",
     "tabFunctions": "功能",
     "empty": "暂无记录",
@@ -408,6 +418,7 @@
     "enableHint": "开启裁判功能后，你可以解绑玩家、代替投票或提名。所有操作都会在公开战报中红字记录，全场可见。",
     "open": "开启裁判功能",
     "close": "关闭裁判功能",
+    "closeShort": "关闭",
     "someone": "某人",
     "unbindTitle": "解绑玩家",
     "unbindHint": "将该玩家踢出座位，座位变空，可由他人重新认领并接管该身份与全部历史。",
@@ -429,7 +440,23 @@
     "startAssassinationHint": "立即结束当前讨论或投票，由刺客指认梅林。指认正确则红方获胜，错误则蓝方获胜。",
     "skipSpeech": "跳过 {name} 的发言",
     "pauseTimer": "暂停当前计时",
-    "resumeTimer": "继续当前计时"
+    "resumeTimer": "继续当前计时",
+    "ask": {
+      "pauseTimer": "暂停所有行动计时？",
+      "resumeTimer": "恢复所有行动计时？",
+      "unbind": "解除 {name} 的座位绑定？",
+      "vote": "替 {name} 投出「{vote}」？",
+      "propose": "确认替队长提交队伍：{names}？",
+      "enable": "开启裁判功能？",
+      "enableConfirm": "开启",
+      "skipSpeech": "跳过 {name} 的发言？",
+      "rerollLeader": "重新随机起始队长？",
+      "rerollRoles": "重新随机所有身份？",
+      "assassination": "立即发起梅林指认？",
+      "previous": "返回「{phase}」？",
+      "retractVotes": "撤回所有投票？",
+      "retractProposal": "撤回本次提名？"
+    }
   },
   "replay": {
     "retry": "重试加载",
@@ -493,6 +520,7 @@
   "table": {
     "tabTable": "圆桌",
     "returnToTable": "返回圆桌",
+    "resizePanel": "调整宽度",
     "rules": "规则",
     "missionRule": "第{round}轮任务：需要{players}人参加，{fails}张失败票可破坏",
     "identity": "身份",

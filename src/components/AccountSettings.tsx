@@ -3,6 +3,7 @@ import { useTranslations } from 'use-intl';
 import { accountDisplayName, type AuthUser } from '@/lib/auth/types';
 import { MAX_NAME_LENGTH, sanitizeName } from '@/lib/game/displayName';
 import { cn } from '@/lib/utils/cn';
+import { Popconfirm } from '@/components/ui/Popconfirm';
 
 export function AccountAvatar({ user, className }: { user: AuthUser; className?: string }) {
   return user.picture ? (
@@ -18,7 +19,7 @@ interface AccountSettingsProps {
   user: AuthUser;
   loading: boolean;
   onSaveAlias: (alias: string) => Promise<void>;
-  onLogout: () => void;
+  onLogout: () => unknown;
 }
 
 /** Nameplate at the top of settings: the alias is edited in place, like the lobby's room name. */
@@ -149,18 +150,22 @@ export function AccountSettings({ user, loading, onSaveAlias, onLogout }: Accoun
           )}
         </button>
       ) : (
-        <button
-          type="button"
-          className="prefs-plate-action"
-          disabled={loading}
-          aria-label={t('home.signOut')}
-          title={t('home.signOut')}
-          onClick={onLogout}
-        >
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 3.5H5a1.5 1.5 0 0 0-1.5 1.5v10A1.5 1.5 0 0 0 5 16.5h3M12.5 13.5 16 10l-3.5-3.5M16 10H8" />
-          </svg>
-        </button>
+        <Popconfirm title={t('home.signOutConfirm')} confirmLabel={t('home.signOut')} onConfirm={onLogout} disabled={loading}>
+          {(trigger) => (
+            <button
+              {...trigger}
+              type="button"
+              className="prefs-plate-action"
+              disabled={loading}
+              aria-label={t('home.signOut')}
+              title={t('home.signOut')}
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3.5H5a1.5 1.5 0 0 0-1.5 1.5v10A1.5 1.5 0 0 0 5 16.5h3M12.5 13.5 16 10l-3.5-3.5M16 10H8" />
+              </svg>
+            </button>
+          )}
+        </Popconfirm>
       )}
     </section>
   );

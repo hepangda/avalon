@@ -1,102 +1,22 @@
+import { Popconfirm } from '@/components/ui/Popconfirm';
 import { Button } from '@/components/ui/Button';
 import type { ClientGameState } from '@/lib/engine';
 import { seatLabel } from '@/lib/game/playerLabel';
 import { adminActions } from '@/lib/socket/client';
 import { useTranslations } from 'use-intl';
-import { TableSheet } from './TableSheet';
+import { TableSheet, useSheetPresence } from './TableSheet';
 
 import type { useRefereeTools } from './useRefereeTools';
 
+/** Referee tools that need players picked; plain yes/no tools ask with a popconfirm on their tile instead. */
 export function RefereeToolDialog({ tools, game }: { tools: ReturnType<typeof useRefereeTools>; game: ClientGameState }) {
   const t = useTranslations();
-  const { activeTool, setActiveTool, skipTarget, speakerId, busy, error, voteTarget, setVoteTarget, proposeSel, setProposeSel, players, teamSize, unvotedPlayers, selectedEntry, run, handleAuth, handleDisable, toggleProposeMember } = tools;
+  const { activeTool, setActiveTool, busy, error, voteTarget, setVoteTarget, proposeSel, setProposeSel, players, teamSize, unvotedPlayers, selectedEntry, run, toggleProposeMember } = tools;
+  const [present, onExited] = useSheetPresence(!!selectedEntry);
   return <>
-    {selectedEntry && (
-      <TableSheet open title={selectedEntry.title} onClose={() => setActiveTool(null)} busy={busy} error={error}>
-        {activeTool === 'enable' ? (
-          <div className="space-y-3">
-            <p className="text-sm text-parchment/60">{t('admin.enableHint')}</p>
-            <Button
-              variant="danger"
-              className="w-full"
-              disabled={busy}
-              onClick={() => void handleAuth()}
-            >
-              {t('admin.open')}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {activeTool === 'skipSpeech' && skipTarget && (
-              <Button variant="danger" className="w-full" disabled={busy || skipTarget !== speakerId}
-                onClick={() => void run(() => adminActions.skipSpeech(skipTarget))}>
-                {t('common.confirm')}
-              </Button>
-            )}
-            {(activeTool === 'rerollLeader' || activeTool === 'rerollRoles') && (
-              <section className="space-y-3">
-                <p className="text-sm text-parchment/70">
-                  {t(
-                    activeTool === 'rerollLeader'
-                      ? 'admin.rerollLeaderHint'
-                      : 'admin.rerollRolesHint',
-                  )}
-                </p>
-                <p className="text-xs text-parchment/50">{t('admin.openingOnlyHint')}</p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    className="flex-1"
-                    disabled={busy}
-                    onClick={() => setActiveTool(null)}
-                  >
-                    {t('common.cancel')}
-                  </Button>
-                  <Button
-                    variant="danger"
-                    className="flex-1"
-                    disabled={busy || !game.canRerollOpening}
-                    onClick={() =>
-                      void run(() =>
-                        activeTool === 'rerollLeader'
-                          ? adminActions.rerollLeader()
-                          : adminActions.rerollRoles(),
-                      )
-                    }
-                  >
-                    {t('common.confirm')}
-                  </Button>
-                </div>
-              </section>
-            )}
-            {(activeTool === 'assassination' || activeTool === 'previous') && (
-              <section className="space-y-3">
-                <p className="text-sm text-parchment/70">
-                  {t(
-                    activeTool === 'previous'
-                      ? 'admin.previousPhaseHint'
-                      : 'admin.startAssassinationHint',
-                  )}
-                </p>
-                {activeTool === 'previous' && game.previousPhase && (
-                  <p className="text-sm text-gold">{t(`phase.${game.previousPhase}`)}</p>
-                )}
-                <Button
-                  variant="danger"
-                  className="w-full"
-                  disabled={busy}
-                  onClick={() =>
-                    void run(() =>
-                      activeTool === 'previous'
-                        ? adminActions.previousPhase()
-                        : adminActions.startAssassination(),
-                    )
-                  }
-                >
-                  {t('common.confirm')}
-                </Button>
-              </section>
-            )}
+    {present && (
+      <TableSheet open={!!selectedEntry} title={selectedEntry?.title ?? ''} onClose={() => setActiveTool(null)} onExited={onExited} busy={busy} error={error}>
+        <div className="space-y-5">
             {activeTool === 'unbind' && (
               <section className="space-y-2">
                 <h3 className="text-sm font-semibold text-gold">{t('admin.unbindTitle')}</h3>
@@ -116,13 +36,13 @@ export function RefereeToolDialog({ tools, game }: { tools: ReturnType<typeof us
                           ●
                         </span>
                       </span>
-                      <button
-                        disabled={busy}
-                        onClick={() => void run(() => adminActions.unbind(p.id))}
-                        className="rounded px-2 py-0.5 text-xs text-crimson hover:bg-crimson/30 hover:text-parchment disabled:opacity-50"
-                      >
-                        {t('admin.unbindBtn')}
-                      </button>
+                      <Popconfirm confirmLabel={t('common.confirm')} title={t('admin.ask.unbind', { name: seatLabel(p.seat, p.name) })}
+                        disabled={busy} onConfirm={() => run(() => adminActions.unbind(p.id))}>
+                        {(trigger) => <button {...trigger} type="button" disabled={busy}
+                          className="rounded px-2 py-0.5 text-xs text-crimson hover:bg-crimson/30 hover:text-parchment disabled:opacity-50">
+                          {t('admin.unbindBtn')}
+                        </button>}
+                      </Popconfirm>
                     </div>
                   ))}
                 </div>
@@ -146,60 +66,20 @@ export function RefereeToolDialog({ tools, game }: { tools: ReturnType<typeof us
                   ))}
                 </select>
                 <div className="flex gap-2">
-                  <Button
-                    className="flex-1"
-                    disabled={
-                      !unvotedPlayers.some((player) => player.id === voteTarget) || busy
-                    }
-                    onClick={() => void run(() => adminActions.vote(voteTarget, 'approve'))}
-                  >
-                    👍 {t('vote.approve')}
-                  </Button>
-                  <Button
-                    variant="danger"
-                    className="flex-1"
-                    disabled={
-                      !unvotedPlayers.some((player) => player.id === voteTarget) || busy
-                    }
-                    onClick={() => void run(() => adminActions.vote(voteTarget, 'reject'))}
-                  >
-                    👎 {t('vote.reject')}
-                  </Button>
+                  {(['approve', 'reject'] as const).map((value) => (
+                    <Popconfirm confirmLabel={t('common.confirm')} key={`${voteTarget}:${value}`}
+                      title={t('admin.ask.vote', {
+                        name: players.find((p) => p.id === voteTarget)?.name ?? '', vote: t(`vote.${value}`),
+                      })}
+                      disabled={!unvotedPlayers.some((player) => player.id === voteTarget) || busy}
+                      onConfirm={() => run(() => adminActions.vote(voteTarget, value))}>
+                      {(trigger) => <Button {...trigger} variant={value === 'reject' ? 'danger' : undefined}
+                        className="flex-1" disabled={!unvotedPlayers.some((player) => player.id === voteTarget) || busy}>
+                        {value === 'approve' ? '👍' : '👎'} {t(`vote.${value}`)}
+                      </Button>}
+                    </Popconfirm>
+                  ))}
                 </div>
-              </section>
-            )}
-
-            {activeTool === 'retractVotes' && game.phase === 'Voting' && (
-              <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-gold">
-                  {t('admin.retractVotesTitle')}
-                </h3>
-                <p className="text-xs text-parchment/50">{t('admin.retractVotesHint')}</p>
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  disabled={busy}
-                  onClick={() => void run(() => adminActions.retractVotes())}
-                >
-                  {t('admin.retractVotesBtn')}
-                </Button>
-              </section>
-            )}
-
-            {activeTool === 'retractProposal' && game.phase === 'Voting' && (
-              <section className="space-y-2">
-                <h3 className="text-sm font-semibold text-gold">
-                  {t('admin.retractProposalTitle')}
-                </h3>
-                <p className="text-xs text-parchment/50">{t('admin.retractProposalHint')}</p>
-                <Button
-                  variant="danger"
-                  className="w-full"
-                  disabled={busy}
-                  onClick={() => void run(() => adminActions.retractProposal())}
-                >
-                  {t('admin.retractProposalBtn')}
-                </Button>
               </section>
             )}
 
@@ -228,39 +108,27 @@ export function RefereeToolDialog({ tools, game }: { tools: ReturnType<typeof us
                     );
                   })}
                 </div>
-                <Button
-                  variant="danger"
-                  className="w-full"
+                <Popconfirm confirmLabel={t('common.confirm')} key={proposeSel.join(',')}
+                  title={t('admin.ask.propose', { names: proposeSel.map((id) => {
+                    const player = players.find((p) => p.id === id);
+                    return player ? seatLabel(player.seat, player.name) : '';
+                  }).join(', ') })}
                   disabled={proposeSel.length !== teamSize || busy}
-                  onClick={() =>
-                    void run(async () => {
-                      const leader = players.find((p) => p.seat === game.leaderIndex);
-                      const res = await adminActions.propose(leader?.id ?? '', proposeSel);
-                      if (res.ok) setProposeSel([]);
-                      return res;
-                    })
-                  }
-                >
-                  {t('admin.proposeBtn', {
-                    picked: proposeSel.length,
-                    size: teamSize,
-                  })}
-                </Button>
+                  onConfirm={() => run(async () => {
+                    const leader = players.find((p) => p.seat === game.leaderIndex);
+                    const res = await adminActions.propose(leader?.id ?? '', proposeSel);
+                    if (res.ok) setProposeSel([]);
+                    return res;
+                  })}>
+                  {(trigger) => <Button {...trigger} variant="danger" className="w-full"
+                    disabled={proposeSel.length !== teamSize || busy}>
+                    {t('admin.proposeBtn', { picked: proposeSel.length, size: teamSize })}
+                  </Button>}
+                </Popconfirm>
               </section>
             )}
-
-            {activeTool === 'disable' && (
-              <Button
-                variant="secondary"
-                className="w-full"
-                disabled={busy}
-                onClick={() => void handleDisable()}
-              >
-                {t('admin.close')}
-              </Button>
-            )}
-          </div>
-        )}        </TableSheet>
+        </div>
+      </TableSheet>
     )}
   </>;
 }

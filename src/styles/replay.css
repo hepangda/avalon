@@ -16,6 +16,9 @@
   gap: 16px;
 }
 
+/* The player dossier lays the card beside the record, so it keeps a wider frame. */
+.table-sheet.replay-sheet { width: min(calc(100% - 24px), 720px); }
+
 /* ---------------------------------------------------------------- verdict */
 .replay-verdict {
   flex: none;

@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslations } from 'use-intl';
 import { useRouter } from '@/i18n/navigation';
 import { TableSheet } from '@/components/game/TableSheet';
 import { wouldDissolveRoom } from '@/lib/game/roomDissolution';
 import { GameIcon } from '@/components/game/GameArt';
+import { PanelResizer } from '@/components/game/PanelResizer';
+import { useSettled, useSidePanel, useWideTable } from '@/components/game/useSidePanel';
 import { LobbyProgress } from '@/components/lobby/LobbyProgress';
 import { LobbyTable } from '@/components/lobby/LobbyTable';
 import { DeckPreview } from '@/components/lobby/DeckPreview';
@@ -46,6 +48,13 @@ export default function LobbyPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [view, setView] = useState<'table' | 'setup'>('table');
   const viewToggle = useRef<HTMLButtonElement>(null);
+  const screenRef = useRef<HTMLElement>(null);
+  const setupRef = useRef<HTMLElement>(null);
+  // Beside a wide table the setup is a panel the host opens, closes and sizes; on a narrow one it covers the table.
+  const wide = useWideTable(screenRef);
+  const setupPanel = useSidePanel('avalon:setup-panel', { open: true, width: 420 });
+  const settled = useSettled();
+  const openSetup = () => (wide ? setupPanel.setOpen(true) : setView('setup'));
   const [pending, setPending] = useState(false);
   const actionPending = useRef(false);
   const [dissolutionAction, setDissolutionAction] = useState<(() => Promise<void | Ack<unknown>>) | null>(null);
@@ -194,7 +203,7 @@ export default function LobbyPage() {
     : actionError ?? (notice?.type === 'join_error' ? joinErrorText(notice, t) : null);
 
   return (
-    <main className="table-screen lobby-screen">
+    <main ref={screenRef} className="table-screen lobby-screen">
       <ReconnectOverlay active={!connected && notice?.type !== 'session_replaced' && notice?.type !== 'join_error'} />
       <header className="table-header">
         <div className="flex min-w-0 items-center">
@@ -228,7 +237,8 @@ export default function LobbyPage() {
       </header>
 
       {/* Only the host configures; everyone else reads the whole setup off the table. */}
-      <div className={cn('table-workspace', !isHost && 'is-solo')} data-view={isHost && view === 'setup' ? 'report' : 'table'}>
+      <div className={cn('table-workspace', !isHost && 'is-solo')} data-view={isHost && view === 'setup' ? 'report' : 'table'}
+        data-animate={(settled && wide) || undefined}>
         <div className="table-play" role="region" aria-label={t('table.tabTable')}>
           <div className="table-progress">
             <LobbyProgress count={count} options={config.options} />
@@ -241,7 +251,7 @@ export default function LobbyPage() {
               myPlayerId={myPlayerId}
               isHost={isHost}
               busy={busy}
-              deck={<DeckPreview count={count} options={config.options} onOpen={isHost ? () => setView('setup') : undefined} />}
+              deck={<DeckPreview count={count} options={config.options} onOpen={isHost ? openSetup : undefined} />}
               onClaim={() => void act(handleClaim)}
               onKick={(id) => requestDeparture(() => roomActions.kick(id), id)}
               onTransferHost={(id) => void act(() => roomActions.transferHost(id))}
@@ -294,7 +304,8 @@ export default function LobbyPage() {
                 type="button"
                 className="table-tool table-view-toggle"
                 title={t('lobby.configuration')}
-                onClick={() => setView('setup')}
+                aria-pressed={wide ? setupPanel.open : undefined}
+                onClick={() => (wide ? setupPanel.setOpen(!setupPanel.open) : setView('setup'))}
               >
                 <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
                   <rect x="3" y="4" width="6" height="9" rx="1.2" transform="rotate(-8 6 8.5)" />
@@ -306,32 +317,38 @@ export default function LobbyPage() {
           </footer>
         </div>
 
-        {isHost && <aside className="table-report lobby-setup" role="region" aria-label={t('lobby.configuration')}>
-          <div className="lobby-setup-scroll">
-            <GameSetup
-              count={count}
-              options={config.options}
-              useRecommended={config.useRecommended === true}
-              disabled={!canConfigure}
-              onRecommended={(value) => {
-                if (canConfigure) void handleConfig(resolveRoomConfig({ ...config, useRecommended: value }, count));
+        {isHost && <aside ref={setupRef} className="table-report table-side lobby-setup" role="region" aria-label={t('lobby.configuration')}
+          data-open={(wide && setupPanel.open) || undefined} inert={wide && !setupPanel.open}
+          style={{ '--side-width': `${setupPanel.width}px` } as CSSProperties}>
+          <div className="table-side-body">
+            {wide && <PanelResizer panel={setupRef} width={setupPanel.width} onCommit={setupPanel.setWidth} />}
+            <div className="lobby-setup-scroll">
+              <GameSetup
+                count={count}
+                options={config.options}
+                useRecommended={config.useRecommended === true}
+                disabled={!canConfigure}
+                onRecommended={(value) => {
+                  if (canConfigure) void handleConfig(resolveRoomConfig({ ...config, useRecommended: value }, count));
+                }}
+                onChange={customize}
+              />
+            </div>
+            <button
+              type="button"
+              className="table-report-close"
+              aria-label={wide ? t('mission.close') : t('table.returnToTable')}
+              title={wide ? t('mission.close') : t('table.returnToTable')}
+              onClick={() => {
+                if (wide) setupPanel.setOpen(false);
+                else setView('table');
+                // The toggle is hidden with the table until this render lands.
+                requestAnimationFrame(() => viewToggle.current?.focus());
               }}
-              onChange={customize}
-            />
+            >
+              <span aria-hidden="true">×</span>
+            </button>
           </div>
-          <button
-            type="button"
-            className="table-report-close"
-            aria-label={t('table.returnToTable')}
-            title={t('table.returnToTable')}
-            onClick={() => {
-              setView('table');
-              // The toggle is hidden with the table until this render lands.
-              requestAnimationFrame(() => viewToggle.current?.focus());
-            }}
-          >
-            <span aria-hidden="true">×</span>
-          </button>
         </aside>}
 
       </div>

@@ -57,7 +57,8 @@ async function push(revision: number) {
   const hash = await sha256(viewContent(view));
   await act(async () => {
     socket.handlers.onPush?.('view:sync', { epoch: 'epoch', revision, hash, view });
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // The push is verified against its hash asynchronously; under load that takes more than one tick.
+    await vi.waitFor(() => expect(useRoomStore.getState().syncing).toBe(false));
   });
 }
 

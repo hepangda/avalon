@@ -1,0 +1,325 @@
+/* Functions sheet: the viewer's instruments, the referee's bench, the host's crown, the door. */
+.table-sheet.fx-sheet {
+  width: min(calc(100% - 24px), 520px);
+  background:
+    radial-gradient(120% 40% at 50% 0%, rgb(201 162 39 / 0.07), transparent 70%),
+    #221c14;
+}
+.fx-sheet .table-sheet-content,
+.fx-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fx-glyph { flex: none; width: 24px; height: 24px; }
+.fx-emblem { width: 32px; height: 32px; margin: -4px; }
+.fx-chevron { flex: none; color: rgb(232 220 192 / 0.4); font-size: 18px; }
+.fx-alert {
+  padding: 8px 12px;
+  border: 1px solid rgb(178 58 46 / 0.5);
+  border-radius: 8px;
+  background: rgb(139 40 32 / 0.2);
+  color: #e8dcc0;
+  font-size: 13px;
+}
+
+/* Instruments: keys on one strip; a lit key glows and carries a pip. */
+.fx-keys {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 8px;
+}
+.fx-key {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 72px;
+  padding: 10px 4px;
+  border: 1px solid rgb(201 162 39 / 0.22);
+  border-radius: 12px;
+  background: linear-gradient(160deg, #2e261b, #1b1610);
+  box-shadow: inset 0 1px 0 rgb(232 220 192 / 0.05), inset 0 0 0 3px rgb(18 13 8 / 0.35);
+  color: #cbbd9f;
+  font-size: 13px;
+  line-height: 1.25;
+  text-align: center;
+  transition: border-color 150ms ease, background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+.fx-key > span { text-wrap: balance; }
+.fx-key .fx-glyph { color: rgb(201 162 39 / 0.75); transition: color 150ms ease; }
+.fx-key[aria-pressed="true"] {
+  border-color: rgb(230 193 74 / 0.7);
+  background:
+    radial-gradient(90% 80% at 50% 30%, rgb(230 193 74 / 0.16), transparent 70%),
+    linear-gradient(160deg, #3a2f1d, #211a11);
+  box-shadow: inset 0 1px 0 rgb(255 240 200 / 0.08), 0 0 18px -6px rgb(230 193 74 / 0.5);
+  color: #f1e2bb;
+}
+.fx-key[aria-pressed="true"] .fx-glyph { color: #e6c14a; }
+.fx-key[aria-pressed]::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e6c14a;
+  box-shadow: 0 0 6px #e6c14a;
+  opacity: 0;
+  scale: 0;
+  transition: opacity 180ms ease, scale 260ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.fx-key[aria-pressed="true"]::after { opacity: 1; scale: 1; }
+.fx-key:disabled { cursor: not-allowed; opacity: 0.4; }
+
+/* Sound: one plate, a channel per row — a seal to switch it, a groove to level it. */
+.fx-audio {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px 8px;
+  border: 1px solid rgb(201 162 39 / 0.22);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2a2219, #1d1812);
+}
+.fx-audio-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+  color: rgb(232 220 192 / 0.6);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+}
+.fx-audio-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgb(201 162 39 / 0.32), transparent);
+}
+.fx-channel {
+  display: grid;
+  grid-template-columns: 38px auto minmax(0, 1fr) 2.2em;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+.fx-channel-seal {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(155deg, #3a2f20, #1b160f);
+  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 0.35);
+  color: rgb(232 220 192 / 0.55);
+  transition: background 200ms ease, color 200ms ease, box-shadow 200ms ease;
+}
+.fx-channel-seal svg { width: 20px; height: 20px; }
+.fx-channel-seal[aria-pressed="true"] {
+  background: linear-gradient(to bottom, #e6c14a, #c9a227);
+  box-shadow: 0 0 18px -6px rgb(201 162 39 / 0.6), inset 0 0 0 1px rgb(255 240 190 / 0.35);
+  color: #16100a;
+}
+.fx-channel[data-silent] .fx-channel-seal[aria-pressed="true"] { background: linear-gradient(to bottom, #a8913f, #85701f); }
+.fx-channel-name {
+  min-width: 2.5em;
+  color: #e8dcc0;
+  font-size: 14px;
+  transition: color 200ms ease;
+}
+.fx-channel-level {
+  color: #e6c14a;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  transition: color 200ms ease;
+}
+.fx-channel .prefs-volume { transition: filter 200ms ease; }
+.fx-channel[data-silent] .fx-channel-name { color: rgb(232 220 192 / 0.5); }
+.fx-channel[data-silent] .fx-channel-level { color: rgb(232 220 192 / 0.35); }
+.fx-channel[data-silent] .prefs-volume { filter: saturate(0.2) brightness(0.7); }
+.fx-channel + .fx-channel { border-top: 1px solid rgb(201 162 39 / 0.1); }
+
+/* Referee, closed: a wax seal waiting to be broken. */
+.fx-seal-wax {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #c8503f, #7a1d16 72%);
+  box-shadow: inset 0 0 0 2px rgb(0 0 0 / 0.18), inset 0 -2px 3px rgb(0 0 0 / 0.3), 0 2px 6px rgb(0 0 0 / 0.5);
+  color: #f6dccb;
+}
+.fx-seal-wax .fx-glyph { width: 21px; height: 21px; }
+.fx-seal-wax.is-small { width: 28px; height: 28px; }
+.fx-seal-wax.is-small .fx-glyph { width: 16px; height: 16px; }
+.fx-seal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 58px;
+  padding: 9px 14px 9px 10px;
+  border: 1px solid rgb(139 40 32 / 0.5);
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgb(74 18 14 / 0.55), rgb(30 20 13 / 0.6) 70%);
+  color: #e8dcc0;
+  text-align: left;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.fx-seal-title { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; }
+.fx-seal:disabled > * { opacity: 0.5; }
+
+/* Referee, open: the bench, every tool a tile under one mark. */
+.fx-bench {
+  overflow: hidden;
+  padding: 10px;
+  border: 1px solid rgb(139 40 32 / 0.55);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2b1511, #1d1510 55%);
+  box-shadow: inset 0 1px 0 rgb(240 176 160 / 0.06);
+}
+.fx-bench-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 0 2px 10px;
+  border-bottom: 1px solid rgb(139 40 32 / 0.35);
+}
+.fx-bench-head h3 {
+  flex: 1;
+  color: #eab4a4;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 15px;
+  letter-spacing: 0.2em;
+}
+.fx-bench-off {
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid rgb(178 58 46 / 0.45);
+  border-radius: 999px;
+  color: #f0b0a0;
+  font-size: 12px;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+.fx-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.fx-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 74px;
+  padding: 10px 4px;
+  border: 1px solid rgb(139 40 32 / 0.4);
+  border-radius: 10px;
+  background: rgb(22 14 10 / 0.6);
+  color: #e8dcc0;
+  font-size: 12.5px;
+  line-height: 1.3;
+  text-align: center;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+.fx-tile > span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-wrap: balance;
+}
+.fx-tile .fx-glyph { color: #dc7563; }
+.fx-tile:disabled { cursor: not-allowed; }
+/* Dim the contents: the tile's own opacity belongs to its unfolding. */
+.fx-tile:disabled > * { opacity: 0.35; }
+
+/* Host: the heirs in seat order; pick one, then confirm. */
+.fx-crown {
+  padding: 10px 12px 12px;
+  border: 1px solid rgb(201 162 39 / 0.22);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2a2219, #1d1812);
+}
+.fx-crown-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.fx-crown-crest { width: 22px; height: 22px; }
+.fx-crown-head h3 { flex: 1; color: #e6c14a; font-size: 14px; font-weight: 600; }
+.fx-crown-confirm {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: linear-gradient(#e6c14a, #c9a227);
+  color: #16100a;
+  font-size: 12px;
+  font-weight: 600;
+  transition: opacity 150ms ease;
+}
+.fx-crown-confirm:disabled { cursor: not-allowed; opacity: 0.3; }
+.fx-heirs {
+  display: flex;
+  gap: 6px;
+  margin: 0 -4px;
+  padding: 2px 4px 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.fx-heir {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 64px;
+  padding: 4px 0;
+  color: rgb(232 220 192 / 0.75);
+}
+.fx-heir-avatar {
+  width: 42px;
+  height: 42px;
+  box-shadow: 0 0 0 1.5px rgb(201 162 39 / 0.3);
+  transition: box-shadow 150ms ease;
+}
+.fx-heir-avatar img { border-radius: 50%; }
+.fx-heir-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fx-heir[aria-checked="true"] { color: #e6c14a; }
+.fx-heir[aria-checked="true"] .fx-heir-avatar {
+  box-shadow: 0 0 0 3.5px #221c14, 0 0 0 5.5px #e6c14a, 0 0 16px rgb(230 193 74 / 0.45);
+}
+.fx-heir:disabled { opacity: 0.5; }
+
+/* The door: apart from everything else. */
+
+.fx-key:focus-visible, .fx-channel-seal:focus-visible, .fx-seal:focus-visible, .fx-tile:focus-visible, .fx-bench-off:focus-visible,
+.fx-crown-confirm:focus-visible, .fx-heir:focus-visible {
+  outline: 2px solid #e6c14a;
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .fx-key:hover:not(:disabled) { border-color: rgb(230 193 74 / 0.55); color: #f1e2bb; }
+  .fx-channel-seal[aria-pressed="false"]:hover { color: #e8dcc0; box-shadow: inset 0 0 0 1px rgb(230 193 74 / 0.6); }
+  .fx-seal:hover:not(:disabled) { border-color: #c2463a; box-shadow: 0 0 16px rgb(178 58 46 / 0.27); }
+  .fx-bench-off:hover:not(:disabled) { border-color: #c2463a; background: rgb(178 58 46 / 0.15); }
+  .fx-tile:hover:not(:disabled) { border-color: #c2463a; background: rgb(58 23 18 / 0.8); }
+  .fx-heir:hover:not(:disabled) .fx-heir-avatar { box-shadow: 0 0 0 1.5px rgb(230 193 74 / 0.7); }
+}
