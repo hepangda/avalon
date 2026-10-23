@@ -64,7 +64,10 @@ type KnowledgeView = Pick<
 
 /** Only use curated private perception, never public roles revealed at game over. */
 export function knownRoleNotes(
-  game: KnowledgeView,
+  game: Pick<ClientGameState, 'selfRole' | 'knownPlayers'> & {
+    config: Pick<ClientGameState['config'], 'rolesInPlay'>;
+    players: ReadonlyArray<{ id: string }>;
+  },
   viewerId: string | null,
 ): RoleNotes {
   const result: RoleNotes = {};

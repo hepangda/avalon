@@ -48,10 +48,9 @@ export default function LobbyPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [view, setView] = useState<'table' | 'setup'>('table');
   const viewToggle = useRef<HTMLButtonElement>(null);
-  const screenRef = useRef<HTMLElement>(null);
   const setupRef = useRef<HTMLElement>(null);
   // Beside a wide table the setup is a panel the host opens, closes and sizes; on a narrow one it covers the table.
-  const wide = useWideTable(screenRef);
+  const [wide, screenRef] = useWideTable();
   const setupPanel = useSidePanel('avalon:setup-panel', { open: true, width: 420 });
   const settled = useSettled();
   const openSetup = () => (wide ? setupPanel.setOpen(true) : setView('setup'));

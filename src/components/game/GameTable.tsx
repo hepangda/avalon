@@ -38,6 +38,8 @@ interface GameTableProps {
   knownNotes?: RoleNotes;
   editableNoteIds?: string[];
   onEditRoleNote?: (id: string, anchor: HTMLButtonElement) => void;
+  /** Show every seat's tag even where none can be edited. Editing implies it. */
+  showNotes?: boolean;
   notePlayerId?: string;
   notePopoverId?: string;
   /** Layers drawn over the whole table (phase beats, reactions); they must not take pointer input. */
@@ -71,6 +73,7 @@ export function GameTable({
   knownNotes = {},
   editableNoteIds,
   onEditRoleNote,
+  showNotes = !!onEditRoleNote,
   notePlayerId,
   notePopoverId,
   overlay,
@@ -201,7 +204,7 @@ export function GameTable({
             <span className="table-seat-meta" aria-hidden="true" />
           </button>
           {/* With notes on, every seat carries its tag, unknown until the player marks it. */}
-          {onEditRoleNote && <div className="table-seat-labels">
+          {showNotes && <div className="table-seat-labels">
             {canNote ? (
               <button
                 type="button"

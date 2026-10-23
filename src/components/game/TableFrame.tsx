@@ -24,11 +24,13 @@ export function TableFrame({
   error,
   onDismissError,
 }: {
-  code: string;
+  /** A live room's code; a finished game has none to share. */
+  code?: string;
   /** The room's name; the brand stands in for an unnamed room. */
   title?: string;
-  connected: boolean;
-  latency: number | null;
+  /** A live room's connection; omitted where nothing is connected. */
+  connected?: boolean;
+  latency?: number | null;
   headerAction?: (openReport: () => void) => ReactNode;
   /** Leads the title in place of the crest, as the room's way out does. */
   headerStart?: ReactNode;
@@ -36,7 +38,8 @@ export function TableFrame({
   progress?: ReactNode | ((openReport: () => void) => ReactNode);
   children: ReactNode;
   footer: ReactNode;
-  report: ReactNode;
+  /** Given a way back to the table, for choices in the report that are shown there. */
+  report: ReactNode | ((showTable: () => void) => ReactNode);
   onOpenReport?: () => void;
   tools: (viewToggle: ReactNode) => ReactNode;
   /** Opens the dock, beside the actions: the player's own face-down card. */
@@ -45,13 +48,12 @@ export function TableFrame({
   onDismissError?: () => void;
 }) {
   const t = useTranslations();
-  const { copied, copyInvite } = useInviteLink(code);
+  const { copied, copyInvite } = useInviteLink(code ?? '');
   const [tab, setTab] = useState<'table' | 'report'>('table');
   const viewToggleRef = useRef<HTMLButtonElement>(null);
-  const screenRef = useRef<HTMLElement>(null);
   const reportRef = useRef<HTMLElement>(null);
   const tabsId = useId();
-  const wide = useWideTable(screenRef);
+  const [wide, screenRef] = useWideTable();
   const panel = useSidePanel('avalon:report-panel', { open: true, width: 360 });
   const settled = useSettled();
   const reportOpen = wide && panel.open;
@@ -90,7 +92,7 @@ export function TableFrame({
         <div className="table-title">
           {headerStart ?? <GameIcon name="crest" className="table-title-crest" />}
           <span className={`table-title-name${title ? '' : ' is-brand'}`}>{title || 'AVALON'}</span>
-          <button
+          {code && <button
             type="button"
             onClick={() => void copyInvite()}
             className="table-code-chip"
@@ -107,14 +109,14 @@ export function TableFrame({
               </svg>
             )}
             <span className="room-code">{copied ? t('lobby.copied') : code}</span>
-          </button>
+          </button>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span
-            className={`table-latency ${connected ? latencyTextClass(latency) : 'text-amber-300'}`}
+          {connected !== undefined && <span
+            className={`table-latency ${connected ? latencyTextClass(latency ?? null) : 'text-amber-300'}`}
           >
-            {connected ? `● ${formatLatency(latency)}` : t('game.reconnecting')}
-          </span>
+            {connected ? `● ${formatLatency(latency ?? null)}` : t('game.reconnecting')}
+          </span>}
           {headerAction?.(openReport)}
           <PreferencesButton />
         </div>
@@ -146,7 +148,7 @@ export function TableFrame({
         >
           <div className="table-side-body">
             {wide && <PanelResizer panel={reportRef} width={panel.width} onCommit={panel.setWidth} />}
-            {report}
+            {typeof report === 'function' ? report(() => { if (!wide) setTab('table'); }) : report}
             <button
               type="button"
               className="table-report-close"

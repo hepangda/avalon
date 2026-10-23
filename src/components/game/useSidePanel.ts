@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 
 type PanelState = { open: boolean; width: number };
 
@@ -22,22 +22,25 @@ function readPanel(key: string, defaults: PanelState): PanelState {
   }
 }
 
-/** Whether the table is wide enough to keep its panels beside it rather than over it. */
-export function useWideTable(ref: RefObject<HTMLElement | null>) {
+/**
+ * Whether the table is wide enough to keep its panels beside it rather than over it. Attach the
+ * returned ref to the screen: it may mount after a loading state, and is measured whenever it does.
+ */
+export function useWideTable() {
+  const [el, setEl] = useState<HTMLElement | null>(null);
   const [wide, setWide] = useState(false);
   useLayoutEffect(() => {
-    const el = ref.current;
     if (!el) return;
     // Measured before the first paint, so a wide table never shows its narrow layout.
     const style = getComputedStyle(el);
-    setWide(el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) >= WIDE_TABLE);
+    setWide(el.clientWidth - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0) >= WIDE_TABLE);
     const observer = new ResizeObserver(([entry]) => {
       if (entry) setWide(entry.contentRect.width >= WIDE_TABLE);
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [ref]);
-  return wide;
+  }, [el]);
+  return [wide, setEl] as const;
 }
 
 /** Whether a wide table shows a side panel beside it, and how wide, remembered on this device under `key`. */
