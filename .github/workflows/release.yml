@@ -1,9 +1,20 @@
 name: Release
 
 # Pushing a v1.2.3 tag on main releases it: checks, image, static assets, rollout.
+# Running it by hand from main deploys an existing tag again, or an earlier one.
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing version tag, such as v1.2.3
+        required: true
+        type: string
+      restart:
+        description: Restart the pod even if this version is already running
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,6 +26,8 @@ concurrency:
 jobs:
   checks:
     uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.version) || '' }}
 
   release:
     needs: checks
@@ -24,7 +37,7 @@ jobs:
       name: production
       url: ${{ vars.PUBLIC_ORIGIN }}
     env:
-      VERSION: ${{ github.ref_name }}
+      VERSION: ${{ inputs.version || github.ref_name }}
       IMAGE_REPOSITORY: ${{ vars.IMAGE_REPOSITORY }}
       STATIC_ASSET_BASE_URL: ${{ vars.STATIC_ASSET_BASE_URL }}
       STATIC_R2_BUCKET: ${{ vars.STATIC_R2_BUCKET }}
@@ -32,19 +45,26 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.version) || '' }}
           fetch-depth: 0
 
       - name: Check the tag
         id: tag
         run: |
+          if [[ $GITHUB_EVENT_NAME == workflow_dispatch && $GITHUB_REF != refs/heads/main ]]; then
+            echo "::error::Run this workflow from main"
+            exit 1
+          fi
           if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
             echo "::error::Tag $VERSION is not a version like v1.2.3"
             exit 1
           fi
-          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+          commit=$(git rev-parse HEAD)
+          if ! git merge-base --is-ancestor "$commit" origin/main; then
             echo "::error::$VERSION does not point to a commit on main"
             exit 1
           fi
+          echo "COMMIT=$commit" >> "$GITHUB_ENV"
           echo "registry=${IMAGE_REPOSITORY%%/*}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v7
@@ -64,7 +84,7 @@ jobs:
       - name: Find an image built from this commit
         id: existing
         run: |
-          ref="$IMAGE_REPOSITORY:sha-$GITHUB_SHA"
+          ref="$IMAGE_REPOSITORY:sha-$COMMIT"
           if base=$(docker buildx imagetools inspect "$ref" --format '{{index .Image.Config.Labels "avalon.static-base"}}' 2>/dev/null) &&
             [[ $base == "$STATIC_ASSET_BASE_URL" ]]; then
             digest=$(docker buildx imagetools inspect "$ref" --format '{{.Manifest.Digest}}')
@@ -82,11 +102,11 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
-            ${{ env.IMAGE_REPOSITORY }}:sha-${{ github.sha }}
+            ${{ env.IMAGE_REPOSITORY }}:sha-${{ env.COMMIT }}
           build-args: STATIC_ASSET_BASE_URL=${{ env.STATIC_ASSET_BASE_URL }}
           labels: |
             org.opencontainers.image.version=${{ env.VERSION }}
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ env.COMMIT }}
             avalon.static-base=${{ env.STATIC_ASSET_BASE_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -125,6 +145,7 @@ jobs:
           K8S_DEPLOYMENT: ${{ vars.K8S_DEPLOYMENT || 'avalon' }}
           K8S_CONTAINER: ${{ vars.K8S_CONTAINER || 'avalon' }}
           KUBECONFIG: ${{ runner.temp }}/kubeconfig
+          RESTART: ${{ inputs.restart && '--restart' || '' }}
         run: |
           curl -fsSL -o "$RUNNER_TEMP/cloudflared" \
             https://github.com/cloudflare/cloudflared/releases/download/2026.10.0/cloudflared-linux-amd64
@@ -172,14 +193,14 @@ jobs:
             sleep 5
           done
 
-          deploy/release/rollout.sh "${{ steps.image.outputs.ref }}" "$VERSION"
+          deploy/release/rollout.sh "${{ steps.image.outputs.ref }}" "$VERSION" ${RESTART:+"$RESTART"}
 
       - name: Summary
         if: success()
         run: |
           {
-            echo "### Released $VERSION"
+            echo "### Deployed $VERSION"
             echo
             echo "- Image: \`${{ steps.image.outputs.ref }}\`"
-            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Commit: \`$COMMIT\`"
           } >> "$GITHUB_STEP_SUMMARY"

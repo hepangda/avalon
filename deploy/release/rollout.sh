@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Rolls the Deployment to one digest-pinned image and checks /api/health.
 # Any failure after the image changes restores the previous image.
-# Usage: rollout.sh <repository@sha256:digest> <version>
+# --restart restarts the pod when that image is already running.
+# Usage: rollout.sh <repository@sha256:digest> <version> [--restart]
 set -euo pipefail
 
 image=${1:?image}
 version=${2:?version}
+restart=${3:-}
+[[ -z $restart || $restart == --restart ]] || { echo "Unknown option: $restart" >&2; exit 1; }
 : "${K8S_NAMESPACE:?}" "${K8S_DEPLOYMENT:?}" "${K8S_CONTAINER:?}" "${PUBLIC_ORIGIN:?}"
 [[ $image =~ @sha256:[a-f0-9]{64}$ ]] || { echo "Image must be pinned by digest: $image" >&2; exit 1; }
 
@@ -41,8 +44,18 @@ healthy() {
 previous=$(current_image)
 [[ -n $previous ]] || { echo "Container $K8S_CONTAINER not found in $K8S_DEPLOYMENT" >&2; exit 1; }
 if [[ $previous == "$image" ]]; then
-  echo "$version is already running"
-  exit 0
+  if [[ -z $restart ]]; then
+    echo "$version is already running"
+    exit 0
+  fi
+  echo "Restarting $version"
+  k rollout restart deployment "$K8S_DEPLOYMENT" --request-timeout=30s
+  if wait_rollout && healthy; then
+    echo "Restarted $version"
+    exit 0
+  fi
+  echo "::error::Restart of $version failed"
+  exit 1
 fi
 
 echo "Rolling out $version: $previous -> $image"

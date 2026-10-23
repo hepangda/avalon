@@ -23,7 +23,21 @@ git push origin v1.2.3
 
 Tags that are not `vX.Y.Z[-suffix]` or not on `main` are rejected. Releases run one
 at a time. The rollout uses the Deployment's `Recreate` strategy, so players reconnect
-once per release. To redeploy an earlier version, re-run its workflow run.
+once per release.
+
+## Manual deploys
+
+To deploy an existing tag again, or roll back to an earlier one, run the workflow
+from `main` (Actions → Release → Run workflow):
+
+```sh
+gh workflow run release.yml --ref main -f version=v1.2.3
+gh workflow run release.yml --ref main -f version=v1.2.3 -f restart=true
+```
+
+The run checks and deploys that tag's commit with the workflow from `main`. If the
+tag's image is already running, nothing changes unless `restart` is set, which
+restarts the pod (players reconnect) and waits for `/api/health` again.
 
 ## One-time setup
 
@@ -37,7 +51,8 @@ kubectl -n avalon get secret avalon-release-token -o jsonpath='{.data.token}' | 
 In Cloudflare Zero Trust, create a service token and add a **Service Auth** policy
 that includes it to the Access application in front of the Kubernetes API.
 
-Create a GitHub environment named `production`, limited to `v*` tags, with:
+Create a GitHub environment named `production`, limited to `v*` tags and the
+`main` branch (for manual deploys), with:
 
 | Variable | Value |
 | --- | --- |
