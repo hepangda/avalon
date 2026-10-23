@@ -92,7 +92,8 @@ ownership health; SIGTERM drains pending room work before shutdown.
 
 Static files are served by the app by default. Optional CDN publishing is described
 in [deploy/r2](deploy/r2/README.md); Kubernetes constraints are documented in
-[deploy/k8s](deploy/k8s/README.md). Site-specific infrastructure and migration
+[deploy/k8s](deploy/k8s/README.md), and tag-triggered releases in
+[deploy/release](deploy/release/README.md). Site-specific infrastructure and migration
 records are not part of the public deployment instructions.
 
 ## Verification
@@ -135,7 +136,7 @@ TEST_DATABASE_URL=postgres://user:password@localhost:5432/avalon_test npm run te
 | `messages/` | Chinese/English text; `*.debug.json` loads only in development |
 | `public/assets/` | Optimized game artwork |
 | `scripts/` | Development launcher, static publishing and bot benchmarks |
-| `deploy/` | Optional R2 and Kubernetes deployment documentation |
+| `deploy/` | Optional R2, Kubernetes and release pipeline documentation |
 | `dist/client/`, `dist/server/` | Generated frontend and backend build output |
 
 See [gameplay](docs/gameplay.md), [architecture and recovery](docs/architecture.md),

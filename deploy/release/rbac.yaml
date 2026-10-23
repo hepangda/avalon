@@ -1,0 +1,28 @@
+# Release identity for CI: it can read, watch and patch only the avalon Deployment.
+apiVersion: v1
+kind: ServiceAccount
+metadata: { name: avalon-release, namespace: avalon }
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: { name: avalon-release, namespace: avalon }
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [avalon]
+    verbs: [get, list, watch, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: { name: avalon-release, namespace: avalon }
+subjects: [{ kind: ServiceAccount, name: avalon-release, namespace: avalon }]
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: avalon-release }
+---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: avalon-release-token
+  namespace: avalon
+  annotations: { kubernetes.io/service-account.name: avalon-release }
