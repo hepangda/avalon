@@ -42,17 +42,13 @@ describe('game records', () => {
       return g;
     }));
     const book = await recordBook(db);
-    const first = historyGames(book, 'account0', 'mine', 0);
+    const first = historyGames(book, 'account0', 0);
     expect(first.total).toBe(35);
     expect(first.next).toBe(30);
     expect(first.games[0]).toMatchObject({ gameId: 'g34', unrated: null, seat: { role: 'Merlin', won: true } });
     expect(first.games[1]).toMatchObject({ gameId: 'g33', unrated: 'legacy', seat: { delta: null } });
-    expect(historyGames(book, 'account0', 'mine', 30)).toMatchObject({ next: null, games: { length: 5 } });
-    expect(historyGames(book, 'stranger', 'mine', 0).total).toBe(0);
-    const all = historyGames(book, 'stranger', 'all', 0);
-    expect(all.total).toBe(35);
-    expect(all.games[0]!.seat).toBeNull();
-    expect(JSON.stringify(all)).not.toContain('account');
+    expect(historyGames(book, 'account0', 30)).toMatchObject({ next: null, games: { length: 5 } });
+    expect(historyGames(book, 'stranger', 0).total).toBe(0);
   });
 
   it('filters bots before pagination while retaining development history', async () => {
@@ -62,13 +58,13 @@ describe('game records', () => {
       game.replay.endedAt = 10000 + i; return game;
     });
     seed(db, record('human'), ...bots);
-    const production = historyGames(await recordBook(db), 'account0', 'all', 0);
+    const production = historyGames(await recordBook(db), 'account0', 0);
     expect(production).toMatchObject({ total: 1, next: null, games: [{ gameId: 'human' }] });
-    const development = historyGames(await recordBook(db, { includeBots: true }), 'account0', 'all', 0);
+    const development = historyGames(await recordBook(db, { includeBots: true }), 'account0', 0);
     expect(development.total).toBe(32);
     expect(development.next).toBe(30);
     expect(development.games).toHaveLength(30);
-    expect(historyGames(await recordBook(db), 'account0', 'all', 0)).toEqual(production);
+    expect(historyGames(await recordBook(db), 'account0', 0)).toEqual(production);
   });
 
   it('reconstructs match deltas from adjacent chronological prefixes without future leakage', async () => {
@@ -81,7 +77,7 @@ describe('game records', () => {
     const last = record('a-last', 'evil'); last.replay.endedAt = 3000;
     seed(db, last, ...others, first);
     const book = await recordBook(db);
-    const page = historyGames(book, 'account0', 'mine', 0);
+    const page = historyGames(book, 'account0', 0);
     const firstScore = publicRating(fitRatings([first]).players.get('account0')).score;
     const before = publicRating(fitRatings([first, ...others]).players.get('account0')).score;
     expect(page.games.find(g => g.gameId === 'z-first')!.seat!.delta).toBe(firstScore - 1000);
@@ -116,11 +112,10 @@ describe('game records', () => {
     expect(profile.unresolvedGames).toBe(1);
     expect(profile.rating.ratedGames).toBe(1);
     expect(profile.form).toEqual([true]);
-    const mine = historyGames(book, 'account0', 'mine', 0);
+    const mine = historyGames(book, 'account0', 0);
     expect(mine.total).toBe(2);
     expect(mine.games.find(g => g.gameId === 'unknown')).toMatchObject({ seat: null, participationOnly: true });
-    expect(historyGames(book, 'stranger', 'mine', 0).total).toBe(0);
-    expect(historyGames(book, 'stranger', 'all', 0).games.every(g => !g.participationOnly)).toBe(true);
+    expect(historyGames(book, 'stranger', 0).total).toBe(0);
     expect(JSON.stringify(mine)).not.toContain('account0');
   });
 
@@ -153,7 +148,7 @@ describe('history HTTP', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(await response.json()).toMatchObject({ rating: { score: 1000, ratedGames: 0 }, total: { games: 0 } });
-    for (const query of ['?offset=-1', '?offset=1.5', '?scope=private'])
+    for (const query of ['?offset=-1', '?offset=1.5'])
       expect((await get(`/api/history/games${query}`)).status).toBe(400);
   });
 
@@ -168,12 +163,10 @@ describe('history HTTP', () => {
     for (const environment of ['production', 'development', undefined]) {
       env.ENVIRONMENT = environment;
       const development = environment === 'development';
-      for (const scope of ['mine', 'all']) {
-        expect(await (await get(`/api/history/games?scope=${scope}&includeBots=true`)).json()).toMatchObject({
-          total: development ? 1 : 0,
-          games: development ? [{ unrated: null }] : [],
-        });
-      }
+      expect(await (await get('/api/history/games?includeBots=true')).json()).toMatchObject({
+        total: development ? 1 : 0,
+        games: development ? [{ unrated: null }] : [],
+      });
       expect(await (await get('/api/history')).json()).toMatchObject({
         total: { games: development ? 1 : 0 }, rating: { ratedGames: development ? 1 : 0 },
       });

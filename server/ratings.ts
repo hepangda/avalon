@@ -116,10 +116,10 @@ export function fitRatings(input: GameRecord[], policy: RatingPolicy = {}) {
 const TITLES: RatingTitle[] = ['beginner', 'learning', 'capable', 'expert', 'master'];
 /** The only projection of a fit that leaves the server. */
 export function publicRating(player: RatedPlayer | undefined, now = Date.now()): PublicRating {
-  if (!player) return { score: 1000, ratedGames: 0, title: 'observing', confidence: 'insufficient' };
+  if (!player) return { score: 1000, ratedGames: 0, title: 'beginner', confidence: 'insufficient' };
   const { hidden, sd, games, lastPlayed } = player;
   const tier = hidden < 1600 ? 0 : hidden < 1750 ? 1 : hidden < 1850 ? 2 : hidden < 2000 ? 3 : 4;
   return { score: Math.round(frontScore(hidden, games)), ratedGames: games,
-    title: sd > 0.8 ? 'observing' : TITLES[tier]!,
+    title: TITLES[tier]!,
     confidence: now - lastPlayed > 90 * 86400000 ? 'stale' : sd > 0.8 ? 'insufficient' : sd > 0.6 ? 'tentative' : 'supported' };
 }

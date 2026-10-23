@@ -6,7 +6,7 @@ import { GameIcon, RolePortrait } from '@/components/game/GameArt';
 import { PreferencesButton } from '@/components/PreferencesButton';
 import { accountDisplayName } from '@/lib/auth/types';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
-import type { HistoryGame, HistoryGamesPage, HistoryProfile, HistoryScope, TeamRecord } from '@/lib/game/historyTypes';
+import type { HistoryGame, HistoryGamesPage, HistoryProfile, TeamRecord } from '@/lib/game/historyTypes';
 import { teamOf } from '@/lib/engine';
 import { outcomeReasonKey } from '@/lib/game/outcomeText';
 import { useRoleText } from '@/lib/game/useRoleText';
@@ -213,27 +213,18 @@ function ScoreTrend({ scores }: { scores: number[] }) {
   );
 }
 
-/** Every game, newest first. */
+/** Every game the account played, newest first. */
 function Chronicle() {
   const t = useTranslations();
-  const [scope, setScope] = useState<HistoryScope>('mine');
   return (
     <section className="history-chronicle" aria-label={t('history.chronicle')}>
-      <div role="tablist" aria-label={t('history.scope')} className="history-scope">
-        {(['mine', 'all'] as const).map((value) => (
-          <button key={value} type="button" role="tab" aria-selected={scope === value}
-            className="history-scope-tab" onClick={() => setScope(value)}>
-            {t(`history.scopes.${value}`)}
-          </button>
-        ))}
-      </div>
-      <GameList key={scope} scope={scope} />
+      <GameList />
     </section>
   );
 }
 
 /** Loads on as its end scrolls into view. */
-function GameList({ scope }: { scope: HistoryScope }) {
+function GameList() {
   const t = useTranslations();
   const [games, setGames] = useState<HistoryGame[]>([]);
   const [offset, setOffset] = useState(0);
@@ -245,7 +236,7 @@ function GameList({ scope }: { scope: HistoryScope }) {
   useEffect(() => {
     const controller = new AbortController();
     setStatus('loading');
-    getJson<HistoryGamesPage>(`/api/history/games?scope=${scope}&offset=${offset}`, controller.signal)
+    getJson<HistoryGamesPage>(`/api/history/games?offset=${offset}`, controller.signal)
       .then((page) => {
         setGames((current) => [...current, ...page.games]);
         setNext(page.next);
@@ -253,7 +244,7 @@ function GameList({ scope }: { scope: HistoryScope }) {
       })
       .catch(() => { if (!controller.signal.aborted) setStatus('failed'); });
     return () => controller.abort();
-  }, [scope, offset, attempt]);
+  }, [offset, attempt]);
 
   useEffect(() => {
     const target = end.current;

@@ -50,7 +50,7 @@ describe('ratings', () => {
   it('projects only the public score, title and confidence', () => {
     const value = publicRating(fitRatings([record()]).players.get('account0'));
     expect(Object.keys(value).sort()).toEqual(['confidence', 'ratedGames', 'score', 'title']);
-    expect(value.title).toBe('observing');
-    expect(publicRating(undefined)).toEqual({ score: 1000, ratedGames: 0, title: 'observing', confidence: 'insufficient' });
+    expect(value.title).toBe('capable');
+    expect(publicRating(undefined)).toEqual({ score: 1000, ratedGames: 0, title: 'beginner', confidence: 'insufficient' });
   });
 });

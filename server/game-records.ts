@@ -1,5 +1,5 @@
 import { teamOf, type Role } from '@/lib/engine';
-import type { HistoryGame, HistoryGamesPage, HistoryProfile, HistoryScope, TeamRecord } from '@/lib/game/historyTypes';
+import type { HistoryGame, HistoryGamesPage, HistoryProfile, TeamRecord } from '@/lib/game/historyTypes';
 import type { ReplayData } from '@/lib/game/replayTypes';
 import type { Persistence, RoomDocument } from './persistence';
 import { exclusion, fitRatings, publicRating, type RatingPolicy } from './ratings';
@@ -148,8 +148,8 @@ export function historyProfile(book: RecordBook, account: string): HistoryProfil
   };
 }
 
-export function historyGames(book: RecordBook, account: string, scope: HistoryScope, offset: number): HistoryGamesPage {
-  const games = scope === 'mine' ? book.games.filter((g) => participated(g, account)) : book.games;
+export function historyGames(book: RecordBook, account: string, offset: number): HistoryGamesPage {
+  const games = book.games.filter((g) => participated(g, account));
   return {
     total: games.length,
     next: offset + PAGE < games.length ? offset + PAGE : null,

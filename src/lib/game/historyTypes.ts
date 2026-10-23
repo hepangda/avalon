@@ -1,6 +1,6 @@
 import type { GameOutcome, Role, Team } from '@/lib/engine';
 
-export type RatingTitle = 'observing' | 'beginner' | 'learning' | 'capable' | 'expert' | 'master';
+export type RatingTitle = 'beginner' | 'learning' | 'capable' | 'expert' | 'master';
 export type RatingConfidence = 'insufficient' | 'tentative' | 'supported' | 'stale';
 /** Why a finished game does not count toward ratings. */
 export type UnratedReason = 'bots' | 'legacy' | 'altered' | 'identity' | 'invalid';
@@ -46,8 +46,6 @@ export interface HistoryGame {
   participationOnly?: boolean;
   seat: { role: Role; variant?: number; won: boolean; delta: number | null } | null;
 }
-
-export type HistoryScope = 'mine' | 'all';
 
 /** GET /api/history/games */
 export interface HistoryGamesPage {

@@ -598,11 +598,6 @@
     "title": "Record",
     "dossier": "Your record",
     "chronicle": "Games",
-    "scope": "Which games",
-    "scopes": {
-      "mine": "My games",
-      "all": "All replays"
-    },
     "games": "Games",
     "wins": "Wins",
     "winRate": "Win rate",
@@ -619,7 +614,6 @@
     "retry": "Retry",
     "empty": "No games yet",
     "titles": {
-      "observing": "Observing",
       "beginner": "Finding your feet",
       "learning": "Making progress",
       "capable": "At ease",

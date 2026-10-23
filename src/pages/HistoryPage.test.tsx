@@ -26,7 +26,7 @@ const game = (gameId: string, seat: HistoryGame['seat'], unrated: HistoryGame['u
   missions: [true, false, true, true], unrated, seat,
 });
 
-it('shows the plate, scores each game and pages the chronicle by scope', async () => {
+it('shows the plate, scores each game and pages the chronicle', async () => {
   let observed: IntersectionObserverCallback | null = null;
   vi.stubGlobal('IntersectionObserver', class {
     constructor(callback: IntersectionObserverCallback) { observed = callback; }
@@ -34,15 +34,14 @@ it('shows the plate, scores each game and pages the chronicle by scope', async (
     disconnect() {}
   });
   const pages: Record<string, HistoryGamesPage> = {
-    'mine&offset=0': { total: 3, next: 2, games: [
+    '0': { total: 3, next: 2, games: [
       game('won', { role: 'Merlin', won: true, delta: 42 }),
       game('lost', { role: 'Merlin', won: false, delta: -11 }),
     ] },
-    'mine&offset=2': { total: 3, next: null, games: [game('bots', { role: 'Percival', won: true, delta: null }, 'bots')] },
-    'all&offset=0': { total: 1, next: null, games: [game('stranger', null)] },
+    '2': { total: 3, next: null, games: [game('bots', { role: 'Percival', won: true, delta: null }, 'bots')] },
   };
   const fetcher = vi.fn(async (url: string) => {
-    const body = url === '/api/history' ? profile : pages[url.split('scope=')[1]!];
+    const body = url === '/api/history' ? profile : pages[url.split('offset=')[1]!];
     return new Response(JSON.stringify(body));
   });
   vi.stubGlobal('fetch', fetcher);
@@ -69,13 +68,10 @@ it('shows the plate, scores each game and pages the chronicle by scope', async (
     expect(counts()).toEqual(['4/7', '2/4', '2/3']);
 
     await act(async () => { observed!([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver); });
-    expect(fetcher).toHaveBeenLastCalledWith('/api/history/games?scope=mine&offset=2', expect.any(Object));
+    expect(fetcher).toHaveBeenLastCalledWith('/api/history/games?offset=2', expect.any(Object));
     expect(container.querySelector('a[href="/replay/bots"]')!.textContent).toContain('含机器人');
-
-    const all = [...container.querySelectorAll('[role="tab"]')].find((b) => b.textContent === '全部复盘') as HTMLButtonElement;
-    await act(async () => { all.click(); });
-    expect(container.querySelectorAll('.history-game')).toHaveLength(1);
-    expect(container.querySelector('a[href="/replay/stranger"]')!.textContent).toContain('蓝方胜利');
+    expect(container.querySelector('[role="tab"]')).toBeNull();
+    expect(container.querySelector('a[href="/replay/lost"]')!.textContent).toContain('失败');
   } finally {
     await act(async () => root.unmount());
   }

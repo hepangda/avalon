@@ -33,11 +33,9 @@ app.get('/api/history', async (c) => {
 app.get('/api/history/games', async (c) => {
   const account = await viewer(c);
   if (account instanceof Response) return account;
-  const scope = c.req.query('scope') ?? 'mine';
   const offset = Number(c.req.query('offset') ?? 0);
-  if ((scope !== 'mine' && scope !== 'all') || !Number.isSafeInteger(offset) || offset < 0)
-    return c.json({ error: 'Invalid query' }, 400);
-  return c.json(historyGames(await recordBook(c.env.persistence, policy(c)), account, scope, offset));
+  if (!Number.isSafeInteger(offset) || offset < 0) return c.json({ error: 'Invalid query' }, 400);
+  return c.json(historyGames(await recordBook(c.env.persistence, policy(c)), account, offset));
 });
 
 app.get('/api/games/:id/replay', async (c) => {

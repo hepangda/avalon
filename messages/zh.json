@@ -598,11 +598,6 @@
     "title": "战绩",
     "dossier": "个人战绩",
     "chronicle": "对局",
-    "scope": "对局范围",
-    "scopes": {
-      "mine": "我的对局",
-      "all": "全部复盘"
-    },
     "games": "对局",
     "wins": "胜场",
     "winRate": "胜率",
@@ -612,14 +607,13 @@
     "roles": "担任过的角色",
     "form": "近期战况",
     "win": "胜利",
-    "loss": "失利",
+    "loss": "失败",
     "players": "{count} 人局",
     "loading": "正在加载",
     "loadFailed": "战绩加载失败",
     "retry": "重试",
     "empty": "暂无对局",
     "titles": {
-      "observing": "观察中",
       "beginner": "初窥门径",
       "learning": "渐入佳境",
       "capable": "应对自如",
