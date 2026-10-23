@@ -638,6 +638,8 @@
       "altered": "有回退",
       "identity": "身份不全",
       "invalid": "数据不全"
-    }
+    },
+    "participationOnly": "已确认参赛 · 角色未恢复",
+    "unresolved": "含 {count} 局已确认参赛、角色尚未恢复的历史对局；胜场、胜率和阵营统计仅使用角色已知的对局。"
   }
 }

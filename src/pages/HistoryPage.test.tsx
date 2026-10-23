@@ -80,3 +80,19 @@ it('shows the plate, scores each game and pages the chronicle by scope', async (
     await act(async () => root.unmount());
   }
 });
+
+it('shows confirmed attendance without inventing personal outcomes or a win rate', async () => {
+  const unknown = { ...game('old-game', null, 'identity'), participationOnly: true };
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(url === '/api/history'
+    ? { ...profile, total: { games: 0, wins: 0 }, unresolvedGames: 2, roles: [], form: [] }
+    : { games: [unknown], total: 2, next: null }))));
+  const container = document.createElement('div'); const root = createRoot(container);
+  try {
+    await act(async () => root.render(<IntlProvider locale="zh" messages={messages} timeZone="Asia/Shanghai"><MemoryRouter><HistoryPage /></MemoryRouter></IntlProvider>));
+    expect(container.textContent).toContain('已确认参赛 · 角色未恢复');
+    expect(container.textContent).toContain('含 2 局已确认参赛');
+    expect(container.querySelector('.history-record')!.textContent).toContain('—');
+    expect(container.querySelector('a[href="/replay/old-game"]')).not.toBeNull();
+    expect(container.querySelector('.history-game-score')).toBeNull();
+  } finally { await act(async () => root.unmount()); }
+});

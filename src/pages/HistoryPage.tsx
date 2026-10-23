@@ -97,7 +97,7 @@ function Dossier({ profile, failed, onRetry }: { profile: HistoryProfile | null;
         <dl className="history-record">
           <div>
             <dt>{t('history.games')}</dt>
-            <dd className="tabular-nums">{profile.total.games}</dd>
+            <dd className="tabular-nums">{profile.total.games + (profile.unresolvedGames ?? 0)}</dd>
           </div>
           <div>
             <dt>{t('history.wins')}</dt>
@@ -105,10 +105,11 @@ function Dossier({ profile, failed, onRetry }: { profile: HistoryProfile | null;
           </div>
           <div>
             <dt>{t('history.winRate')}</dt>
-            <dd className="tabular-nums">{percent(profile.total)}<small>%</small></dd>
+            <dd className="tabular-nums">{profile.unresolvedGames && !profile.total.games ? '—' : <>{percent(profile.total)}<small>%</small></>}</dd>
           </div>
         </dl>
 
+        {!!profile.unresolvedGames && <p className="text-xs text-parchment/60">{t('history.unresolved', { count: profile.unresolvedGames })}</p>}
         <div className="history-sides">
           {(['good', 'evil'] as const).map((team) => {
             const record = profile.teams[team];
@@ -308,6 +309,7 @@ function GameRow({ game }: { game: HistoryGame }) {
             {game.endedAt ? format.dateTime(new Date(game.endedAt), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null}
             <span>{t('history.players', { count: game.playerCount })}</span>
             {seat && <span>{roleText.shortName(seat.role)}</span>}
+            {game.participationOnly && <span>{t('history.participationOnly')}</span>}
           </span>
         </span>
         <span className="history-game-quests" aria-label={t(`gameOver.${outcomeReasonKey(game)}`)}>

@@ -19,7 +19,7 @@ export const frontScore = (hidden: number, games: number) => 1000 + (1 - 0.94 **
 export function exclusion(game: GameRecord, policy: RatingPolicy = {}): UnratedReason | null {
   const { replay: r } = game;
   if (!policy.includeBots && r.players.some(p => p.isBot)) return 'bots';
-  if (game.altered === null || !r.options) return 'legacy';
+  if ((game.altered === null || !r.options) && game.ratingImport !== 'name-recovery-v1') return 'legacy';
   if (game.altered) return 'altered';
   const accounts = r.players.map(p => participantAccount(game, p.id));
   if (accounts.some(a => !a) || new Set(accounts).size !== accounts.length) return 'identity';
@@ -31,7 +31,7 @@ export function exclusion(game: GameRecord, policy: RatingPolicy = {}): UnratedR
   return null;
 }
 function configuration(r: ReplayData): string {
-  return JSON.stringify([r.roleAssignments.map(a => a.role).sort(), !!r.options?.ladyOfTheLake, r.options?.maxRejections ?? 5]);
+  return JSON.stringify([r.roleAssignments.map(a => a.role).sort(), r.options ? 'known-rules' : 'legacy-unknown-rules', r.options ? !!r.options.ladyOfTheLake : null, r.options ? r.options.maxRejections ?? 5 : null]);
 }
 // Cholesky factorization and triangular solves preserve the full joint covariance.
 function factor(a: number[][]): number[][] {

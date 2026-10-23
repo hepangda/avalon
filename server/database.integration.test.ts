@@ -1,3 +1,4 @@
+import { record as historicalRecord } from './test-records';
 import { accountKey } from './account-profile';
 import { viewContent, type ViewSnapshot } from '@/lib/socket/stateIntegrity';
 import { documentHash } from './room-journal';
@@ -71,6 +72,19 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
   afterEach(async () => {
     await db.close();
     vi.restoreAllMocks();
+  });
+
+  it('reads historical attendance from settlement records without fabricating seat links', async () => {
+    const game = historicalRecord('unlinked');
+    await db.pool.query('INSERT INTO avalon_replays (game_id, revision, payload) VALUES ($1, $2, $3)', ['unlinked', 1, game.replay]);
+    const version = await db.gameRecordsVersion();
+    await db.pool.query('INSERT INTO avalon_game_rewards (game_id, account) VALUES ($1, $2)', ['unlinked', 'account-a']);
+    await db.pool.query('INSERT INTO avalon_role_weight_games (game_id, account) VALUES ($1, $2), ($1, $3)', ['unlinked', 'account-a', 'account-b']);
+    expect(await db.gameRecordsVersion()).not.toBe(version);
+    const records = await db.listGameRecords();
+    expect(records[0]!.seats).toEqual({});
+    expect(records[0]!.participants!.sort()).toEqual(['account-a', 'account-b']);
+    expect(await db.findSeat('unlinked', 'account-a')).toBeNull();
   });
 
   it('deletes an empty lobby and its journal with version fencing', async () => {

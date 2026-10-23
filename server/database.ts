@@ -80,17 +80,20 @@ export class PostgresPersistence implements Persistence {
 
   async listGameRecords(): Promise<GameRecord[]> {
     // One statement: replays and their seat links come from the same snapshot.
-    const result = await this.pool.query<{ payload: ReplayData; altered: boolean | null; seats: Record<string, string> | null }>(`
-      SELECT r.payload, r.altered,
-        (SELECT jsonb_object_agg(s.player_id, s.account) FROM avalon_game_seats s WHERE s.game_id = r.game_id) AS seats
+    const result = await this.pool.query<{ payload: ReplayData; altered: boolean | null; seats: Record<string, string> | null; participants: string[]; rating_import: GameRecord['ratingImport'] }>(`
+      SELECT r.payload, r.altered, r.rating_import,
+        (SELECT jsonb_object_agg(s.player_id, s.account) FROM avalon_game_seats s WHERE s.game_id = r.game_id) AS seats,
+        ARRAY(SELECT w.account FROM avalon_game_rewards w WHERE w.game_id = r.game_id
+              UNION SELECT w.account FROM avalon_role_weight_games w WHERE w.game_id = r.game_id) AS participants
       FROM avalon_replays r ORDER BY r.game_id`);
-    return result.rows.map((row) => ({ replay: row.payload, altered: row.altered, seats: row.seats ?? {} }));
+    return result.rows.map((row) => ({ replay: row.payload, altered: row.altered, seats: row.seats ?? {}, participants: row.participants, ratingImport: row.rating_import ?? undefined }));
   }
 
   async gameRecordsVersion(): Promise<string> {
     const result = await this.pool.query<{ version: string }>(`
       SELECT concat_ws(':', (SELECT count(*) FROM avalon_replays), (SELECT max(updated_at) FROM avalon_replays),
-        (SELECT count(*) FROM avalon_game_seats)) AS version`);
+        (SELECT count(*) FROM avalon_game_seats),
+        (SELECT count(*) FROM avalon_game_rewards), (SELECT count(*) FROM avalon_role_weight_games)) AS version`);
     return result.rows[0]!.version;
   }
 
@@ -274,7 +277,7 @@ export class PostgresPersistence implements Persistence {
         const archived = await client.query(
           `INSERT INTO avalon_replays (game_id, revision, payload, altered) VALUES ($1, $2, $3, $4)
           ON CONFLICT(game_id) DO UPDATE SET revision = excluded.revision,
-            payload = excluded.payload, altered = excluded.altered, updated_at = now()
+            payload = excluded.payload, altered = excluded.altered, rating_import = NULL, updated_at = now()
           WHERE excluded.revision > avalon_replays.revision`,
           [
             archive.replay.gameId,

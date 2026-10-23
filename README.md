@@ -157,3 +157,9 @@ privately or still needs review before distribution.
 存储：对局结束时把席位→账号写入私有表 `avalon_game_seats`，并在 `avalon_replays.altered` 记录是否有干预。升级后首次启动会一次性（`avalon_migrations: game-seats-v1`）为旧对局补链接：仍存在的房间按其日志精确恢复；其余仅当「唯一真人席位 + 唯一结算账号」时关联，且标为旧对局不计分，绝不按昵称猜测。
 
 接口（均需登录、`no-store`）：`GET /api/history` 返回本人铭牌；`GET /api/history/games?scope=mine|all&offset=0` 每页 30 局；`GET /api/games/:id/replay` 返回 `{ replay, viewerId }`。每次请求先查归档版本号，未变化时复用内存中的拟合。
+
+历史参与与席位归属分开处理：角色偏好结算或奖励结算能证明账号参加过该局时，即使旧记录无法恢复席位，也进入该账号的「我的对局」，标注「已确认参赛 · 角色未恢复」。这部分计入参与局数，单独返回 `unresolvedGames`；不纳入个人胜场、胜率、阵营/角色统计、近期胜负或评分。没有任何已知角色对局时胜率显示为未知。原始账号列表只在服务端使用。生产环境仍隐藏所有已标记机器人对局。精确席位回填只能来自匹配 game ID、修订号和完整 replay 的存档证据，不按昵称猜测。
+
+经用户明确授权的历史名称修复：`server/history-name-recovery.ts` 仅供运营回填使用，不作为日后自动认领身份的规则。它使用历史已验证名称（含用户确认的别名）、完整结算名单和一对一约束，只输出唯一关联；冲突或歧义不自动写入。回填前备份并核对 replay 修订与完整内容，保存修复前后数据和依据。已确认的旧 `Bot N` 席位可补齐 `isBot`，现有正式环境隐藏规则随即生效，不删除存档。
+
+对明确批准纳入评分的旧局，私有 `avalon_replays.rating_import = 'name-recovery-v1'` 允许缺少规则或干预审计的记录进入历史兼容模型；原 `altered = NULL` 和缺失规则保持原样。未知规则使用独立配置组，不假设等于当前默认规则；已知回退、机器人和身份不全仍排除。新的 replay 修订会清除该批准标记，防止旧批准覆盖后来的结果变化。

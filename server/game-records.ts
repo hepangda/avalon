@@ -9,6 +9,10 @@ export interface GameRecord {
   replay: ReplayData;
   /** Player id → account, for every seat a signed-in account held. */
   seats: Record<string, string>;
+  /** Settlement proves attendance, even when the historical seat is unknown. Private. */
+  participants?: string[];
+  /** Explicit, audited operator approval for otherwise incomplete legacy rating metadata. */
+  ratingImport?: 'name-recovery-v1';
   /** A rewind, reroll, retraction or referee action changed the game; null once that is no longer known. */
   altered: boolean | null;
 }
@@ -95,6 +99,10 @@ function seatOf(game: GameRecord, account: string) {
   return game.replay.roleAssignments.find((a) => a.playerId === playerId) ?? null;
 }
 
+function participated(game: GameRecord, account: string): boolean {
+  return !!seatOf(game, account) || !!game.participants?.includes(account);
+}
+
 const books = new WeakMap<Persistence, { key: string; book: RecordBook }>();
 
 export async function recordBook(persistence: Persistence, policy: RatingPolicy = {}): Promise<RecordBook> {
@@ -107,13 +115,17 @@ export async function recordBook(persistence: Persistence, policy: RatingPolicy 
 }
 
 export function historyProfile(book: RecordBook, account: string): HistoryProfile {
+  let unresolvedGames = 0;
   const total: TeamRecord = { games: 0, wins: 0 };
   const teams = { good: { games: 0, wins: 0 }, evil: { games: 0, wins: 0 } };
   const roles = new Map<Role, TeamRecord>();
   const form: boolean[] = [];
   for (const game of book.games) {
     const seat = seatOf(game, account);
-    if (!seat) continue;
+    if (!seat) {
+      if (participated(game, account)) unresolvedGames++;
+      continue;
+    }
     const team = teamOf(seat.role);
     const won = game.replay.outcome!.winner === team;
     const role = roles.get(seat.role) ?? { games: 0, wins: 0 };
@@ -128,6 +140,7 @@ export function historyProfile(book: RecordBook, account: string): HistoryProfil
     rating: book.rating(account),
     trend: book.trend(account),
     total,
+    unresolvedGames,
     teams,
     roles: [...roles].map(([role, record]) => ({ role, ...record }))
       .sort((a, b) => b.games - a.games || b.wins - a.wins || a.role.localeCompare(b.role)),
@@ -136,7 +149,7 @@ export function historyProfile(book: RecordBook, account: string): HistoryProfil
 }
 
 export function historyGames(book: RecordBook, account: string, scope: HistoryScope, offset: number): HistoryGamesPage {
-  const games = scope === 'mine' ? book.games.filter((g) => seatOf(g, account)) : book.games;
+  const games = scope === 'mine' ? book.games.filter((g) => participated(g, account)) : book.games;
   return {
     total: games.length,
     next: offset + PAGE < games.length ? offset + PAGE : null,
@@ -151,6 +164,7 @@ export function historyGames(book: RecordBook, account: string, scope: HistorySc
         reason: replay.outcome!.reason,
         missions: [...replay.rounds].sort((a, b) => a.roundIndex - b.roundIndex).flatMap((round) => round.missionSuccess === null ? [] : [round.missionSuccess]),
         unrated: exclusion(game, book.policy),
+        participationOnly: !seat && participated(game, account),
         seat: seat && {
           role: seat.role,
           ...(seat.roleVariant !== undefined ? { variant: seat.roleVariant } : {}),

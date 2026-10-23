@@ -101,6 +101,29 @@ describe('game records', () => {
     expect(after.rating.score).toBeLessThan(before.rating.score);
   });
 
+  it('recovers attendance without inventing a role, win, rating or spectator identity', async () => {
+    const db = new MemoryPersistence();
+    const known = record('known');
+    const unknown = record('unknown'); unknown.seats = {}; unknown.altered = null;
+    const bots = record('bots'); bots.seats = {}; bots.replay.players[1]!.isBot = true;
+    seed(db, known, unknown, bots);
+    db.participants.set('unknown', ['account0', 'account0']);
+    db.participants.set('known', ['account0']);
+    db.participants.set('bots', ['account0']);
+    const book = await recordBook(db);
+    const profile = historyProfile(book, 'account0');
+    expect(profile.total).toEqual({ games: 1, wins: 1 });
+    expect(profile.unresolvedGames).toBe(1);
+    expect(profile.rating.ratedGames).toBe(1);
+    expect(profile.form).toEqual([true]);
+    const mine = historyGames(book, 'account0', 'mine', 0);
+    expect(mine.total).toBe(2);
+    expect(mine.games.find(g => g.gameId === 'unknown')).toMatchObject({ seat: null, participationOnly: true });
+    expect(historyGames(book, 'stranger', 'mine', 0).total).toBe(0);
+    expect(historyGames(book, 'stranger', 'all', 0).games.every(g => !g.participationOnly)).toBe(true);
+    expect(JSON.stringify(mine)).not.toContain('account0');
+  });
+
   it('links a legacy game only through a lone human and a lone settled account', () => {
     const g = record();
     for (const player of g.replay.players.slice(1)) player.isBot = true;

@@ -638,6 +638,8 @@
       "altered": "Rewound",
       "identity": "Unlinked",
       "invalid": "Incomplete"
-    }
+    },
+    "participationOnly": "Participation confirmed · Role unavailable",
+    "unresolved": "Includes {count} historical games with confirmed participation but unknown roles. Wins, win rate and team statistics use only games with known roles."
   }
 }

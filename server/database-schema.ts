@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS avalon_replays (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE avalon_replays ADD COLUMN IF NOT EXISTS altered boolean;
+ALTER TABLE avalon_replays ADD COLUMN IF NOT EXISTS rating_import text;
 CREATE TABLE IF NOT EXISTS avalon_game_seats (
   game_id text NOT NULL REFERENCES avalon_replays(game_id) ON DELETE CASCADE,
   player_id text NOT NULL,

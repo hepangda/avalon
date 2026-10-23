@@ -15,11 +15,12 @@ import {
 /** Test double; database integration tests exercise real PostgreSQL separately. */
 export class MemoryPersistence implements Persistence {
   /** Seat links and integrity by game id; tests may seed them beside `archives`. */
-  links = new Map<string, Pick<GameRecord, 'seats' | 'altered'>>();
+  links = new Map<string, Pick<GameRecord, 'seats' | 'altered' | 'ratingImport'>>();
+  participants = new Map<string, string[]>();
   recordsVersion = 0;
   async listGameRecords(): Promise<GameRecord[]> {
     return [...this.archives.values()].map((replay) => ({
-      replay: structuredClone(replay), seats: { ...this.links.get(replay.gameId)?.seats }, altered: this.links.get(replay.gameId)?.altered ?? null,
+      replay: structuredClone(replay), participants: this.participants.get(replay.gameId) ?? [], ratingImport: this.links.get(replay.gameId)?.ratingImport, seats: { ...this.links.get(replay.gameId)?.seats }, altered: this.links.get(replay.gameId)?.altered ?? null,
     }));
   }
   /** Tests that seed the maps directly bump `recordsVersion`, as a write would. */
