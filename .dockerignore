@@ -3,6 +3,7 @@ dist
 .git
 .env
 .env.*
+.ghcr.read.io
 .dev.vars*
 .wrangler
 .next
