@@ -11,8 +11,8 @@ scripts have been removed from the public tree.
 - Build `Dockerfile`, push it to `ghcr.io/hepangda/avalon` and pin the deployment to its
   immutable image digest. If using a CDN, publish resources from that exact image
   before deploying it; see [static publishing](../r2/README.md).
-- GHCR images are public and support anonymous pulls. Existing `ghcr-pull`
-  credentials may be retained; see [release setup](../release/README.md).
+- GHCR images are public and pulled anonymously; do not configure registry
+  credentials or `imagePullSecrets`. See [release setup](../release/README.md).
 - Supply the variables in `.env.example`. Put database credentials and OIDC client
   and session secrets in a Secret. Keep the session secret stable across releases.
 - Set `PUBLIC_ORIGIN` to your HTTPS origin, register its OIDC callback and configure

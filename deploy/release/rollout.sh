@@ -21,14 +21,9 @@ current_image() {
 
 # One strategic merge patch, so the image and the release stamp roll out together.
 set_image() {
-  local pull_secret=''
-  if [[ -n ${K8S_IMAGE_PULL_SECRET:-} ]]; then
-    [[ $K8S_IMAGE_PULL_SECRET =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] || { echo 'Invalid image pull secret name' >&2; return 1; }
-    pull_secret=$(printf ',"imagePullSecrets":[{"name":"%s"}]' "$K8S_IMAGE_PULL_SECRET")
-  fi
   k patch deployment "$K8S_DEPLOYMENT" --type strategic --request-timeout=30s -p "$(printf \
-    '{"spec":{"template":{"metadata":{"annotations":{"avalon/release":"%s"}},"spec":{"containers":[{"name":"%s","image":"%s"}]%s}}}}' \
-    "$2" "$K8S_CONTAINER" "$1" "$pull_secret")"
+    '{"spec":{"template":{"metadata":{"annotations":{"avalon/release":"%s"}},"spec":{"containers":[{"name":"%s","image":"%s"}]}}}}' \
+    "$2" "$K8S_CONTAINER" "$1")"
 }
 
 wait_rollout() {

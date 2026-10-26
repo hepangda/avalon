@@ -24,9 +24,8 @@ requested; follow the separate `Release` run for deployment status.
 3. Extracts static assets from that exact image, uploads missing CDN objects and
    verifies them; see [static publishing](../r2/README.md).
 4. Uses deployment tooling from the workflow commit to roll Kubernetes to
-   `ghcr.io/hepangda/avalon@sha256:<digest>`, with `ghcr-pull` for authentication.
-   The image and pull-secret reference are patched together. Existing pull-secret
-   references are retained, allowing rollback to the old registry during migration.
+   `ghcr.io/hepangda/avalon@sha256:<digest>`. Kubernetes pulls the public image
+   anonymously; no registry credentials or `imagePullSecrets` are needed.
 5. Waits for rollout and `/api/health`, restoring the previous image on failure.
 
 Releases run one at a time. `Recreate` updates reconnect players once per release.
@@ -34,19 +33,12 @@ To roll back, request an older commit on `main`. An already-running image is lef
 alone unless `restart` is selected. Direct dispatch of `release.yml` accepts
 `commit`, `restart` and optional `commit_title`.
 
-## GHCR pull credentials (optional for public images)
+## Registry authentication
 
-The current deployment retains `ghcr-pull` from the initial migration setup.
-Public images do not require authentication. For private images, create a classic GitHub personal access token with only `read:packages`, owned by
-an account that can read the private package. Store it as a Docker registry Secret
-named `ghcr-pull` in the `avalon` namespace. Do not use the workflow's short-lived
-`GITHUB_TOKEN` as a persistent Kubernetes credential. Rotate the pull token before
-it expires. Configure this Secret before the first GHCR deployment.
-
-The release ServiceAccount does not need to read or write Secrets; Kubernetes
-uses the pod's `imagePullSecrets` reference. Registry push credentials and the
-`IMAGE_REPOSITORY` variable are no longer used. Keep the old Harbor pull Secret
-until rollback to Harbor is no longer needed.
+Actions pushes to GHCR with its short-lived `GITHUB_TOKEN`; Kubernetes pulls the
+public image anonymously. No registry username/password secrets, image repository
+variable, local PAT file, or Kubernetes image pull Secret are required. Rollbacks
+should target previous commits published to GHCR.
 
 ## One-time setup
 

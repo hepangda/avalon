@@ -40,10 +40,10 @@ test('release resolves main and abbreviated commits, rejecting tags and commits 
   }
 });
 
-test('GHCR rollout patches pull credentials and image together and can restore Harbor', () => {
+test('anonymous GHCR rollout can restore the previous image', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'avalon-rollout-'));
   const image = `ghcr.io/hepangda/avalon@sha256:${'a'.repeat(64)}`;
-  const previous = `harbor.example/avalon@sha256:${'b'.repeat(64)}`;
+  const previous = `ghcr.io/hepangda/avalon@sha256:${'b'.repeat(64)}`;
   try {
     writeFileSync(join(cwd, 'kubectl'), `#!/usr/bin/env bash
 shift 2
@@ -60,13 +60,13 @@ esac
       encoding: 'utf8',
       env: { ...process.env, PATH: `${cwd}:${process.env.PATH}`, PREVIOUS: previous,
         PATCH_LOG: log, K8S_NAMESPACE: 'avalon', K8S_DEPLOYMENT: 'avalon',
-        K8S_CONTAINER: 'avalon', K8S_IMAGE_PULL_SECRET: 'ghcr-pull', PUBLIC_ORIGIN: 'https://example.invalid' },
+        K8S_CONTAINER: 'avalon', PUBLIC_ORIGIN: 'https://example.invalid' },
     });
     assert.equal(result.status, 1, result.stderr);
     const patches = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
     assert.equal(patches.length, 2);
     assert.equal(patches[0].spec.template.spec.containers[0].image, image);
-    assert.deepEqual(patches[0].spec.template.spec.imagePullSecrets, [{ name: 'ghcr-pull' }]);
+    assert.equal(patches[0].spec.template.spec.imagePullSecrets, undefined);
     assert.equal(patches[1].spec.template.spec.containers[0].image, previous);
   } finally {
     rmSync(cwd, { recursive: true, force: true });

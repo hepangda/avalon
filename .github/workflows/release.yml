@@ -160,7 +160,6 @@ jobs:
           K8S_NAMESPACE: ${{ vars.K8S_NAMESPACE || 'avalon' }}
           K8S_DEPLOYMENT: ${{ vars.K8S_DEPLOYMENT || 'avalon' }}
           K8S_CONTAINER: ${{ vars.K8S_CONTAINER || 'avalon' }}
-          K8S_IMAGE_PULL_SECRET: ghcr-pull
           KUBECONFIG: ${{ runner.temp }}/kubeconfig
           RESTART: ${{ inputs.restart && '--restart' || '' }}
         run: |
