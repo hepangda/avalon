@@ -1,14 +1,14 @@
 name: Release
 
 # Pushing a v1.2.3 tag on main releases it: checks, image, static assets, rollout.
-# Running it by hand from main deploys an existing tag again, or an earlier one.
+# Running it by hand deploys the existing tag specified in the version input.
 on:
   push:
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
       version:
-        description: Existing version tag, such as v1.2.3
+        description: Existing version tag to deploy, independent of the selected workflow ref (e.g. v1.2.3)
         required: true
         type: string
       restart:
@@ -51,10 +51,6 @@ jobs:
       - name: Check the tag
         id: tag
         run: |
-          if [[ $GITHUB_EVENT_NAME == workflow_dispatch && $GITHUB_REF != refs/heads/main ]]; then
-            echo "::error::Run this workflow from main"
-            exit 1
-          fi
           if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
             echo "::error::Tag $VERSION is not a version like v1.2.3"
             exit 1
