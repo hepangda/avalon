@@ -8,9 +8,11 @@ scripts have been removed from the public tree.
 - Run one application replica per database and use `Recreate` updates. Stop the
   old process before starting the new one; the database ownership lock rejects
   concurrent owners. Allow at least 20 seconds for graceful termination.
-- Build `Dockerfile`, push it to your registry and pin the deployment to its
+- Build `Dockerfile`, push it to private `ghcr.io/hepangda/avalon` and pin the deployment to its
   immutable image digest. If using a CDN, publish resources from that exact image
   before deploying it; see [static publishing](../r2/README.md).
+- Configure `imagePullSecrets` with the `ghcr-pull` Secret containing a GitHub
+  classic PAT with `read:packages`; see [release setup](../release/README.md).
 - Supply the variables in `.env.example`. Put database credentials and OIDC client
   and session secrets in a Secret. Keep the session secret stable across releases.
 - Set `PUBLIC_ORIGIN` to your HTTPS origin, register its OIDC callback and configure

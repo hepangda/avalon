@@ -1,15 +1,12 @@
 name: Release
-run-name: ${{ inputs.commit_title || github.event.head_commit.message || format('Release {0}', inputs.version || github.ref_name) }}
+run-name: ${{ inputs.commit_title || format('Release {0}', inputs.commit) }}
 
-# Pushing a v1.2.3 tag on main releases it: checks, image, static assets, rollout.
-# Running it by hand deploys the existing tag specified in the version input.
+# Releases are explicitly requested by commit; pushing a tag does not deploy.
 on:
-  push:
-    tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
-      version:
-        description: Existing version tag to deploy, independent of the selected workflow ref (e.g. v1.2.3)
+      commit:
+        description: Commit SHA on main, or main for its latest commit
         required: true
         type: string
       restart:
@@ -29,44 +26,57 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      commit: ${{ steps.resolve.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Resolve and validate commit
+        id: resolve
+        env:
+          TARGET: ${{ inputs.commit }}
+        run: |
+          commit=$(bash deploy/release/resolve-commit.sh "$TARGET")
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
   checks:
+    needs: resolve
     uses: ./.github/workflows/ci.yml
     with:
-      ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.version) || '' }}
+      ref: ${{ needs.resolve.outputs.commit }}
 
   release:
-    needs: checks
+    needs: [resolve, checks]
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment:
       name: production
       url: ${{ vars.PUBLIC_ORIGIN }}
     env:
-      VERSION: ${{ inputs.version || github.ref_name }}
-      IMAGE_REPOSITORY: ${{ vars.IMAGE_REPOSITORY }}
+      VERSION: sha-${{ needs.resolve.outputs.commit }}
+      COMMIT: ${{ needs.resolve.outputs.commit }}
       STATIC_ASSET_BASE_URL: ${{ vars.STATIC_ASSET_BASE_URL }}
       STATIC_R2_BUCKET: ${{ vars.STATIC_R2_BUCKET }}
       PUBLIC_ORIGIN: ${{ vars.PUBLIC_ORIGIN }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.version) || '' }}
+          ref: ${{ needs.resolve.outputs.commit }}
           fetch-depth: 0
 
-      - name: Check the tag
-        id: tag
-        run: |
-          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
-            echo "::error::Tag $VERSION is not a version like v1.2.3"
-            exit 1
-          fi
-          commit=$(git rev-parse HEAD)
-          if ! git merge-base --is-ancestor "$commit" origin/main; then
-            echo "::error::$VERSION does not point to a commit on main"
-            exit 1
-          fi
-          echo "COMMIT=$commit" >> "$GITHUB_ENV"
-          echo "registry=${IMAGE_REPOSITORY%%/*}" >> "$GITHUB_OUTPUT"
+      - name: Set image repository
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: echo "IMAGE_REPOSITORY=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v7
         with:
@@ -74,14 +84,13 @@ jobs:
 
       - uses: docker/login-action@v4
         with:
-          registry: ${{ steps.tag.outputs.registry }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: docker/setup-buildx-action@v4
 
-      # Each commit is built once. Re-runs and further tags on the same commit
-      # reuse its image if it was built for the same static base.
+      # Re-runs reuse the commit image if it was built for the same static base.
       - name: Find an image built from this commit
         id: existing
         run: |
@@ -89,7 +98,6 @@ jobs:
           if base=$(docker buildx imagetools inspect "$ref" --format '{{index .Image.Config.Labels "avalon.static-base"}}' 2>/dev/null) &&
             [[ $base == "$STATIC_ASSET_BASE_URL" ]]; then
             digest=$(docker buildx imagetools inspect "$ref" --format '{{.Manifest.Digest}}')
-            docker buildx imagetools create -t "$IMAGE_REPOSITORY:$VERSION" "$IMAGE_REPOSITORY@$digest"
             echo "digest=$digest" >> "$GITHUB_OUTPUT"
             echo "Reusing $ref ($digest)"
           fi
@@ -101,11 +109,10 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
-            ${{ env.IMAGE_REPOSITORY }}:sha-${{ env.COMMIT }}
+          tags: ${{ env.IMAGE_REPOSITORY }}:${{ env.VERSION }}
           build-args: STATIC_ASSET_BASE_URL=${{ env.STATIC_ASSET_BASE_URL }}
           labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.revision=${{ env.COMMIT }}
             avalon.static-base=${{ env.STATIC_ASSET_BASE_URL }}
@@ -134,6 +141,14 @@ jobs:
           node scripts/publish-static.mjs --upload
           node scripts/verify-static.mjs
 
+      # Use deployment tooling from this workflow, even when deploying old commits.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .release-tools
+          sparse-checkout: deploy/release
+          persist-credentials: false
+
       - name: Roll out
         env:
           TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
@@ -145,6 +160,7 @@ jobs:
           K8S_NAMESPACE: ${{ vars.K8S_NAMESPACE || 'avalon' }}
           K8S_DEPLOYMENT: ${{ vars.K8S_DEPLOYMENT || 'avalon' }}
           K8S_CONTAINER: ${{ vars.K8S_CONTAINER || 'avalon' }}
+          K8S_IMAGE_PULL_SECRET: ghcr-pull
           KUBECONFIG: ${{ runner.temp }}/kubeconfig
           RESTART: ${{ inputs.restart && '--restart' || '' }}
         run: |
@@ -194,7 +210,7 @@ jobs:
             sleep 5
           done
 
-          deploy/release/rollout.sh "${{ steps.image.outputs.ref }}" "$VERSION" ${RESTART:+"$RESTART"}
+          .release-tools/deploy/release/rollout.sh "${{ steps.image.outputs.ref }}" "$VERSION" ${RESTART:+"$RESTART"}
 
       - name: Summary
         if: success()

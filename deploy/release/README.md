@@ -1,51 +1,51 @@
-# Tag-triggered releases
+# Commit-based releases
 
-Pushing a version tag on `main` releases it to production:
-
-```sh
-git tag v1.2.3
-git push origin v1.2.3
-```
-
-[`release.yml`](../../.github/workflows/release.yml) then runs, in order:
-
-1. The CI checks (typecheck, lint, tests).
-2. Builds `Dockerfile` with `STATIC_ASSET_BASE_URL` and pushes it as `<repository>:v1.2.3`
-   and `<repository>:sha-<commit>`. If `sha-<commit>` already exists with the same
-   static base (a re-run, or another tag on the same commit), it only adds the
-   version tag to that image.
-3. Copies `/app/dist/client` out of that digest, then uploads the assets the CDN
-   does not have yet and verifies all of them with `static:upload` and
-   `static:verify` (see [static publishing](../r2/README.md)).
-4. Opens the Kubernetes API through Cloudflare Access with a service token and runs
-   [`rollout.sh`](rollout.sh): it patches the Deployment to the image digest, waits for
-   the rollout and `/api/health`, and restores the previous image if either fails.
-
-Tags that are not `vX.Y.Z[-suffix]` or not on `main` are rejected. Releases run one
-at a time. The rollout uses the Deployment's `Recreate` strategy, so players reconnect
-once per release.
-
-## Manual deploys
-
-To deploy an existing tag again, or roll back to an earlier one, open
-Actions → Release (manual) → Run workflow. Select `main` or a version tag as the workflow
-ref, enter the existing tag to deploy in `version`, and optionally enable `restart`:
+Open Actions → Release (manual) → Run workflow on `main`. Enter a full or short
+commit SHA (at least seven characters), or leave `commit` as `main` to deploy its
+latest commit. No Git tag is required, and pushing tags no longer deploys.
 
 ```sh
-gh workflow run release-manual.yml --ref main -f version=v1.2.3
-gh workflow run release-manual.yml --ref main -f version=v1.2.3 -f restart=true
+gh workflow run release-manual.yml --ref main -f commit=main
+gh workflow run release-manual.yml --ref main -f commit=dede2cb -f restart=true
 ```
 
-The entry workflow reads the target tag's commit subject and starts `Release`
-from `main`, using that subject as its run title. Its successful completion means
-the release was requested, not that deployment has finished; follow the separate
-`Release` run for deployment status. Tag pushes continue to release directly with
-the commit message as the title. The target commit must still belong to `main`.
-Older tags do not contain the entry workflow, so select `main` and enter their
-tag in `version`. Direct calls to `release.yml` remain supported; pass
-`commit_title` to set the title, or omit it to display `Release <version>`.
-If the tag's image is already running, nothing changes unless `restart` is set, which
-restarts the pod (players reconnect) and waits for `/api/health` again.
+The entry resolves the target to a full SHA, verifies it belongs to `main`, and
+starts `Release` using the target commit's subject as its title. The actual release
+validates the SHA again and uses it for all checks and the build, so a subsequent
+push cannot change the selected code. Entry success only means the release was
+requested; follow the separate `Release` run for deployment status.
+
+[`release.yml`](../../.github/workflows/release.yml) then:
+
+1. Runs typecheck, lint and tests on the selected commit.
+2. Builds and pushes `ghcr.io/hepangda/avalon:sha-<full-commit>` using the workflow's
+   `GITHUB_TOKEN` with `packages: write`. Re-runs reuse the image when its static
+   base matches. The GHCR package must remain private (the default on creation).
+3. Extracts static assets from that exact image, uploads missing CDN objects and
+   verifies them; see [static publishing](../r2/README.md).
+4. Uses deployment tooling from the workflow commit to roll Kubernetes to
+   `ghcr.io/hepangda/avalon@sha256:<digest>`, with `ghcr-pull` for authentication.
+   The image and pull-secret reference are patched together. Existing pull-secret
+   references are retained, allowing rollback to the old registry during migration.
+5. Waits for rollout and `/api/health`, restoring the previous image on failure.
+
+Releases run one at a time. `Recreate` updates reconnect players once per release.
+To roll back, request an older commit on `main`. An already-running image is left
+alone unless `restart` is selected. Direct dispatch of `release.yml` accepts
+`commit`, `restart` and optional `commit_title`.
+
+## GHCR pull credentials
+
+Create a classic GitHub personal access token with only `read:packages`, owned by
+an account that can read the private package. Store it as a Docker registry Secret
+named `ghcr-pull` in the `avalon` namespace. Do not use the workflow's short-lived
+`GITHUB_TOKEN` as a persistent Kubernetes credential. Rotate the pull token before
+it expires. Configure this Secret before the first GHCR deployment.
+
+The release ServiceAccount does not need to read or write Secrets; Kubernetes
+uses the pod's `imagePullSecrets` reference. Registry push credentials and the
+`IMAGE_REPOSITORY` variable are no longer used. Keep the old Harbor pull Secret
+until rollback to Harbor is no longer needed.
 
 ## One-time setup
 
@@ -59,12 +59,11 @@ kubectl -n avalon get secret avalon-release-token -o jsonpath='{.data.token}' | 
 In Cloudflare Zero Trust, create a service token and add a **Service Auth** policy
 that includes it to the Access application in front of the Kubernetes API.
 
-Create a GitHub environment named `production`, limited to `v*` tags and the
-`main` branch (for manual deploys), with:
+Create a GitHub environment named `production` allowing deployments from the
+`main` branch, with:
 
 | Variable | Value |
 | --- | --- |
-| `IMAGE_REPOSITORY` | Image repository without a tag, such as `registry.example.com/avalon/avalon` |
 | `STATIC_ASSET_BASE_URL` | CDN base ending in `/avalon/` |
 | `STATIC_R2_BUCKET` | Public assets bucket |
 | `PUBLIC_ORIGIN` | App HTTPS origin |
@@ -76,7 +75,6 @@ Create a GitHub environment named `production`, limited to `v*` tags and the
 
 | Secret | Value |
 | --- | --- |
-| `REGISTRY_USERNAME`, `REGISTRY_PASSWORD` | Registry account that can push the repository |
 | `CLOUDFLARE_API_TOKEN` | R2 object read/write on the bucket |
 | `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` | The Access service token |
 | `K8S_TOKEN` | The `avalon-release-token` ServiceAccount token |
