@@ -20,7 +20,7 @@ requested; follow the separate `Release` run for deployment status.
 1. Runs typecheck, lint and tests on the selected commit.
 2. Builds and pushes `ghcr.io/hepangda/avalon:sha-<full-commit>` using the workflow's
    `GITHUB_TOKEN` with `packages: write`. Re-runs reuse the image when its static
-   base matches. The GHCR package must remain private (the default on creation).
+   base matches. The GHCR package is public, so Kubernetes can also pull it anonymously.
 3. Extracts static assets from that exact image, uploads missing CDN objects and
    verifies them; see [static publishing](../r2/README.md).
 4. Uses deployment tooling from the workflow commit to roll Kubernetes to
@@ -34,9 +34,10 @@ To roll back, request an older commit on `main`. An already-running image is lef
 alone unless `restart` is selected. Direct dispatch of `release.yml` accepts
 `commit`, `restart` and optional `commit_title`.
 
-## GHCR pull credentials
+## GHCR pull credentials (optional for public images)
 
-Create a classic GitHub personal access token with only `read:packages`, owned by
+The current deployment retains `ghcr-pull` from the initial migration setup.
+Public images do not require authentication. For private images, create a classic GitHub personal access token with only `read:packages`, owned by
 an account that can read the private package. Store it as a Docker registry Secret
 named `ghcr-pull` in the `avalon` namespace. Do not use the workflow's short-lived
 `GITHUB_TOKEN` as a persistent Kubernetes credential. Rotate the pull token before

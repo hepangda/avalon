@@ -92,7 +92,7 @@ ownership health; SIGTERM drains pending room work before shutdown.
 
 Static files are served by the app by default. Optional CDN publishing is described
 in [deploy/r2](deploy/r2/README.md); Kubernetes constraints are documented in
-[deploy/k8s](deploy/k8s/README.md), and commit-based releases through private GHCR images in
+[deploy/k8s](deploy/k8s/README.md), and commit-based releases through GHCR images in
 [deploy/release](deploy/release/README.md). Site-specific infrastructure and migration
 records are not part of the public deployment instructions.
 
