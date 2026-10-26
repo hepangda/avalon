@@ -28,19 +28,22 @@ once per release.
 ## Manual deploys
 
 To deploy an existing tag again, or roll back to an earlier one, open
-Actions → Release → Run workflow. Select `main` or a version tag as the workflow
+Actions → Release (manual) → Run workflow. Select `main` or a version tag as the workflow
 ref, enter the existing tag to deploy in `version`, and optionally enable `restart`:
 
 ```sh
-gh workflow run release.yml --ref main -f version=v1.2.3
-gh workflow run release.yml --ref main -f version=v1.2.3 -f restart=true
-gh workflow run release.yml --ref v1.2.3 -f version=v1.2.3
+gh workflow run release-manual.yml --ref main -f version=v1.2.3
+gh workflow run release-manual.yml --ref main -f version=v1.2.3 -f restart=true
 ```
 
-The selected ref supplies the workflow; `version` determines which tag's commit
-is checked and deployed. The target commit must still belong to `main`.
-Older tags retain their original workflow, so tags created before manual tag-ref
-support must be deployed by selecting `main` and entering the old tag in `version`.
+The entry workflow reads the target tag's commit subject and starts `Release`
+from `main`, using that subject as its run title. Its successful completion means
+the release was requested, not that deployment has finished; follow the separate
+`Release` run for deployment status. Tag pushes continue to release directly with
+the commit message as the title. The target commit must still belong to `main`.
+Older tags do not contain the entry workflow, so select `main` and enter their
+tag in `version`. Direct calls to `release.yml` remain supported; pass
+`commit_title` to set the title, or omit it to display `Release <version>`.
 If the tag's image is already running, nothing changes unless `restart` is set, which
 restarts the pod (players reconnect) and waits for `/api/health` again.
 

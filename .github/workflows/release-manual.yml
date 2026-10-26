@@ -1,0 +1,54 @@
+name: Release (manual)
+run-name: Prepare release ${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing version tag to deploy (e.g. v1.2.3)
+        required: true
+        type: string
+      restart:
+        description: Restart the pod even if this version is already running
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: write
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Validate version
+        run: |
+          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Tag $VERSION is not a version like v1.2.3"
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ inputs.version }}
+          persist-credentials: false
+      - name: Start release with the commit title
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESTART: ${{ inputs.restart }}
+        run: |
+          title=$(git log -1 --format=%s)
+          gh workflow run release.yml --ref main \
+            -f version="$VERSION" \
+            -f restart="$RESTART" \
+            -f commit_title="$title"
+          {
+            echo "### Release requested for $VERSION"
+            echo
+            echo "This entry workflow only starts the release; follow its checks and deployment in [Release](https://github.com/$GH_REPO/actions/workflows/release.yml)."
+          } >> "$GITHUB_STEP_SUMMARY"
