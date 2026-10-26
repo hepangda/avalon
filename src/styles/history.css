@@ -47,13 +47,14 @@
   height: calc(100% - 28px);
   opacity: 0.16;
 }
-/* The recent score path, clipped inside the medal's inner ring. */
+/* Keep the entire trend subdued beneath the score, including during its reveal. */
 .history-trend {
   position: absolute;
   inset: 5px;
   width: calc(100% - 10px);
   height: calc(100% - 10px);
   clip-path: circle(50%);
+  opacity: 0.3;
 }
 .history-trend-area { animation: history-trend-rise 900ms ease-out both; }
 .history-trend-line {
@@ -64,8 +65,6 @@
   vector-effect: non-scaling-stroke;
   /* Non-scaling strokes dash in screen pixels: longer than any medal's path. */
   stroke-dasharray: 400;
-  filter: drop-shadow(0 0 3px rgb(230 193 74 / 0.6));
-  opacity: 0.9;
   animation: history-trend-draw 1100ms cubic-bezier(0.3, 0.6, 0.2, 1) both;
 }
 @keyframes history-trend-draw { from { stroke-dashoffset: 400; } }
