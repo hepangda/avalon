@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { exclusion, fitRatings, frontScore, publicRating } from './ratings';
+import { exclusion, fitRatings, deviationScore, publicRating } from './ratings';
 import { record } from './test-records';
 
 describe('ratings', () => {
-  it('starts at 1000, approaches each hidden score, and permits early loss gains', () => {
-    expect(frontScore(1800, 0)).toBe(1000);
-    expect(Math.round(frontScore(1800, 10))).toBe(1369);
-    expect(frontScore(1760, 11)).toBeGreaterThan(frontScore(1800, 10));
-    expect(frontScore(2100, 1000)).toBeCloseTo(2100);
-    expect(frontScore(900, 10)).toBeLessThan(1000);
+  it('maps hidden skill to a fixed deviation scale without clamping', () => {
+    expect([1400, 1600, 1800, 2000, 2200].map(deviationScore)).toEqual([30, 40, 50, 60, 70]);
+    expect(deviationScore(1825)).toBe(51.3);
+    expect(deviationScore(700)).toBe(-5);
+    expect(deviationScore(2900)).toBe(105);
+  });
+  it('does not award growth points and reflects losses immediately', () => {
+    const player = { hidden: 1800, sd: 0.5, games: 0, lastPlayed: 1 };
+    expect([0, 10, 60, 1000].map(games => publicRating({ ...player, games }).score)).toEqual([50, 50, 50, 50]);
+    expect(publicRating(fitRatings([record('loss', 'evil')]).players.get('account0')).score).toBeLessThan(50);
+    expect(publicRating(fitRatings([record()]).players.get('account0')).score).toBeGreaterThan(50);
   });
   it('uses the final outcome even for early assassination and rewards no activity in hidden skill', () => {
     const good = fitRatings([record()]);
@@ -51,6 +56,6 @@ describe('ratings', () => {
     const value = publicRating(fitRatings([record()]).players.get('account0'));
     expect(Object.keys(value).sort()).toEqual(['confidence', 'ratedGames', 'score', 'title']);
     expect(value.title).toBe('capable');
-    expect(publicRating(undefined)).toEqual({ score: 1000, ratedGames: 0, title: 'beginner', confidence: 'insufficient' });
+    expect(publicRating(undefined)).toEqual({ score: 50, ratedGames: 0, title: 'beginner', confidence: 'insufficient' });
   });
 });

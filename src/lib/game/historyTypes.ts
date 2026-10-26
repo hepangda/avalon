@@ -6,6 +6,7 @@ export type RatingConfidence = 'insufficient' | 'tentative' | 'supported' | 'sta
 export type UnratedReason = 'bots' | 'legacy' | 'altered' | 'identity' | 'invalid';
 
 export interface PublicRating {
+  /** Fixed-reference deviation score: 50 + 10 × (hidden − 1800) / 200, rounded to one decimal. */
   score: number;
   ratedGames: number;
   title: RatingTitle;

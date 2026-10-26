@@ -97,9 +97,9 @@ describe('game records', () => {
     const page = historyGames(book, 'account0', 0);
     const firstScore = publicRating(fitRatings([first]).players.get('account0')).score;
     const before = publicRating(fitRatings([first, ...others]).players.get('account0')).score;
-    expect(page.games.find(g => g.gameId === 'z-first')!.seat!.delta).toBe(firstScore - 1000);
-    expect(page.games[0]!.seat!.delta).toBe(book.rating('account0').score - before);
-    expect(historyProfile(book, 'account0').trend).toEqual([1000, firstScore, book.rating('account0').score]);
+    expect(page.games.find(g => g.gameId === 'z-first')!.seat!.delta).toBeCloseTo(firstScore - 50, 10);
+    expect(page.games[0]!.seat!.delta).toBeCloseTo(book.rating('account0').score - before, 10);
+    expect(historyProfile(book, 'account0').trend).toEqual([50, firstScore, book.rating('account0').score]);
     expect(historyProfile(book, 'stranger').trend).toEqual([]);
   });
 
@@ -186,7 +186,7 @@ describe('history HTTP', () => {
     const response = await get('/api/history?account=someone-else');
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
-    expect(await response.json()).toMatchObject({ rating: { score: 1000, ratedGames: 0 }, total: { games: 0 } });
+    expect(await response.json()).toMatchObject({ rating: { score: 50, ratedGames: 0 }, total: { games: 0 } });
     for (const query of ['?offset=-1', '?offset=1.5'])
       expect((await get(`/api/history/games${query}`)).status).toBe(400);
   });

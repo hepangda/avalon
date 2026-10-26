@@ -66,10 +66,10 @@ function Dossier({ profile, failed, onRetry }: { profile: HistoryProfile | null;
   return (
     <section className="history-dossier" aria-label={t('history.dossier')} aria-busy={!profile && !failed}>
       <div className="history-plate">
-        <div className="history-medal" data-title={profile?.rating.title}>
+        <div className="history-medal" data-title={profile?.rating.title} title={t('history.scoreHelp')} aria-label={t('seatMenu.score')}>
           <GameIcon name="crest" className="history-medal-crest" />
           {profile && <ScoreTrend scores={profile.trend} />}
-          <strong className="history-score tabular-nums">{profile ? profile.rating.score : '—'}</strong>
+          <strong className="history-score tabular-nums">{profile ? profile.rating.score.toFixed(1) : '—'}</strong>
         </div>
         <div className="history-identity">
           {user && (
@@ -79,6 +79,7 @@ function Dossier({ profile, failed, onRetry }: { profile: HistoryProfile | null;
             </p>
           )}
           {profile && <>
+            <p className="history-confidence">{t('seatMenu.score')}</p>
             <p className="history-title">{t(`history.titles.${profile.rating.title}`)}</p>
             <p className="history-confidence">
               {t(`history.confidence.${profile.rating.confidence}`)} · {t('history.ratedGames', { count: profile.rating.ratedGames })}
@@ -194,7 +195,7 @@ function ScoreTrend({ scores }: { scores: number[] }) {
   const low = Math.min(...scores);
   const high = Math.max(...scores);
   // A few points of drift should not read as a cliff.
-  const pad = Math.max(0, 60 - (high - low)) / 2;
+  const pad = Math.max(0, 3 - (high - low)) / 2;
   const line = smoothPath(scores.map((score, i): Point => [
     -4 + (i / (scores.length - 1)) * 108,
     82 - ((score - low + pad) / (high - low + 2 * pad)) * 44,
@@ -318,7 +319,7 @@ function GameRow({ game }: { game: HistoryGame }) {
         {seat && (
           <span className="history-game-score">
             {seat.delta !== null
-              ? <b className="tabular-nums" data-sign={Math.sign(seat.delta)}>{seat.delta > 0 ? `+${seat.delta}` : seat.delta}</b>
+              ? <b className="tabular-nums" data-sign={Math.sign(seat.delta)}>{seat.delta > 0 ? `+${seat.delta.toFixed(1)}` : seat.delta.toFixed(1)}</b>
               : <small>{t(`history.unrated.${game.unrated ?? 'legacy'}`)}</small>}
           </span>
         )}

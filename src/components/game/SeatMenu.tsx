@@ -198,9 +198,9 @@ export function SeatMenu({ code, player, anchor, isMe, actions, onClose, showSea
           </p>
         </div>
         {hasRecord && (
-          <div className="seat-menu-medal" data-title={rating?.title} aria-label={rating ? `${t('seatMenu.score')} ${rating.score}` : undefined}>
+          <div className="seat-menu-medal" title={t('history.scoreHelp')} data-title={rating?.title} aria-label={rating ? `${t('seatMenu.score')} ${rating.score.toFixed(1)}` : undefined}>
             <GameIcon name="crest" className="seat-menu-medal-crest" />
-            <strong className="tabular-nums">{rating ? rating.score : record === null ? '—' : ''}</strong>
+            <strong className="tabular-nums">{rating ? rating.score.toFixed(1) : record === null ? '—' : ''}</strong>
           </div>
         )}
       </header>

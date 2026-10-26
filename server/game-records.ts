@@ -2,7 +2,7 @@ import { teamOf, type Role } from '@/lib/engine';
 import type { HistoryGame, HistoryGamesPage, HistoryProfile, SeatRecord, TeamRecord } from '@/lib/game/historyTypes';
 import type { ReplayData } from '@/lib/game/replayTypes';
 import type { Persistence, RoomDocument } from './persistence';
-import { exclusion, fitRatings, publicRating, type RatingPolicy } from './ratings';
+import { exclusion, fitRatings, INITIAL_PUBLIC_SCORE, publicRating, type RatingPolicy } from './ratings';
 
 /** An archived game with its private seat links. The links themselves never leave the server. */
 export interface GameRecord {
@@ -82,14 +82,15 @@ class RecordBook {
   delta(game: GameRecord, account: string): number | null {
     const index = this.rated.indexOf(game);
     if (index < 0) return null;
-    return (this.scoresAfter(index + 1).get(account) ?? 1000) - (this.scoresAfter(index).get(account) ?? 1000);
+    const difference = (this.scoresAfter(index + 1).get(account) ?? INITIAL_PUBLIC_SCORE) - (this.scoresAfter(index).get(account) ?? INITIAL_PUBLIC_SCORE);
+    return Math.round(difference * 10) / 10;
   }
 
   /** The account's score before its last `limit` rated games and after each of them, oldest first. */
   trend(account: string, limit = 20): number[] {
     const played = this.rated.flatMap((game, index) => Object.values(game.seats).includes(account) ? [index] : []).slice(-limit);
     if (!played.length) return [];
-    const score = (count: number) => this.scoresAfter(count).get(account) ?? 1000;
+    const score = (count: number) => this.scoresAfter(count).get(account) ?? INITIAL_PUBLIC_SCORE;
     return [score(played[0]!), ...played.map((index) => score(index + 1))];
   }
 }

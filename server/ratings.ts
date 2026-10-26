@@ -13,9 +13,14 @@ function participantAccount(game: GameRecord, playerId: string): string | undefi
     ? JSON.stringify(['local-rating-bot', playerId])
     : game.seats[playerId];
 }
-export const RATING_VERSION = 'bt-map-v1-1800';
+export const RATING_VERSION = 'bt-map-v1-deviation-v1';
 const SCALE = 400 / Math.log(10);
-export const frontScore = (hidden: number, games: number) => 1000 + (1 - 0.94 ** games) * (hidden - 1000);
+// Fixed display calibration, not an empirical standard deviation of current players.
+const REFERENCE_MEAN = 1800;
+const REFERENCE_SCALE = 200;
+export const INITIAL_PUBLIC_SCORE = 50;
+export const deviationScore = (hidden: number) =>
+  Math.round((50 + 10 * (hidden - REFERENCE_MEAN) / REFERENCE_SCALE) * 10) / 10;
 export function exclusion(game: GameRecord, policy: RatingPolicy = {}): UnratedReason | null {
   const { replay: r } = game;
   if (!policy.includeBots && r.players.some(p => p.isBot)) return 'bots';
@@ -116,10 +121,10 @@ export function fitRatings(input: GameRecord[], policy: RatingPolicy = {}) {
 const TITLES: RatingTitle[] = ['beginner', 'learning', 'capable', 'expert', 'master'];
 /** The only projection of a fit that leaves the server. */
 export function publicRating(player: RatedPlayer | undefined, now = Date.now()): PublicRating {
-  if (!player) return { score: 1000, ratedGames: 0, title: 'beginner', confidence: 'insufficient' };
+  if (!player) return { score: INITIAL_PUBLIC_SCORE, ratedGames: 0, title: 'beginner', confidence: 'insufficient' };
   const { hidden, sd, games, lastPlayed } = player;
   const tier = hidden < 1600 ? 0 : hidden < 1750 ? 1 : hidden < 1850 ? 2 : hidden < 2000 ? 3 : 4;
-  return { score: Math.round(frontScore(hidden, games)), ratedGames: games,
+  return { score: deviationScore(hidden), ratedGames: games,
     title: TITLES[tier]!,
     confidence: now - lastPlayed > 90 * 86400000 ? 'stale' : sd > 0.8 ? 'insufficient' : sd > 0.6 ? 'tentative' : 'supported' };
 }

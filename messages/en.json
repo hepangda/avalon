@@ -569,7 +569,7 @@
   "seatMenu": {
     "label": "Seat {seat}, {name}",
     "record": "Record",
-    "score": "Rating",
+    "score": "Deviation score",
     "markRole": "Mark role",
     "emotes": "Reactions",
     "transferHost": "Make host",
@@ -611,6 +611,7 @@
     "emptyHint": "Create a room and invite your friends to take a seat"
   },
   "history": {
+    "scoreHelp": "50 is the reference level; your score rises or falls with results. New players start at 50.0. The fixed scale does not describe the current player population’s actual distribution.",
     "title": "Record",
     "dossier": "Your record",
     "chronicle": "Games",

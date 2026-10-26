@@ -14,8 +14,8 @@ Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 afterEach(() => { vi.unstubAllGlobals(); });
 
 const profile: HistoryProfile = {
-  rating: { score: 1369, ratedGames: 10, title: 'capable', confidence: 'tentative' },
-  trend: [1000, 1180, 1290, 1369],
+  rating: { score: 50, ratedGames: 10, title: 'capable', confidence: 'tentative' },
+  trend: [50, 51.2, 49.7, 50],
   total: { games: 11, wins: 6 },
   teams: { good: { games: 7, wins: 4 }, evil: { games: 4, wins: 2 } },
   roles: [{ role: 'Merlin', games: 3, wins: 2 }],
@@ -35,8 +35,8 @@ it('shows the plate, scores each game and pages the chronicle', async () => {
   });
   const pages: Record<string, HistoryGamesPage> = {
     '0': { total: 3, next: 2, games: [
-      game('won', { role: 'Merlin', won: true, delta: 42 }),
-      game('lost', { role: 'Merlin', won: false, delta: -11 }),
+      game('won', { role: 'Merlin', won: true, delta: 2.1 }),
+      game('lost', { role: 'Merlin', won: false, delta: -0.6 }),
     ] },
     '2': { total: 3, next: null, games: [game('bots', { role: 'Percival', won: true, delta: null }, 'bots')] },
   };
@@ -53,11 +53,12 @@ it('shows the plate, scores each game and pages the chronicle', async () => {
     });
     const text = () => container.textContent ?? '';
     expect(text()).toContain('Arthur');
-    expect(text()).toContain('1369');
+    expect(text()).toContain('偏差值');
+    expect(text()).toContain('50.0');
     expect(text()).toContain('应对自如');
     expect(text()).toContain('55%');
-    expect(text()).toContain('+42');
-    expect(text()).toContain('-11');
+    expect(text()).toContain('+2.1');
+    expect(text()).toContain('-0.6');
     expect(container.querySelector('a[href="/replay/won"]')).not.toBeNull();
 
     const counts = () => [...container.querySelectorAll('.history-side-count, .history-role-count')].map((c) => c.textContent);

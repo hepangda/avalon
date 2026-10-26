@@ -569,7 +569,7 @@
   "seatMenu": {
     "label": "{seat} 号 {name}",
     "record": "战绩",
-    "score": "对局分",
+    "score": "偏差值",
     "markRole": "标记身份",
     "emotes": "表情",
     "transferHost": "设为房主",
@@ -611,6 +611,7 @@
     "emptyHint": "创建一个房间，邀请朋友入座吧"
   },
   "history": {
+    "scoreHelp": "以 50 为参考水平，随对局表现升降。新人从 50.0 开始估计；固定参考尺度不代表当前玩家群体的实际分布。",
     "title": "战绩",
     "dossier": "个人战绩",
     "chronicle": "对局",
