@@ -13,7 +13,7 @@ function participantAccount(game: GameRecord, playerId: string): string | undefi
     ? JSON.stringify(['local-rating-bot', playerId])
     : game.seats[playerId];
 }
-export const RATING_VERSION = 'bt-map-v1-deviation-v1';
+export const RATING_VERSION = 'bt-map-v1-deviation-v2';
 const SCALE = 400 / Math.log(10);
 // Fixed display calibration, not an empirical standard deviation of current players.
 const REFERENCE_MEAN = 1800;
@@ -25,7 +25,7 @@ export function exclusion(game: GameRecord, policy: RatingPolicy = {}): UnratedR
   const { replay: r } = game;
   if (!policy.includeBots && r.players.some(p => p.isBot)) return 'bots';
   if ((game.altered === null || !r.options) && game.ratingImport !== 'name-recovery-v1') return 'legacy';
-  if (game.altered) return 'altered';
+  // Rerolls, rewinds and referee actions are rated using the final archived result.
   const accounts = r.players.map(p => participantAccount(game, p.id));
   if (accounts.some(a => !a) || new Set(accounts).size !== accounts.length) return 'identity';
   if (r.players.length < 5 || r.players.length > 10 || r.roleAssignments.length !== r.players.length ||

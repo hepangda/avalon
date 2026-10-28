@@ -37,7 +37,7 @@ describe('explicit historical name recovery', () => {
     g.ratingImport = 'name-recovery-v1';
     expect(exclusion(g)).toBeNull();
     expect(fitRatings([g]).players.size).toBe(5);
-    g.altered = true; expect(exclusion(g)).toBe('altered');
+    g.altered = true; expect(exclusion(g)).toBeNull();
     g.altered = null; g.replay.players[1]!.isBot = true; expect(exclusion(g)).toBe('bots');
   });
 });

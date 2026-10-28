@@ -34,6 +34,22 @@ describe('game records', () => {
     expect(JSON.stringify(profile)).not.toContain('hidden');
   });
 
+  it('includes previously altered archives in scores, trends and game deltas', async () => {
+    const db = new MemoryPersistence();
+    const game = record('previously-altered');
+    game.altered = true;
+    seed(db, game);
+    const book = await recordBook(db);
+    const profile = historyProfile(book, 'account0');
+    expect(profile.rating.ratedGames).toBe(1);
+    expect(profile.rating.score).toBeGreaterThan(50);
+    expect(profile.trend).toEqual([50, profile.rating.score]);
+    expect(historyGames(book, 'account0', 0).games[0]).toMatchObject({
+      unrated: null,
+      seat: { delta: Math.round((profile.rating.score - 50) * 10) / 10 },
+    });
+  });
+
   it('shows tablemates a plate with at most three roles and no games', async () => {
     const db = new MemoryPersistence();
     const roles = ['Merlin', 'Percival', 'LoyalServant', 'Morgana'] as const;

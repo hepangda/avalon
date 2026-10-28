@@ -646,7 +646,6 @@
     "unrated": {
       "bots": "Bots",
       "legacy": "Older game",
-      "altered": "Rewound",
       "identity": "Unlinked",
       "invalid": "Incomplete"
     },

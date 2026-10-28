@@ -28,15 +28,25 @@ describe('ratings', () => {
     expect(a.parameters).toEqual(b.parameters);
     expect(a.covariance[0]![0]! + a.covariance[1]![1]! - 2 * a.covariance[0]![1]!).toBeCloseTo(2, 8);
   });
-  it.each(['bots', 'legacy', 'altered', 'identity', 'invalid'] as const)('excludes %s from the model', reason => {
+  it.each(['bots', 'legacy', 'identity', 'invalid'] as const)('excludes %s from the model', reason => {
     const g = record();
     if (reason === 'bots') g.replay.players[0]!.isBot = true;
     if (reason === 'legacy') g.altered = null;
-    if (reason === 'altered') g.altered = true;
     if (reason === 'identity') delete g.seats.p0;
     if (reason === 'invalid') g.replay.roleAssignments.pop();
     expect(exclusion(g)).toBe(reason);
     expect(fitRatings([g]).players.size).toBe(0);
+  });
+  it('rates altered archives identically to ordinary games using their final result', () => {
+    for (const winner of ['good', 'evil'] as const) {
+      const game = record('altered', winner);
+      const ordinary = fitRatings([game]);
+      game.altered = true;
+      expect(exclusion(game)).toBeNull();
+      expect(fitRatings([game]).players).toEqual(ordinary.players);
+      delete game.seats.p0;
+      expect(exclusion(game)).toBe('identity');
+    }
   });
   it('rates local bot games under their own identities when the policy allows it', () => {
     const g = record();

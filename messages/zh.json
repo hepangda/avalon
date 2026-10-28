@@ -646,7 +646,6 @@
     "unrated": {
       "bots": "含机器人",
       "legacy": "旧对局",
-      "altered": "有回退",
       "identity": "身份不全",
       "invalid": "数据不全"
     },
