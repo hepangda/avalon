@@ -79,10 +79,10 @@ function Dossier({ profile, failed, onRetry }: { profile: HistoryProfile | null;
             </p>
           )}
           {profile && <>
-            <p className="history-confidence">{t('seatMenu.score')}</p>
+            <p className="history-meta">{t('seatMenu.score')}</p>
             <p className="history-title">{t(`history.titles.${profile.rating.title}`)}</p>
-            <p className="history-confidence">
-              {t(`history.confidence.${profile.rating.confidence}`)} · {t('history.ratedGames', { count: profile.rating.ratedGames })}
+            <p className="history-meta">
+              {t('history.ratedGames', { count: profile.rating.ratedGames })}
             </p>
           </>}
           {failed && (

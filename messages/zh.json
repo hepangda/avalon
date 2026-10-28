@@ -637,12 +637,6 @@
       "expert": "深谙局势",
       "master": "运筹帷幄"
     },
-    "confidence": {
-      "insufficient": "参考不足",
-      "tentative": "估计暂定",
-      "supported": "已有参考",
-      "stale": "近期参考不足"
-    },
     "unrated": {
       "bots": "含机器人",
       "legacy": "旧对局",

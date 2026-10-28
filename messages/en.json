@@ -637,12 +637,6 @@
       "expert": "Reading the table",
       "master": "Commanding the game"
     },
-    "confidence": {
-      "insufficient": "Limited evidence",
-      "tentative": "Tentative",
-      "supported": "Supported",
-      "stale": "Little recent play"
-    },
     "unrated": {
       "bots": "Bots",
       "legacy": "Older game",
