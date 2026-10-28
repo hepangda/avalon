@@ -1,11 +1,7 @@
 import type { HeartbeatState, ViewSnapshot } from './stateIntegrity';
 import type {
-  ClientGameState,
   GameOptions,
   PlayerId,
-  Role,
-  Team,
-  VisibilityInfo,
 } from '@/lib/engine';
 import type { RoleNotesDocument, RoleNotesSyncRequest } from '@/lib/game/roleNotes';
 import type { Emote, EmoteEvent } from '@/lib/game/emotes';
@@ -94,12 +90,12 @@ export interface Ack<T = undefined> {
   data?: T;
 }
 
-/** Events the client emits. The third arg is always an ack callback. */
+/** Client requests pair a payload with an acknowledgement callback. */
 export interface ClientToServerEvents {
   /** Private, seat-authenticated notes; never broadcast or included in replay. */
   'notes:sync': (p: RoleNotesSyncRequest, ack: (r: Ack<RoleNotesDocument>) => void) => void;
   'room:join': (
-    p: { code: string; playerId?: PlayerId; playerToken?: string; hostToken?: string; syncVersion?: 1 },
+    p: { code: string; playerId?: PlayerId; playerToken?: string; hostToken?: string },
     ack: (r: Ack<{ playerId?: PlayerId; playerToken?: string; isHost: boolean }>) => void,
   ) => void;
   'room:resync': (p: Record<string, never>, ack: (r: Ack) => void) => void;
@@ -113,8 +109,7 @@ export interface ClientToServerEvents {
   'room:start': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:restart': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'room:removeSeat': (p: { seatId: PlayerId }, ack: (r: Ack) => void) => void;
-  /** Omit seatId to sit in the lobby, allocating a seat up to the 10-player limit.
-   * During a game, an existing empty seat must be selected explicitly. */
+  /** Lobby only. Omit seatId to allocate a seat up to the 10-player limit. */
   'room:claimSeat': (
     p: { seatId?: PlayerId; name?: string; avatarUrl?: string },
     ack: (r: Ack<{ playerId: PlayerId; playerToken: string }>) => void,
@@ -149,9 +144,9 @@ export interface ClientToServerEvents {
   // player" action itself, so the operator's client never assumes the target's
   // identity and never receives the target's private role/vision.
   // -------------------------------------------------------------------------
-  /** Enable referee powers for this socket. Logs an "opened panel" notice. */
+  /** Enable referee powers for this socket. */
   'admin:auth': (p: Record<string, never>, ack: (r: Ack<{ ok: boolean }>) => void) => void;
-  /** Drop this socket's admin power (logs a public notice). */
+  /** Drop this socket's referee powers. */
   'admin:close': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   /** Unbind a player from their seat (frees it for re-claim; full history is
    *  restored to whoever claims it next). Admin only. */
@@ -178,10 +173,6 @@ export interface ServerToClientEvents {
   'view:sync': (snapshot: ViewSnapshot) => void;
   'net:latency': (update: PlayerLatency) => void;
   'table:emote': (event: EmoteEvent) => void;
-  'state:sync': (state: ClientGameState) => void;
-  'room:snapshot': (snapshot: RoomSnapshot) => void;
-  'private:reveal': (p: { selfRole: Role; knownPlayers: VisibilityInfo[] }) => void;
-  'private:lady': (p: { targetId: PlayerId; loyalty: Team }) => void;
   'system:notice': (p: { type: string; message?: string }) => void;
   error: (p: { code: string; message: string }) => void;
 }

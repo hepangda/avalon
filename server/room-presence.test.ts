@@ -204,8 +204,8 @@ describe('room presence deadlines and host succession', () => {
   it('publishes the new host to reliable clients after the ownership commit', async () => {
     const h = roomHarness();
     const next = h.sockets[1]!;
-    await h.action(h.host, 'room:join', { syncVersion: 1, playerId: 'p0', playerToken: 'token-0', hostToken: 'host-secret' });
-    await h.action(next, 'room:join', { syncVersion: 1, playerId: 'p2', playerToken: 'token-2' });
+    await h.action(h.host, 'room:join', { playerId: 'p0', playerToken: 'token-0', hostToken: 'host-secret' });
+    await h.action(next, 'room:join', { playerId: 'p2', playerToken: 'token-2' });
     await h.action(h.host, 'room:leave');
     const view = next.messages.filter((message) => message.event === 'view:sync').at(-1)!.payload;
     expect(view).toMatchObject({ view: { isHost: true, playerId: 'p2', room: { hostPlayerId: 'p2' } } });

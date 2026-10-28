@@ -7,7 +7,6 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { WebSocket } from "ws";
 import type { Ack } from "@/lib/socket/types";
-import type { ClientGameState } from "@/lib/engine";
 import { PostgresPersistence } from "./database";
 import { Room } from "./room";
 import { RoomConflict } from "./persistence";
@@ -44,10 +43,7 @@ class Peer implements RoomSocket {
     return this.attachment;
   }
   get game() {
-    return this.messages
-      .slice()
-      .reverse()
-      .find((m) => m.event === "state:sync")?.payload as ClientGameState;
+    return (this.messages.filter((m) => m.event === 'view:sync').at(-1)?.payload as ViewSnapshot | undefined)?.view.game!;
   }
 }
 let sequence = 0;
@@ -113,7 +109,7 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
     const created = await room.init({ code: '1234', creator: { name: 'Host', account: 'host' } });
     if (!created.ok) throw new Error('init');
     const peer = new Peer(); peer.attachment.account = 'host'; room.addSocket(peer);
-    await action(room, peer, 'room:join', { ...created, syncVersion: 1 });
+    await action(room, peer, 'room:join', { ...created });
     expect((await db.listPublicRooms(1)).rooms).toEqual([]);
     expect((await action(room, peer, 'room:details', { name: 'Round table', visibility: 'public' })).ok).toBe(true);
     const published = (await db.loadRoom('1234'))!;
@@ -160,7 +156,7 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
     const created = await room.init({ code: '1234', creator: { name: 'Host', account: 'host' } });
     if (!created.ok) throw new Error('init');
     const peer = new Peer(); peer.attachment.account = 'host'; room.addSocket(peer);
-    await action(room, peer, 'room:join', { ...created, syncVersion: 1 });
+    await action(room, peer, 'room:join', { ...created });
     const first = (await db.loadRoom('1234'))!;
     const rawBefore = (await db.pool.query('SELECT document, snapshot_version FROM avalon_rooms WHERE code = $1', ['1234'])).rows[0];
     await action(room, peer, 'room:rename', { name: 'Renamed' });
@@ -663,7 +659,7 @@ describe.skipIf(!url)("PostgreSQL persistence and recovery", () => {
           t: "req",
           id: "join",
           event: "room:join",
-          payload: { ...tokens[0], syncVersion: 1 },
+          payload: { ...tokens[0] },
         }),
       );
       await vi.waitFor(() =>

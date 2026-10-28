@@ -83,11 +83,6 @@ describe('Lady of the Lake', () => {
     const r = reduce(s, { type: 'USE_LADY', by: holder, target: mordred }, CTX);
     expect(r.ok).toBe(true);
     if (r.ok) {
-      const priv = r.effects.find((e) => e.kind === 'PRIVATE_LADY');
-      expect(priv).toBeDefined();
-      if (priv && priv.kind === 'PRIVATE_LADY') {
-        expect(priv.loyalty).toBe('evil');
-      }
       expect(r.state.lastLadyResult?.loyalty).toBe('evil');
     }
   });

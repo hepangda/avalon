@@ -31,10 +31,8 @@ interface MembershipEffects {
   send(ws: RoomSocket, event: string, payload: unknown): void;
   wsForPlayer(id: string): RoomSocket | undefined;
   applyEvent(event: GameEvent): Promise<Ack>;
-  broadcastRoom(): void;
-  syncOne(id: string): void;
-  syncSpectator(ws: RoomSocket): void;
-  negotiateView(ws: RoomSocket): void;
+  broadcastView(): void;
+  requestView(ws: RoomSocket): void;
   retireAfterCommit(ws: RoomSocket): void;
 }
 /** Seat/account changes and lobby commands execute within the caller's transaction. */
@@ -53,9 +51,7 @@ export class RoomMembership {
       hostToken?: string;
     };
 
-    if ((payload as { syncVersion?: number } | null)?.syncVersion === 1) {
-      this.effects.negotiateView(ws);
-    }
+    this.effects.requestView(ws);
     const account = this.effects.attach(ws).account!;
     // Account ownership takes precedence over browser-local reconnect tokens.
     const ownedSeat = [...this.state.members.values()].find(
@@ -78,7 +74,6 @@ export class RoomMembership {
       if (attachment.account !== account && (!member || attachment.playerId !== member.id)) continue;
       this.effects.setAttach(existing, { playerId: undefined, isHost: false, isAdmin: false });
       this.effects.send(existing, "system:notice", { type: "session_replaced" });
-      if (this.state.game) this.effects.syncSpectator(existing);
       this.effects.retireAfterCommit(existing);
     }
 
@@ -92,14 +87,12 @@ export class RoomMembership {
       this.bindAccount(ws, playerId);
       if (this.state.game)
         await this.effects.applyEvent({ type: "SET_CONNECTED", by: playerId, connected: true });
-      this.effects.broadcastRoom();
-      if (this.state.game) this.effects.syncOne(playerId);
+      this.effects.broadcastView();
       return ok({ playerId, playerToken, isHost });
     }
 
     // Unseated → spectator view.
-    this.effects.broadcastRoom();
-    if (this.state.game) this.effects.syncSpectator(ws);
+    this.effects.broadcastView();
     return ok({ isHost });
   }
 
@@ -124,7 +117,7 @@ export class RoomMembership {
     delete target.avatarUrl;
     delete target.latency;
     this.persistPlayer(target);
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok();
   }
 
@@ -197,7 +190,7 @@ export class RoomMembership {
     this.persistPlayer(target);
     this.effects.setAttach(ws, { playerId: seatId });
     this.bindAccount(ws, seatId);
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok({ playerId: seatId, playerToken });
   }
 
@@ -213,9 +206,8 @@ export class RoomMembership {
         by: pid,
         connected: false,
       });
-      this.effects.syncSpectator(ws);
     }
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok();
   }
 
@@ -231,7 +223,7 @@ export class RoomMembership {
     const { names } = (payload ?? {}) as { names?: string[] };
     const res = await this.applyRoster(names ?? []);
     if (!res.ok) return res;
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok();
   }
 
@@ -246,7 +238,7 @@ export class RoomMembership {
     }
     this.state.meta.name = name.trim();
     this.state.meta.visibility = visibility;
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok();
   }
 
@@ -261,7 +253,7 @@ export class RoomMembership {
       sanitizeConfig(config, this.state.meta.config.roster),
       activePlayers(this.state.members).filter((member) => member.claimed).length,
     );
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok();
   }
 
@@ -293,7 +285,7 @@ export class RoomMembership {
     this.state.members.delete(target.id);
     for (const seat of remaining) this.state.members.set(seat.id, seat);
     this.state.meta.config = config;
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok();
   }
 
@@ -315,7 +307,7 @@ export class RoomMembership {
     }
     member.name = desired;
     this.persistPlayer(member);
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok({ name: desired });
   }
 
@@ -336,7 +328,7 @@ export class RoomMembership {
         message: "You were removed",
       });
     this.releaseSeat(targetPlayerId);
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok();
   }
 
@@ -364,7 +356,7 @@ export class RoomMembership {
     if (!this.state.meta) return ok();
     const pid = this.effects.attach(ws).playerId;
     if (!pid) {
-      this.effects.broadcastRoom();
+      this.effects.broadcastView();
       return ok();
     }
     this.releaseSeat(pid);
@@ -374,7 +366,7 @@ export class RoomMembership {
         by: pid,
         connected: false,
       });
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
     return ok();
   }
 
@@ -399,7 +391,7 @@ export class RoomMembership {
     }
     if (this.state.game)
       await this.effects.applyEvent({ type: "SET_CONNECTED", by: pid, connected: false });
-    this.effects.broadcastRoom();
+    this.effects.broadcastView();
   }
 
 

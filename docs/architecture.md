@@ -46,7 +46,7 @@ PostgreSQL is authoritative; room objects are disposable caches:
    separately. Idle rooms are evicted after five minutes once pending work finishes.
    Completed replays and account aliases have no automatic expiry.
 
-The browser negotiates synchronization version 1 at join. Each `view:sync` is a
+All room connections use `view:sync`. Each message is a
 complete, atomic room/game/identity view carrying a runtime epoch, increasing view
 revision and SHA-256 digest. Only the authenticated viewer's projection is hashed;
 server secrets never enter this protocol. Latency and sampled `serverTime` are
@@ -60,7 +60,9 @@ blocks interaction until a verified full view replaces state and clears stale
 presentations and pending UI actions. Old snapshots/socket callbacks are ignored;
 failed recovery retries on later heartbeats rather than looping immediately.
 A referee rewind advances the view revision. A restart establishes a new epoch.
-Older clients retain the legacy push protocol, without integrity verification.
+The retired `state:sync`, `room:snapshot`, `private:reveal` and `private:lady`
+protocol is no longer emitted. Clients that predate atomic views must reload
+the application after an upgrade.
 
 Run **one application process** per database (no PM2 cluster or multiple replicas).
 A dedicated connection holds a PostgreSQL advisory lock; startup rejects a second
@@ -69,8 +71,16 @@ processes after ownership changes. A lost owner connection stops the server so t
 process manager can restart it. Use a direct PostgreSQL connection (or session-mode
 pooling), not PgBouncer transaction pooling, for this ownership connection.
 
-Four-digit room codes still provide 10,000 retained rooms. Automatic room deletion
-is not implemented. PostgreSQL backups remain necessary for disk/database loss;
+Four-digit room codes provide 10,000 possible active rooms. A lobby with no seated
+humans dissolves immediately. When all seated humans are offline, lobbies expire
+after ten minutes and started/finished rooms after one hour. Host departure
+transfers ownership to an online human; a disconnected host has a five-minute
+grace period. When succession is required but no eligible player remains, the
+room dissolves, except that a started/finished game with a disconnected host
+keeps its one-hour grace period. Dissolution deletes room state and its journal
+after pending checkpoints finish; completed replays remain archived.
+
+PostgreSQL backups remain necessary for disk/database loss;
 application crash recovery is not a substitute for backups. Backups and migrations
 must capture both `avalon_rooms` and `avalon_room_journal` in one consistent database
 snapshot. A snapshot-only server is not compatible with
@@ -93,9 +103,8 @@ contact the provider; WebSocket verification also skips display preferences and
 daily rewards.
 
 The current browser store accepts an atomic verified view and reads private
-identity and Lady results directly from that game projection. Old server push
-messages remain supported for older clients. Account-less seat tokens and game
-flow versions 1–4 remain necessary for existing rooms and event logs; they are
-not dead code. Removing these adapters requires a separate migration with a
-known data inventory and client refresh window. Room/replay expiry is unchanged;
-source cleanup never deletes persistent game data.
+identity and Lady results directly from that game projection. Account-less seat
+tokens and game flow versions 1–4 still support existing rooms and event logs.
+Removing those data adapters requires a known data inventory and migration.
+Live protocol compatibility is separate from stored-data compatibility; removing
+retired push messages does not change room snapshots or archived replays.

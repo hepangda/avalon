@@ -20,15 +20,13 @@ interface ViewContext {
 /** Per-viewer committed snapshots and digests; called only after persistence succeeds. */
 export class RoomViews {
   private readonly epoch = randomUUID();
-  private reliableSockets = new WeakSet<RoomSocket>();
   private committedViews = new WeakMap<RoomSocket, ViewSnapshot>();
   private committedAttachments = new WeakMap<RoomSocket, SocketAttachment>();
   dirty = false;
   private viewRevision = 0;
   private forceViews = new WeakSet<RoomSocket>();
   constructor(private readonly context: ViewContext) { }
-  enable(ws: RoomSocket) { this.reliableSockets.add(ws); this.forceViews.add(ws); }
-  isReliable(ws: RoomSocket) { return this.reliableSockets.has(ws); }
+  request(ws: RoomSocket) { this.forceViews.add(ws); this.dirty = true; }
   get(ws: RoomSocket) { return this.committedViews.get(ws); }
   attachment(ws: RoomSocket) { return this.committedAttachments.get(ws); }
   invalidate() { this.committedViews = new WeakMap(); }
@@ -40,7 +38,7 @@ export class RoomViews {
   }
 
 
-  project(playerId: string): ClientGameState {
+  private project(playerId: string): ClientGameState {
     const view = projectStateForViewer(this.context.state.game!, playerId);
     view.serverTime = Date.now();
     view.gameId = this.context.state.meta?.gameId ?? null;
@@ -60,7 +58,7 @@ export class RoomViews {
   }
 
 
-  currentHostPlayerId(): string | null {
+  private currentHostPlayerId(): string | null {
     for (const ws of [...this.context.sockets]) {
       const attachment = this.context.attach(ws);
       if (attachment.isHost && attachment.playerId) return attachment.playerId;
@@ -69,7 +67,7 @@ export class RoomViews {
   }
 
 
-  roomSnapshot() {
+  private roomSnapshot() {
     const result = snapshot(this.context.state.meta!, this.context.state.members, this.currentHostPlayerId());
     return {
       ...result, members: result.members.map((member) => ({
@@ -84,7 +82,7 @@ export class RoomViews {
     if (!this.context.state.meta) return;
     const room = this.roomSnapshot();
     for (const ws of this.context.sockets) {
-      if (!this.reliableSockets.has(ws) || this.context.reconnectOnly.has(ws)) continue;
+      if (this.context.reconnectOnly.has(ws)) continue;
       const attachment = this.context.attach(ws);
       const view: RoomView = {
         room, game: this.context.state.game ? this.project(attachment.playerId ?? '__spectator__') : null,
@@ -93,7 +91,10 @@ export class RoomViews {
       const hash = documentHash(viewContent(view));
       const previous = this.committedViews.get(ws);
       if (previous?.hash === hash) {
-        if (this.forceViews.has(ws)) this.sendView(ws, previous);
+        // Latency is excluded from the digest but must be fresh on rejoin.
+        const refreshed = { ...previous, view: structuredClone(view) };
+        this.committedViews.set(ws, refreshed);
+        if (this.forceViews.has(ws)) this.sendView(ws, refreshed);
         this.forceViews.delete(ws);
         continue;
       }

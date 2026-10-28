@@ -7,7 +7,7 @@ describe('committed per-viewer synchronization', () => {
   const latest = (socket: Socket) => socket.messages.filter((m) => m.event === 'view:sync').at(-1)!.payload as import('@/lib/socket/stateIntegrity').ViewSnapshot;
   async function connected() {
     const h = roomHarness();
-    await h.action(h.host, 'room:join', { syncVersion: 1, playerId: 'p0', playerToken: 'token-0', hostToken: 'host-secret' });
+    await h.action(h.host, 'room:join', { playerId: 'p0', playerToken: 'token-0', hostToken: 'host-secret' });
     return h;
   }
 
@@ -37,7 +37,7 @@ describe('committed per-viewer synchronization', () => {
 
   it('publishes one atomic authorized view and advertises a missed update on a later heartbeat', async () => {
     const h = await connected();
-    await h.action(h.spectator, 'room:join', { syncVersion: 1 });
+    await h.action(h.spectator, 'room:join', {  });
     h.host.messages = []; h.spectator.messages = [];
     await h.action(h.host, 'room:start');
     const own = latest(h.host); const spectator = latest(h.spectator);
@@ -75,7 +75,7 @@ describe('committed per-viewer synchronization', () => {
     expect(rewound.revision).toBeGreaterThan(advanced.revision);
     expect(rewound.view.game?.phase).toBe('TeamBuilding');
     h.wake();
-    await h.action(h.host, 'room:join', { syncVersion: 1 });
+    await h.action(h.host, 'room:join', {  });
     expect(latest(h.host).epoch).not.toBe(rewound.epoch);
   });
 

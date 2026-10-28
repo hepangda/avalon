@@ -77,7 +77,6 @@ export function useRoomConnection(code: string | null) {
       try {
         const res = await emitWithAck('room:join', {
           code: roomCode,
-          syncVersion: 1,
           playerId: session?.playerId,
           playerToken: session?.playerToken,
           hostToken: session?.hostToken,

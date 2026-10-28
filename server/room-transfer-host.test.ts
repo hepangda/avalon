@@ -8,9 +8,9 @@ describe('manual host transfer', () => {
     const h = roomHarness();
     if (phase !== 'lobby') await h.action(h.host, 'room:start');
     if (phase === 'finished') await h.finish();
-    await h.action(h.host, 'room:join', { syncVersion: 1, playerId: 'p0', playerToken: 'token-0', hostToken: 'host-secret' });
+    await h.action(h.host, 'room:join', { playerId: 'p0', playerToken: 'token-0', hostToken: 'host-secret' });
     const next = h.sockets[1]!;
-    await h.action(next, 'room:join', { syncVersion: 1, playerId: 'p2', playerToken: 'token-2' });
+    await h.action(next, 'room:join', { playerId: 'p2', playerToken: 'token-2' });
     const before = structuredClone(h.document);
     expect((await h.action(h.host, 'room:transferHost', { targetPlayerId: 'p2' })).ok).toBe(true);
     expect(h.document.meta.hostAccount).toBe('account-2');

@@ -288,14 +288,7 @@ export type GameEvent =
 export type CheckpointKind =
   'game_started' | 'vote' | 'mission_result' | 'lady' | 'game_over';
 
-export type Effect =
-  | { kind: 'PERSIST_CHECKPOINT'; checkpoint: CheckpointKind }
-  | {
-      kind: 'PRIVATE_LADY';
-      holderId: PlayerId;
-      targetId: PlayerId;
-      loyalty: Team;
-    };
+export type Effect = { kind: 'PERSIST_CHECKPOINT'; checkpoint: CheckpointKind };
 
 // ---------------------------------------------------------------------------
 // Engine context & results

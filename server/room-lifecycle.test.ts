@@ -195,6 +195,7 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
     const h = roomHarness();
     await h.action(h.host, "room:removeSeat", { seatId: "p1" });
     expect((await h.action(h.host, "room:start")).ok).toBe(true);
+    const before = (await h.action(h.spectator, "net:ping")).data;
     for (const socket of h.sockets) socket.messages = [];
 
     expect((await h.action(h.host, "net:ping", { rtt: 230.4 })).ok).toBe(true);
@@ -215,6 +216,7 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
     ).toEqual([]);
 
     await h.action(h.spectator, "room:join");
+    expect((await h.action(h.spectator, "net:ping")).data).toEqual(before);
     expect(
       h.spectator.snapshot.members.find((m) => m.id === "p0")?.latency,
     ).toBe(230);
@@ -257,13 +259,8 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
         role: s.game.selfRole,
       }));
     for (const socket of h.sockets.filter((s) => s !== h.spectator)) {
-      const reveal = socket.messages
-        .filter((m) => m.event === "private:reveal")
-        .at(-1)?.payload;
-      expect(reveal).toEqual({
-        selfRole: socket.game.selfRole,
-        knownPlayers: socket.game.knownPlayers,
-      });
+      expect(socket.game.selfRole).toBeTruthy();
+      expect(socket.game.roleRevision).toBe(1);
       expect(socket.game.logs.filter((l) => l.key === "yourRole")).toHaveLength(
         1,
       );
@@ -274,9 +271,8 @@ describe("room lifecycle and referee handlers (snapshot + WebSocket harness)", (
     expect(h.spectator.game.logs.every((l) => l.channel === "public")).toBe(
       true,
     );
-    expect(
-      h.spectator.messages.filter((m) => m.event === "private:reveal"),
-    ).toEqual([]);
+    expect(h.spectator.game.selfRole).toBeNull();
+    expect(h.spectator.game.knownPlayers).toEqual([]);
     const publicView = h.spectator.game;
     h.wake();
     await h.action(h.spectator, "room:join");

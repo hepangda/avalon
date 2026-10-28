@@ -44,8 +44,8 @@ describe('table:emote over the room socket', () => {
     for (const [index, socket] of h.sockets.entries()) {
       const playerId = socket.deserializeAttachment().playerId;
       await h.action(socket, 'room:join', playerId
-        ? { syncVersion: 1, playerId, playerToken: `token-${playerId.slice(1)}`, ...(index === 0 ? { hostToken: 'host-secret' } : {}) }
-        : { syncVersion: 1 });
+        ? { playerId, playerToken: `token-${playerId.slice(1)}`, ...(index === 0 ? { hostToken: 'host-secret' } : {}) }
+        : {  });
     }
     expect((await h.action(h.host, 'room:start')).ok).toBe(true);
     return h;
@@ -84,7 +84,7 @@ describe('table:emote over the room socket', () => {
 
   it('rejects spectators, unknown reactions and tables that have not been dealt', async () => {
     const lobby = roomHarness();
-    await lobby.action(lobby.host, 'room:join', { syncVersion: 1, playerId: 'p0', playerToken: 'token-0', hostToken: 'host-secret' });
+    await lobby.action(lobby.host, 'room:join', { playerId: 'p0', playerToken: 'token-0', hostToken: 'host-secret' });
     expect((await lobby.action(lobby.host, 'table:emote', { emote: 'approve' })).error?.code).toBe('NOT_SEATED');
 
     const h = await started();

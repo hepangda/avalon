@@ -3,9 +3,7 @@ import {
 buildRoleSet,
 createGame,
 createRng,
-projectStateForViewer,
 reduce,
-type ClientGameState,
 type EngineContext,
 type GameEvent
 } from "@/lib/engine";
@@ -51,8 +49,6 @@ sanitizeName,
 sanitizeRoster
 } from "./room-helpers";
 
-/** A viewer id guaranteed not to match any seat → projects the spectator view. */
-const SPECTATOR_VIEWER = "__spectator__";
 const HOST_OFFLINE_MS = 5 * 60_000;
 function allHumansOfflineTimeout(status: RoomStatus): number {
   return (status === 'lobby' ? 10 : 60) * 60_000;
@@ -101,10 +97,8 @@ export class Room {
       send: (ws, event, payload) => this.send(ws, event, payload),
       wsForPlayer: (id) => this.wsForPlayer(id),
       applyEvent: (event) => this.applyEvent(event),
-      broadcastRoom: () => this.broadcastRoom(),
-      syncOne: (id) => this.syncOne(id),
-      syncSpectator: (ws) => this.syncSpectator(ws),
-      negotiateView: (ws) => { this.views.enable(ws); },
+      broadcastView: () => this.broadcastView(),
+      requestView: (ws) => this.views.request(ws),
       retireAfterCommit: (ws) => this.outgoing!.push(() => {
         this.reconnectOnly.add(ws);
         ws.close(4001, 'Room opened on another device');
@@ -137,8 +131,7 @@ export class Room {
       wsForPlayer: (id) => this.wsForPlayer(id),
       send: (ws, event, payload) => this.send(ws, event, payload),
       applyEvent: (event) => this.applyEvent(event),
-      broadcastRoom: () => this.broadcastRoom(),
-      syncSpectator: (ws) => this.syncSpectator(ws),
+      broadcastView: () => this.broadcastView(),
     });
     this.commands = {
       membership: this.membership, referee: this.referee,
@@ -406,7 +399,7 @@ export class Room {
     for (const ws of this.sockets) {
       this.setAttach(ws, { isHost: !this.reconnectOnly.has(ws) && this.attach(ws).account === meta.hostAccount });
     }
-    this.broadcastRoom();
+    this.broadcastView();
   }
 
   private handleTransferHost(ws: RoomSocket, payload: unknown): Ack {
@@ -701,7 +694,7 @@ export class Room {
     this.state.game = null;
     for (const socket of [...this.sockets])
       this.setAttach(socket, { isAdmin: false });
-    this.broadcastRoom();
+    this.broadcastView();
     return ok();
   }
 
@@ -772,8 +765,7 @@ export class Room {
       awaitRoleAcks: true,
     });
     if (!res.ok) return res;
-    for (const m of seated) if (m.claimed) this.sendPrivateReveal(m.id);
-    this.broadcastRoom();
+    this.broadcastView();
     return ok();
   }
 
@@ -853,14 +845,7 @@ export class Room {
     this.state.events.push({ seq, event, createdAt: ctx.now });
 
     for (const effect of result.effects) {
-      if (effect.kind === "PRIVATE_LADY") {
-        const w = this.wsForPlayer(effect.holderId);
-        if (w)
-          this.send(w, "private:lady", {
-            targetId: effect.targetId,
-            loyalty: effect.loyalty,
-          });
-      } else if (effect.kind === "PERSIST_CHECKPOINT") {
+      if (effect.kind === "PERSIST_CHECKPOINT") {
         if (effect.checkpoint === "game_started") this.setStatus("in_game");
         else if (effect.checkpoint === "game_over") {
           this.setStatus("finished");
@@ -870,13 +855,7 @@ export class Room {
     }
 
     if (event.type === "PREVIOUS_PHASE") this.setStatus("in_game");
-    this.broadcastState();
-    if (event.type === "REROLL_ROLES" || event.type === "USE_REROLL_CARD") {
-      for (const member of this.state.members.values()) {
-        if (member.claimed && !member.isSpectator)
-          this.sendPrivateReveal(member.id);
-      }
-    }
+    this.broadcastView();
     return ok();
   }
 
@@ -909,56 +888,9 @@ export class Room {
     };
   }
 
-  private broadcastState(): void {
-    if (!this.state.game) return;
+  /** Schedule one atomic view per viewer after the command commits. */
+  private broadcastView(): void {
     this.views.dirty = true;
-    let spectatorView: ClientGameState | null = null;
-    for (const w of [...this.sockets]) {
-      if (this.views.isReliable(w)) continue;
-      const pid = this.attach(w).playerId;
-      if (pid && this.state.members.has(pid)) {
-        this.send(w, "state:sync", this.views.project(pid));
-      } else {
-        if (!spectatorView) spectatorView = this.views.project(SPECTATOR_VIEWER);
-        this.send(w, "state:sync", spectatorView);
-      }
-    }
-  }
-
-  private broadcastRoom(): void {
-    if (!this.state.meta) return;
-    this.views.dirty = true;
-    const snap = this.views.roomSnapshot();
-    for (const w of this.sockets) if (!this.views.isReliable(w)) this.send(w, "room:snapshot", snap);
-  }
-
-  private sendPrivateReveal(playerId: string): void {
-    if (!this.state.game) return;
-    this.views.dirty = true;
-    const socket = this.wsForPlayer(playerId);
-    if (socket && this.views.isReliable(socket)) return;
-    const view = projectStateForViewer(this.state.game, playerId);
-    if (view.selfRole) {
-      const w = this.wsForPlayer(playerId);
-      if (w)
-        this.send(w, "private:reveal", {
-          selfRole: view.selfRole,
-          knownPlayers: view.knownPlayers,
-        });
-    }
-  }
-
-  private syncOne(playerId: string): void {
-    if (!this.state.game) return;
-    this.views.dirty = true;
-    const w = this.wsForPlayer(playerId);
-    if (w && !this.views.isReliable(w)) this.send(w, "state:sync", this.views.project(playerId));
-  }
-
-  private syncSpectator(ws: RoomSocket): void {
-    if (!this.state.game) return;
-    this.views.dirty = true;
-    if (!this.views.isReliable(ws)) this.send(ws, "state:sync", this.views.project(SPECTATOR_VIEWER));
   }
 
   private pushAdminLog(
@@ -976,11 +908,11 @@ export class Room {
       params,
       style: "admin",
     });
-    this.broadcastState();
+    this.broadcastView();
   }
 
   // ---------------------------------------------------------------------------
-  // RoomSocket / attachment helpers (replace socket.data + socketByPlayer)
+  // RoomSocket / attachment helpers
   // ---------------------------------------------------------------------------
 
   private attach(ws: RoomSocket): SocketAttachment {
@@ -1004,10 +936,6 @@ export class Room {
   }
 
   private send(ws: RoomSocket, event: string, payload: unknown): void {
-    if (['state:sync', 'room:snapshot', 'private:reveal', 'private:lady'].includes(event)) {
-      this.views.dirty = true;
-      if (this.views.isReliable(ws)) return;
-    }
     const message = JSON.stringify({ t: "push", event, payload });
     const send = () => {
       try {

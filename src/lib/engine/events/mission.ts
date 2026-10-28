@@ -147,6 +147,5 @@ export function applyLadyOfLake(s: GameState, by: PlayerId, target: PlayerId): E
 
   return ok(next, [
     { kind: 'PERSIST_CHECKPOINT', checkpoint: 'lady' },
-    { kind: 'PRIVATE_LADY', holderId: by, targetId: target, loyalty },
   ]);
 }

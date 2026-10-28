@@ -15,8 +15,7 @@ interface RefereeContext {
   wsForPlayer(id: string): RoomSocket | undefined;
   send(ws: RoomSocket, event: string, payload: unknown): void;
   applyEvent(event: GameEvent): Promise<Ack>;
-  broadcastRoom(): void;
-  syncSpectator(ws: RoomSocket): void;
+  broadcastView(): void;
 }
 
 /** Called only inside Room's serial transaction; never commits or sends independently. */
@@ -66,8 +65,7 @@ export class RefereeCommands {
         connected: false,
       });
     this.room.pushAdminLog("admin.unbound", { actor, target: targetName });
-    this.room.broadcastRoom();
-    if (this.room.game && targetWs) this.room.syncSpectator(targetWs);
+    this.room.broadcastView();
     return ok();
   }
 
@@ -175,7 +173,7 @@ export class RefereeCommands {
           actor,
         },
     );
-    if (res.ok) this.room.broadcastRoom();
+    if (res.ok) this.room.broadcastView();
     return res;
   }
 

@@ -1,5 +1,5 @@
-import type { ClientGameState } from "@/lib/engine";
-import type { Ack, RoomSnapshot } from "@/lib/socket/types";
+import type { ViewSnapshot } from "@/lib/socket/stateIntegrity";
+import type { Ack } from "@/lib/socket/types";
 import { expect, vi } from "vitest";
 import type { RoomSocket, SocketAttachment } from "./env";
 import type { RoomDocument } from "./persistence";
@@ -30,17 +30,14 @@ export class Socket {
   get ws(): RoomSocket {
     return this;
   }
+  get view() {
+    return (this.messages.filter((m) => m.event === 'view:sync').at(-1)?.payload as ViewSnapshot | undefined)?.view;
+  }
   get game() {
-    return this.messages
-      .slice()
-      .reverse()
-      .find((m) => m.event === "state:sync")!.payload as ClientGameState;
+    return this.view!.game!;
   }
   get snapshot() {
-    return this.messages
-      .slice()
-      .reverse()
-      .find((m) => m.event === "room:snapshot")!.payload as RoomSnapshot;
+    return this.view!.room;
   }
 }
 
@@ -105,7 +102,7 @@ export function roomHarness(seedRoom = true) {
   /** Play waits for every seated player to confirm their identity. */
   const ackRoles = async () => {
     for (const socket of sockets) {
-      if (socket === spectator || !socket.messages.some((m) => m.event === "state:sync")) continue;
+      if (socket === spectator || !socket.view?.game) continue;
       const game = socket.game;
       if (game.isSpectator || !game.players.some((p) => p.id === socket.deserializeAttachment().playerId)) continue;
       expect((await action(socket, "game:ackRole", { roleRevision: game.roleRevision })).ok).toBe(true);
