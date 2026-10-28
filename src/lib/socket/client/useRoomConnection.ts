@@ -1,7 +1,7 @@
 import type { HeartbeatState,ViewSnapshot } from '../stateIntegrity';
 import { ViewSynchronizer } from './viewSync';
 
-import { useRouter } from '@/i18n/navigation';
+import { useNavigate } from 'react-router-dom';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import { isEmoteEvent, publishEmote } from '@/lib/game/emotes';
 import { gameImageUrls,preloadImages } from '@/lib/game/preloadImages';
@@ -20,10 +20,10 @@ import { connectRoom,emitWithAck,getConnection,type ConnState } from './socket';
  * New players still choose a seat through `room:claimSeat`.
  */
 export function useRoomConnection(code: string | null) {
-  const router = useRouter();
-  const routerRef = useRef(router);
+  const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
   // React Router changes navigate's identity on route changes, not the room session.
-  useLayoutEffect(() => { routerRef.current = router; }, [router]);
+  useLayoutEffect(() => { navigateRef.current = navigate; }, [navigate]);
   const { user, loading, refresh } = useAuthIdentity();
   const cardArtStyle = useCardArtStore((state) => state.style);
   useEffect(() => {
@@ -120,7 +120,7 @@ export function useRoomConnection(code: string | null) {
         getConnection()?.close();
         useSessionStore.getState().setSession(roomCode, { playerId: undefined, playerToken: undefined, hostToken: undefined });
         store.reset();
-        routerRef.current.replace('/');
+        navigateRef.current('/', { replace: true });
         return;
       }
       // Being kicked (host) or unbound (referee) frees our seat server-side; drop

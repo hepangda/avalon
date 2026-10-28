@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
-import { Link } from '@/i18n/navigation';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import type { PublicRoom, PublicRoomPage } from '@/lib/socket/types';
 import { cn } from '@/lib/utils/cn';
@@ -20,7 +20,7 @@ function RoomRow({ room }: { room: PublicRoom }) {
   const t = useTranslations('publicRooms');
   return (
     <Link
-      href={`/room/${room.code}`}
+      to={`/room/${room.code}`}
       className="group flex items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-gold/[0.06] focus-visible:bg-gold/[0.06] focus-visible:outline-none sm:gap-4 sm:px-5"
     >
       <span className="room-code grid h-11 w-[3.75rem] shrink-0 place-items-center rounded-lg border border-gold/25 bg-ink-deep/70 text-[15px] tracking-[0.14em] text-gold">

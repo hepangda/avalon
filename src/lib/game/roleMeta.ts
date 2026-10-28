@@ -1,4 +1,4 @@
-import type { Role, Team } from '@/lib/engine';
+import type { Role } from '@/lib/engine';
 import { assetUrl } from '@/lib/assets';
 import { DEFAULT_CARD_ART_STYLE, type CardArtStyle } from '@/lib/preferences';
 import { CARD_DECKS } from './cardDecks';
@@ -32,8 +32,3 @@ export function roleArt(role: Role, variant = 0, style: CardArtStyle = DEFAULT_C
     avatar: assetUrl(`${root}/avatars/${slug}.webp`),
   };
 }
-
-export const TEAM_COLOR: Record<Team, string> = {
-  good: 'text-sky-300',
-  evil: 'text-crimson',
-};

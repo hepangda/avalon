@@ -5,13 +5,7 @@ import type { Locale } from './routing';
 import zh from '../../messages/zh.json';
 import en from '../../messages/en.json';
 
-/**
- * Client i18n provider built on `use-intl` — the framework-agnostic core that
- * next-intl was built on, so the `useTranslations`/`useFormatter`/`useLocale`
- * hooks used throughout the components work unchanged. Messages are the same
- * `messages/*.json` files as before. Locale is a persisted browser preference, independent of routing.
- */
-
+/** Locale is a persisted account/browser preference, independent of routing. */
 const MESSAGES: Record<Locale, typeof zh & Partial<typeof import('../../messages/zh.debug.json')>> = { zh, en };
 if (import.meta.env.DEV) {
   const [zhDebug, enDebug] = await Promise.all([

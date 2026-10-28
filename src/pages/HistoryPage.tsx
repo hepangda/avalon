@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { useFormatter, useTranslations } from 'use-intl';
-import { Link } from '@/i18n/navigation';
+import { Link } from 'react-router-dom';
 import { AccountAvatar } from '@/components/AccountSettings';
 import { GameIcon, RolePortrait } from '@/components/game/GameArt';
 import { PreferencesButton } from '@/components/PreferencesButton';
@@ -38,7 +38,7 @@ export default function HistoryPage() {
     <main className="table-screen history-screen">
       <header className="table-header">
         <div className="table-title">
-          <Link href="/" className="table-tool -ml-2.5 shrink-0" aria-label={t('common.backHome')} title={t('common.backHome')}>
+          <Link to="/" className="table-tool -ml-2.5 shrink-0" aria-label={t('common.backHome')} title={t('common.backHome')}>
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <path d="m12 5-7 7 7 7M5 12h14" />
             </svg>
@@ -288,7 +288,7 @@ function GameRow({ game }: { game: HistoryGame }) {
     : t(game.winner === 'good' ? 'gameOver.goodTriumphs' : 'gameOver.evilPrevails');
   return (
     <li>
-      <Link href={`/replay/${encodeURIComponent(game.gameId)}`} className="history-game"
+      <Link to={`/replay/${encodeURIComponent(game.gameId)}`} className="history-game"
         data-result={seat ? (seat.won ? 'win' : 'loss') : undefined} data-winner={game.winner}>
         <span className="history-game-face" data-team={seat ? teamOf(seat.role) : game.winner}>
           {seat

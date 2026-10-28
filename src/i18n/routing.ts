@@ -1,4 +1,4 @@
-/** Locale routing config. Framework-agnostic (was next-intl's defineRouting). */
+/** Supported interface languages; routes are independent of the selected locale. */
 export const routing = {
   locales: ['zh', 'en'] as const,
   defaultLocale: 'zh' as const,

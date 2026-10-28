@@ -18,7 +18,7 @@ import { TableCard } from '@/components/game/TableCard';
 import { TableFrame } from '@/components/game/TableFrame';
 import { AvatarFactionProvider } from '@/components/player/AvatarFactions';
 import { ReconnectOverlay } from '@/components/ui/ReconnectOverlay';
-import { Link } from '@/i18n/navigation';
+import { Link } from 'react-router-dom';
 import type { ClientGameState, ClientPlayer } from '@/lib/engine';
 import { actionAvailability } from '@/lib/game/actionAvailability';
 import { avatarFactions, displayedRoleNotes, knownRoleNotes, roleNoteOptions, roleNotesKey } from '@/lib/game/roleNotes';
@@ -121,7 +121,7 @@ export function GameView({
               )}
         </p>
         {notice?.type === 'join_error' && (
-          <Link href="/" className="table-tool">
+          <Link to="/" className="table-tool">
             {t('gameOver.newGame')}
           </Link>
         )}
@@ -437,7 +437,7 @@ export function GameView({
                   )}
                   {game.gameId ? (
                     <Link
-                      href={`/replay/${game.gameId}`}
+                      to={`/replay/${game.gameId}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="table-action is-quiet"

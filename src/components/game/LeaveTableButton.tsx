@@ -1,5 +1,5 @@
 import { useTranslations } from 'use-intl';
-import { useRouter } from '@/i18n/navigation';
+import { useNavigate } from 'react-router-dom';
 import { Popconfirm } from '@/components/ui/Popconfirm';
 import { roomActions } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
@@ -14,7 +14,7 @@ export function LeaveTableButton({ code, busy, run }: {
   run: (action: () => Promise<Ack<unknown>>) => Promise<boolean>;
 }) {
   const t = useTranslations();
-  const router = useRouter();
+  const navigate = useNavigate();
   const snapshot = useRoomStore((state) => state.snapshot);
   const myPlayerId = useRoomStore((state) => state.myPlayerId);
   const isHost = useRoomStore((state) => state.isHost);
@@ -23,7 +23,7 @@ export function LeaveTableButton({ code, busy, run }: {
     if (!await run(roomActions.leave)) return;
     useSessionStore.getState().setSession(code, { playerId: undefined, playerToken: undefined });
     useRoomStore.getState().reset();
-    router.push('/');
+    navigate('/');
   }
   return (
     <Popconfirm title={t(willDissolve ? 'common.dissolveRoomTitle' : 'game.leaveSeatAsk')}

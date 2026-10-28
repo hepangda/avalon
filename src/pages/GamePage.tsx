@@ -3,7 +3,7 @@ import { TableSheet } from '@/components/game/TableSheet';
 import { Button } from '@/components/ui/Button';
 import { useRoomAction } from '@/lib/game/useRoomAction';
 import { wouldDissolveRoom } from '@/lib/game/roomDissolution';
-import { useRouter } from '@/i18n/navigation';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthIdentity } from '@/lib/auth/useAuthIdentity';
 import {
 roomActions
@@ -11,7 +11,6 @@ roomActions
 import { useRoomStore } from '@/lib/store/room';
 import { useSceneGate } from '@/lib/store/sceneGate';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import { GameView } from '@/components/game/GameView';
 
@@ -20,7 +19,7 @@ export default function GamePage() {
   const [confirmRestart, setConfirmRestart] = useState(false);
   const code = useParams().code ?? '';
   const { refresh } = useAuthIdentity();
-  const router = useRouter();
+  const navigate = useNavigate();
   const {
     snapshot,
     isHost,
@@ -40,8 +39,8 @@ export default function GamePage() {
   useEffect(() => { if (ready) useSceneGate.getState().arrive(code); }, [ready, code]);
   useEffect(() => {
     if (snapshot?.code === code && snapshot.status === 'lobby')
-      router.replace(`/room/${code}`);
-  }, [code, router, snapshot?.code, snapshot?.status]);
+      navigate(`/room/${code}`, { replace: true });
+  }, [code, navigate, snapshot?.code, snapshot?.status]);
   async function requestRestart() {
     if (snapshot && wouldDissolveRoom({ ...snapshot, status: 'lobby' }, null)) {
       restart.clearError();

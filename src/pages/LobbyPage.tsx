@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslations } from 'use-intl';
-import { useRouter } from '@/i18n/navigation';
 import { TableSheet } from '@/components/game/TableSheet';
 import { wouldDissolveRoom } from '@/lib/game/roomDissolution';
 import { GameIcon } from '@/components/game/GameArt';
@@ -34,7 +33,7 @@ export default function LobbyPage() {
   const t = useTranslations();
   const params = useParams();
   const code = params.code ?? '';
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const conn = useRoomStore((s) => s.syncing && s.conn === 'connected' ? 'connecting' : s.conn);
   const snapshot = useRoomStore((s) => s.snapshot);
@@ -75,12 +74,12 @@ export default function LobbyPage() {
     if (snapshot?.code !== code) return;
     if (snapshot.status === 'lobby') sawLobby.current = code;
     if (snapshot.status === 'in_game' || snapshot.status === 'finished') {
-      const enter = () => router.replace(`/game/${code}`);
+      const enter = () => navigate(`/game/${code}`, { replace: true });
       const crest = document.querySelector('.lobby-felt-crest')?.getBoundingClientRect();
       const origin = crest ? { x: crest.left + crest.width / 2, y: crest.top + crest.height / 2, width: crest.width } : null;
       if (snapshot.status !== 'in_game' || sawLobby.current !== code || !useSceneGate.getState().close(code, origin, enter)) enter();
     }
-  }, [snapshot?.code, snapshot?.status, code, router]);
+  }, [snapshot?.code, snapshot?.status, code, navigate]);
 
   useEffect(() => {
     if (!myPlayerId || !identityName.trim() || conn !== 'connected') return;
@@ -130,7 +129,7 @@ export default function LobbyPage() {
     if (res.ok) {
       useSessionStore.getState().setSession(code, { playerId: undefined, playerToken: undefined });
       useRoomStore.getState().reset();
-      router.push('/');
+      navigate('/');
     }
     return res;
   }
@@ -169,7 +168,7 @@ export default function LobbyPage() {
             onClick={() => {
               disconnectRoom();
               useRoomStore.getState().reset();
-              router.push('/');
+              navigate('/');
             }}
           >
             {t('common.backHome')}

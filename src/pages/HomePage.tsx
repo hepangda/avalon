@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useTranslations } from 'use-intl';
-import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/Button';
 import { PreferencesButton } from '@/components/PreferencesButton';
 import { AccountLogin } from '@/components/auth/AccountLogin';
@@ -15,7 +14,7 @@ import './home.css';
 
 export default function HomePage() {
   const t = useTranslations();
-  const router = useRouter();
+  const navigate = useNavigate();
   const location = useLocation();
   const { user: authUser, loading: authLoading, login, logout } = useAuthIdentity();
   const canJoin = !authLoading && Boolean(authUser);
@@ -91,13 +90,13 @@ export default function HomePage() {
         playerToken,
         name: accountDisplayName(authUser),
       });
-      router.push(`/room/${code}`);
+      navigate(`/room/${code}`);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
-  }, [authUser, logout, router, t]);
+  }, [authUser, logout, navigate, t]);
 
   async function handleJoin() {
     if (!canJoin) return setError(t('home.identityRequiredToJoin'));
@@ -114,7 +113,7 @@ export default function HomePage() {
     } finally {
       setJoining(false);
     }
-    router.push(`/room/${code}`);
+    navigate(`/room/${code}`);
   }
 
   return (
@@ -122,7 +121,7 @@ export default function HomePage() {
     <div className="flex min-h-[100dvh] flex-col overflow-x-clip">
       <header className="mx-auto flex w-full max-w-5xl justify-end gap-2 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pt-5">
         {authUser && (
-          <Link href="/history" className="prefs-chip">
+          <Link to="/history" className="prefs-chip">
             <svg aria-hidden="true" viewBox="0 0 24 24" className="prefs-chip-icon" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
               <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4ZM7 6H4.5a2.5 2.5 0 0 0 2.6 3.5M17 6h2.5a2.5 2.5 0 0 1-2.6 3.5" />
             </svg>
@@ -227,7 +226,7 @@ export default function HomePage() {
 
         {import.meta.env.DEV && isLocalhost && (
           <p className="mt-auto pt-12 text-center">
-            <Link href="/debug/gallery" className="text-xs text-parchment/40 underline decoration-gold/30 underline-offset-4 hover:text-gold">
+            <Link to="/debug/gallery" className="text-xs text-parchment/40 underline decoration-gold/30 underline-offset-4 hover:text-gold">
               {t('debug.entry')}
             </Link>
           </p>

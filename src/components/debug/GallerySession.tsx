@@ -1,7 +1,7 @@
 import { PreferencesButton } from "@/components/PreferencesButton";
 import { EarlyAssassinationProposal } from "@/components/game/EarlyAssassinationPact";
 import { GameView } from "@/components/game/GameView";
-import { Link } from "@/i18n/navigation";
+import { Link } from 'react-router-dom';
 import {
 applyEvent,
 buildScenario,
@@ -298,7 +298,7 @@ export function GallerySession({
       <aside className="debug-controls" aria-label={t("debug.controls")}>
         <header className="debug-heading">
           <div>
-            <Link href="/">← AVALON</Link>
+            <Link to="/">← AVALON</Link>
             <PreferencesButton />
           </div>
           <h1>Debug gallery</h1>

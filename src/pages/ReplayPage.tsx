@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useFormatter, useTranslations } from 'use-intl';
-import { Link } from '@/i18n/navigation';
 import { GameTable } from '@/components/game/GameTable';
 import { MissionToken } from '@/components/game/MissionTrack';
 import { TableCard } from '@/components/game/TableCard';
@@ -23,7 +22,7 @@ const BEAT_MS = 2400;
 function BackLink() {
   const t = useTranslations();
   return (
-    <Link href="/history" className="table-tool -ml-2.5 shrink-0" aria-label={t('history.title')} title={t('history.title')}>
+    <Link to="/history" className="table-tool -ml-2.5 shrink-0" aria-label={t('history.title')} title={t('history.title')}>
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="m12 5-7 7 7 7M5 12h14" />
       </svg>

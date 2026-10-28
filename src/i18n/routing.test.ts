@@ -1,7 +1,4 @@
-import { renderToStaticMarkup } from 'react-dom/server';
-import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
-import { Link } from './navigation';
 import { stripLocalePrefix } from './routing';
 
 describe('language-independent links', () => {
@@ -18,12 +15,4 @@ describe('language-independent links', () => {
     expect(stripLocalePrefix(path)).toBe(expected);
   });
 
-  it('keeps room links and their query/hash independent of the current language path', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter initialEntries={['/en']}>
-        <Link href="/room/0123?from=invite#seats">Join</Link>
-      </MemoryRouter>,
-    );
-    expect(html).toContain('href="/room/0123?from=invite#seats"');
-  });
 });
