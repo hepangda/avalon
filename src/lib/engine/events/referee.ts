@@ -43,7 +43,7 @@ export function previousPhase(s: GameState, actor: string): EngineResult {
   if (next.phase === 'Voting') next.votes = {};
   // An interrupted mission is replayed by every team member.
   next.missionCards = {};
-  pushPublic(next, 'admin.phaseReturned', { actor, phase: next.phase }, 'admin');
+  pushPublic(next, 'admin.phaseReturned', { actor, phase: next.phase, proposal: next.rejectionCount + 1 }, 'admin');
   return ok(next);
 }
 

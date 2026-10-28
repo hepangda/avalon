@@ -308,13 +308,6 @@
 }
 .proposal-record-speech-lines [data-admin] { color: #f08a80; }
 
-.proposal-record-note {
-  color: #f08a80;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.5;
-}
-
 .proposal-record-quest {
   display: flex;
   align-items: center;

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslations } from 'use-intl';
 import { labelById, seatLabel } from '@/lib/game/playerLabel';
-import type { ClientGameState, ClientLogEntry, ClientMissionResult, ClientVoteRecord } from '@/lib/engine';
+import type { ClientGameState, ClientLogEntry } from '@/lib/engine';
 import type { ProposalChapter } from '@/lib/game/foldLog';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { GameIcon } from './GameArt';
@@ -36,20 +36,14 @@ export function LogSeat({ game, id, coin = false, named = false, className = '',
 export function ProposalRecord({
   chapter,
   game,
-  record,
-  mission,
   limit,
-  leader,
   status,
   format,
   clock,
 }: {
   chapter: ProposalChapter;
   game: ClientGameState;
-  record?: ClientVoteRecord;
-  mission?: ClientMissionResult;
   limit: number;
-  leader: string;
   /** What the table is doing now, on the nomination still in play. */
   status: string | null;
   format: (entry: ClientLogEntry) => string;
@@ -58,7 +52,7 @@ export function ProposalRecord({
   const t = useTranslations();
   const nameOf = (id: string) => labelById(game, id);
   const seatOf = (id: string) => game.players.find((p) => p.id === id)?.seat ?? 0;
-  const team = record?.team ?? chapter.team;
+  const { record, mission, leader, team } = chapter;
   const ballots = (record?.votes ?? []).slice().sort((a, b) => seatOf(a.playerId) - seatOf(b.playerId));
   const sides = (['approve', 'reject'] as const).map((vote) => ({
     vote,
@@ -72,7 +66,7 @@ export function ProposalRecord({
     <article className="proposal-record" data-verdict={verdict} data-last={chapter.proposal >= limit || undefined}
       data-live={status ? true : undefined}>
       <header className="proposal-record-head">
-        <span className="proposal-record-n" title={clock(chapter.vote?.at ?? 0)}>
+        <span className="proposal-record-n" title={clock(chapter.at)}>
           {t('log.proposalOf', { n: chapter.proposal, limit })}
         </span>
         {record ? (
@@ -139,10 +133,6 @@ export function ProposalRecord({
           ))}
         </div>
       )}
-
-      {chapter.notes.map((entry) => (
-        <p key={entry.seq} className="proposal-record-note" title={clock(entry.at)}>{format(entry)}</p>
-      ))}
 
       {mission ? (
         <footer className="proposal-record-quest" data-result={mission.success ? 'success' : 'fail'}>

@@ -1,5 +1,5 @@
 import { rejectionLimit, type ClientGameState, type ClientLogEntry, type GamePhase } from '@/lib/engine';
-import { chronicle, type ProposalChapter } from '@/lib/game/foldLog';
+import { chronicle } from '@/lib/game/foldLog';
 import type { GameIconName } from '@/lib/game/gameIcons';
 import { formatGameLog } from '@/lib/game/formatGameLog';
 import { useRoleText } from '@/lib/game/useRoleText';
@@ -58,18 +58,16 @@ export function LogPanel({
   const following = useRef(true);
 
   const entries = game.logs.filter((l) => l.channel === tab);
-  const items = chronicle(entries);
+  const items = chronicle(entries, game);
   const format = (entry: ClientLogEntry) => formatGameLog(entry, game, t, roleText.name);
   const limit = rejectionLimit(game.config.maxRejections);
-  const lastChapter = items.filter((i): i is ProposalChapter => i.kind === 'proposal').at(-1);
-  const liveChapter = lastChapter && lastChapter.round === game.roundIndex + 1 && !lastChapter.mission ? lastChapter : null;
-  const currentLeader = game.players.find((p) => p.seat === game.leaderIndex)?.id;
   const records = game.voteHistory.length + game.missionResults.length;
   // A quest picked on the board places the log on its chapter; nothing may pull it back to the end.
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (!focus || !el) return;
-    const chapter = el.querySelector<HTMLElement>(`.war-log-chapter[data-round="${focus.round + 1}"]`);
+    // A quest a referee rewound into is headed again; the latest heading is the one in play.
+    const chapter = [...el.querySelectorAll<HTMLElement>(`.war-log-chapter[data-round="${focus.round + 1}"]`)].at(-1);
     if (!chapter) {
       following.current = true;
       el.scrollTop = el.scrollHeight;
@@ -187,16 +185,11 @@ export function LogPanel({
         ) : entries.length > 0 ? (
           items.map((item) => {
             if (item.kind === 'proposal') {
-              const live = item === liveChapter;
-              const record = game.voteHistory
-                .filter((v) => v.roundIndex === item.round - 1 && v.proposalIndex === item.proposal - 1)
-                .at(-1);
+              // The nomination being played: still forming, or its approved team out on the quest.
+              const playing = item.live || (item.record?.approved && !item.mission && item.round === game.roundIndex + 1);
               return (
                 <ProposalRecord key={item.key} chapter={item} game={game} limit={limit}
-                  record={item.vote ? record : undefined}
-                  mission={item.mission ? game.missionResults.find((m) => m.roundIndex === item.round - 1) : undefined}
-                  leader={record && item.vote ? record.leaderId : live ? (currentLeader ?? item.leader) : item.leader}
-                  status={live && LIVE_PHASES.has(game.phase) ? t(`phase.${game.phase}`) : null}
+                  status={playing && LIVE_PHASES.has(game.phase) ? t(`phase.${game.phase}`) : null}
                   format={format} clock={clock} />
               );
             }

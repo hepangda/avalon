@@ -1,55 +1,105 @@
 import { describe, expect, it } from 'vitest';
 import { buildScenario } from '@/lib/debug/scenarios';
-import { projectStateForViewer, type ClientLogEntry } from '@/lib/engine';
+import { createGame, createRng, projectStateForViewer, reduce, type ClientGameState, type GameEvent, type GameState } from '@/lib/engine';
+import { DEFAULT_OPTIONS, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
 import { chronicle, type ProposalChapter } from './foldLog';
 
+const step = (s: GameState, event: GameEvent) => {
+  const result = reduce(s, event, { now: 1, rng: createRng('fold') });
+  if (!result.ok) throw new Error(result.error.message);
+  return result.state;
+};
+const started = () => {
+  const created = createGame({
+    hostId: 'p0', players: FIVE_P.map((_, i) => ({ id: `p${i}`, name: `P${i}` })), options: DEFAULT_OPTIONS, seed: 'fold',
+  });
+  if (!created.ok) throw new Error(created.error.message);
+  return step(created.state, { type: 'START_GAME', by: 'p0' });
+};
+const leaderOf = (s: GameState) => s.players[s.leaderIndex]!.id;
+const vote = (s: GameState, value: 'approve' | 'reject') =>
+  s.players.reduce((next, p) => step(next, { type: 'CAST_VOTE', by: p.id, value }), s);
+const quest = (s: GameState, fail: string | null = null) =>
+  (s.proposedTeam ?? []).reduce((next, by) => step(next, { type: 'CAST_MISSION_CARD', by, card: by === fail ? 'fail' : 'success' }), s);
+const back = (s: GameState) => step(s, { type: 'PREVIOUS_PHASE', actor: 'Referee' });
+const view = (s: GameState): ClientGameState => projectStateForViewer(s, 'p0');
+const render = (s: GameState) => {
+  const game = view(s);
+  return chronicle(game.logs.filter((l) => l.channel === 'public'), game);
+};
+const shape = (s: GameState) => render(s).map((i) =>
+  i.kind === 'entry' ? i.entry.key : i.kind === 'round' ? `round ${i.entry.params?.round}` : `card ${i.key}`);
+const cards = (s: GameState) => render(s).filter((i): i is ProposalChapter => i.kind === 'proposal');
+
 describe('the chronicle', () => {
-  const entry = (seq: number, key: string, params?: Record<string, string>, style?: 'admin'): ClientLogEntry =>
-    ({ seq, key, params, style, at: seq, roundIndex: 0, channel: 'public' }) as ClientLogEntry;
+  it('draws each nomination from the history, with the draft its leader later changed', () => {
+    let s = started();
+    s = vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p0', 'p1'] }), 'reject');
+    const leader = leaderOf(s);
+    s = step(s, { type: 'PROPOSE_TEAM', by: leader, team: ['p1', 'p2'] });
+    s = step(s, { type: 'START_DISCUSSION', by: leader });
+    for (const by of s.discussion!.order) s = step(s, { type: 'END_SPEECH', by });
+    s = quest(vote(step(s, { type: 'FINALIZE_TEAM', by: leader, team: ['p1', 'p3'] }), 'approve'), 'p3');
+    expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'card 1-1', 'card 1-2', 'round 2', 'card 2-1']);
+    const [, second, live] = cards(s);
+    expect(second).toMatchObject({ leader, draft: ['p1', 'p2'], team: ['p1', 'p3'], live: false });
+    expect([second!.speeches.length, second!.record?.approved, second!.mission?.success]).toEqual([5, true, false]);
+    expect(live).toMatchObject({ round: 2, proposal: 1, leader: leaderOf(s), team: [], live: true });
+  });
 
-  it('gathers one nomination into a single chapter that ends with its quest', () => {
-    const items = chronicle([
-      entry(1, 'gameStarted'),
-      entry(2, 'roundBegins', { round: '1' }),
-      entry(3, 'proposalBegins', { round: '1', proposal: '1', leader: 'p1' }),
-      entry(4, 'teamAnnounced', { leader: 'p1', team: 'p1,p2' }),
-      entry(5, 'speechBegins', { player: 'p2' }),
-      entry(6, 'discussionFinished', { leader: 'p1' }),
-      entry(7, 'teamFinalized', { leader: 'p1', team: 'p1,p3' }),
-      entry(8, 'voteApproved', { round: '1', proposal: '1' }),
-      entry(9, 'missionFailed', { round: '1', fails: '1' }),
-      entry(10, 'ladyBegins', { holder: 'p4' }),
+  it('reads a rerolled opening as a new game, with the reroll noted only until play begins', () => {
+    let s = started();
+    s = step(s, { type: 'REROLL_LEADER', actor: 'Referee' });
+    s = step(s, { type: 'REROLL_ROLES', actor: 'Referee' });
+    s = step(s, { type: 'USE_REROLL_CARD', by: 'p2', roleRevision: s.roleRevision ?? 0 });
+    const leader = leaderOf(s);
+    expect(shape(s)).toEqual([
+      'gameStarted', 'lineup', 'round 1',
+      'admin.leaderRerolled', 'admin.rolesRerolled', 'rerollCardUsed',
+      'card 1-1',
     ]);
-    expect(items.map((i) => i.kind)).toEqual(['entry', 'round', 'proposal', 'entry']);
-    const chapter = items[2] as ProposalChapter;
-    expect(chapter).toMatchObject({ round: 1, proposal: 1, leader: 'p1', draft: ['p1', 'p2'], team: ['p1', 'p3'] });
-    expect([chapter.speeches.length, chapter.vote?.seq, chapter.mission?.seq]).toEqual([1, 8, 9]);
+    s = vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leader, team: ['p0', 'p1'] }), 'reject');
+    expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'card 1-1', 'card 1-2']);
+    expect(cards(s)[0]).toMatchObject({ leader, team: ['p0', 'p1'] });
+    expect(cards(s)[0]!.speeches).toHaveLength(5);
   });
 
-  it('keeps no draft when the final team is the announced one', () => {
-    const [chapter] = chronicle([
-      entry(1, 'proposalBegins', { round: '1', proposal: '1', leader: 'p1' }),
-      entry(2, 'teamAnnounced', { leader: 'p1', team: 'p1,p2' }),
-      entry(3, 'teamFinalized', { leader: 'p1', team: 'p2,p1' }),
-    ]) as [ProposalChapter];
-    expect([chapter.draft, chapter.team]).toEqual([null, ['p2', 'p1']]);
+  it('shows a nomination a referee rewound into once, as history now has it', () => {
+    let s = started();
+    s = vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p0', 'p1'] }), 'reject');
+    s = back(s);
+    expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'admin.phaseReturned', 'card 1-1']);
+    expect(cards(s)[0]).toMatchObject({ team: ['p0', 'p1'], live: true, record: undefined });
+    s = vote(s, 'approve');
+    expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'admin.phaseReturned', 'card 1-1']);
+    expect(cards(s)[0]!.record?.approved).toBe(true);
   });
 
-  it('keeps referee lines inside the nomination and clears a retracted team', () => {
-    const [chapter] = chronicle([
-      entry(1, 'proposalBegins', { round: '1', proposal: '1', leader: 'p1' }),
-      entry(2, 'teamFinalized', { leader: 'p1', team: 'p1,p2' }),
-      entry(3, 'admin.proposalRetracted', { actor: 'x' }, 'admin'),
-    ]) as [ProposalChapter];
-    expect([chapter.team, chapter.notes.map((n) => n.seq)]).toEqual([[], [3]]);
+  it('keeps a rewound quest on its own card and heads the next quest once', () => {
+    let s = started();
+    s = quest(vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p0', 'p1'] }), 'approve'));
+    s = back(s);
+    expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'card 1-1', 'admin.phaseReturned']);
+    expect(cards(s)[0]!.mission).toBeUndefined();
+    s = quest(s, 'p1');
+    expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'card 1-1', 'admin.phaseReturned', 'round 2', 'card 2-1']);
+    expect(cards(s)[0]!.mission?.success).toBe(false);
   });
 
-  it('turns every nomination of a real game into a chapter', () => {
+  it('carries on the nomination in play when a referee steps it back', () => {
+    let s = started();
+    s = back(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p0', 'p1'] }));
+    s = vote(step(s, { type: 'FINALIZE_TEAM', by: leaderOf(s), team: ['p0', 'p2'] }), 'approve');
+    expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'admin.phaseReturned', 'card 1-1']);
+    expect(cards(s)[0]).toMatchObject({ draft: ['p0', 'p1'], team: ['p0', 'p2'] });
+  });
+
+  it('turns every nomination of a real game into a card', () => {
     const scene = buildScenario('voteSheet', 7);
     const state = projectStateForViewer(scene.state, scene.viewerId);
-    const chapters = chronicle(state.logs.filter((l) => l.channel === 'public'))
+    const all = chronicle(state.logs.filter((l) => l.channel === 'public'), state)
       .filter((i): i is ProposalChapter => i.kind === 'proposal');
-    expect(chapters.filter((c) => c.vote).length).toBe(state.voteHistory.length);
-    expect(chapters.filter((c) => c.mission).length).toBe(state.missionResults.length);
+    expect(all.filter((c) => c.record).length).toBe(state.voteHistory.length);
+    expect(all.filter((c) => c.mission).length).toBe(state.missionResults.length);
   });
 });
