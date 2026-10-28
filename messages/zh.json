@@ -403,7 +403,16 @@
     "discussionFinished": "全员发言完毕，由 {leader} 调整最终队形。",
     "rerollCardUsed": "{player} 使用了重随卡，全桌身份已重新发放，请重新确认",
     "assassinationRequested": "{player} 提议提前刺杀，等待所有已知队友同意",
-    "assassinationRejected": "{player} 反对提前刺杀，本次提议已取消"
+    "assassinationRejected": "{player} 反对提前刺杀，本次提议已取消",
+    "tabVotes": "票型",
+    "questTrack": "任务进度",
+    "needsTwoFails": "需 2 张失败",
+    "verdictRejected": "否决",
+    "result": {
+      "success": "成功",
+      "fail": "失败",
+      "live": "进行中"
+    }
   },
   "proposal": {
     "hammerWarnLast": "这是最后一次提名，再被否决红方将获胜！"

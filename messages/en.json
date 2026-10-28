@@ -403,7 +403,16 @@
     "discussionFinished": "Everyone has spoken. {leader} may now revise the team.",
     "rerollCardUsed": "{player} used a reroll card. All roles have been redealt; confirm your new identity.",
     "assassinationRequested": "{player} proposes early assassination, awaiting all known teammates",
-    "assassinationRejected": "{player} rejects early assassination; the proposal is cancelled"
+    "assassinationRejected": "{player} rejects early assassination; the proposal is cancelled",
+    "tabVotes": "Votes",
+    "questTrack": "Quest track",
+    "needsTwoFails": "needs 2 fails",
+    "verdictRejected": "Rejected",
+    "result": {
+      "success": "Succeeded",
+      "fail": "Failed",
+      "live": "In play"
+    }
   },
   "proposal": {
     "hammerWarnLast": "Final proposal — one more rejection and the red team wins!"

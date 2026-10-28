@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildScenario } from '@/lib/debug/scenarios';
 import { createGame, createRng, projectStateForViewer, reduce, type ClientGameState, type GameEvent, type GameState } from '@/lib/engine';
 import { DEFAULT_OPTIONS, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
-import { chronicle, type ProposalChapter } from './foldLog';
+import { byQuest, chronicle, type ProposalChapter } from './foldLog';
 
 const step = (s: GameState, event: GameEvent) => {
   const result = reduce(s, event, { now: 1, rng: createRng('fold') });
@@ -29,6 +29,8 @@ const render = (s: GameState) => {
 };
 const shape = (s: GameState) => render(s).map((i) =>
   i.kind === 'entry' ? i.entry.key : i.kind === 'round' ? `round ${i.entry.params?.round}` : `card ${i.key}`);
+const quests = (s: GameState) => byQuest(render(s)).map((i) =>
+  i.kind === 'entry' ? i.entry.key : `quest ${i.round}: ${i.body.map((b) => b.kind === 'proposal' ? b.key : b.entry.key).join(' ')}`);
 const cards = (s: GameState) => render(s).filter((i): i is ProposalChapter => i.kind === 'proposal');
 
 describe('the chronicle', () => {
@@ -101,5 +103,20 @@ describe('the chronicle', () => {
       .filter((i): i is ProposalChapter => i.kind === 'proposal');
     expect(all.filter((c) => c.record).length).toBe(state.voteHistory.length);
     expect(all.filter((c) => c.mission).length).toBe(state.missionResults.length);
+  });
+
+  it('gathers each quest onto one card, lines before and after its nominations standing outside it', () => {
+    let s = started();
+    s = step(s, { type: 'SET_TIMERS_PAUSED', paused: true, actor: 'Referee' });
+    for (let i = 0; i < 5; i++) s = vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p0', 'p1'] }), 'reject');
+    expect(quests(s)).toEqual(['gameStarted', 'lineup', 'admin.timersPaused', 'quest 1: 1-1 1-2 1-3 1-4 1-5', 'hammerEvilWins']);
+  });
+
+  it("keeps a referee's line told between two nominations inside the quest", () => {
+    let s = started();
+    s = vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p0', 'p1'] }), 'reject');
+    s = step(s, { type: 'SET_TIMERS_PAUSED', paused: true, actor: 'Referee' });
+    s = vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p1', 'p2'] }), 'reject');
+    expect(quests(s)).toEqual(['gameStarted', 'lineup', 'quest 1: 1-1 admin.timersPaused 1-2 1-3']);
   });
 });

@@ -129,3 +129,60 @@ export function chronicle(entries: ClientLogEntry[], history: ChronicleHistory):
   }
   return items;
 }
+
+type LineItem = { kind: 'entry'; entry: ClientLogEntry };
+
+/** A quest as the log shows it: one card holding its nominations and the lines told between them. */
+export interface QuestChapter {
+  kind: 'quest';
+  /** 1-based, as the log counts. */
+  round: number;
+  /** The line that opened the quest; absent when the log lost it. */
+  heading?: ClientLogEntry;
+  body: Array<ProposalChapter | LineItem>;
+}
+
+export type QuestItem = QuestChapter | LineItem;
+
+/**
+ * Gathers the chronicle into a card per quest. A line told before a quest's
+ * first nomination stands before its card, and one told after its last
+ * nomination stands after it; only lines between two nominations go inside.
+ */
+export function byQuest(items: ChronicleItem[]): QuestItem[] {
+  const out: QuestItem[] = [];
+  let quest: QuestChapter | null = null;
+  let placed = false;
+  let held: LineItem[] = [];
+  const close = () => {
+    if (quest && !placed) out.push(...held, quest);
+    else out.push(...held);
+    quest = null;
+    held = [];
+  };
+  for (const item of items) {
+    if (item.kind === 'round') {
+      close();
+      quest = { kind: 'quest', round: Number(item.entry.params?.round), heading: item.entry, body: [] };
+      placed = false;
+    } else if (item.kind === 'entry') {
+      if (quest) held.push(item);
+      else out.push(item);
+    } else {
+      if (!quest || quest.round !== item.round) {
+        close();
+        quest = { kind: 'quest', round: item.round, body: [] };
+        placed = false;
+      }
+      if (placed) quest.body.push(...held);
+      else {
+        out.push(...held, quest);
+        placed = true;
+      }
+      held = [];
+      quest.body.push(item);
+    }
+  }
+  close();
+  return out;
+}

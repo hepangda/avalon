@@ -1,4 +1,4 @@
-/* The public war log as a chronicle: a chapter per quest, a card per nomination. */
+/* The public war log as a chronicle: a card per quest, a nomination per row inside it. */
 
 .war-log-line {
   display: flex;
@@ -18,258 +18,376 @@
   font-weight: 600;
 }
 
-/* ---- Quest chapter ---- */
-.war-log-chapter {
+/* ---- Game pieces ---- */
+.log-medal {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 4px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.25);
+  box-shadow: inset 0 0 0 1.5px rgb(201 162 39 / 0.45);
+  color: rgb(232 220 192 / 0.66);
+  font-family: var(--font-numbers);
+  font-size: 13px;
+  font-weight: 700;
+}
+.log-medal[data-result="success"] {
+  background: radial-gradient(circle at 40% 30%, #3b79a8, #1a3a57 75%);
+  box-shadow: 0 0 0 2px #1a130c, 0 0 0 3px rgb(124 196 245 / 0.6), 0 0 14px rgb(124 196 245 / 0.25);
+}
+.log-medal[data-result="fail"] {
+  background: radial-gradient(circle at 40% 30%, #a83a2e, #571a14 75%);
+  box-shadow: 0 0 0 2px #1a130c, 0 0 0 3px rgb(240 112 95 / 0.6), 0 0 14px rgb(240 112 95 / 0.25);
+}
+.log-medal[data-live] {
+  color: #e6c14a;
+  box-shadow: 0 0 0 2px #1a130c, 0 0 0 3px #c9a227, 0 0 16px rgb(230 193 74 / 0.45);
+  animation: log-medal-glow 1.8s ease-in-out infinite;
+}
+@keyframes log-medal-glow {
+  50% { box-shadow: 0 0 0 2px #1a130c, 0 0 0 3px #e6c14a, 0 0 22px rgb(230 193 74 / 0.6); }
+}
+
+.log-quest-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.log-quest-card {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 26px;
+  padding: 2px;
+  border-radius: 3px;
+  background: linear-gradient(#24507a, #16324d);
+  box-shadow: inset 0 0 0 1px rgb(124 196 245 / 0.65);
+}
+.log-quest-card[data-fail] {
+  background: linear-gradient(#7a2a20, #4a1610);
+  box-shadow: inset 0 0 0 1px rgb(240 112 95 / 0.75);
+}
+
+/* A seat's number on a gilt coin; a ring for the leader and the draft. */
+.log-coin {
+  position: relative;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: linear-gradient(#e6c14a, #a8851f);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.5);
+  color: #22170a;
+  font-family: var(--font-numbers);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.log-coin[data-tone="ring"] {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px rgb(201 162 39 / 0.6);
+  color: #e8dcc0;
+}
+.log-coin[data-tone="spoken"] {
+  background: none;
+  box-shadow: inset 0 0 0 1px rgb(232 220 192 / 0.2);
+  color: rgb(232 220 192 / 0.38);
+}
+.log-coin[data-tone="speaking"] {
+  background: none;
+  box-shadow: inset 0 0 0 2px #e6c14a, 0 0 10px rgb(230 193 74 / 0.4);
+  color: #e6c14a;
+}
+.log-coin[data-tone="waiting"] {
+  background: none;
+  box-shadow: inset 0 0 0 1px rgb(232 220 192 / 0.3);
+  color: rgb(232 220 192 / 0.72);
+}
+.log-coin[data-tone="dropped"] {
+  background: none;
+  box-shadow: inset 0 0 0 1px rgb(232 220 192 / 0.14);
+  color: rgb(232 220 192 / 0.4);
+  text-decoration: line-through;
+}
+.log-coin-crown {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+}
+
+/* A ballot: the white or black marble, the voter's seat cut into it. */
+.log-stone {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+.log-stone-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.log-stone[data-vote="reject"] { box-shadow: 0 0 0 1px rgb(232 220 192 / 0.3); }
+.log-stone > b {
+  position: relative;
+  font-family: var(--font-numbers);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #4a3a22;
+}
+.log-stone[data-vote="reject"] > b { color: #e0d4b8; }
+
+/* ---- Quest track, held above the log ---- */
+.log-track {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 -16px;
+  padding: 10px 22px 12px;
+  background: linear-gradient(#17110b 82%, rgb(23 17 11 / 0));
+}
+.log-track::before {
+  content: "";
+  position: absolute;
+  top: 26px;
+  left: 40px;
+  right: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, rgb(201 162 39 / 0.15), rgb(201 162 39 / 0.5), rgb(201 162 39 / 0.15));
+}
+.log-track-quest {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  border-radius: 50%;
+}
+.log-track-quest .log-medal {
+  width: 32px;
+  height: 32px;
+  background-color: #17110b;
+}
+.log-track-quest:disabled { cursor: default; }
+.log-track-pips {
+  display: flex;
+  gap: 3px;
+  height: 5px;
+}
+.log-track-pips > i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f0705f;
+}
+.log-track-pips > i[data-approved] { background: #7cc4f5; }
+
+/* ---- Quest card ---- */
+.log-quest {
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: linear-gradient(#211910, #1a130d);
+  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 0.2), 0 6px 18px rgb(0 0 0 / 0.35);
+  scroll-margin-top: 4px;
+}
+.log-quest[data-result="live"] { box-shadow: inset 0 0 0 1px rgb(230 193 74 / 0.6), 0 0 24px rgb(230 193 74 / 0.12); }
+.log-quest-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 18px 0 4px;
+  gap: 10px;
+  min-height: 54px;
+  padding: 10px 14px;
 }
-.war-log-chapter::before,
-.war-log-chapter::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(201 162 39 / 0.4));
+.log-quest[data-result="success"] .log-quest-head { background: linear-gradient(90deg, rgb(59 121 168 / 0.28), rgb(59 121 168 / 0) 75%); }
+.log-quest[data-result="fail"] .log-quest-head { background: linear-gradient(90deg, rgb(168 58 46 / 0.3), rgb(168 58 46 / 0) 75%); }
+.log-quest[data-result="live"] .log-quest-head { background: linear-gradient(90deg, rgb(201 162 39 / 0.2), rgb(201 162 39 / 0) 75%); }
+.log-quest-name {
+  color: #f1e2b8;
+  font-family: var(--font-cinzel), "Songti SC", serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
-.war-log-chapter::after { background: linear-gradient(90deg, rgb(201 162 39 / 0.4), transparent); }
-.war-log-chapter { scroll-margin-top: 4px; }
-.war-log-chapter[data-flash] .war-log-chapter-name { animation: war-log-flash 1.4s ease-out; }
+.war-log-chapter[data-flash] .log-quest-name { animation: war-log-flash 1.4s ease-out; }
 @keyframes war-log-flash {
   0%, 35% { color: #fff3c4; text-shadow: 0 0 10px rgb(230 193 74 / 0.9); }
 }
-.war-log-chapter-size {
-  display: inline-grid;
-  place-items: center;
-  width: 18px;
-  height: 18px;
-  border: 1px solid rgb(201 162 39 / 0.45);
-  border-radius: 50%;
-  color: #e8dcc0;
-  font-family: var(--font-numbers);
-  font-size: 10px;
+.log-quest-outcome {
+  font-size: 15px;
   font-weight: 700;
-}
-.war-log-chapter-shield {
-  display: inline-block;
-  width: 12px;
-  height: 14px;
-  margin-left: -2px;
-  color: #c9a227;
-}
-.war-log-chapter-shield svg {
-  width: 100%;
-  height: 100%;
-  fill: currentColor;
-}
-.war-log-chapter-medal {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  padding: 3px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1.5px rgb(201 162 39 / 0.55);
-}
-.war-log-chapter[data-result="success"] .war-log-chapter-medal {
-  background: radial-gradient(circle at 40% 30%, #3b79a8, #1a3a57 75%);
-  box-shadow: 0 0 0 2px #1a130c, 0 0 0 3px rgb(124 196 245 / 0.6), 0 0 12px rgb(124 196 245 / 0.25);
-}
-.war-log-chapter[data-result="fail"] .war-log-chapter-medal {
-  background: radial-gradient(circle at 40% 30%, #a83a2e, #571a14 75%);
-  box-shadow: 0 0 0 2px #1a130c, 0 0 0 3px rgb(224 80 63 / 0.6), 0 0 12px rgb(224 80 63 / 0.25);
-}
-.war-log-chapter-name {
-  color: #d7ba65;
-  font-family: var(--font-cinzel), "Songti SC", serif;
-  font-size: 13px;
-  letter-spacing: 0.08em;
   white-space: nowrap;
 }
-
-/* ---- Seats: the number leads, the face and name follow ---- */
-.log-seat {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 28px;
-  max-width: 100%;
-  padding: 2px 9px 2px 2px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.04);
-  box-shadow: inset 0 0 0 1px rgb(201 162 39 / 0.22);
-}
-.log-seat-face {
-  flex: none;
-  width: 24px;
-  height: 24px;
-}
-.log-seat-n {
-  color: #f1e2b8;
-  font-family: var(--font-numbers);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
-.log-seat-name {
-  overflow: hidden;
-  max-width: 5.5em;
-  color: rgb(232 220 192 / 0.72);
+.log-quest-outcome[data-result="success"] { color: #7cc4f5; }
+.log-quest-outcome[data-result="fail"] { color: #f0705f; }
+.log-quest-outcome[data-result="live"] { color: #e6c14a; }
+.log-quest-head > .log-quest-cards,
+.log-quest-needs { margin-left: auto; }
+.log-quest-needs {
+  color: rgb(232 220 192 / 0.62);
   font-size: 12px;
+  text-align: right;
+}
+
+/* Those who went: faces in seat order, the leader crowned. */
+.log-crew {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 6px;
+  padding: 16px 10px 12px;
+}
+.log-crew-seat {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  width: 54px;
+}
+.log-crew-face {
+  width: 42px;
+  height: 42px;
+}
+.log-crew-face:not(.has-faction) { box-shadow: 0 0 0 2px #1a130c, 0 0 0 3px #8a6f1c; }
+.log-crew-seat[data-leader] .log-crew-face:not(.has-faction) {
+  box-shadow: 0 0 0 2px #1a130c, 0 0 0 3px #e6c14a, 0 0 12px rgb(230 193 74 / 0.35);
+}
+.log-crew-crown {
+  position: absolute;
+  z-index: 1;
+  top: -11px;
+  width: 18px;
+  height: 18px;
+}
+.log-crew-n {
+  position: absolute;
+  z-index: 1;
+  top: 27px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: linear-gradient(#e6c14a, #a8851f);
+  box-shadow: 0 0 0 2px #1a130c;
+  color: #22170a;
+  font-family: var(--font-numbers);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.log-crew-name {
+  overflow: hidden;
+  max-width: 54px;
+  color: rgb(232 220 192 / 0.66);
+  font-size: 11.5px;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.log-seat.is-team {
-  background: rgb(201 162 39 / 0.12);
-  box-shadow: inset 0 0 0 1px rgb(230 193 74 / 0.6);
-}
-.log-seat.is-leader {
-  background: linear-gradient(90deg, rgb(230 193 74 / 0.22), rgb(230 193 74 / 0.08));
-  box-shadow: inset 0 0 0 1.5px #e6c14a;
-}
-.log-seat.is-leader .log-seat-n { color: #ffe9a6; }
 
-.log-coin {
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 4px;
-  border-radius: 999px;
-  background: rgb(0 0 0 / 0.35);
-  box-shadow: inset 0 0 0 1px rgb(232 220 192 / 0.28);
-  color: #ecd9a3;
-  font-family: var(--font-numbers);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
+.log-quest-body {
+  padding: 0 14px 4px;
+  border-top: 1px solid rgb(232 220 192 / 0.09);
 }
-/* On a ballot row, those sent on the team wear gold, so a member voting against their own team stands out. */
-.log-coin.is-team {
-  background: radial-gradient(circle at 40% 30%, #f3d77a, #b88a22 75%);
-  box-shadow: none;
-  color: #2a1d08;
+.log-quest-line {
+  padding: 8px 0;
+  color: rgb(232 220 192 / 0.62);
+  font-size: 12.5px;
+  border-top: 1px dashed rgb(232 220 192 / 0.09);
 }
-.log-coin.is-dropped {
-  color: rgb(232 220 192 / 0.4);
-  text-decoration: line-through;
-  box-shadow: inset 0 0 0 1px rgb(232 220 192 / 0.12);
-}
+.log-quest-line:first-child { border-top: 0; }
+.log-quest-line[data-admin] { color: #f08a80; font-weight: 600; }
 
-/* ---- Nomination card ---- */
-.proposal-record {
-  --accent: rgb(201 162 39 / 0.55);
-  --accent-text: #ecd9a3;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin: 8px 0;
-  padding: 9px 12px 12px 14px;
-  border-radius: 10px;
-  background: rgb(0 0 0 / 0.26);
-  box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1px rgb(201 162 39 / 0.1);
-  font-size: 13px;
+/* ---- Nomination ---- */
+.log-nomination {
+  --label-width: 2.6em;
+  padding: 11px 0;
 }
-.proposal-record[data-verdict="approved"] { --accent: #6fb4e0; --accent-text: #9fdcf5; }
-.proposal-record[data-verdict="rejected"] { --accent: #c9574a; --accent-text: #f08a80; }
-.proposal-record[data-verdict="open"] {
-  background: rgb(201 162 39 / 0.06);
-  box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1px rgb(201 162 39 / 0.22);
-}
-
-.proposal-record-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 22px;
-}
-.proposal-record-n {
-  color: rgb(232 220 192 / 0.55);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
-}
-.proposal-record[data-last] .proposal-record-n { color: #f08a80; }
-.proposal-record-verdict {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-  color: var(--accent-text);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-.proposal-record-tally {
-  font-family: var(--font-numbers);
-  font-size: 13px;
-  letter-spacing: 0;
-}
-.proposal-record-tally > i {
-  margin: 0 2px;
-  font-style: normal;
-  opacity: 0.5;
-}
-.proposal-record-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 1px 9px;
-  border: 1px dashed rgb(201 162 39 / 0.55);
-  border-radius: 999px;
-  color: #e6c14a;
-  font-size: 11.5px;
-  line-height: 18px;
-}
-.proposal-record-status::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  animation: proposal-record-pulse 1.6s ease-in-out infinite;
-}
-@keyframes proposal-record-pulse {
-  50% { opacity: 0.3; }
-}
-
-.proposal-record-row {
+:lang(en) .log-nomination { --label-width: 3.2em; }
+.log-nomination + .log-nomination,
+.log-quest-line + .log-nomination,
+.log-nomination + .log-quest-line { border-top: 1px dashed rgb(232 220 192 / 0.09); }
+.log-nomination-line {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 5px;
-  /* Wrapped chips line up under the first one, not under the label. */
-  padding-left: calc(var(--label-width) + 5px);
+  min-height: 26px;
 }
-.proposal-record { --label-width: 3.4em; }
-:lang(zh) .proposal-record { --label-width: 2.4em; }
-.proposal-record-label {
+.log-nomination-n {
+  width: calc(var(--label-width) - 5px);
+  color: rgb(232 220 192 / 0.4);
+  font-family: var(--font-numbers);
+  font-size: 11.5px;
+}
+.log-nomination-n[data-last] { color: #f08a80; }
+.log-nomination-arrow {
+  margin: 0 1px;
+  color: rgb(232 220 192 / 0.4);
+  font-size: 12px;
+}
+.log-nomination[data-verdict="rejected"] .log-nomination-line > .log-coin:not([data-tone]) {
+  filter: saturate(0.55) brightness(0.85);
+}
+.log-verdict {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.log-verdict[data-verdict="approved"] { background: rgb(124 196 245 / 0.13); color: #7cc4f5; }
+.log-verdict[data-verdict="rejected"] { background: rgb(240 112 95 / 0.13); color: #f0705f; }
+.log-verdict[data-verdict="open"] { background: rgb(230 193 74 / 0.13); color: #e6c14a; font-weight: 600; }
+.log-verdict > span { font-family: var(--font-numbers); }
+
+.log-nomination-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 7px;
+  /* Wrapped pieces line up under the first one, not under the label. */
+  padding-left: var(--label-width);
+}
+.log-nomination-label {
   flex: none;
   width: var(--label-width);
-  margin-left: calc(-1 * var(--label-width) - 5px);
-  color: rgb(232 220 192 / 0.55);
+  margin-left: calc(-1 * var(--label-width));
+  color: rgb(232 220 192 / 0.42);
   font-size: 12px;
-  letter-spacing: 0.04em;
 }
-
-.proposal-record-ballots {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 10px;
-  border-top: 1px solid rgb(201 162 39 / 0.1);
+.log-nomination-row > .log-coin {
+  width: 21px;
+  height: 21px;
+  font-size: 11px;
 }
-.proposal-record-none { color: rgb(232 220 192 / 0.3); }
+.log-nomination-none { color: rgb(232 220 192 / 0.3); }
 
-.proposal-record-speeches > summary {
-  flex-wrap: nowrap;
+.log-speeches > summary {
   cursor: pointer;
   list-style: none;
 }
-.proposal-record-speeches > summary::-webkit-details-marker { display: none; }
-.proposal-record-speeches > summary::after {
+.log-speeches > summary::-webkit-details-marker { display: none; }
+.log-speeches > summary::after {
   content: "";
   flex: none;
   width: 6px;
@@ -280,74 +398,132 @@
   transform: rotate(45deg) translateY(-2px);
   transition: transform 0.2s;
 }
-.proposal-record-speeches[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
-.proposal-record-speakers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  min-width: 0;
-}
-.proposal-record-speakers > .log-coin {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 3px;
-  font-size: 12px;
-}
-.proposal-record-speech-lines {
+.log-speeches[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.log-speech-lines {
   margin-top: 6px;
-  padding-left: calc(var(--label-width) + 5px);
+  padding-left: var(--label-width);
   color: rgb(232 220 192 / 0.7);
   font-size: 12px;
   line-height: 1.7;
 }
-.proposal-record-speech-lines span {
+.log-speech-lines span {
   margin-right: 8px;
   color: rgb(232 220 192 / 0.35);
   font-family: var(--font-numbers);
   font-size: 11px;
 }
-.proposal-record-speech-lines [data-admin] { color: #f08a80; }
+.log-speech-lines [data-admin] { color: #f08a80; }
 
-.proposal-record-quest {
-  display: flex;
+/* ---- Vote sheet: a column per seat, a row per nomination ---- */
+.vote-sheet { --seats: 8; }
+.vote-sheet-seats,
+.vote-sheet-row {
+  display: grid;
+  grid-template-columns: 36px repeat(var(--seats), minmax(0, 1fr)) 38px;
   align-items: center;
-  gap: 10px;
-  margin: 2px -12px -12px -14px;
-  padding: 9px 12px 10px 14px;
-  border-radius: 0 0 10px 10px;
-  background: linear-gradient(90deg, rgb(111 180 224 / 0.16), transparent 80%);
 }
-.proposal-record-quest[data-result="fail"] { background: linear-gradient(90deg, rgb(201 87 74 / 0.2), transparent 80%); }
-.proposal-record-quest[data-result="pending"] { background: none; border-top: 1px solid rgb(201 162 39 / 0.1); }
-.proposal-record-cards {
-  display: flex;
-  flex-wrap: wrap;
+.vote-sheet-seats {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: 0 -16px;
+  padding: 10px 16px 10px;
+  background: linear-gradient(#17110b 85%, rgb(23 17 11 / 0));
+}
+.vote-sheet-seat {
+  display: grid;
+  justify-items: center;
   gap: 4px;
+  min-width: 0;
 }
-.proposal-record-card {
+.vote-sheet-face {
+  width: min(25px, 92%);
+  height: auto;
+  aspect-ratio: 1;
+}
+.vote-sheet-face:not(.has-faction) { box-shadow: 0 0 0 1.5px #8a6f1c; }
+.vote-sheet-seat > b {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 30px;
-  padding: 2px;
-  border: 1.5px solid #7cc4f5;
-  border-radius: 5px;
-  background: rgb(36 95 140 / 0.45);
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: linear-gradient(#e6c14a, #a8851f);
+  color: #22170a;
+  font-family: var(--font-numbers);
+  font-size: 10px;
 }
-.proposal-record-card[data-fail] { border-color: #e0503f; background: rgb(139 40 32 / 0.5); }
-.proposal-record-quest[data-result="pending"] .proposal-record-card {
-  border: 1.5px dashed rgb(201 162 39 / 0.45);
-  background: none;
+.vote-sheet-quest { margin-top: 10px; }
+.vote-sheet-quest .log-quest-head { min-height: 48px; padding: 8px 10px; }
+.vote-sheet-quest .log-quest-name { font-size: 15px; }
+.vote-sheet-quest .log-quest-outcome { font-size: 14px; }
+.vote-sheet-row {
+  height: 36px;
+  border-top: 1px solid rgb(232 220 192 / 0.09);
 }
-.proposal-record-outcome {
-  color: #9fdcf5;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+.vote-sheet-row[data-verdict="approved"] { background: rgb(124 196 245 / 0.05); }
+.vote-sheet-row[data-verdict="rejected"] .log-stone,
+.vote-sheet-row[data-verdict="rejected"] .vote-sheet-leader { opacity: 0.72; }
+.vote-sheet-leader {
+  display: grid;
+  place-items: center;
 }
-.proposal-record-quest[data-result="fail"] .proposal-record-outcome { color: #f08a80; }
-.proposal-record-quest[data-result="pending"] .proposal-record-outcome {
-  color: #e6c14a;
-  font-weight: 400;
-  font-size: 12px;
+.vote-sheet-leader .log-coin {
+  width: 21px;
+  height: 21px;
+  font-size: 11px;
+}
+.vote-sheet-leader .log-coin-crown {
+  top: -7px;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+}
+.vote-sheet-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-width: 0;
+}
+.vote-sheet-cell[data-team]::before {
+  content: "";
+  position: absolute;
+  inset: 0 2px;
+  background: linear-gradient(rgb(201 162 39 / 0.22), rgb(201 162 39 / 0.12));
+}
+.vote-sheet-cell .log-stone {
+  width: min(20px, 88%);
+  height: auto;
+  aspect-ratio: 1;
+}
+.vote-sheet-wait {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(232 220 192 / 0.25);
+}
+.vote-sheet-tally {
+  text-align: center;
+  font-family: var(--font-numbers);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.vote-sheet-row[data-verdict="approved"] .vote-sheet-tally { color: #7cc4f5; }
+.vote-sheet-row[data-verdict="rejected"] .vote-sheet-tally { color: #f0705f; }
+.vote-sheet-row[data-verdict="open"] .vote-sheet-tally { color: #e6c14a; }
+.vote-sheet-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: rgb(232 220 192 / 0.62);
+  font-size: 12.5px;
+  text-align: center;
+}
+.vote-sheet-note-icon {
+  width: 20px;
+  height: 20px;
 }

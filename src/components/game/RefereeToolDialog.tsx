@@ -1,7 +1,7 @@
 import { Popconfirm } from '@/components/ui/Popconfirm';
 import { Button } from '@/components/ui/Button';
 import type { ClientGameState } from '@/lib/engine';
-import { seatLabel } from '@/lib/game/playerLabel';
+import { bySeat, seatLabel } from '@/lib/game/playerLabel';
 import { adminActions } from '@/lib/socket/client';
 import { useTranslations } from 'use-intl';
 import { TableSheet, useSheetPresence } from './TableSheet';
@@ -109,7 +109,7 @@ export function RefereeToolDialog({ tools, game }: { tools: ReturnType<typeof us
                   })}
                 </div>
                 <Popconfirm confirmLabel={t('common.confirm')} key={proposeSel.join(',')}
-                  title={t('admin.ask.propose', { names: proposeSel.map((id) => {
+                  title={t('admin.ask.propose', { names: bySeat(game, proposeSel).map((id) => {
                     const player = players.find((p) => p.id === id);
                     return player ? seatLabel(player.seat, player.name) : '';
                   }).join(', ') })}

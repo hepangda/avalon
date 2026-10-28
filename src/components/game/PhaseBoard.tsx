@@ -1,5 +1,6 @@
 import type { ClientGameState } from '@/lib/engine';
 import { outcomeReasonKey } from '@/lib/game/outcomeText';
+import { bySeat } from '@/lib/game/playerLabel';
 import { ROLE_TEAM_UI } from '@/lib/game/roleMeta';
 import type { TablePresentation } from '@/lib/game/tablePresentation';
 import type { ReactNode } from 'react';
@@ -23,7 +24,8 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
   const speakerId = game.phase === 'Discussion' ? game.discussion?.order[game.discussion.speakerIndex] : undefined;
   const speaker = game.players.find((p) => p.id === speakerId);
   /** The team as portraits on the felt; open places show how many are still to be named. */
-  function chips(ids: string[], size = ids.length, tone: 'gold' | 'sky' | 'crimson' = 'gold') {
+  function chips(picked: string[], size = picked.length, tone: 'gold' | 'sky' | 'crimson' = 'gold') {
+    const ids = bySeat(game, picked);
     return (
       <ol className="table-team-chips" data-tone={tone} aria-label={t('table.teamSlots', { count: ids.length, total: size })}>
         {Array.from({ length: Math.max(size, ids.length) }, (_, index) => {
@@ -85,15 +87,18 @@ export function PhaseBoard({ game, presentation, isOver, isLeader, isHolder, isA
             <p className="table-phase-detail">{t('discussion.speechProgress', {
               current: (game.discussion?.speakerIndex ?? 0) + 1, total: game.players.length,
             })}</p>
-            <ol className="discussion-order" aria-label={t('discussion.order')}>
-              {game.discussion?.order.map((id, index) => {
-                const player = game.players.find((p) => p.id === id)!;
-                return <li key={id} aria-current={id === speakerId ? 'step' : undefined}
-                  data-done={index < game.discussion!.speakerIndex} title={player.name}>
-                  {player.seat + 1}
-                </li>;
-              })}
-            </ol>
+            {/* Seats count up from 1; whose turn has passed or come shows on each seat, not in their order. */}
+            <ul className="discussion-order" aria-label={t('discussion.order')}>
+              {game.players
+                .filter((p) => game.discussion?.order.includes(p.id))
+                .sort((a, b) => a.seat - b.seat)
+                .map((player) => (
+                  <li key={player.id} aria-current={player.id === speakerId ? 'step' : undefined}
+                    data-done={game.discussion!.order.indexOf(player.id) < game.discussion!.speakerIndex} title={player.name}>
+                    {player.seat + 1}
+                  </li>
+                ))}
+            </ul>
           </div>
         )}
       </>,

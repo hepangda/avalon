@@ -1,6 +1,6 @@
 import type { useTranslations } from 'use-intl';
 import type { ClientGameState, ClientLogEntry, Role } from '@/lib/engine';
-import { labelById } from './playerLabel';
+import { bySeat, labelById } from './playerLabel';
 
 const PLAYER_PARAMS = ['player', 'leader', 'target', 'holder'];
 
@@ -43,7 +43,7 @@ export function formatGameLog(entry: ClientLogEntry, game: Pick<ClientGameState,
       } else if (PLAYER_PARAMS.includes(k) && typeof v === 'string') {
         resolved[k] = nameOf(v);
       } else if (k === 'team' && typeof v === 'string') {
-        resolved[k] = v.split(',').map(nameOf).join('、');
+        resolved[k] = bySeat(game, v.split(',').filter(Boolean)).map(nameOf).join('、');
       } else if (k === 'role' && typeof v === 'string') {
         resolved[k] = roleName(v as Role);
       } else {

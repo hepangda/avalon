@@ -3,6 +3,7 @@ import { useTranslations } from 'use-intl';
 import { GameIcon } from '@/components/game/GameArt';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { outcomeReasonKey } from '@/lib/game/outcomeText';
+import { bySeat } from '@/lib/game/playerLabel';
 import type { ReplayModel } from '@/lib/game/replayModel';
 import type { ReplayStep } from '@/lib/game/replaySteps';
 import { useRoleText } from '@/lib/game/useRoleText';
@@ -23,7 +24,7 @@ export function ReplayBoard({ model, step, viewpoint }: { model: ReplayModel; st
   );
   const chips = (ids: string[], tone: 'gold' | 'sky' | 'crimson' = 'gold') => (
     <ol className="table-team-chips" data-tone={tone}>
-      {ids.map((id) => {
+      {bySeat(model, ids).map((id) => {
         const p = model.byId.get(id);
         if (!p) return null;
         return (

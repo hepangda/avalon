@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { ClientGameState } from '@/lib/engine';
+import { bySeat } from '@/lib/game/playerLabel';
 import { PlayerAvatar } from '@/components/player/PlayerAvatar';
 import { GameIcon } from './GameArt';
 
@@ -25,7 +26,7 @@ export function FeltObjects({ game }: { game: ClientGameState }) {
           <li key={`${record.roundIndex}-${record.proposalIndex}`} className="table-rejected-team"
             style={{ '--tilt': `${(jitter(record.proposalIndex + 1) - 0.5) * 7}deg`, '--depth': rejected.length - 1 - index } as CSSProperties}>
             <GameIcon name="reject" className="table-rejected-stone" />
-            {record.team.map((id) => {
+            {bySeat(game, record.team).map((id) => {
               const p = game.players.find((player) => player.id === id);
               return p && <PlayerAvatar key={id} playerId={id} avatarUrl={p.claimed === false ? undefined : p.avatarUrl} name="" className="table-rejected-token" />;
             })}
