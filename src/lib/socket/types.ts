@@ -54,7 +54,7 @@ export interface RoomMember {
   /** A live participant has taken this roster seat. claimed=false → empty seat
    *  anyone may claim. Independent of `connected` (the socket liveness). */
   claimed: boolean;
-  /** Last self-measured round-trip latency in ms (undefined until first ping). */
+  /** Server-measured WebSocket round-trip latency in ms (undefined until first ping). */
   latency?: number;
 }
 
@@ -130,11 +130,7 @@ export interface ClientToServerEvents {
   'game:startAssassination': (p: Record<string, never>, ack: (r: Ack) => void) => void;
   'game:voteAssassination': (p: { proposalId: number; value: VoteValue }, ack: (r: Ack) => void) => void;
   'game:assassinate': (p: { targetPlayerId: PlayerId }, ack: (r: Ack) => void) => void;
-  /**
-   * Latency heartbeat. The client measures round-trip time by timing the ack,
-   * and reports the previous measurement back so the server can share each
-   * player's self-measured latency with the rest of the room.
-   */
+  /** State-integrity heartbeat. RTT is measured separately by protocol Ping/Pong. */
   'net:ping': (p: { rtt?: number }, ack: (r: Ack<HeartbeatState>) => void) => void;
   /** A seated player's quick reaction; rate limited and broadcast, never stored. */
   'table:emote': (p: { emote: Emote }, ack: (r: Ack) => void) => void;
@@ -171,6 +167,7 @@ export interface ClientToServerEvents {
 /** Events the server emits. */
 export interface ServerToClientEvents {
   'view:sync': (snapshot: ViewSnapshot) => void;
+  'net:rtt': (update: { latency: number }) => void;
   'net:latency': (update: PlayerLatency) => void;
   'table:emote': (event: EmoteEvent) => void;
   'system:notice': (p: { type: string; message?: string }) => void;

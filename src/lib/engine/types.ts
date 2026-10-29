@@ -348,7 +348,7 @@ export interface ClientPlayer {
   avatarUrl?: string;
   seat: number;
   connected: boolean;
-  /** Self-measured round-trip latency in ms. Filled by the socket layer (the
+  /** Server-measured WebSocket round-trip latency in ms. Filled by the socket layer (the
    *  pure engine has no notion of latency); undefined until first ping. */
   latency?: number;
   /** Whether a live participant holds this seat. Filled by the socket layer

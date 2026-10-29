@@ -270,10 +270,8 @@ pub enum Command {
     #[serde(rename = "notes:sync")]
     Notes(NotesRequest),
     #[serde(rename = "net:ping")]
-    Ping {
-        #[serde(default)]
-        rtt: Option<f64>,
-    },
+    // Legacy client RTT fields are ignored; only protocol Pong supplies latency.
+    Ping {},
     #[serde(rename = "table:emote")]
     Emote { emote: Emote },
     #[serde(rename = "admin:auth")]

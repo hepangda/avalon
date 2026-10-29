@@ -1,6 +1,7 @@
 pub mod domain;
 #[cfg(test)]
 mod domain_tests;
+mod heartbeat;
 pub mod helpers;
 pub mod model;
 pub mod protocol;
@@ -33,7 +34,7 @@ use std::{
         Arc, Mutex, RwLock,
         atomic::{AtomicBool, AtomicUsize, Ordering},
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 use tokio::{
     sync::{mpsc, oneshot, watch},
@@ -1013,10 +1014,25 @@ async fn connection(ws: WebSocket, handle: Handle, account: String) {
     let ended = CancellationToken::new();
     let writer_ended = ended.clone();
     let write_peer = peer.clone();
+    let transport_heartbeat = Arc::new(Mutex::new(heartbeat::Heartbeat::default()));
+    let write_heartbeat = transport_heartbeat.clone();
     let mut writing = tokio::spawn(async move {
+        let mut timer = tokio::time::interval(Duration::from_secs(4));
+        timer.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         loop {
             tokio::select! {
                 _=writer_ended.cancelled()=>break,
+                _=timer.tick()=>{
+                    // Start timing here, after waiting for the writer, not in the room queue.
+                    let probe = write_heartbeat.lock().unwrap().ping(Instant::now());
+                    match probe {
+                        Ok(Some(payload)) => {
+                            if !matches!(tokio::time::timeout(Duration::from_secs(10), writer.send(Message::Ping(payload.to_vec().into()))).await, Ok(Ok(()))) { break; }
+                        }
+                        Ok(None) => {}
+                        Err(()) => { write_peer.close(1001, "Heartbeat timeout"); }
+                    }
+                },
                 _=closing.changed()=>{let close=closing.borrow().clone();if let Some((code,reason))=close{let _=tokio::time::timeout(Duration::from_secs(2),writer.send(Message::Close(Some(CloseFrame{code,reason:reason.into()})))).await;}break;},
                 message=messages.recv()=>{let Some(message)=message else{break;};write_peer.bytes.fetch_sub(message_size(&message),Ordering::AcqRel);let closing=matches!(message,Message::Close(_));
                     if !matches!(tokio::time::timeout(Duration::from_secs(10),writer.send(message)).await,Ok(Ok(())))||closing{break;}}
@@ -1024,16 +1040,14 @@ async fn connection(ws: WebSocket, handle: Handle, account: String) {
         }
         writer_ended.cancel();
     });
-    let mut heartbeat = tokio::time::interval(Duration::from_secs(30));
-    heartbeat.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
-    heartbeat.tick().await;
-    let mut alive = true;
     loop {
         tokio::select! {
             _=ended.cancelled()=>break,
-            _=heartbeat.tick()=>{if !alive{peer.close(1001,"Heartbeat timeout");break;}alive=false;peer.send(Message::Ping(bytes::Bytes::new()));},
             message=reader.next()=>{match message{
-                Some(Ok(Message::Pong(_)))=>alive=true,
+                Some(Ok(Message::Pong(payload)))=>{
+                    let rtt = transport_heartbeat.lock().unwrap().pong(&payload, Instant::now());
+                    if let Some(ms) = rtt { publish_latency(&handle, &peer, ms); }
+                },
                 Some(Ok(Message::Ping(payload)))=>peer.send(Message::Pong(payload)),
                 Some(Ok(Message::Text(raw)))=>{let request=match serde_json::from_str::<Request>(&raw){Ok(r)if r.id.len()<=128=>r,_=>continue};
                     if peer.retired.load(Ordering::Acquire){break;}
@@ -1065,6 +1079,34 @@ async fn connection(ws: WebSocket, handle: Handle, account: String) {
     ended.cancel();
     let _ = handle.tx.send(Work::Disconnect(peer.id.clone())).await;
 }
+fn publish_latency(handle: &Handle, peer: &Peer, ms: i64) {
+    // Every connection, including spectators, receives its own transport measurement.
+    peer.send(Message::Text(
+        json!({"t":"push","event":"net:rtt","payload":{"latency":ms}})
+            .to_string()
+            .into(),
+    ));
+    let snapshot = peer.view.borrow().clone();
+    if let Some(pid) = snapshot.as_ref().and_then(|s| s.view.player_id.as_ref()) {
+        let old = handle
+            .live
+            .latencies
+            .lock()
+            .unwrap()
+            .insert(pid.to_string(), ms);
+        if old != Some(ms) {
+            let message = Message::Text(
+                json!({"t":"push","event":"net:latency","payload":{"playerId":pid,"latency":ms}})
+                    .to_string()
+                    .into(),
+            );
+            for other in handle.live.peers.read().unwrap().values() {
+                other.send(message.clone());
+            }
+        }
+    }
+}
+
 fn message_size(message: &Message) -> usize {
     match message {
         Message::Text(s) => s.len(),
@@ -1081,28 +1123,11 @@ async fn fast(handle: &Handle, peer: &Arc<Peer>, request_id: &str, command: &Com
     }
     let snapshot = peer.view.borrow().clone();
     match command {
-        Command::Ping { rtt } => {
+        Command::Ping { .. } => {
             let sync = snapshot
                 .as_ref()
                 .map(|s| json!({"epoch":s.epoch,"revision":s.revision,"hash":s.hash}));
             peer.ack(request_id, json!({"ok":true,"data":{"sync":sync}}));
-            if let Some(rtt) = rtt.filter(|n| n.is_finite())
-                && let Some(pid) = snapshot.as_ref().and_then(|s| s.view.player_id.as_ref())
-            {
-                let ms = rtt.round().clamp(0., 9999.) as i64;
-                let old = handle
-                    .live
-                    .latencies
-                    .lock()
-                    .unwrap()
-                    .insert(pid.to_string(), ms);
-                if old != Some(ms) {
-                    let msg=Message::Text(json!({"t":"push","event":"net:latency","payload":{"playerId":pid,"latency":ms}}).to_string().into());
-                    for p in handle.live.peers.read().unwrap().values() {
-                        p.send(msg.clone());
-                    }
-                }
-            }
         }
         Command::Resync {} => {
             if let Some(snapshot) = snapshot {

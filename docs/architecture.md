@@ -119,3 +119,11 @@ random outcomes (`resolved-v1`); the old seeded stream is compiled only into the
 offline importer. The one-time [cutover](randomness-cutover.md) preserves completed
 history and private migration evidence, then ends old live rooms. Old rules remain
 available for import verification. The browser's live protocol remains unchanged.
+
+Network latency is measured by the Rust WebSocket writer using protocol Ping/Pong
+every four seconds, starting immediately after connection. Only a matching Pong
+completes a sample; an unanswered probe times out after 30 seconds (checked on
+the next heartbeat tick). The server pushes `net:rtt` to that connection, including
+spectators, and `net:latency` to the room for seated players. Browser JavaScript
+acknowledgment timing and client-reported RTT are not used. The application-level
+`net:ping` remains a state-integrity check, independent of latency measurement.

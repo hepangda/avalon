@@ -10,7 +10,7 @@ import { useRoomStore } from '@/lib/store/room';
 import { useSessionStore } from '@/lib/store/session';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { PlayerLatency } from '../types';
-import { createLatencyHeartbeat } from './heartbeat';
+import { createSyncHeartbeat } from './heartbeat';
 import { connectRoom,emitWithAck,getConnection,type ConnState } from './socket';
 
 /**
@@ -97,14 +97,12 @@ export function useRoomConnection(code: string | null) {
       }
     }
 
-    // Latency heartbeat: time the ack round-trip, store it locally, and report
-    // the previous measurement so the server can share it with the room.
-    const heartbeat = createLatencyHeartbeat(
-      async (rtt) => {
+    // Application heartbeats check state integrity; only protocol Pong measures RTT.
+    const heartbeat = createSyncHeartbeat(
+      async () => {
         const conn = getConnection();
-        return conn?.connected ? conn.emit<HeartbeatState>('net:ping', { rtt }) : { ok: false };
+        return conn?.connected ? conn.emit<HeartbeatState>('net:ping', {}) : { ok: false };
       },
-      store.setSelfLatency,
       (result) => { if (active && result.ok) void sync.check((result.data as HeartbeatState | undefined)?.sync ?? null); },
     );
     function ping() {
@@ -154,6 +152,9 @@ export function useRoomConnection(code: string | null) {
       switch (event) {
         case 'view:sync':
           void sync.receive(payload as ViewSnapshot);
+          break;
+        case 'net:rtt':
+          store.setSelfLatency((payload as { latency: number }).latency);
           break;
         case 'net:latency':
           store.setPlayerLatency(payload as PlayerLatency);
