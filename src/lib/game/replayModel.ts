@@ -113,7 +113,8 @@ function segmentLog(log: ClientLogEntry[]) {
 
 /** Normalize an archived replay, including archives written before proposals and logs were kept. */
 export function buildReplayModel(data: ReplayData): ReplayModel {
-  const roleOf = new Map(data.roleAssignments.map((r) => [r.playerId, r]));
+  // Migration preserves missing historical facts instead of inventing roles.
+  const roleOf = new Map((data.roleAssignments ?? []).map((r) => [r.playerId, r]));
   const players: ReplaySeat[] = data.players
     .slice()
     .sort((a, b) => a.seat - b.seat)
@@ -131,8 +132,8 @@ export function buildReplayModel(data: ReplayData): ReplayModel {
   const sizes = missionSizesFor(count);
   const fails = requiredFailsFor(count);
   const { segments, closing } = segmentLog(data.log ?? []);
-  const roundByIndex = new Map(data.rounds.map((r) => [r.roundIndex, r]));
-  const ladyAfter = new Map(data.ladyChecks.map((l) => [l.roundIndex - 1, l]));
+  const roundByIndex = new Map((data.rounds ?? []).map((r) => [r.roundIndex, r]));
+  const ladyAfter = new Map((data.ladyChecks ?? []).map((l) => [l.roundIndex - 1, l]));
 
   const missions: ReplayMissionView[] = sizes.map((size, roundIndex) => {
     const round = roundByIndex.get(roundIndex);

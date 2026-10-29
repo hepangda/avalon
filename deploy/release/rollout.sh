@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rolls the Deployment to one digest-pinned image and checks /api/health.
-# Any failure after the image changes restores the previous image.
+# Rust releases are forward-only; failures never restore a legacy Node image.
 # --restart restarts the pod when that image is already running.
 # Usage: rollout.sh <repository@sha256:digest> <version> [--restart]
 set -euo pipefail
@@ -65,8 +65,5 @@ if wait_rollout && healthy; then
   exit 0
 fi
 
-echo "::error::Release $version failed; restoring $previous"
-set_image "$previous" "$version-rollback"
-wait_rollout
-healthy || echo "::error::Rollback finished but the app is still unhealthy"
+echo "::error::Release $version failed; keeping the Rust image. Repair forward; automatic rollback is disabled."
 exit 1

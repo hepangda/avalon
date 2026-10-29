@@ -4,14 +4,15 @@ An online Avalon game for 5–10 players, with real-time rooms, spectators,
 reconnection, companion bots and post-game replays. The interface supports
 Simplified Chinese and English, with layouts for phones and desktops.
 
-The app uses React, Vite and TypeScript, a Node.js HTTP/WebSocket server, and
+The app uses React, Vite and TypeScript, a Rust (Tokio/Axum) HTTP/WebSocket server, and
 PostgreSQL. Sign-in is required for rooms, spectating and replays. Authentication
 currently integrates with Pangda Auth; it is not a provider-independent OIDC client.
 
 ## Local development
 
-Requires Node.js 22 or newer, npm and Docker Compose. Local development and
-Docker builds use `npm ci` with the single `package-lock.json`.
+Requires Node.js 22 or newer, npm, Docker Compose and Rust installed through
+`rustup`. The pinned toolchain in `rust-toolchain.toml` is selected automatically.
+Frontend dependencies use `npm ci`; backend dependencies use `backend/Cargo.lock`.
 
 ```sh
 npm ci
@@ -29,7 +30,8 @@ Tables are initialized automatically.
 The launcher reads development configuration from `.env.local` and overrides
 `DATABASE_URL` with the dedicated local database.
 Set `AVALON_DEV_DB_PORT` in `.env.local` if port 55432 is occupied. Ctrl+C stops the
-servers while preserving the database container and volume.
+servers while preserving the database container and volume. Vite reloads frontend
+changes automatically; restart `npm run dev:server` after changing Rust sources.
 
 ```sh
 npm run db:up       # Start only the local database
@@ -62,13 +64,13 @@ their rooms; a page loaded during the outage shows sign-in and re-checks with ba
 
 Register the exact callback `${PUBLIC_ORIGIN}/api/auth/callback`; local Vite uses
 `http://localhost:5173/api/auth/callback`. The approved issuers are explicit in
-`server/auth/config.ts`; development additionally accepts a loopback issuer such as
+`backend/src/auth.rs`; development additionally accepts a loopback issuer such as
 `http://localhost:17001`. Supporting another provider requires adapting and testing that
 integration, not just changing the example issuer URL.
 
 ## Self-hosting
 
-A single Node application process and PostgreSQL are required. For Docker Compose:
+A single Rust application process and PostgreSQL are required. For Docker Compose:
 
 1. Copy `.env.example` to `.env` and configure authentication.
 2. Set `ENVIRONMENT=production` and `PUBLIC_ORIGIN` to your public HTTPS origin.
@@ -81,7 +83,14 @@ Compose keeps PostgreSQL data in the `postgres-data` volume. Back it up separate
 For a process-managed installation, run `npm run build` followed by `npm start`
 with `.env` or environment variables. Set `PUBLIC_ORIGIN` to the browser-facing
 origin (for example `http://localhost:3000` for a local production-build preview).
-The server serves the frontend from `dist/client`.
+The server serves the frontend from `dist/client`. `npm run build:web` builds only
+the frontend; `npm run build:server` builds the release executable at
+`backend/target/release/avalon-server`. The production Docker image contains the
+Rust binary, frontend assets and CA certificates; no Node runtime is needed.
+
+The Rust migration intentionally invalidates old login cookies. Account identity
+and database history remain associated after signing in again. Releases are
+forward-only: do not deploy the legacy Node backend after the cutover.
 
 Run **one application process per database**. A PostgreSQL session advisory lock
 and generation checks enforce room ownership. Use a direct database connection
@@ -95,12 +104,55 @@ in [deploy/r2](deploy/r2/README.md); Kubernetes constraints are documented in
 [deploy/release](deploy/release/README.md). Site-specific infrastructure and migration
 records are not part of the public deployment instructions.
 
+## One-way data cutover
+
+The production server uses recorded random outcomes and contains no legacy
+JavaScript RNG implementation. Stop every old Avalon process before migrating.
+The offline importer preserves accounts, preferences, cards, rewards, ratings
+inputs and completed archives. It archives and clears existing rooms, so ongoing
+games end at this release. It does not invent a winner for an unfinished game.
+Players sign in again after the Rust server starts.
+
+First take a consistent PostgreSQL backup. Build the separate importer, review its
+read-only report, and apply the transaction with the same database connection:
+
+```sh
+npm run build:migration
+# DATABASE_URL must be supplied by the operator; no production default is used.
+backend/target/release/migrate-randomness --dry-run
+backend/target/release/migrate-randomness --apply
+npm run build:server
+npm start
+```
+
+A Docker importer is available as an explicit build target. The default production
+image contains only the Rust server; it never contains the legacy importer binary:
+
+```sh
+docker build --target migration-tool -t avalon-migration .
+docker run --rm -e DATABASE_URL avalon-migration --dry-run
+docker run --rm -e DATABASE_URL avalon-migration --apply
+docker build --target production -t avalon .
+```
+
+Completed archives become `formatVersion: 2` without changing recorded outcomes,
+roles, cosmetic variants, logs or timestamps. Missing legacy metadata stays
+missing. A completed room with no archive is reconstructed only by the isolated
+legacy importer and checked against its persisted final result. Corruption or a
+mismatch fails the transaction. The server refuses an unmigrated nonempty database;
+there is no automatic migration or fallback to the Node backend.
+See the [cutover guide](docs/randomness-cutover.md) for data preservation,
+preflight checks and repeat-execution behavior.
+
 ## Verification
 
 ```sh
 npm run typecheck
 npm run lint
 npm test
+npm run test:rust
+npm run test:rust:legacy
+npm run check:rust
 npm run build
 ```
 
@@ -118,6 +170,19 @@ selected database. Use a disposable database whose name ends in `_test`:
 TEST_DATABASE_URL=postgres://user:password@localhost:5432/avalon_test npm run test:postgres
 ```
 
+Rust persistence and live HTTP/WebSocket integration tests create and drop their
+own UUID-named databases. The supplied account needs `CREATEDB`; use the local
+disposable PostgreSQL server. The runtime test also refuses a connection URL whose
+database name does not end in `_test`:
+
+```sh
+AVALON_TEST_DATABASE_URL=postgres://user:password@localhost:5432/postgres cargo test --manifest-path backend/Cargo.toml --test storage_integration -- --ignored
+TEST_DATABASE_URL=postgres://user:password@localhost:5432/avalon_test cargo test --manifest-path backend/Cargo.toml --test runtime_integration -- --ignored
+```
+
+The runtime suite covers private views, real SQL lock delays, failed commits,
+account takeover, process restart and room dissolution through actual sockets.
+
 ## Project layout
 
 | Path | Purpose |
@@ -126,19 +191,22 @@ TEST_DATABASE_URL=postgres://user:password@localhost:5432/avalon_test npm run te
 | `src/lib/engine/` | Deterministic rules, event modules, role visibility and player projections |
 | `src/components/game/GameView.tsx` | Injectable game table shared by rooms and gallery |
 | `src/styles/` | Ordered table, card, dialog and timer styles |
-| `server/` | Node backend and colocated tests |
-| `server/index.ts` | Node HTTP/WebSocket entry point and shutdown |
-| `server/app.ts`, `server/http/` | HTTP API composition and route groups |
-| `server/room.ts`, `server/room-*.ts` | Serialized commits and separate membership, referee, view and recovery services |
-| `server/database.ts` | PostgreSQL transactions and process ownership |
-| `server/auth.ts`, `server/auth/` | Auth API, OIDC protocol, session encryption and provider cache |
+| `backend/src/` | Production Rust HTTP, authentication, rooms, storage, rules and CPU workers |
+| `backend/tests/` | Rust integration tests and cross-language fixtures |
+| `server/` | Retained TypeScript behavioral oracle and regression tests |
+| `backend/src/main.rs` | Rust HTTP/WebSocket entry point and shutdown |
+| `backend/src/http.rs`, `backend/src/static_files.rs` | HTTP API composition and frontend resources |
+| `backend/src/room/` | Bounded room tasks, committed views, membership and referee commands |
+| `backend/src/storage.rs`, `backend/src/journal.rs` | PostgreSQL transactions, ownership and verified recovery |
+| `backend/src/auth.rs` | OIDC protocol, new encrypted Rust sessions and provider cache |
 | `messages/` | Chinese/English text; `*.debug.json` loads only in development |
 | `public/assets/` | Optimized game artwork |
 | `scripts/` | Development launcher, static publishing and bot benchmarks |
 | `deploy/` | Optional R2, Kubernetes and release pipeline documentation |
-| `dist/client/`, `dist/server/` | Generated frontend and backend build output |
+| `dist/client/`, `backend/target/` | Generated frontend and Rust build output |
 
 See [gameplay](docs/gameplay.md), [architecture and recovery](docs/architecture.md),
+[Rust runtime and validation](docs/rust-backend.md),
 [bot decisions](docs/bots.md), and [artwork provenance](docs/art/README.md).
 [Publication review](docs/publication-review.md) records what was removed, retained
 privately or still needs review before distribution.

@@ -15,7 +15,8 @@ Lady results remain hidden in that viewpoint.
 
 ## Rating model
 
-`server/ratings.ts` implements `bt-map-v1-deviation-v2`, an average-team
+`backend/src/ratings.rs` implements `bt-map-v1-deviation-v2` (with
+`server/ratings.ts` retained as the differential reference), an average-team
 Bradley–Terry model:
 
 ```text

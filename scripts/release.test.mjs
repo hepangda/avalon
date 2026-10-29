@@ -40,7 +40,7 @@ test('release resolves main and abbreviated commits, rejecting tags and commits 
   }
 });
 
-test('anonymous GHCR rollout can restore the previous image', () => {
+test('failed Rust rollout never restores a legacy image', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'avalon-rollout-'));
   const image = `ghcr.io/hepangda/avalon@sha256:${'a'.repeat(64)}`;
   const previous = `ghcr.io/hepangda/avalon@sha256:${'b'.repeat(64)}`;
@@ -64,10 +64,10 @@ esac
     });
     assert.equal(result.status, 1, result.stderr);
     const patches = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
-    assert.equal(patches.length, 2);
+    assert.equal(patches.length, 1);
     assert.equal(patches[0].spec.template.spec.containers[0].image, image);
     assert.equal(patches[0].spec.template.spec.imagePullSecrets, undefined);
-    assert.equal(patches[1].spec.template.spec.containers[0].image, previous);
+    assert.match(result.stdout, /automatic rollback is disabled/);
   } finally {
     rmSync(cwd, { recursive: true, force: true });
   }

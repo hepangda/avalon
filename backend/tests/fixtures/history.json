@@ -1,0 +1,6860 @@
+{
+  "records": [
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-000",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1000,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-001",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1001,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-002",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1002,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-003",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1003,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-004",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1004,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-005",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1005,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-006",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1006,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-007",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1007,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-008",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1008,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-009",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1009,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-010",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1010,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-011",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1011,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-012",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0,
+            "isBot": true
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1012,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-013",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1013,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-014",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1014,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-015",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1015,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null
+      },
+      "ratingImport": "name-recovery-v1"
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-016",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1016,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-017",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1017,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-018",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1018,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-019",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1019,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {},
+      "altered": false,
+      "replay": {
+        "gameId": "game-020",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1020,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      },
+      "participants": [
+        "account0",
+        "account1"
+      ]
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-021",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1021,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-022",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1022,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-023",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1023,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-024",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1024,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": false,
+      "replay": {
+        "gameId": "game-025",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1025,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-026",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1026,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-027",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1027,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-028",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1028,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-029",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1029,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-030",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1030,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-031",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1031,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-032",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1032,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account4",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account0"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-033",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "good",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1033,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": false,
+            "failCount": 1,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    },
+    {
+      "seats": {
+        "p0": "account0",
+        "p1": "account1",
+        "p2": "account2",
+        "p3": "account3",
+        "p4": "account4"
+      },
+      "altered": null,
+      "replay": {
+        "gameId": "game-034",
+        "players": [
+          {
+            "id": "p0",
+            "name": "Player 0",
+            "seat": 0
+          },
+          {
+            "id": "p1",
+            "name": "Player 1",
+            "seat": 1
+          },
+          {
+            "id": "p2",
+            "name": "Player 2",
+            "seat": 2
+          },
+          {
+            "id": "p3",
+            "name": "Player 3",
+            "seat": 3
+          },
+          {
+            "id": "p4",
+            "name": "Player 4",
+            "seat": 4
+          }
+        ],
+        "roleAssignments": [
+          {
+            "playerId": "p0",
+            "role": "Merlin"
+          },
+          {
+            "playerId": "p1",
+            "role": "Percival"
+          },
+          {
+            "playerId": "p2",
+            "role": "LoyalServant"
+          },
+          {
+            "playerId": "p3",
+            "role": "Morgana"
+          },
+          {
+            "playerId": "p4",
+            "role": "Assassin"
+          }
+        ],
+        "outcome": {
+          "winner": "evil",
+          "reason": "assassin_missed",
+          "missionTally": {
+            "good": 0,
+            "evil": 0
+          },
+          "revealedRoles": []
+        },
+        "endedAt": 1034,
+        "rounds": [
+          {
+            "roundIndex": 0,
+            "leaderPlayerId": "p0",
+            "teamSize": 2,
+            "finalTeam": [
+              "p0",
+              "p1"
+            ],
+            "approved": true,
+            "missionSuccess": true,
+            "failCount": 0,
+            "votes": [],
+            "proposals": [],
+            "missionCards": []
+          }
+        ],
+        "ladyChecks": [],
+        "assassination": null,
+        "options": {
+          "oberon": false,
+          "mordred": false,
+          "morgana": true,
+          "percival": true,
+          "ladyOfTheLake": false
+        }
+      }
+    }
+  ],
+  "policies": [
+    {
+      "includeBots": false,
+      "exclusions": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "legacy",
+        null,
+        null,
+        null,
+        "bots",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "identity",
+        null,
+        "invalid",
+        null,
+        null,
+        null,
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy"
+      ],
+      "fit": {
+        "players": {
+          "account0": {
+            "hidden": 1837.0996409080474,
+            "sd": 0.8255430727215081,
+            "games": 22,
+            "lastPlayed": 1025
+          },
+          "account1": {
+            "hidden": 1816.6433880683874,
+            "sd": 0.9555712829189539,
+            "games": 22,
+            "lastPlayed": 1025
+          },
+          "account2": {
+            "hidden": 1816.6433880683874,
+            "sd": 0.9555712829189538,
+            "games": 22,
+            "lastPlayed": 1025
+          },
+          "account3": {
+            "hidden": 1775.0349178974188,
+            "sd": 0.8969459697571497,
+            "games": 22,
+            "lastPlayed": 1025
+          },
+          "account4": {
+            "hidden": 1754.5786650577588,
+            "sd": 0.8202958347968725,
+            "games": 22,
+            "lastPlayed": 1025
+          }
+        },
+        "parameters": [
+          0.21356270027575514,
+          0.09580704315795975,
+          0.09580704315795972,
+          -0.14371056473693955,
+          -0.2614662218547352,
+          0.14083635344220072,
+          -0.021772356963304085,
+          0.056981445323854275
+        ],
+        "covariance": [
+          [
+            0.6815213649184692,
+            0.013084772481785632,
+            0.013084772481785632,
+            -0.019627158722678457,
+            0.31193624884063786,
+            0.01923461554822486,
+            -0.0010770688945731257,
+            0.0058857227816293545
+          ],
+          [
+            0.013084772481785632,
+            0.9131164767393755,
+            -0.08688352326062522,
+            0.13032528489093734,
+            0.03035698914852679,
+            -0.12771877919311841,
+            -0.02938311097120872,
+            -0.002546583827070951
+          ],
+          [
+            0.013084772481785632,
+            -0.08688352326062515,
+            0.9131164767393751,
+            0.13032528489093725,
+            0.030356989148526796,
+            -0.12771877919311836,
+            -0.02938311097120872,
+            -0.002546583827070952
+          ],
+          [
+            -0.01962715872267845,
+            0.13032528489093734,
+            0.13032528489093723,
+            0.8045120726635936,
+            -0.045535483722790114,
+            0.19157816878967768,
+            0.04407466645681307,
+            0.003819875740606424
+          ],
+          [
+            0.3119362488406379,
+            0.030356989148526786,
+            0.03035698914852679,
+            -0.04553548372279013,
+            0.6728852565850979,
+            0.044624774048334266,
+            0.01576862438017749,
+            -0.004612430868093867
+          ],
+          [
+            0.01923461554822486,
+            -0.12771877919311844,
+            -0.12771877919311836,
+            0.19157816878967768,
+            0.044624774048334266,
+            0.3022533945861154,
+            -0.04319317312767677,
+            -0.0037434782257942914
+          ],
+          [
+            -0.0010770688945731246,
+            -0.029383110971208718,
+            -0.029383110971208725,
+            0.04407466645681307,
+            0.015768624380177485,
+            -0.04319317312767677,
+            0.10936456272573006,
+            0.0023371439923507973
+          ],
+          [
+            0.005885722781629355,
+            -0.0025465838270709524,
+            -0.002546583827070951,
+            0.003819875740606424,
+            -0.004612430868093867,
+            -0.003743478225794292,
+            0.0023371439923507973,
+            0.11922698645120063
+          ]
+        ],
+        "accounts": [
+          "account0",
+          "account1",
+          "account2",
+          "account3",
+          "account4"
+        ],
+        "configs": [
+          "[[\"Assassin\",\"LoyalServant\",\"Merlin\",\"Morgana\",\"Percival\"],\"known-rules\",false,5]",
+          "[[\"Assassin\",\"LoyalServant\",\"Merlin\",\"Morgana\",\"Percival\"],\"legacy-unknown-rules\",null,null]"
+        ]
+      },
+      "public": {
+        "account0": {
+          "score": 51.9,
+          "ratedGames": 22,
+          "title": "capable",
+          "confidence": "insufficient"
+        },
+        "account1": {
+          "score": 50.8,
+          "ratedGames": 22,
+          "title": "capable",
+          "confidence": "insufficient"
+        },
+        "account2": {
+          "score": 50.8,
+          "ratedGames": 22,
+          "title": "capable",
+          "confidence": "insufficient"
+        },
+        "account3": {
+          "score": 48.8,
+          "ratedGames": 22,
+          "title": "capable",
+          "confidence": "insufficient"
+        },
+        "account4": {
+          "score": 47.7,
+          "ratedGames": 22,
+          "title": "capable",
+          "confidence": "insufficient"
+        }
+      },
+      "profiles": [
+        {
+          "account": "account0",
+          "profile": {
+            "rating": {
+              "score": 51.9,
+              "ratedGames": 22,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "trend": [
+              53.1,
+              51.9,
+              50,
+              49,
+              50,
+              51.4,
+              52.2,
+              50.8,
+              50,
+              50.7,
+              51.2,
+              50.6,
+              49.5,
+              48.9,
+              49.4,
+              50.6,
+              51,
+              50.1,
+              50.5,
+              51.5,
+              51.9
+            ],
+            "total": {
+              "games": 33,
+              "wins": 16
+            },
+            "unresolvedGames": 1,
+            "teams": {
+              "good": {
+                "games": 22,
+                "wins": 11
+              },
+              "evil": {
+                "games": 11,
+                "wins": 5
+              }
+            },
+            "roles": [
+              {
+                "role": "Merlin",
+                "games": 22,
+                "wins": 11
+              },
+              {
+                "role": "Assassin",
+                "games": 11,
+                "wins": 5
+              }
+            ],
+            "form": [
+              false,
+              false,
+              false,
+              true,
+              true,
+              true,
+              false,
+              false,
+              false,
+              true
+            ]
+          },
+          "games": {
+            "total": 34,
+            "next": 30,
+            "games": [
+              {
+                "gameId": "game-034",
+                "endedAt": 1034,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-033",
+                "endedAt": 1033,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-032",
+                "endedAt": 1032,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-031",
+                "endedAt": 1031,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-030",
+                "endedAt": 1030,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-029",
+                "endedAt": 1029,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-028",
+                "endedAt": 1028,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-027",
+                "endedAt": 1027,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-026",
+                "endedAt": 1026,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-025",
+                "endedAt": 1025,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-024",
+                "endedAt": 1024,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 1
+                }
+              },
+              {
+                "gameId": "game-023",
+                "endedAt": 1023,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-022",
+                "endedAt": 1022,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "invalid",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-021",
+                "endedAt": 1021,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": -0.9
+                }
+              },
+              {
+                "gameId": "game-020",
+                "endedAt": 1020,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "identity",
+                "participationOnly": true,
+                "seat": null
+              },
+              {
+                "gameId": "game-019",
+                "endedAt": 1019,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-018",
+                "endedAt": 1018,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 1.2
+                }
+              },
+              {
+                "gameId": "game-017",
+                "endedAt": 1017,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-016",
+                "endedAt": 1016,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -0.6
+                }
+              },
+              {
+                "gameId": "game-015",
+                "endedAt": 1015,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": -1.1
+                }
+              },
+              {
+                "gameId": "game-014",
+                "endedAt": 1014,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -0.6
+                }
+              },
+              {
+                "gameId": "game-013",
+                "endedAt": 1013,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-011",
+                "endedAt": 1011,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.7
+                }
+              },
+              {
+                "gameId": "game-010",
+                "endedAt": 1010,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -0.8
+                }
+              },
+              {
+                "gameId": "game-009",
+                "endedAt": 1009,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": -1.4
+                }
+              },
+              {
+                "gameId": "game-008",
+                "endedAt": 1008,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-007",
+                "endedAt": 1007,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.8
+                }
+              },
+              {
+                "gameId": "game-006",
+                "endedAt": 1006,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 1.4
+                }
+              },
+              {
+                "gameId": "game-005",
+                "endedAt": 1005,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 1
+                }
+              },
+              {
+                "gameId": "game-004",
+                "endedAt": 1004,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -1
+                }
+              }
+            ]
+          },
+          "next": {
+            "total": 34,
+            "next": null,
+            "games": [
+              {
+                "gameId": "game-003",
+                "endedAt": 1003,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": -1.9
+                }
+              },
+              {
+                "gameId": "game-002",
+                "endedAt": 1002,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -1.2
+                }
+              },
+              {
+                "gameId": "game-001",
+                "endedAt": 1001,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 1.5
+                }
+              },
+              {
+                "gameId": "game-000",
+                "endedAt": 1000,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 1.6
+                }
+              }
+            ]
+          },
+          "visible": {
+            "rating": {
+              "score": 51.9,
+              "ratedGames": 22,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "total": {
+              "games": 33,
+              "wins": 16
+            },
+            "teams": {
+              "good": {
+                "games": 22,
+                "wins": 11
+              },
+              "evil": {
+                "games": 11,
+                "wins": 5
+              }
+            },
+            "roles": [
+              {
+                "role": "Merlin",
+                "games": 22,
+                "wins": 11
+              },
+              {
+                "role": "Assassin",
+                "games": 11,
+                "wins": 5
+              }
+            ],
+            "form": [
+              false,
+              false,
+              false,
+              true,
+              true,
+              true,
+              false,
+              false,
+              false,
+              true
+            ]
+          },
+          "hidden": {
+            "rating": {
+              "score": 51.9,
+              "ratedGames": 22,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "hidden": true
+          }
+        },
+        {
+          "account": "account3",
+          "profile": {
+            "rating": {
+              "score": 48.8,
+              "ratedGames": 22,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "trend": [
+              50,
+              51.3,
+              50,
+              50.9,
+              50,
+              50.8,
+              50.1,
+              49.4,
+              50,
+              49.5,
+              49.1,
+              49.6,
+              48.9,
+              49.3,
+              49,
+              49.5,
+              49.2,
+              48.8,
+              48.6,
+              49,
+              48.8
+            ],
+            "total": {
+              "games": 33,
+              "wins": 16
+            },
+            "unresolvedGames": 0,
+            "teams": {
+              "good": {
+                "games": 0,
+                "wins": 0
+              },
+              "evil": {
+                "games": 33,
+                "wins": 16
+              }
+            },
+            "roles": [
+              {
+                "role": "Morgana",
+                "games": 33,
+                "wins": 16
+              }
+            ],
+            "form": [
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false
+            ]
+          },
+          "games": {
+            "total": 33,
+            "next": 30,
+            "games": [
+              {
+                "gameId": "game-034",
+                "endedAt": 1034,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-033",
+                "endedAt": 1033,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-032",
+                "endedAt": 1032,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-031",
+                "endedAt": 1031,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-030",
+                "endedAt": 1030,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-029",
+                "endedAt": 1029,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-028",
+                "endedAt": 1028,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-027",
+                "endedAt": 1027,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-026",
+                "endedAt": 1026,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-025",
+                "endedAt": 1025,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.2
+                }
+              },
+              {
+                "gameId": "game-024",
+                "endedAt": 1024,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-023",
+                "endedAt": 1023,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.2
+                }
+              },
+              {
+                "gameId": "game-022",
+                "endedAt": 1022,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "invalid",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-021",
+                "endedAt": 1021,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.4
+                }
+              },
+              {
+                "gameId": "game-019",
+                "endedAt": 1019,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.3
+                }
+              },
+              {
+                "gameId": "game-018",
+                "endedAt": 1018,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-017",
+                "endedAt": 1017,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.3
+                }
+              },
+              {
+                "gameId": "game-016",
+                "endedAt": 1016,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-015",
+                "endedAt": 1015,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.7
+                }
+              },
+              {
+                "gameId": "game-014",
+                "endedAt": 1014,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-013",
+                "endedAt": 1013,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.4
+                }
+              },
+              {
+                "gameId": "game-011",
+                "endedAt": 1011,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.5
+                }
+              },
+              {
+                "gameId": "game-010",
+                "endedAt": 1010,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.6
+                }
+              },
+              {
+                "gameId": "game-009",
+                "endedAt": 1009,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.7
+                }
+              },
+              {
+                "gameId": "game-008",
+                "endedAt": 1008,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-007",
+                "endedAt": 1007,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.7
+                }
+              },
+              {
+                "gameId": "game-006",
+                "endedAt": 1006,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.8
+                }
+              },
+              {
+                "gameId": "game-005",
+                "endedAt": 1005,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.9
+                }
+              },
+              {
+                "gameId": "game-004",
+                "endedAt": 1004,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.9
+                }
+              },
+              {
+                "gameId": "game-003",
+                "endedAt": 1003,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -1.3
+                }
+              }
+            ]
+          },
+          "next": {
+            "total": 33,
+            "next": null,
+            "games": [
+              {
+                "gameId": "game-002",
+                "endedAt": 1002,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 1.3
+                }
+              },
+              {
+                "gameId": "game-001",
+                "endedAt": 1001,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -1.6
+                }
+              },
+              {
+                "gameId": "game-000",
+                "endedAt": 1000,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 1.6
+                }
+              }
+            ]
+          },
+          "visible": {
+            "rating": {
+              "score": 48.8,
+              "ratedGames": 22,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "total": {
+              "games": 33,
+              "wins": 16
+            },
+            "teams": {
+              "good": {
+                "games": 0,
+                "wins": 0
+              },
+              "evil": {
+                "games": 33,
+                "wins": 16
+              }
+            },
+            "roles": [
+              {
+                "role": "Morgana",
+                "games": 33,
+                "wins": 16
+              }
+            ],
+            "form": [
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false
+            ]
+          },
+          "hidden": {
+            "rating": {
+              "score": 48.8,
+              "ratedGames": 22,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "hidden": true
+          }
+        },
+        {
+          "account": "missing",
+          "profile": {
+            "rating": {
+              "score": 50,
+              "ratedGames": 0,
+              "title": "beginner",
+              "confidence": "insufficient"
+            },
+            "trend": [],
+            "total": {
+              "games": 0,
+              "wins": 0
+            },
+            "unresolvedGames": 0,
+            "teams": {
+              "good": {
+                "games": 0,
+                "wins": 0
+              },
+              "evil": {
+                "games": 0,
+                "wins": 0
+              }
+            },
+            "roles": [],
+            "form": []
+          },
+          "games": {
+            "total": 0,
+            "next": null,
+            "games": []
+          },
+          "next": {
+            "total": 0,
+            "next": null,
+            "games": []
+          },
+          "visible": {
+            "rating": {
+              "score": 50,
+              "ratedGames": 0,
+              "title": "beginner",
+              "confidence": "insufficient"
+            },
+            "total": {
+              "games": 0,
+              "wins": 0
+            },
+            "teams": {
+              "good": {
+                "games": 0,
+                "wins": 0
+              },
+              "evil": {
+                "games": 0,
+                "wins": 0
+              }
+            },
+            "roles": [],
+            "form": []
+          },
+          "hidden": {
+            "rating": {
+              "score": 50,
+              "ratedGames": 0,
+              "title": "beginner",
+              "confidence": "insufficient"
+            },
+            "hidden": true
+          }
+        }
+      ]
+    },
+    {
+      "includeBots": true,
+      "exclusions": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "legacy",
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        "identity",
+        null,
+        "invalid",
+        null,
+        null,
+        null,
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy",
+        "legacy"
+      ],
+      "fit": {
+        "players": {
+          "[\"local-rating-bot\",\"p0\"]": {
+            "hidden": 1771.8750546560975,
+            "sd": 0.9873677134507248,
+            "games": 1,
+            "lastPlayed": 1012
+          },
+          "account0": {
+            "hidden": 1862.7592147663718,
+            "sd": 0.8125645655324333,
+            "games": 23,
+            "lastPlayed": 1025
+          },
+          "account1": {
+            "hidden": 1812.7182264806738,
+            "sd": 0.9552861676207819,
+            "games": 23,
+            "lastPlayed": 1025
+          },
+          "account2": {
+            "hidden": 1812.7182264806738,
+            "sd": 0.9552861676207819,
+            "games": 23,
+            "lastPlayed": 1025
+          },
+          "account3": {
+            "hidden": 1780.9226602789895,
+            "sd": 0.8962623720803552,
+            "games": 23,
+            "lastPlayed": 1025
+          },
+          "account4": {
+            "hidden": 1759.0066173371938,
+            "sd": 0.8196309631419869,
+            "games": 22,
+            "lastPlayed": 1025
+          }
+        },
+        "parameters": [
+          -0.16190019972535513,
+          0.36127108092264865,
+          0.07321199675930362,
+          0.07321199675930362,
+          -0.10981799513895532,
+          -0.23597687957694546,
+          0.10762163523617616,
+          -0.0339495617050547,
+          0.06085497051409871
+        ],
+        "covariance": [
+          [
+            0.9748950015649127,
+            0.022922013450127163,
+            -0.0035018069499597056,
+            -0.003501806949959702,
+            0.005252710424939566,
+            0.003933888459939596,
+            -0.0051476562164407625,
+            -0.00188886352364522,
+            0.0006019494695350226
+          ],
+          [
+            0.022922013450127163,
+            0.6602611731589121,
+            0.01615360555504037,
+            0.016153605555040362,
+            -0.024230408332560634,
+            0.3087400106134392,
+            0.023745800165909364,
+            0.0005705225444856055,
+            0.0053659274969917415
+          ],
+          [
+            -0.003501806949959712,
+            0.016153605555040366,
+            0.9125716620476007,
+            -0.08742833795239764,
+            0.13114250692859672,
+            0.031062370371118204,
+            -0.12851965679002456,
+            -0.029656711974649922,
+            -0.002473202222856313
+          ],
+          [
+            -0.003501806949959706,
+            0.016153605555040355,
+            -0.08742833795239766,
+            0.9125716620476005,
+            0.13114250692859677,
+            0.031062370371118187,
+            -0.12851965679002456,
+            -0.029656711974649908,
+            -0.0024732022228563127
+          ],
+          [
+            0.005252710424939567,
+            -0.024230408332560623,
+            0.13114250692859675,
+            0.13114250692859675,
+            0.8032862396071051,
+            -0.04659355555667739,
+            0.19277948518503746,
+            0.04448506796197501,
+            0.0037098033342844758
+          ],
+          [
+            0.003933888459939596,
+            0.3087400106134392,
+            0.031062370371118204,
+            0.03106237037111822,
+            -0.0465935555566774,
+            0.6717949157410611,
+            0.04566168444554373,
+            0.016146696966484582,
+            -0.004731275855098611
+          ],
+          [
+            -0.005147656216440765,
+            0.023745800165909367,
+            -0.12851965679002458,
+            -0.12851965679002456,
+            0.1927794851850375,
+            0.04566168444554375,
+            0.3010761045186632,
+            -0.04359536660273545,
+            -0.0036356072675987794
+          ],
+          [
+            -0.0018888635236452176,
+            0.0005705225444856052,
+            -0.029656711974649905,
+            -0.029656711974649915,
+            0.044485067961975024,
+            0.016146696966484582,
+            -0.04359536660273544,
+            0.1092088404297273,
+            0.0023923179195890296
+          ],
+          [
+            0.0006019494695350225,
+            0.005365927496991742,
+            -0.0024732022228563127,
+            -0.0024732022228563136,
+            0.003709803334284476,
+            -0.004731275855098611,
+            -0.0036356072675987785,
+            0.0023923179195890296,
+            0.11919878026351126
+          ]
+        ],
+        "accounts": [
+          "[\"local-rating-bot\",\"p0\"]",
+          "account0",
+          "account1",
+          "account2",
+          "account3",
+          "account4"
+        ],
+        "configs": [
+          "[[\"Assassin\",\"LoyalServant\",\"Merlin\",\"Morgana\",\"Percival\"],\"known-rules\",false,5]",
+          "[[\"Assassin\",\"LoyalServant\",\"Merlin\",\"Morgana\",\"Percival\"],\"legacy-unknown-rules\",null,null]"
+        ]
+      },
+      "public": {
+        "[\"local-rating-bot\",\"p0\"]": {
+          "score": 48.6,
+          "ratedGames": 1,
+          "title": "capable",
+          "confidence": "insufficient"
+        },
+        "account0": {
+          "score": 53.1,
+          "ratedGames": 23,
+          "title": "expert",
+          "confidence": "insufficient"
+        },
+        "account1": {
+          "score": 50.6,
+          "ratedGames": 23,
+          "title": "capable",
+          "confidence": "insufficient"
+        },
+        "account2": {
+          "score": 50.6,
+          "ratedGames": 23,
+          "title": "capable",
+          "confidence": "insufficient"
+        },
+        "account3": {
+          "score": 49,
+          "ratedGames": 23,
+          "title": "capable",
+          "confidence": "insufficient"
+        },
+        "account4": {
+          "score": 48,
+          "ratedGames": 22,
+          "title": "capable",
+          "confidence": "insufficient"
+        }
+      },
+      "profiles": [
+        {
+          "account": "account0",
+          "profile": {
+            "rating": {
+              "score": 53.1,
+              "ratedGames": 23,
+              "title": "expert",
+              "confidence": "stale"
+            },
+            "trend": [
+              51.9,
+              50,
+              49,
+              50,
+              51.4,
+              52.2,
+              50.8,
+              50,
+              50.7,
+              52.1,
+              52.8,
+              52,
+              51,
+              50.4,
+              50.9,
+              51.9,
+              52.4,
+              51.5,
+              51.9,
+              52.7,
+              53.1
+            ],
+            "total": {
+              "games": 34,
+              "wins": 17
+            },
+            "unresolvedGames": 1,
+            "teams": {
+              "good": {
+                "games": 22,
+                "wins": 11
+              },
+              "evil": {
+                "games": 12,
+                "wins": 6
+              }
+            },
+            "roles": [
+              {
+                "role": "Merlin",
+                "games": 22,
+                "wins": 11
+              },
+              {
+                "role": "Assassin",
+                "games": 12,
+                "wins": 6
+              }
+            ],
+            "form": [
+              false,
+              false,
+              false,
+              true,
+              true,
+              true,
+              false,
+              false,
+              false,
+              true
+            ]
+          },
+          "games": {
+            "total": 35,
+            "next": 30,
+            "games": [
+              {
+                "gameId": "game-034",
+                "endedAt": 1034,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-033",
+                "endedAt": 1033,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-032",
+                "endedAt": 1032,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-031",
+                "endedAt": 1031,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-030",
+                "endedAt": 1030,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-029",
+                "endedAt": 1029,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-028",
+                "endedAt": 1028,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-027",
+                "endedAt": 1027,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-026",
+                "endedAt": 1026,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-025",
+                "endedAt": 1025,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-024",
+                "endedAt": 1024,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 0.8
+                }
+              },
+              {
+                "gameId": "game-023",
+                "endedAt": 1023,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-022",
+                "endedAt": 1022,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "invalid",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-021",
+                "endedAt": 1021,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": -0.9
+                }
+              },
+              {
+                "gameId": "game-020",
+                "endedAt": 1020,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "identity",
+                "participationOnly": true,
+                "seat": null
+              },
+              {
+                "gameId": "game-019",
+                "endedAt": 1019,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-018",
+                "endedAt": 1018,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 1
+                }
+              },
+              {
+                "gameId": "game-017",
+                "endedAt": 1017,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-016",
+                "endedAt": 1016,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -0.6
+                }
+              },
+              {
+                "gameId": "game-015",
+                "endedAt": 1015,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": -1
+                }
+              },
+              {
+                "gameId": "game-014",
+                "endedAt": 1014,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -0.8
+                }
+              },
+              {
+                "gameId": "game-013",
+                "endedAt": 1013,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.7
+                }
+              },
+              {
+                "gameId": "game-012",
+                "endedAt": 1012,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 1.4
+                }
+              },
+              {
+                "gameId": "game-011",
+                "endedAt": 1011,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.7
+                }
+              },
+              {
+                "gameId": "game-010",
+                "endedAt": 1010,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -0.8
+                }
+              },
+              {
+                "gameId": "game-009",
+                "endedAt": 1009,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": -1.4
+                }
+              },
+              {
+                "gameId": "game-008",
+                "endedAt": 1008,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-007",
+                "endedAt": 1007,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 0.8
+                }
+              },
+              {
+                "gameId": "game-006",
+                "endedAt": 1006,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 1.4
+                }
+              },
+              {
+                "gameId": "game-005",
+                "endedAt": 1005,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 1
+                }
+              }
+            ]
+          },
+          "next": {
+            "total": 35,
+            "next": null,
+            "games": [
+              {
+                "gameId": "game-004",
+                "endedAt": 1004,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -1
+                }
+              },
+              {
+                "gameId": "game-003",
+                "endedAt": 1003,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": false,
+                  "delta": -1.9
+                }
+              },
+              {
+                "gameId": "game-002",
+                "endedAt": 1002,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": false,
+                  "delta": -1.2
+                }
+              },
+              {
+                "gameId": "game-001",
+                "endedAt": 1001,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Merlin",
+                  "won": true,
+                  "delta": 1.5
+                }
+              },
+              {
+                "gameId": "game-000",
+                "endedAt": 1000,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Assassin",
+                  "won": true,
+                  "delta": 1.6
+                }
+              }
+            ]
+          },
+          "visible": {
+            "rating": {
+              "score": 53.1,
+              "ratedGames": 23,
+              "title": "expert",
+              "confidence": "stale"
+            },
+            "total": {
+              "games": 34,
+              "wins": 17
+            },
+            "teams": {
+              "good": {
+                "games": 22,
+                "wins": 11
+              },
+              "evil": {
+                "games": 12,
+                "wins": 6
+              }
+            },
+            "roles": [
+              {
+                "role": "Merlin",
+                "games": 22,
+                "wins": 11
+              },
+              {
+                "role": "Assassin",
+                "games": 12,
+                "wins": 6
+              }
+            ],
+            "form": [
+              false,
+              false,
+              false,
+              true,
+              true,
+              true,
+              false,
+              false,
+              false,
+              true
+            ]
+          },
+          "hidden": {
+            "rating": {
+              "score": 53.1,
+              "ratedGames": 23,
+              "title": "expert",
+              "confidence": "stale"
+            },
+            "hidden": true
+          }
+        },
+        {
+          "account": "account3",
+          "profile": {
+            "rating": {
+              "score": 49,
+              "ratedGames": 23,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "trend": [
+              51.3,
+              50,
+              50.9,
+              50,
+              50.8,
+              50.1,
+              49.4,
+              50,
+              49.5,
+              50,
+              49.6,
+              50.1,
+              49.4,
+              49.8,
+              49.4,
+              49.9,
+              49.6,
+              49.2,
+              48.9,
+              49.3,
+              49
+            ],
+            "total": {
+              "games": 34,
+              "wins": 17
+            },
+            "unresolvedGames": 0,
+            "teams": {
+              "good": {
+                "games": 0,
+                "wins": 0
+              },
+              "evil": {
+                "games": 34,
+                "wins": 17
+              }
+            },
+            "roles": [
+              {
+                "role": "Morgana",
+                "games": 34,
+                "wins": 17
+              }
+            ],
+            "form": [
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false
+            ]
+          },
+          "games": {
+            "total": 34,
+            "next": 30,
+            "games": [
+              {
+                "gameId": "game-034",
+                "endedAt": 1034,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-033",
+                "endedAt": 1033,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-032",
+                "endedAt": 1032,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-031",
+                "endedAt": 1031,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-030",
+                "endedAt": 1030,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-029",
+                "endedAt": 1029,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-028",
+                "endedAt": 1028,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-027",
+                "endedAt": 1027,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-026",
+                "endedAt": 1026,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-025",
+                "endedAt": 1025,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.3
+                }
+              },
+              {
+                "gameId": "game-024",
+                "endedAt": 1024,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-023",
+                "endedAt": 1023,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.3
+                }
+              },
+              {
+                "gameId": "game-022",
+                "endedAt": 1022,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "invalid",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-021",
+                "endedAt": 1021,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.4
+                }
+              },
+              {
+                "gameId": "game-019",
+                "endedAt": 1019,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.3
+                }
+              },
+              {
+                "gameId": "game-018",
+                "endedAt": 1018,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-017",
+                "endedAt": 1017,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.4
+                }
+              },
+              {
+                "gameId": "game-016",
+                "endedAt": 1016,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.4
+                }
+              },
+              {
+                "gameId": "game-015",
+                "endedAt": 1015,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.7
+                }
+              },
+              {
+                "gameId": "game-014",
+                "endedAt": 1014,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-013",
+                "endedAt": 1013,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.4
+                }
+              },
+              {
+                "gameId": "game-012",
+                "endedAt": 1012,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.5
+                }
+              },
+              {
+                "gameId": "game-011",
+                "endedAt": 1011,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.5
+                }
+              },
+              {
+                "gameId": "game-010",
+                "endedAt": 1010,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.6
+                }
+              },
+              {
+                "gameId": "game-009",
+                "endedAt": 1009,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.7
+                }
+              },
+              {
+                "gameId": "game-008",
+                "endedAt": 1008,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": "legacy",
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": null
+                }
+              },
+              {
+                "gameId": "game-007",
+                "endedAt": 1007,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.7
+                }
+              },
+              {
+                "gameId": "game-006",
+                "endedAt": 1006,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.8
+                }
+              },
+              {
+                "gameId": "game-005",
+                "endedAt": 1005,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -0.9
+                }
+              },
+              {
+                "gameId": "game-004",
+                "endedAt": 1004,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 0.9
+                }
+              }
+            ]
+          },
+          "next": {
+            "total": 34,
+            "next": null,
+            "games": [
+              {
+                "gameId": "game-003",
+                "endedAt": 1003,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -1.3
+                }
+              },
+              {
+                "gameId": "game-002",
+                "endedAt": 1002,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 1.3
+                }
+              },
+              {
+                "gameId": "game-001",
+                "endedAt": 1001,
+                "playerCount": 5,
+                "winner": "good",
+                "reason": "assassin_missed",
+                "missions": [
+                  false
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": false,
+                  "delta": -1.6
+                }
+              },
+              {
+                "gameId": "game-000",
+                "endedAt": 1000,
+                "playerCount": 5,
+                "winner": "evil",
+                "reason": "assassin_missed",
+                "missions": [
+                  true
+                ],
+                "unrated": null,
+                "participationOnly": false,
+                "seat": {
+                  "role": "Morgana",
+                  "won": true,
+                  "delta": 1.6
+                }
+              }
+            ]
+          },
+          "visible": {
+            "rating": {
+              "score": 49,
+              "ratedGames": 23,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "total": {
+              "games": 34,
+              "wins": 17
+            },
+            "teams": {
+              "good": {
+                "games": 0,
+                "wins": 0
+              },
+              "evil": {
+                "games": 34,
+                "wins": 17
+              }
+            },
+            "roles": [
+              {
+                "role": "Morgana",
+                "games": 34,
+                "wins": 17
+              }
+            ],
+            "form": [
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false,
+              true,
+              false
+            ]
+          },
+          "hidden": {
+            "rating": {
+              "score": 49,
+              "ratedGames": 23,
+              "title": "capable",
+              "confidence": "stale"
+            },
+            "hidden": true
+          }
+        },
+        {
+          "account": "missing",
+          "profile": {
+            "rating": {
+              "score": 50,
+              "ratedGames": 0,
+              "title": "beginner",
+              "confidence": "insufficient"
+            },
+            "trend": [],
+            "total": {
+              "games": 0,
+              "wins": 0
+            },
+            "unresolvedGames": 0,
+            "teams": {
+              "good": {
+                "games": 0,
+                "wins": 0
+              },
+              "evil": {
+                "games": 0,
+                "wins": 0
+              }
+            },
+            "roles": [],
+            "form": []
+          },
+          "games": {
+            "total": 0,
+            "next": null,
+            "games": []
+          },
+          "next": {
+            "total": 0,
+            "next": null,
+            "games": []
+          },
+          "visible": {
+            "rating": {
+              "score": 50,
+              "ratedGames": 0,
+              "title": "beginner",
+              "confidence": "insufficient"
+            },
+            "total": {
+              "games": 0,
+              "wins": 0
+            },
+            "teams": {
+              "good": {
+                "games": 0,
+                "wins": 0
+              },
+              "evil": {
+                "games": 0,
+                "wins": 0
+              }
+            },
+            "roles": [],
+            "form": []
+          },
+          "hidden": {
+            "rating": {
+              "score": 50,
+              "ratedGames": 0,
+              "title": "beginner",
+              "confidence": "insufficient"
+            },
+            "hidden": true
+          }
+        }
+      ]
+    }
+  ]
+}

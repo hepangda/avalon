@@ -32,6 +32,17 @@ function replay(overrides: Partial<ReplayData> = {}): ReplayData {
 }
 
 describe('buildReplayModel', () => {
+  it('keeps missing legacy roles and rounds unknown after migration', () => {
+    const data = replay();
+    const archived = { ...data } as Partial<ReplayData>;
+    delete archived.roleAssignments;
+    delete archived.rounds;
+    delete archived.ladyChecks;
+    const model = buildReplayModel(archived as ReplayData);
+    expect(model.players.every((player) => player.role === undefined)).toBe(true);
+    expect(model.missions.every((mission) => mission.proposals.length === 0 && mission.success === null)).toBe(true);
+    expect(model.outcome).toEqual(data.outcome);
+  });
   it('infers leaders and leaves unknown teams empty for archives without proposals', () => {
     const [first, second] = buildReplayModel(replay()).missions[0]!.proposals;
     expect(first).toMatchObject({ leaderId: 'p3', team: null, approved: false, rejects: 5 });

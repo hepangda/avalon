@@ -45,7 +45,7 @@ try {
     await docker(['up', '-d', '--wait', '--wait-timeout', '60', 'db']);
     console.log(`[dev] Local PostgreSQL: 127.0.0.1:${env.AVALON_DEV_DB_PORT}/avalon_development`);
     if (mode !== '--db-only') {
-      const commands = [{ name: 'api', command: 'tsx watch server/index.ts', env }];
+      const commands = [{ name: 'api', command: 'cargo run --manifest-path backend/Cargo.toml', env }];
       if (mode !== '--server-only') commands.push({ name: 'web', command: 'vite --host localhost --port 5173 --strictPort', env });
       await concurrently(commands, { cwd: root, prefix: 'name', killOthersOn: ['failure', 'success'], killSignal: 'SIGTERM' }).result;
     }

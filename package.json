@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "voices:generate": "node scripts/generate-voices.mjs",
-    "build": "vite build && esbuild server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server/index.js",
+    "build": "npm run build:web && npm run build:server",
     "preview": "npm run start",
     "static:check": "node scripts/publish-static.mjs",
     "static:upload": "node scripts/publish-static.mjs --upload",
@@ -17,12 +17,18 @@
     "test:watch": "vitest --project unit",
     "test:slow": "vitest run --project slow",
     "dev:server": "node scripts/dev.mjs --server-only",
-    "start": "node dist/server/index.js",
+    "start": "backend/target/release/avalon-server",
     "test:postgres": "vitest run server/database.integration.test.ts",
     "benchmark:bots": "tsx scripts/benchmark-bots.ts",
     "db:up": "node scripts/dev.mjs --db-only",
     "db:down": "node scripts/dev.mjs --db-down",
-    "test:dev": "node --test scripts/dev-env.test.mjs"
+    "test:dev": "node --test scripts/dev-env.test.mjs",
+    "build:web": "vite build",
+    "build:server": "cargo build --release --locked --no-default-features --bin avalon-server --manifest-path backend/Cargo.toml",
+    "test:rust": "cargo test --locked --manifest-path backend/Cargo.toml",
+    "check:rust": "cargo fmt --manifest-path backend/Cargo.toml --check && cargo clippy --locked --manifest-path backend/Cargo.toml --all-targets -- -D warnings",
+    "test:rust:legacy": "cargo test --locked --features legacy-import --manifest-path backend/Cargo.toml",
+    "build:migration": "cargo build --release --locked --features legacy-import --bin migrate-randomness --manifest-path backend/Cargo.toml"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",

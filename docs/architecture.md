@@ -1,10 +1,12 @@
 # Architecture and crash recovery
 
 
-`server/index.ts` is the Node entry point. `server/rooms.ts` keeps one in-memory
-`Room` per room code. The deterministic rules engine in `src/lib/engine/` and
-per-viewer projections remain independent of hosting. `server/app.ts` defines the
-HTTP API routes; `server/index.ts` owns the Node runtime and WebSocket lifecycle.
+`backend/src/main.rs` is the Rust entry point. `backend/src/room/` keeps one
+state-owning Tokio task per room code. `backend/src/engine/` contains deterministic
+rules and per-viewer projections independent of hosting. `backend/src/http.rs`
+defines HTTP routes; Axum owns HTTP/WebSocket transport. The TypeScript server and
+engine remain behavioral oracles and browser-development helpers. See
+[Rust runtime and validation](rust-backend.md) for execution bounds and migration.
 **Settings** controls language and Classic /
 Modern / Furry card art across home, rooms, games and replays. Signed-in accounts
 store preferences in `avalon_profiles.preferences`; local storage is only a
@@ -64,7 +66,7 @@ The retired `state:sync`, `room:snapshot`, `private:reveal` and `private:lady`
 protocol is no longer emitted. Clients that predate atomic views must reload
 the application after an upgrade.
 
-Run **one application process** per database (no PM2 cluster or multiple replicas).
+Run **one application process** per database (no multiple application replicas).
 A dedicated connection holds a PostgreSQL advisory lock; startup rejects a second
 owner. A generation token checked inside room-write transactions fences stale
 processes after ownership changes. A lost owner connection stops the server so the
@@ -84,27 +86,36 @@ PostgreSQL backups remain necessary for disk/database loss;
 application crash recovery is not a substitute for backups. Backups and migrations
 must capture both `avalon_rooms` and `avalon_room_journal` in one consistent database
 snapshot. A snapshot-only server is not compatible with
-this journal schema; rollback requires an explicit data/schema migration or a
-pre-upgrade database restore, not merely deploying the old application image.
+this journal schema. Production releases are one-way to Rust; old Node images
+must not be restarted against the migrated application. Data recovery must verify
+both snapshots and journals before the Rust service resumes writes.
 
 ## Module boundaries and compatibility
 
-`Room` owns the single command queue and COMMIT boundary. `RoomState` contains
-its durable fields; membership, referee and private-note handlers mutate only
-inside that queue. `RoomViews` owns committed viewer digests; `RoomCheckpoints`
-compacts verified snapshots independently. Account queries share the pool, while
-room, replay, card debit and reward settlement stay in the same transaction.
+`backend/src/room/mod.rs` owns the bounded command queue and COMMIT boundary.
+`domain.rs` prepares membership, referee and private-note changes on a typed draft;
+committed viewer caches remain readable while the actor awaits SQL. The shared
+CPU pool handles transitions, projection, hashing and verified compaction.
+Account queries share the database pool, while room, replay, card debit and
+reward settlement stay in the same transaction.
+
+The domain uses `GameState`, `GameEvent`, `Role`, `Phase`, `RoomDocument` and
+`Command` types with exhaustive enum matching. Wire JSON is decoded before
+entering the room queue. The original committed JSON is retained separately for
+the existing database CAS/hash contract, and serialization occurs at persistence
+and transport boundaries. The engine and bot policy have explicit `codec` adapters
+for tests and offline imports; production code calls the native APIs directly.
 
 OIDC discovery is validated before a five-minute cache is populated; concurrent
-requests share one lookup and failures are not cached. JWKS resolvers are retained
-per URI so jose can manage key rotation. Both caches are bounded and used only at
+requests share one lookup and failures are not cached. JWKS are cached by URI with
+expiry and an unknown-key refresh cooldown. Both caches are bounded and used only at
 login. HTTP and WebSocket session checks decrypt the session cookie locally and never
 contact the provider; WebSocket verification also skips display preferences and
 daily rewards.
 
-The current browser store accepts an atomic verified view and reads private
-identity and Lady results directly from that game projection. Account-less seat
-tokens and game flow versions 1–4 still support existing rooms and event logs.
-Removing those data adapters requires a known data inventory and migration.
-Live protocol compatibility is separate from stored-data compatibility; removing
-retired push messages does not change room snapshots or archived replays.
+The browser store accepts an atomic verified view and reads private identity and
+Lady results directly from that game projection. Production rooms use recorded
+random outcomes (`resolved-v1`); the old seeded stream is compiled only into the
+offline importer. The one-time [cutover](randomness-cutover.md) preserves completed
+history and private migration evidence, then ends old live rooms. Old rules remain
+available for import verification. The browser's live protocol remains unchanged.

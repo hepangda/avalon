@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-29",
+  "hardware": "Apple M3 Max arm64",
+  "rustToolchain": "1.99.1",
+  "method": {
+    "warmupPasses": 1,
+    "measuredPasses": 3,
+    "successfulStepsPerPass": 11959,
+    "quantiles": "nearest rank",
+    "update": "produce next game state, including copying the prior state",
+    "views": "produce all player views plus one spectator; TS per-view projection vs Rust batch projection",
+    "excluded": [
+      "fixture decoding",
+      "RNG context construction",
+      "output disposal",
+      "view hashing",
+      "JSON encoding",
+      "SQL",
+      "network"
+    ],
+    "order": "TS first, then Rust; no concurrent benchmarks"
+  },
+  "typescript": {
+    "runtime": "v22.23.4",
+    "architecture": "arm64",
+    "rounds": 3,
+    "traces": 102,
+    "update": {
+      "samples": 35877,
+      "p50_ms": 0.11912499999925785,
+      "p95_ms": 0.537624999999025,
+      "p99_ms": 0.7459159999998519
+    },
+    "views": {
+      "samples": 35877,
+      "p50_ms": 0.05916700000034325,
+      "p95_ms": 0.15562499999941792,
+      "p99_ms": 0.2319999999999709
+    },
+    "runs": [
+      {
+        "update": {
+          "samples": 11959,
+          "p50_ms": 0.11929099999997561,
+          "p95_ms": 0.5342500000006112,
+          "p99_ms": 0.746541999999863
+        },
+        "views": {
+          "samples": 11959,
+          "p50_ms": 0.05945800000063173,
+          "p95_ms": 0.15562500000032742,
+          "p99_ms": 0.23791700000037963
+        },
+        "checksum": 7480045
+      },
+      {
+        "update": {
+          "samples": 11959,
+          "p50_ms": 0.11883299999954033,
+          "p95_ms": 0.5394999999998618,
+          "p99_ms": 0.7395419999993464
+        },
+        "views": {
+          "samples": 11959,
+          "p50_ms": 0.05875000000014552,
+          "p95_ms": 0.15516700000080164,
+          "p99_ms": 0.2260420000002341
+        },
+        "checksum": 7480045
+      },
+      {
+        "update": {
+          "samples": 11959,
+          "p50_ms": 0.11924999999973807,
+          "p95_ms": 0.5377500000013242,
+          "p99_ms": 0.7510000000002037
+        },
+        "views": {
+          "samples": 11959,
+          "p50_ms": 0.059166999999433756,
+          "p95_ms": 0.1563750000004802,
+          "p99_ms": 0.2328750000015134
+        },
+        "checksum": 7480045
+      }
+    ],
+    "retainedViews": 11
+  },
+  "rust": {
+    "runtime": "Rust release",
+    "architecture": "aarch64",
+    "rounds": 3,
+    "traces": 102,
+    "update": {
+      "samples": 35877,
+      "p50_ms": 0.010625,
+      "p95_ms": 0.051792000000000005,
+      "p99_ms": 0.073625
+    },
+    "views": {
+      "samples": 35877,
+      "p50_ms": 0.041832999999999995,
+      "p95_ms": 0.149041,
+      "p99_ms": 0.180125
+    },
+    "runs": [
+      {
+        "update": {
+          "samples": 11959,
+          "p50_ms": 0.010583,
+          "p95_ms": 0.051542000000000004,
+          "p99_ms": 0.07375000000000001
+        },
+        "views": {
+          "samples": 11959,
+          "p50_ms": 0.041667,
+          "p95_ms": 0.147916,
+          "p99_ms": 0.17895899999999998
+        },
+        "checksum": 7480045
+      },
+      {
+        "update": {
+          "samples": 11959,
+          "p50_ms": 0.010625,
+          "p95_ms": 0.051542000000000004,
+          "p99_ms": 0.072875
+        },
+        "views": {
+          "samples": 11959,
+          "p50_ms": 0.041832999999999995,
+          "p95_ms": 0.14837499999999998,
+          "p99_ms": 0.179917
+        },
+        "checksum": 7480045
+      },
+      {
+        "update": {
+          "samples": 11959,
+          "p50_ms": 0.010791,
+          "p95_ms": 0.052458,
+          "p99_ms": 0.074416
+        },
+        "views": {
+          "samples": 11959,
+          "p50_ms": 0.041999999999999996,
+          "p95_ms": 0.150292,
+          "p99_ms": 0.18120899999999998
+        },
+        "checksum": 7480045
+      }
+    ]
+  }
+}

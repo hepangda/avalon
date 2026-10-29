@@ -1,0 +1,2905 @@
+{
+  "gameId": "rewind",
+  "seed": "replay-referee",
+  "players": [
+    {
+      "id": "p0",
+      "name": "Player 0"
+    },
+    {
+      "id": "p1",
+      "name": "Player 1"
+    },
+    {
+      "id": "p2",
+      "name": "Player 2"
+    },
+    {
+      "id": "p3",
+      "name": "Player 3"
+    },
+    {
+      "id": "p4",
+      "name": "Player 4"
+    }
+  ],
+  "options": {
+    "oberon": false,
+    "mordred": false,
+    "morgana": false,
+    "percival": false,
+    "ladyOfTheLake": true
+  },
+  "events": [
+    {
+      "seq": 1,
+      "event": {
+        "type": "START_GAME",
+        "by": "p0",
+        "flowVersion": 4
+      },
+      "createdAt": 1
+    },
+    {
+      "seq": 2,
+      "event": {
+        "type": "PROPOSE_TEAM",
+        "by": "p1",
+        "team": [
+          "p0",
+          "p1"
+        ]
+      },
+      "createdAt": 2
+    },
+    {
+      "seq": 3,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p2"
+      },
+      "createdAt": 3
+    },
+    {
+      "seq": 4,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p3"
+      },
+      "createdAt": 4
+    },
+    {
+      "seq": 5,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p4"
+      },
+      "createdAt": 5
+    },
+    {
+      "seq": 6,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p0"
+      },
+      "createdAt": 6
+    },
+    {
+      "seq": 7,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p1"
+      },
+      "createdAt": 7
+    },
+    {
+      "seq": 8,
+      "event": {
+        "type": "FINALIZE_TEAM",
+        "by": "p1",
+        "team": [
+          "p0",
+          "p1"
+        ]
+      },
+      "createdAt": 8
+    },
+    {
+      "seq": 9,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p0",
+        "value": "reject"
+      },
+      "createdAt": 9
+    },
+    {
+      "seq": 10,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p1",
+        "value": "reject"
+      },
+      "createdAt": 10
+    },
+    {
+      "seq": 11,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p2",
+        "value": "reject"
+      },
+      "createdAt": 11
+    },
+    {
+      "seq": 12,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p3",
+        "value": "reject"
+      },
+      "createdAt": 12
+    },
+    {
+      "seq": 13,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p4",
+        "value": "reject"
+      },
+      "createdAt": 13
+    },
+    {
+      "seq": 14,
+      "event": {
+        "type": "PREVIOUS_PHASE",
+        "actor": "Referee"
+      },
+      "createdAt": 14
+    },
+    {
+      "seq": 15,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p0",
+        "value": "approve"
+      },
+      "createdAt": 15
+    },
+    {
+      "seq": 16,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p1",
+        "value": "approve"
+      },
+      "createdAt": 16
+    },
+    {
+      "seq": 17,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p2",
+        "value": "approve"
+      },
+      "createdAt": 17
+    },
+    {
+      "seq": 18,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p3",
+        "value": "approve"
+      },
+      "createdAt": 18
+    },
+    {
+      "seq": 19,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p4",
+        "value": "approve"
+      },
+      "createdAt": 19
+    },
+    {
+      "seq": 20,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p0",
+        "card": "success"
+      },
+      "createdAt": 20
+    },
+    {
+      "seq": 21,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p1",
+        "card": "success"
+      },
+      "createdAt": 21
+    },
+    {
+      "seq": 22,
+      "event": {
+        "type": "PROPOSE_TEAM",
+        "by": "p2",
+        "team": [
+          "p0",
+          "p1",
+          "p2"
+        ]
+      },
+      "createdAt": 22
+    },
+    {
+      "seq": 23,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p3"
+      },
+      "createdAt": 23
+    },
+    {
+      "seq": 24,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p4"
+      },
+      "createdAt": 24
+    },
+    {
+      "seq": 25,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p0"
+      },
+      "createdAt": 25
+    },
+    {
+      "seq": 26,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p1"
+      },
+      "createdAt": 26
+    },
+    {
+      "seq": 27,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p2"
+      },
+      "createdAt": 27
+    },
+    {
+      "seq": 28,
+      "event": {
+        "type": "FINALIZE_TEAM",
+        "by": "p2",
+        "team": [
+          "p0",
+          "p1",
+          "p2"
+        ]
+      },
+      "createdAt": 28
+    },
+    {
+      "seq": 29,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p0",
+        "value": "approve"
+      },
+      "createdAt": 29
+    },
+    {
+      "seq": 30,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p1",
+        "value": "approve"
+      },
+      "createdAt": 30
+    },
+    {
+      "seq": 31,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p2",
+        "value": "approve"
+      },
+      "createdAt": 31
+    },
+    {
+      "seq": 32,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p3",
+        "value": "approve"
+      },
+      "createdAt": 32
+    },
+    {
+      "seq": 33,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p4",
+        "value": "approve"
+      },
+      "createdAt": 33
+    },
+    {
+      "seq": 34,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p0",
+        "card": "success"
+      },
+      "createdAt": 34
+    },
+    {
+      "seq": 35,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p1",
+        "card": "success"
+      },
+      "createdAt": 35
+    },
+    {
+      "seq": 36,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p2",
+        "card": "success"
+      },
+      "createdAt": 36
+    },
+    {
+      "seq": 37,
+      "event": {
+        "type": "USE_LADY",
+        "by": "p0",
+        "target": "p1"
+      },
+      "createdAt": 37
+    },
+    {
+      "seq": 38,
+      "event": {
+        "type": "PREVIOUS_PHASE",
+        "actor": "Referee"
+      },
+      "createdAt": 38
+    },
+    {
+      "seq": 39,
+      "event": {
+        "type": "PREVIOUS_PHASE",
+        "actor": "Referee"
+      },
+      "createdAt": 39
+    },
+    {
+      "seq": 40,
+      "event": {
+        "type": "START_ASSASSINATION",
+        "by": "p3",
+        "admin": true,
+        "actor": "Referee"
+      },
+      "createdAt": 40
+    },
+    {
+      "seq": 41,
+      "event": {
+        "type": "ASSASSINATE",
+        "by": "p3",
+        "target": "p1"
+      },
+      "createdAt": 41
+    }
+  ],
+  "resolvedEvents": [
+    {
+      "seq": 1,
+      "event": {
+        "type": "START_GAME",
+        "by": "p0",
+        "flowVersion": 4,
+        "assignedRoles": [
+          "LoyalServant",
+          "Merlin",
+          "Minion",
+          "Assassin",
+          "LoyalServant"
+        ],
+        "roleVariants": {
+          "p0": 0,
+          "p4": 2,
+          "p2": 0
+        },
+        "leaderIndex": 1,
+        "seatOrder": [
+          "p0",
+          "p1",
+          "p2",
+          "p3",
+          "p4"
+        ]
+      },
+      "createdAt": 1
+    },
+    {
+      "seq": 2,
+      "event": {
+        "type": "PROPOSE_TEAM",
+        "by": "p1",
+        "team": [
+          "p0",
+          "p1"
+        ]
+      },
+      "createdAt": 2
+    },
+    {
+      "seq": 3,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p2"
+      },
+      "createdAt": 3
+    },
+    {
+      "seq": 4,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p3"
+      },
+      "createdAt": 4
+    },
+    {
+      "seq": 5,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p4"
+      },
+      "createdAt": 5
+    },
+    {
+      "seq": 6,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p0"
+      },
+      "createdAt": 6
+    },
+    {
+      "seq": 7,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p1"
+      },
+      "createdAt": 7
+    },
+    {
+      "seq": 8,
+      "event": {
+        "type": "FINALIZE_TEAM",
+        "by": "p1",
+        "team": [
+          "p0",
+          "p1"
+        ]
+      },
+      "createdAt": 8
+    },
+    {
+      "seq": 9,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p0",
+        "value": "reject"
+      },
+      "createdAt": 9
+    },
+    {
+      "seq": 10,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p1",
+        "value": "reject"
+      },
+      "createdAt": 10
+    },
+    {
+      "seq": 11,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p2",
+        "value": "reject"
+      },
+      "createdAt": 11
+    },
+    {
+      "seq": 12,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p3",
+        "value": "reject"
+      },
+      "createdAt": 12
+    },
+    {
+      "seq": 13,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p4",
+        "value": "reject"
+      },
+      "createdAt": 13
+    },
+    {
+      "seq": 14,
+      "event": {
+        "type": "PREVIOUS_PHASE",
+        "actor": "Referee"
+      },
+      "createdAt": 14
+    },
+    {
+      "seq": 15,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p0",
+        "value": "approve"
+      },
+      "createdAt": 15
+    },
+    {
+      "seq": 16,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p1",
+        "value": "approve"
+      },
+      "createdAt": 16
+    },
+    {
+      "seq": 17,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p2",
+        "value": "approve"
+      },
+      "createdAt": 17
+    },
+    {
+      "seq": 18,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p3",
+        "value": "approve"
+      },
+      "createdAt": 18
+    },
+    {
+      "seq": 19,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p4",
+        "value": "approve"
+      },
+      "createdAt": 19
+    },
+    {
+      "seq": 20,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p0",
+        "card": "success"
+      },
+      "createdAt": 20
+    },
+    {
+      "seq": 21,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p1",
+        "card": "success"
+      },
+      "createdAt": 21
+    },
+    {
+      "seq": 22,
+      "event": {
+        "type": "PROPOSE_TEAM",
+        "by": "p2",
+        "team": [
+          "p0",
+          "p1",
+          "p2"
+        ]
+      },
+      "createdAt": 22
+    },
+    {
+      "seq": 23,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p3"
+      },
+      "createdAt": 23
+    },
+    {
+      "seq": 24,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p4"
+      },
+      "createdAt": 24
+    },
+    {
+      "seq": 25,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p0"
+      },
+      "createdAt": 25
+    },
+    {
+      "seq": 26,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p1"
+      },
+      "createdAt": 26
+    },
+    {
+      "seq": 27,
+      "event": {
+        "type": "END_SPEECH",
+        "by": "p2"
+      },
+      "createdAt": 27
+    },
+    {
+      "seq": 28,
+      "event": {
+        "type": "FINALIZE_TEAM",
+        "by": "p2",
+        "team": [
+          "p0",
+          "p1",
+          "p2"
+        ]
+      },
+      "createdAt": 28
+    },
+    {
+      "seq": 29,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p0",
+        "value": "approve"
+      },
+      "createdAt": 29
+    },
+    {
+      "seq": 30,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p1",
+        "value": "approve"
+      },
+      "createdAt": 30
+    },
+    {
+      "seq": 31,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p2",
+        "value": "approve"
+      },
+      "createdAt": 31
+    },
+    {
+      "seq": 32,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p3",
+        "value": "approve"
+      },
+      "createdAt": 32
+    },
+    {
+      "seq": 33,
+      "event": {
+        "type": "CAST_VOTE",
+        "by": "p4",
+        "value": "approve"
+      },
+      "createdAt": 33
+    },
+    {
+      "seq": 34,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p0",
+        "card": "success"
+      },
+      "createdAt": 34
+    },
+    {
+      "seq": 35,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p1",
+        "card": "success"
+      },
+      "createdAt": 35
+    },
+    {
+      "seq": 36,
+      "event": {
+        "type": "CAST_MISSION_CARD",
+        "by": "p2",
+        "card": "success"
+      },
+      "createdAt": 36
+    },
+    {
+      "seq": 37,
+      "event": {
+        "type": "USE_LADY",
+        "by": "p0",
+        "target": "p1"
+      },
+      "createdAt": 37
+    },
+    {
+      "seq": 38,
+      "event": {
+        "type": "PREVIOUS_PHASE",
+        "actor": "Referee"
+      },
+      "createdAt": 38
+    },
+    {
+      "seq": 39,
+      "event": {
+        "type": "PREVIOUS_PHASE",
+        "actor": "Referee"
+      },
+      "createdAt": 39
+    },
+    {
+      "seq": 40,
+      "event": {
+        "type": "START_ASSASSINATION",
+        "by": "p3",
+        "admin": true,
+        "actor": "Referee"
+      },
+      "createdAt": 40
+    },
+    {
+      "seq": 41,
+      "event": {
+        "type": "ASSASSINATE",
+        "by": "p3",
+        "target": "p1"
+      },
+      "createdAt": 41
+    }
+  ],
+  "finalState": {
+    "phase": "GameOver",
+    "flowVersion": 4,
+    "discussion": null,
+    "actionTimers": [],
+    "config": {
+      "playerCount": 5,
+      "options": {
+        "oberon": false,
+        "mordred": false,
+        "morgana": false,
+        "percival": false,
+        "ladyOfTheLake": true
+      },
+      "roles": [
+        "Merlin",
+        "LoyalServant",
+        "LoyalServant",
+        "Assassin",
+        "Minion"
+      ]
+    },
+    "seed": "replay-referee",
+    "players": [
+      {
+        "id": "p0",
+        "name": "Player 0",
+        "seat": 0,
+        "role": "LoyalServant",
+        "connected": true
+      },
+      {
+        "id": "p1",
+        "name": "Player 1",
+        "seat": 1,
+        "role": "Merlin",
+        "connected": true
+      },
+      {
+        "id": "p2",
+        "name": "Player 2",
+        "seat": 2,
+        "role": "Minion",
+        "connected": true
+      },
+      {
+        "id": "p3",
+        "name": "Player 3",
+        "seat": 3,
+        "role": "Assassin",
+        "connected": true
+      },
+      {
+        "id": "p4",
+        "name": "Player 4",
+        "seat": 4,
+        "role": "LoyalServant",
+        "connected": true
+      }
+    ],
+    "roundIndex": 1,
+    "leaderIndex": 2,
+    "rejectionCount": 0,
+    "proposedTeam": null,
+    "votes": {},
+    "missionCards": {},
+    "missionResults": [
+      {
+        "roundIndex": 0,
+        "teamSize": 2,
+        "team": [
+          "p0",
+          "p1"
+        ],
+        "success": true,
+        "failCount": 0,
+        "cards": {
+          "p0": "success",
+          "p1": "success"
+        }
+      }
+    ],
+    "voteHistory": [
+      {
+        "roundIndex": 0,
+        "proposalIndex": 0,
+        "leaderId": "p1",
+        "team": [
+          "p0",
+          "p1"
+        ],
+        "votes": {
+          "p0": "approve",
+          "p1": "approve",
+          "p2": "approve",
+          "p3": "approve",
+          "p4": "approve"
+        },
+        "approved": true
+      },
+      {
+        "roundIndex": 1,
+        "proposalIndex": 0,
+        "leaderId": "p2",
+        "team": [
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "votes": {
+          "p0": "approve",
+          "p1": "approve",
+          "p2": "approve",
+          "p3": "approve",
+          "p4": "approve"
+        },
+        "approved": true
+      }
+    ],
+    "logs": [
+      {
+        "seq": 1,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "public",
+        "key": "gameStarted",
+        "params": {
+          "count": "5"
+        }
+      },
+      {
+        "seq": 2,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "public",
+        "key": "lineup",
+        "params": {
+          "good": "Merlin,LoyalServant*2",
+          "evil": "Assassin,Minion"
+        }
+      },
+      {
+        "seq": 3,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p0",
+        "key": "yourRole",
+        "params": {
+          "role": "LoyalServant"
+        }
+      },
+      {
+        "seq": 4,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p1",
+        "key": "yourRole",
+        "params": {
+          "role": "Merlin"
+        }
+      },
+      {
+        "seq": 5,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p1",
+        "key": "perceive.evil",
+        "params": {
+          "player": "p2"
+        }
+      },
+      {
+        "seq": 6,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p1",
+        "key": "perceive.evil",
+        "params": {
+          "player": "p3"
+        }
+      },
+      {
+        "seq": 7,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p2",
+        "key": "yourRole",
+        "params": {
+          "role": "Minion"
+        }
+      },
+      {
+        "seq": 8,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p2",
+        "key": "perceive.known-ally",
+        "params": {
+          "player": "p3"
+        }
+      },
+      {
+        "seq": 9,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p3",
+        "key": "yourRole",
+        "params": {
+          "role": "Assassin"
+        }
+      },
+      {
+        "seq": 10,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p3",
+        "key": "perceive.known-ally",
+        "params": {
+          "player": "p2"
+        }
+      },
+      {
+        "seq": 11,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "private",
+        "audience": "p4",
+        "key": "yourRole",
+        "params": {
+          "role": "LoyalServant"
+        }
+      },
+      {
+        "seq": 12,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "public",
+        "key": "roundBegins",
+        "params": {
+          "round": "1"
+        }
+      },
+      {
+        "seq": 13,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "public",
+        "key": "proposalBegins",
+        "params": {
+          "round": "1",
+          "proposal": "1",
+          "leader": "p1"
+        }
+      },
+      {
+        "seq": 14,
+        "roundIndex": 0,
+        "at": 2,
+        "channel": "public",
+        "key": "teamAnnounced",
+        "params": {
+          "leader": "p1",
+          "team": "p0,p1"
+        }
+      },
+      {
+        "seq": 15,
+        "roundIndex": 0,
+        "at": 2,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p2"
+        }
+      },
+      {
+        "seq": 16,
+        "roundIndex": 0,
+        "at": 3,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p3"
+        }
+      },
+      {
+        "seq": 17,
+        "roundIndex": 0,
+        "at": 4,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p4"
+        }
+      },
+      {
+        "seq": 18,
+        "roundIndex": 0,
+        "at": 5,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p0"
+        }
+      },
+      {
+        "seq": 19,
+        "roundIndex": 0,
+        "at": 6,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p1"
+        }
+      },
+      {
+        "seq": 20,
+        "roundIndex": 0,
+        "at": 7,
+        "channel": "public",
+        "key": "discussionFinished",
+        "params": {
+          "leader": "p1"
+        }
+      },
+      {
+        "seq": 21,
+        "roundIndex": 0,
+        "at": 8,
+        "channel": "public",
+        "key": "teamFinalized",
+        "params": {
+          "leader": "p1",
+          "team": "p0,p1",
+          "changed": 0
+        }
+      },
+      {
+        "seq": 22,
+        "roundIndex": 0,
+        "at": 9,
+        "channel": "private",
+        "audience": "p0",
+        "key": "youRejected",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 23,
+        "roundIndex": 0,
+        "at": 10,
+        "channel": "private",
+        "audience": "p1",
+        "key": "youRejected",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 24,
+        "roundIndex": 0,
+        "at": 11,
+        "channel": "private",
+        "audience": "p2",
+        "key": "youRejected",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 25,
+        "roundIndex": 0,
+        "at": 12,
+        "channel": "private",
+        "audience": "p3",
+        "key": "youRejected",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 26,
+        "roundIndex": 0,
+        "at": 13,
+        "channel": "private",
+        "audience": "p4",
+        "key": "youRejected",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 27,
+        "roundIndex": 0,
+        "at": 13,
+        "channel": "public",
+        "key": "voteRejected",
+        "params": {
+          "round": "1",
+          "proposal": "1",
+          "approves": "0",
+          "rejects": "5"
+        }
+      },
+      {
+        "seq": 28,
+        "roundIndex": 0,
+        "at": 13,
+        "channel": "public",
+        "key": "proposalBegins",
+        "params": {
+          "leader": "p2",
+          "round": "1",
+          "proposal": "2"
+        }
+      },
+      {
+        "seq": 29,
+        "roundIndex": 0,
+        "at": 14,
+        "channel": "public",
+        "key": "admin.phaseReturned",
+        "params": {
+          "actor": "Referee",
+          "phase": "Voting",
+          "proposal": 1
+        },
+        "style": "admin"
+      },
+      {
+        "seq": 30,
+        "roundIndex": 0,
+        "at": 15,
+        "channel": "private",
+        "audience": "p0",
+        "key": "youApproved",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 31,
+        "roundIndex": 0,
+        "at": 16,
+        "channel": "private",
+        "audience": "p1",
+        "key": "youApproved",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 32,
+        "roundIndex": 0,
+        "at": 17,
+        "channel": "private",
+        "audience": "p2",
+        "key": "youApproved",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 33,
+        "roundIndex": 0,
+        "at": 18,
+        "channel": "private",
+        "audience": "p3",
+        "key": "youApproved",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 34,
+        "roundIndex": 0,
+        "at": 19,
+        "channel": "private",
+        "audience": "p4",
+        "key": "youApproved",
+        "params": {
+          "round": "1",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 35,
+        "roundIndex": 0,
+        "at": 19,
+        "channel": "public",
+        "key": "voteApproved",
+        "params": {
+          "round": "1",
+          "proposal": "1",
+          "approves": "5",
+          "rejects": "0"
+        }
+      },
+      {
+        "seq": 36,
+        "roundIndex": 0,
+        "at": 20,
+        "channel": "private",
+        "audience": "p0",
+        "key": "youPlayedSuccess",
+        "params": {
+          "round": "1"
+        }
+      },
+      {
+        "seq": 37,
+        "roundIndex": 0,
+        "at": 21,
+        "channel": "private",
+        "audience": "p1",
+        "key": "youPlayedSuccess",
+        "params": {
+          "round": "1"
+        }
+      },
+      {
+        "seq": 38,
+        "roundIndex": 0,
+        "at": 21,
+        "channel": "public",
+        "key": "missionSucceeded",
+        "params": {
+          "round": "1",
+          "fails": "0"
+        }
+      },
+      {
+        "seq": 39,
+        "roundIndex": 1,
+        "at": 21,
+        "channel": "public",
+        "key": "roundBegins",
+        "params": {
+          "round": "2"
+        }
+      },
+      {
+        "seq": 40,
+        "roundIndex": 1,
+        "at": 21,
+        "channel": "public",
+        "key": "proposalBegins",
+        "params": {
+          "round": "2",
+          "proposal": "1",
+          "leader": "p2"
+        }
+      },
+      {
+        "seq": 41,
+        "roundIndex": 1,
+        "at": 22,
+        "channel": "public",
+        "key": "teamAnnounced",
+        "params": {
+          "leader": "p2",
+          "team": "p0,p1,p2"
+        }
+      },
+      {
+        "seq": 42,
+        "roundIndex": 1,
+        "at": 22,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p3"
+        }
+      },
+      {
+        "seq": 43,
+        "roundIndex": 1,
+        "at": 23,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p4"
+        }
+      },
+      {
+        "seq": 44,
+        "roundIndex": 1,
+        "at": 24,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p0"
+        }
+      },
+      {
+        "seq": 45,
+        "roundIndex": 1,
+        "at": 25,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p1"
+        }
+      },
+      {
+        "seq": 46,
+        "roundIndex": 1,
+        "at": 26,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p2"
+        }
+      },
+      {
+        "seq": 47,
+        "roundIndex": 1,
+        "at": 27,
+        "channel": "public",
+        "key": "discussionFinished",
+        "params": {
+          "leader": "p2"
+        }
+      },
+      {
+        "seq": 48,
+        "roundIndex": 1,
+        "at": 28,
+        "channel": "public",
+        "key": "teamFinalized",
+        "params": {
+          "leader": "p2",
+          "team": "p0,p1,p2",
+          "changed": 0
+        }
+      },
+      {
+        "seq": 49,
+        "roundIndex": 1,
+        "at": 29,
+        "channel": "private",
+        "audience": "p0",
+        "key": "youApproved",
+        "params": {
+          "round": "2",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 50,
+        "roundIndex": 1,
+        "at": 30,
+        "channel": "private",
+        "audience": "p1",
+        "key": "youApproved",
+        "params": {
+          "round": "2",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 51,
+        "roundIndex": 1,
+        "at": 31,
+        "channel": "private",
+        "audience": "p2",
+        "key": "youApproved",
+        "params": {
+          "round": "2",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 52,
+        "roundIndex": 1,
+        "at": 32,
+        "channel": "private",
+        "audience": "p3",
+        "key": "youApproved",
+        "params": {
+          "round": "2",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 53,
+        "roundIndex": 1,
+        "at": 33,
+        "channel": "private",
+        "audience": "p4",
+        "key": "youApproved",
+        "params": {
+          "round": "2",
+          "proposal": "1"
+        }
+      },
+      {
+        "seq": 54,
+        "roundIndex": 1,
+        "at": 33,
+        "channel": "public",
+        "key": "voteApproved",
+        "params": {
+          "round": "2",
+          "proposal": "1",
+          "approves": "5",
+          "rejects": "0"
+        }
+      },
+      {
+        "seq": 55,
+        "roundIndex": 1,
+        "at": 34,
+        "channel": "private",
+        "audience": "p0",
+        "key": "youPlayedSuccess",
+        "params": {
+          "round": "2"
+        }
+      },
+      {
+        "seq": 56,
+        "roundIndex": 1,
+        "at": 35,
+        "channel": "private",
+        "audience": "p1",
+        "key": "youPlayedSuccess",
+        "params": {
+          "round": "2"
+        }
+      },
+      {
+        "seq": 57,
+        "roundIndex": 1,
+        "at": 36,
+        "channel": "private",
+        "audience": "p2",
+        "key": "youPlayedSuccess",
+        "params": {
+          "round": "2"
+        }
+      },
+      {
+        "seq": 58,
+        "roundIndex": 1,
+        "at": 36,
+        "channel": "public",
+        "key": "missionSucceeded",
+        "params": {
+          "round": "2",
+          "fails": "0"
+        }
+      },
+      {
+        "seq": 59,
+        "roundIndex": 1,
+        "at": 36,
+        "channel": "public",
+        "key": "ladyBegins",
+        "params": {
+          "holder": "p0"
+        }
+      },
+      {
+        "seq": 60,
+        "roundIndex": 1,
+        "at": 37,
+        "channel": "public",
+        "key": "ladyInspected",
+        "params": {
+          "holder": "p0",
+          "target": "p1"
+        }
+      },
+      {
+        "seq": 61,
+        "roundIndex": 1,
+        "at": 37,
+        "channel": "private",
+        "audience": "p0",
+        "key": "ladyResultGood",
+        "params": {
+          "target": "p1"
+        }
+      },
+      {
+        "seq": 62,
+        "roundIndex": 2,
+        "at": 37,
+        "channel": "public",
+        "key": "roundBegins",
+        "params": {
+          "round": "3"
+        }
+      },
+      {
+        "seq": 63,
+        "roundIndex": 2,
+        "at": 37,
+        "channel": "public",
+        "key": "proposalBegins",
+        "params": {
+          "round": "3",
+          "proposal": "1",
+          "leader": "p3"
+        }
+      },
+      {
+        "seq": 64,
+        "roundIndex": 1,
+        "at": 38,
+        "channel": "public",
+        "key": "admin.phaseReturned",
+        "params": {
+          "actor": "Referee",
+          "phase": "LadyOfLake",
+          "proposal": 1
+        },
+        "style": "admin"
+      },
+      {
+        "seq": 65,
+        "roundIndex": 1,
+        "at": 39,
+        "channel": "public",
+        "key": "admin.phaseReturned",
+        "params": {
+          "actor": "Referee",
+          "phase": "MissionVote",
+          "proposal": 1
+        },
+        "style": "admin"
+      },
+      {
+        "seq": 66,
+        "roundIndex": 1,
+        "at": 40,
+        "channel": "public",
+        "key": "admin.assassinationStarted",
+        "params": {
+          "actor": "Referee"
+        },
+        "style": "admin"
+      },
+      {
+        "seq": 67,
+        "roundIndex": 1,
+        "at": 41,
+        "channel": "public",
+        "key": "assassinStruck",
+        "params": {
+          "target": "p1"
+        }
+      },
+      {
+        "seq": 68,
+        "roundIndex": 1,
+        "at": 41,
+        "channel": "public",
+        "key": "assassinHitMerlin"
+      }
+    ],
+    "logSeq": 68,
+    "roleAcks": [],
+    "roleRevision": 0,
+    "openingClosed": true,
+    "ladyEnabled": true,
+    "ladyHolderId": "p0",
+    "ladyInspectedIds": [],
+    "pendingLady": false,
+    "lastLadyResult": null,
+    "assassinId": "p3",
+    "outcome": {
+      "winner": "evil",
+      "reason": "assassinated_merlin",
+      "missionTally": {
+        "good": 1,
+        "evil": 0
+      },
+      "assassinTargetId": "p1",
+      "revealedRoles": [
+        {
+          "playerId": "p0",
+          "role": "LoyalServant",
+          "team": "good"
+        },
+        {
+          "playerId": "p1",
+          "role": "Merlin",
+          "team": "good"
+        },
+        {
+          "playerId": "p2",
+          "role": "Minion",
+          "team": "evil"
+        },
+        {
+          "playerId": "p3",
+          "role": "Assassin",
+          "team": "evil"
+        },
+        {
+          "playerId": "p4",
+          "role": "LoyalServant",
+          "team": "good"
+        }
+      ]
+    },
+    "teamChanged": false,
+    "phaseHistory": [
+      {
+        "phase": "TeamBuilding",
+        "roundIndex": 0,
+        "leaderIndex": 1,
+        "rejectionCount": 0,
+        "proposedTeam": null,
+        "discussion": null,
+        "votes": {},
+        "missionCards": {},
+        "missionResults": [],
+        "voteHistory": [],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "Discussion",
+        "roundIndex": 0,
+        "leaderIndex": 1,
+        "rejectionCount": 0,
+        "proposedTeam": [
+          "p0",
+          "p1"
+        ],
+        "teamChanged": false,
+        "discussion": {
+          "order": [
+            "p2",
+            "p3",
+            "p4",
+            "p0",
+            "p1"
+          ],
+          "speakerIndex": 4
+        },
+        "votes": {},
+        "missionCards": {},
+        "missionResults": [],
+        "voteHistory": [],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "TeamFinalizing",
+        "roundIndex": 0,
+        "leaderIndex": 1,
+        "rejectionCount": 0,
+        "proposedTeam": [
+          "p0",
+          "p1"
+        ],
+        "teamChanged": false,
+        "discussion": {
+          "order": [
+            "p2",
+            "p3",
+            "p4",
+            "p0",
+            "p1"
+          ],
+          "speakerIndex": 5
+        },
+        "votes": {},
+        "missionCards": {},
+        "missionResults": [],
+        "voteHistory": [],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "Voting",
+        "roundIndex": 0,
+        "leaderIndex": 1,
+        "rejectionCount": 0,
+        "proposedTeam": [
+          "p0",
+          "p1"
+        ],
+        "teamChanged": false,
+        "discussion": null,
+        "votes": {
+          "p0": "approve",
+          "p1": "approve",
+          "p2": "approve",
+          "p3": "approve"
+        },
+        "missionCards": {},
+        "missionResults": [],
+        "voteHistory": [],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "MissionVote",
+        "roundIndex": 0,
+        "leaderIndex": 1,
+        "rejectionCount": 0,
+        "proposedTeam": [
+          "p0",
+          "p1"
+        ],
+        "teamChanged": false,
+        "discussion": null,
+        "votes": {
+          "p0": "approve",
+          "p1": "approve",
+          "p2": "approve",
+          "p3": "approve",
+          "p4": "approve"
+        },
+        "missionCards": {
+          "p0": "success"
+        },
+        "missionResults": [],
+        "voteHistory": [
+          {
+            "roundIndex": 0,
+            "proposalIndex": 0,
+            "leaderId": "p1",
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          }
+        ],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "TeamBuilding",
+        "roundIndex": 1,
+        "leaderIndex": 2,
+        "rejectionCount": 0,
+        "proposedTeam": null,
+        "teamChanged": false,
+        "discussion": null,
+        "votes": {},
+        "missionCards": {},
+        "missionResults": [
+          {
+            "roundIndex": 0,
+            "teamSize": 2,
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "success": true,
+            "failCount": 0,
+            "cards": {
+              "p0": "success",
+              "p1": "success"
+            }
+          }
+        ],
+        "voteHistory": [
+          {
+            "roundIndex": 0,
+            "proposalIndex": 0,
+            "leaderId": "p1",
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          }
+        ],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "Discussion",
+        "roundIndex": 1,
+        "leaderIndex": 2,
+        "rejectionCount": 0,
+        "proposedTeam": [
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "teamChanged": false,
+        "discussion": {
+          "order": [
+            "p3",
+            "p4",
+            "p0",
+            "p1",
+            "p2"
+          ],
+          "speakerIndex": 4
+        },
+        "votes": {},
+        "missionCards": {},
+        "missionResults": [
+          {
+            "roundIndex": 0,
+            "teamSize": 2,
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "success": true,
+            "failCount": 0,
+            "cards": {
+              "p0": "success",
+              "p1": "success"
+            }
+          }
+        ],
+        "voteHistory": [
+          {
+            "roundIndex": 0,
+            "proposalIndex": 0,
+            "leaderId": "p1",
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          }
+        ],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "TeamFinalizing",
+        "roundIndex": 1,
+        "leaderIndex": 2,
+        "rejectionCount": 0,
+        "proposedTeam": [
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "teamChanged": false,
+        "discussion": {
+          "order": [
+            "p3",
+            "p4",
+            "p0",
+            "p1",
+            "p2"
+          ],
+          "speakerIndex": 5
+        },
+        "votes": {},
+        "missionCards": {},
+        "missionResults": [
+          {
+            "roundIndex": 0,
+            "teamSize": 2,
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "success": true,
+            "failCount": 0,
+            "cards": {
+              "p0": "success",
+              "p1": "success"
+            }
+          }
+        ],
+        "voteHistory": [
+          {
+            "roundIndex": 0,
+            "proposalIndex": 0,
+            "leaderId": "p1",
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          }
+        ],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "Voting",
+        "roundIndex": 1,
+        "leaderIndex": 2,
+        "rejectionCount": 0,
+        "proposedTeam": [
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "teamChanged": false,
+        "discussion": null,
+        "votes": {
+          "p0": "approve",
+          "p1": "approve",
+          "p2": "approve",
+          "p3": "approve"
+        },
+        "missionCards": {},
+        "missionResults": [
+          {
+            "roundIndex": 0,
+            "teamSize": 2,
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "success": true,
+            "failCount": 0,
+            "cards": {
+              "p0": "success",
+              "p1": "success"
+            }
+          }
+        ],
+        "voteHistory": [
+          {
+            "roundIndex": 0,
+            "proposalIndex": 0,
+            "leaderId": "p1",
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          }
+        ],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "MissionVote",
+        "roundIndex": 1,
+        "leaderIndex": 2,
+        "rejectionCount": 0,
+        "proposedTeam": [
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "teamChanged": false,
+        "discussion": null,
+        "votes": {
+          "p0": "approve",
+          "p1": "approve",
+          "p2": "approve",
+          "p3": "approve",
+          "p4": "approve"
+        },
+        "missionCards": {},
+        "missionResults": [
+          {
+            "roundIndex": 0,
+            "teamSize": 2,
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "success": true,
+            "failCount": 0,
+            "cards": {
+              "p0": "success",
+              "p1": "success"
+            }
+          }
+        ],
+        "voteHistory": [
+          {
+            "roundIndex": 0,
+            "proposalIndex": 0,
+            "leaderId": "p1",
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          },
+          {
+            "roundIndex": 1,
+            "proposalIndex": 0,
+            "leaderId": "p2",
+            "team": [
+              "p0",
+              "p1",
+              "p2"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          }
+        ],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      },
+      {
+        "phase": "Assassination",
+        "roundIndex": 1,
+        "leaderIndex": 2,
+        "rejectionCount": 0,
+        "proposedTeam": null,
+        "teamChanged": false,
+        "discussion": null,
+        "votes": {},
+        "missionCards": {},
+        "missionResults": [
+          {
+            "roundIndex": 0,
+            "teamSize": 2,
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "success": true,
+            "failCount": 0,
+            "cards": {
+              "p0": "success",
+              "p1": "success"
+            }
+          }
+        ],
+        "voteHistory": [
+          {
+            "roundIndex": 0,
+            "proposalIndex": 0,
+            "leaderId": "p1",
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          },
+          {
+            "roundIndex": 1,
+            "proposalIndex": 0,
+            "leaderId": "p2",
+            "team": [
+              "p0",
+              "p1",
+              "p2"
+            ],
+            "votes": {
+              "p0": "approve",
+              "p1": "approve",
+              "p2": "approve",
+              "p3": "approve",
+              "p4": "approve"
+            },
+            "approved": true
+          }
+        ],
+        "ladyHolderId": "p0",
+        "ladyInspectedIds": [],
+        "pendingLady": false,
+        "lastLadyResult": null,
+        "outcome": null
+      }
+    ],
+    "phaseRevision": 3,
+    "earlyAssassination": null
+  },
+  "expected": {
+    "gameId": "rewind",
+    "outcome": {
+      "winner": "evil",
+      "reason": "assassinated_merlin",
+      "missionTally": {
+        "good": 1,
+        "evil": 0
+      },
+      "assassinTargetId": "p1",
+      "revealedRoles": [
+        {
+          "playerId": "p0",
+          "role": "LoyalServant",
+          "team": "good"
+        },
+        {
+          "playerId": "p1",
+          "role": "Merlin",
+          "team": "good"
+        },
+        {
+          "playerId": "p2",
+          "role": "Minion",
+          "team": "evil"
+        },
+        {
+          "playerId": "p3",
+          "role": "Assassin",
+          "team": "evil"
+        },
+        {
+          "playerId": "p4",
+          "role": "LoyalServant",
+          "team": "good"
+        }
+      ]
+    },
+    "roleAssignments": [
+      {
+        "playerId": "p0",
+        "role": "LoyalServant",
+        "roleVariant": 0
+      },
+      {
+        "playerId": "p1",
+        "role": "Merlin"
+      },
+      {
+        "playerId": "p2",
+        "role": "Minion",
+        "roleVariant": 0
+      },
+      {
+        "playerId": "p3",
+        "role": "Assassin"
+      },
+      {
+        "playerId": "p4",
+        "role": "LoyalServant",
+        "roleVariant": 2
+      }
+    ],
+    "players": [
+      {
+        "id": "p0",
+        "name": "Player 0",
+        "seat": 0
+      },
+      {
+        "id": "p1",
+        "name": "Player 1",
+        "seat": 1
+      },
+      {
+        "id": "p2",
+        "name": "Player 2",
+        "seat": 2
+      },
+      {
+        "id": "p3",
+        "name": "Player 3",
+        "seat": 3
+      },
+      {
+        "id": "p4",
+        "name": "Player 4",
+        "seat": 4
+      }
+    ],
+    "rounds": [
+      {
+        "roundIndex": 0,
+        "leaderPlayerId": "p1",
+        "teamSize": 2,
+        "finalTeam": [
+          "p0",
+          "p1"
+        ],
+        "approved": true,
+        "missionSuccess": true,
+        "failCount": 0,
+        "votes": [
+          {
+            "proposalIndex": 0,
+            "playerId": "p0",
+            "value": "approve"
+          },
+          {
+            "proposalIndex": 0,
+            "playerId": "p1",
+            "value": "approve"
+          },
+          {
+            "proposalIndex": 0,
+            "playerId": "p2",
+            "value": "approve"
+          },
+          {
+            "proposalIndex": 0,
+            "playerId": "p3",
+            "value": "approve"
+          },
+          {
+            "proposalIndex": 0,
+            "playerId": "p4",
+            "value": "approve"
+          }
+        ],
+        "proposals": [
+          {
+            "proposalIndex": 0,
+            "leaderPlayerId": "p1",
+            "team": [
+              "p0",
+              "p1"
+            ],
+            "approved": true
+          }
+        ],
+        "missionCards": [
+          {
+            "playerId": "p0",
+            "card": "success"
+          },
+          {
+            "playerId": "p1",
+            "card": "success"
+          }
+        ]
+      },
+      {
+        "roundIndex": 1,
+        "leaderPlayerId": "p2",
+        "teamSize": 3,
+        "finalTeam": [
+          "p0",
+          "p1",
+          "p2"
+        ],
+        "approved": true,
+        "missionSuccess": null,
+        "failCount": null,
+        "votes": [
+          {
+            "proposalIndex": 0,
+            "playerId": "p0",
+            "value": "approve"
+          },
+          {
+            "proposalIndex": 0,
+            "playerId": "p1",
+            "value": "approve"
+          },
+          {
+            "proposalIndex": 0,
+            "playerId": "p2",
+            "value": "approve"
+          },
+          {
+            "proposalIndex": 0,
+            "playerId": "p3",
+            "value": "approve"
+          },
+          {
+            "proposalIndex": 0,
+            "playerId": "p4",
+            "value": "approve"
+          }
+        ],
+        "proposals": [
+          {
+            "proposalIndex": 0,
+            "leaderPlayerId": "p2",
+            "team": [
+              "p0",
+              "p1",
+              "p2"
+            ],
+            "approved": true
+          }
+        ],
+        "missionCards": []
+      }
+    ],
+    "ladyChecks": [],
+    "assassination": {
+      "assassinPlayerId": "p3",
+      "targetPlayerId": "p1",
+      "hitMerlin": true
+    },
+    "options": {
+      "oberon": false,
+      "mordred": false,
+      "morgana": false,
+      "percival": false,
+      "ladyOfTheLake": true
+    },
+    "startedAt": 1,
+    "endedAt": 41,
+    "log": [
+      {
+        "seq": 1,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "public",
+        "key": "gameStarted",
+        "params": {
+          "count": "5"
+        }
+      },
+      {
+        "seq": 2,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "public",
+        "key": "lineup",
+        "params": {
+          "good": "Merlin,LoyalServant*2",
+          "evil": "Assassin,Minion"
+        }
+      },
+      {
+        "seq": 12,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "public",
+        "key": "roundBegins",
+        "params": {
+          "round": "1"
+        }
+      },
+      {
+        "seq": 13,
+        "roundIndex": 0,
+        "at": 1,
+        "channel": "public",
+        "key": "proposalBegins",
+        "params": {
+          "round": "1",
+          "proposal": "1",
+          "leader": "p1"
+        }
+      },
+      {
+        "seq": 14,
+        "roundIndex": 0,
+        "at": 2,
+        "channel": "public",
+        "key": "teamAnnounced",
+        "params": {
+          "leader": "p1",
+          "team": "p0,p1"
+        }
+      },
+      {
+        "seq": 15,
+        "roundIndex": 0,
+        "at": 2,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p2"
+        }
+      },
+      {
+        "seq": 16,
+        "roundIndex": 0,
+        "at": 3,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p3"
+        }
+      },
+      {
+        "seq": 17,
+        "roundIndex": 0,
+        "at": 4,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p4"
+        }
+      },
+      {
+        "seq": 18,
+        "roundIndex": 0,
+        "at": 5,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p0"
+        }
+      },
+      {
+        "seq": 19,
+        "roundIndex": 0,
+        "at": 6,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p1"
+        }
+      },
+      {
+        "seq": 20,
+        "roundIndex": 0,
+        "at": 7,
+        "channel": "public",
+        "key": "discussionFinished",
+        "params": {
+          "leader": "p1"
+        }
+      },
+      {
+        "seq": 21,
+        "roundIndex": 0,
+        "at": 8,
+        "channel": "public",
+        "key": "teamFinalized",
+        "params": {
+          "leader": "p1",
+          "team": "p0,p1",
+          "changed": 0
+        }
+      },
+      {
+        "seq": 27,
+        "roundIndex": 0,
+        "at": 13,
+        "channel": "public",
+        "key": "voteRejected",
+        "params": {
+          "round": "1",
+          "proposal": "1",
+          "approves": "0",
+          "rejects": "5"
+        }
+      },
+      {
+        "seq": 28,
+        "roundIndex": 0,
+        "at": 13,
+        "channel": "public",
+        "key": "proposalBegins",
+        "params": {
+          "leader": "p2",
+          "round": "1",
+          "proposal": "2"
+        }
+      },
+      {
+        "seq": 29,
+        "roundIndex": 0,
+        "at": 14,
+        "channel": "public",
+        "key": "admin.phaseReturned",
+        "params": {
+          "actor": "Referee",
+          "phase": "Voting",
+          "proposal": 1
+        },
+        "style": "admin"
+      },
+      {
+        "seq": 35,
+        "roundIndex": 0,
+        "at": 19,
+        "channel": "public",
+        "key": "voteApproved",
+        "params": {
+          "round": "1",
+          "proposal": "1",
+          "approves": "5",
+          "rejects": "0"
+        }
+      },
+      {
+        "seq": 38,
+        "roundIndex": 0,
+        "at": 21,
+        "channel": "public",
+        "key": "missionSucceeded",
+        "params": {
+          "round": "1",
+          "fails": "0"
+        }
+      },
+      {
+        "seq": 39,
+        "roundIndex": 1,
+        "at": 21,
+        "channel": "public",
+        "key": "roundBegins",
+        "params": {
+          "round": "2"
+        }
+      },
+      {
+        "seq": 40,
+        "roundIndex": 1,
+        "at": 21,
+        "channel": "public",
+        "key": "proposalBegins",
+        "params": {
+          "round": "2",
+          "proposal": "1",
+          "leader": "p2"
+        }
+      },
+      {
+        "seq": 41,
+        "roundIndex": 1,
+        "at": 22,
+        "channel": "public",
+        "key": "teamAnnounced",
+        "params": {
+          "leader": "p2",
+          "team": "p0,p1,p2"
+        }
+      },
+      {
+        "seq": 42,
+        "roundIndex": 1,
+        "at": 22,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p3"
+        }
+      },
+      {
+        "seq": 43,
+        "roundIndex": 1,
+        "at": 23,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p4"
+        }
+      },
+      {
+        "seq": 44,
+        "roundIndex": 1,
+        "at": 24,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p0"
+        }
+      },
+      {
+        "seq": 45,
+        "roundIndex": 1,
+        "at": 25,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p1"
+        }
+      },
+      {
+        "seq": 46,
+        "roundIndex": 1,
+        "at": 26,
+        "channel": "public",
+        "key": "speechBegins",
+        "params": {
+          "player": "p2"
+        }
+      },
+      {
+        "seq": 47,
+        "roundIndex": 1,
+        "at": 27,
+        "channel": "public",
+        "key": "discussionFinished",
+        "params": {
+          "leader": "p2"
+        }
+      },
+      {
+        "seq": 48,
+        "roundIndex": 1,
+        "at": 28,
+        "channel": "public",
+        "key": "teamFinalized",
+        "params": {
+          "leader": "p2",
+          "team": "p0,p1,p2",
+          "changed": 0
+        }
+      },
+      {
+        "seq": 54,
+        "roundIndex": 1,
+        "at": 33,
+        "channel": "public",
+        "key": "voteApproved",
+        "params": {
+          "round": "2",
+          "proposal": "1",
+          "approves": "5",
+          "rejects": "0"
+        }
+      },
+      {
+        "seq": 58,
+        "roundIndex": 1,
+        "at": 36,
+        "channel": "public",
+        "key": "missionSucceeded",
+        "params": {
+          "round": "2",
+          "fails": "0"
+        }
+      },
+      {
+        "seq": 59,
+        "roundIndex": 1,
+        "at": 36,
+        "channel": "public",
+        "key": "ladyBegins",
+        "params": {
+          "holder": "p0"
+        }
+      },
+      {
+        "seq": 60,
+        "roundIndex": 1,
+        "at": 37,
+        "channel": "public",
+        "key": "ladyInspected",
+        "params": {
+          "holder": "p0",
+          "target": "p1"
+        }
+      },
+      {
+        "seq": 62,
+        "roundIndex": 2,
+        "at": 37,
+        "channel": "public",
+        "key": "roundBegins",
+        "params": {
+          "round": "3"
+        }
+      },
+      {
+        "seq": 63,
+        "roundIndex": 2,
+        "at": 37,
+        "channel": "public",
+        "key": "proposalBegins",
+        "params": {
+          "round": "3",
+          "proposal": "1",
+          "leader": "p3"
+        }
+      },
+      {
+        "seq": 64,
+        "roundIndex": 1,
+        "at": 38,
+        "channel": "public",
+        "key": "admin.phaseReturned",
+        "params": {
+          "actor": "Referee",
+          "phase": "LadyOfLake",
+          "proposal": 1
+        },
+        "style": "admin"
+      },
+      {
+        "seq": 65,
+        "roundIndex": 1,
+        "at": 39,
+        "channel": "public",
+        "key": "admin.phaseReturned",
+        "params": {
+          "actor": "Referee",
+          "phase": "MissionVote",
+          "proposal": 1
+        },
+        "style": "admin"
+      },
+      {
+        "seq": 66,
+        "roundIndex": 1,
+        "at": 40,
+        "channel": "public",
+        "key": "admin.assassinationStarted",
+        "params": {
+          "actor": "Referee"
+        },
+        "style": "admin"
+      },
+      {
+        "seq": 67,
+        "roundIndex": 1,
+        "at": 41,
+        "channel": "public",
+        "key": "assassinStruck",
+        "params": {
+          "target": "p1"
+        }
+      },
+      {
+        "seq": 68,
+        "roundIndex": 1,
+        "at": 41,
+        "channel": "public",
+        "key": "assassinHitMerlin"
+      }
+    ]
+  }
+}

@@ -14,6 +14,7 @@ dist
 .backups/
 .private/
 .omo/
+.claude/
 .husky/
 .vscode/
 .idea/
@@ -28,3 +29,5 @@ worker-configuration.d.ts
 *.pem
 *.key
 **/.DS_Store
+
+backend/target/

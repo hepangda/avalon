@@ -17,6 +17,14 @@ on:
         description: Commit title supplied automatically by Release (manual)
         type: string
         required: false
+      prepare_only:
+        description: Build and publish assets without changing the running deployment
+        type: boolean
+        default: false
+      include_migration:
+        description: Also publish the isolated one-shot legacy migration image
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -119,6 +127,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push the migration tool
+        if: inputs.include_migration
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: migration-tool
+          push: true
+          tags: ${{ env.IMAGE_REPOSITORY }}:migration-${{ env.VERSION }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ env.COMMIT }}
+          cache-from: type=gha
+
       # Static assets come from the pushed image itself, so the CDN and the pod
       # serve the same build.
       - name: Extract static assets from the image
@@ -126,6 +147,9 @@ jobs:
         run: |
           image="$IMAGE_REPOSITORY@${{ steps.existing.outputs.digest || steps.build.outputs.digest }}"
           docker pull "$image"
+          # Legacy Node releases are permanently ineligible after the Rust cutover.
+          runtime=$(docker image inspect "$image" --format '{{index .Config.Labels "avalon.runtime"}}')
+          [[ $runtime == rust ]] || { echo "::error::Refusing a non-Rust release"; exit 1; }
           container=$(docker create "$image")
           docker cp "$container:/app/dist/client" "$RUNNER_TEMP/static"
           docker rm "$container"
@@ -150,6 +174,7 @@ jobs:
           persist-credentials: false
 
       - name: Roll out
+        if: ${{ !inputs.prepare_only }}
         env:
           TUNNEL_SERVICE_TOKEN_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           TUNNEL_SERVICE_TOKEN_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
@@ -215,7 +240,7 @@ jobs:
         if: success()
         run: |
           {
-            echo "### Deployed $VERSION"
+            echo "### ${{ inputs.prepare_only && 'Prepared' || 'Deployed' }} $VERSION"
             echo
             echo "- Image: \`${{ steps.image.outputs.ref }}\`"
             echo "- Commit: \`$COMMIT\`"

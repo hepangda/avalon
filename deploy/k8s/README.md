@@ -1,5 +1,11 @@
 # Kubernetes deployment constraints
 
+Before the first release using recorded randomness, stop the old application and
+run the separate migration-tool image against the same database. Follow the
+[cutover guide](../../docs/randomness-cutover.md); inspect a dry run before applying.
+The importer ends old rooms and preserves completed history and account data.
+Normal server startup deliberately refuses an unmigrated populated database.
+
 This repository provides a working Docker Compose setup at the project root.
 Kubernetes resources must be prepared for your own registry, namespace, storage,
 OIDC client and HTTPS ingress. Site-specific manifests and one-time migration
@@ -28,7 +34,9 @@ scripts have been removed from the public tree.
 Backups must capture room snapshots and the room journal in one consistent
 snapshot. An older snapshot-only application cannot safely open the current
 journal schema. Restore into a separate database for verification before a
-cutover; an image rollback alone does not reverse a database migration. See
+cutover. The Rust cutover is permanent: never restart a Node image against this
+database. The release workflow rejects non-Rust images and disables automatic
+rollback. Old login cookies are intentionally invalidated; users sign in again. See
 [architecture and crash recovery](../../docs/architecture.md).
 
 The local `.private/` archive retains the previous deployment and recovery records.

@@ -1,0 +1,62 @@
+[package]
+name = "avalon-server"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+default-run = "avalon-server"
+
+[features]
+default = []
+# Only the offline importer and its compatibility tests compile the old stream.
+legacy-import = []
+
+[[bin]]
+name = "avalon-server"
+path = "src/main.rs"
+
+[[bin]]
+name = "migrate-randomness"
+path = "src/bin/migrate_randomness.rs"
+required-features = ["legacy-import"]
+
+[dependencies]
+anyhow = "1"
+axum = { version = "0.8", features = ["ws", "macros"] }
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+tower-http = { version = "0.6", features = ["fs", "trace", "limit"] }
+futures-util = "0.3"
+serde = { version = "1", features = ["derive", "rc"] }
+serde_json = { version = "1", features = ["preserve_order", "float_roundtrip"] }
+indexmap = { version = "2", features = ["serde"] }
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls-ring", "postgres", "json", "migrate", "chrono"] }
+sha2 = "0.10"
+hex = "0.4"
+ryu-js = "1"
+aes-gcm = "0.10"
+base64 = "0.22"
+rand = "0.8"
+rand_chacha = "0.3"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+jsonwebtoken = { version = "10", features = ["rust_crypto"] }
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+bytes = "1"
+rayon = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+dotenvy = "0.15"
+thiserror = "2"
+
+[dev-dependencies]
+tokio-tungstenite = "0.28"
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+proptest = "1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+debug = 1

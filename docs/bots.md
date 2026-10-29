@@ -1,8 +1,9 @@
 # Companion bot decisions
 
 
-The room calls `server/bots.ts` through the existing bot scheduler. Decisions use
-only `projectStateForViewer`: the bot cannot read the deal seed, another seat's
+The Rust room runtime calls `backend/src/bots.rs` on its bounded CPU pool.
+`server/bots.ts` remains the TypeScript behavioral reference. Decisions use
+only the authorized player projection: the bot cannot read the deal seed, another seat's
 private knowledge, sealed votes, or individual mission cards. Decisions are
 reproducible from the same projection and action seed; no external model service
 or extra runtime dependency is required.
