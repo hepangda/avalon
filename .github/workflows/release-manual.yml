@@ -10,7 +10,7 @@ on:
         default: main
         type: string
       restart:
-        description: Restart the pod even if this version is already running
+        description: Restart the application even if this version is already running
         type: boolean
         default: false
 

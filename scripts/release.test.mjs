@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 const resolver = fileURLToPath(new URL('../deploy/release/resolve-commit.sh', import.meta.url));
+const vmTests = fileURLToPath(new URL('../deploy/release/test_vm_rollout.py', import.meta.url));
 const rollout = fileURLToPath(new URL('../deploy/release/rollout.sh', import.meta.url));
 
 test('release resolves main and abbreviated commits, rejecting tags and commits outside main', () => {
@@ -40,34 +41,24 @@ test('release resolves main and abbreviated commits, rejecting tags and commits 
   }
 });
 
-test('failed Rust rollout never restores a legacy image', () => {
-  const cwd = mkdtempSync(join(tmpdir(), 'avalon-rollout-'));
-  const image = `ghcr.io/hepangda/avalon@sha256:${'a'.repeat(64)}`;
-  const previous = `ghcr.io/hepangda/avalon@sha256:${'b'.repeat(64)}`;
+test('VM rollout safety and restricted SSH gateway', () => {
+  const result = spawnSync('python3', [vmTests], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test('SSH failure cannot be hidden by a healthy public endpoint', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'avalon-ssh-release-'));
   try {
-    writeFileSync(join(cwd, 'kubectl'), `#!/usr/bin/env bash
-shift 2
-case "$1" in
-  get) printf '%s' "$PREVIOUS" ;;
-  patch) printf '%s\\n' "\${@: -1}" >> "$PATCH_LOG" ;;
-  rollout) test "$(wc -l < "$PATCH_LOG")" -gt 1 ;;
-  *) exit 2 ;;
-esac
-`, { mode: 0o755 });
-    writeFileSync(join(cwd, 'curl'), '#!/usr/bin/env bash\nprintf \'{"ok":true}\'\n', { mode: 0o755 });
-    const log = join(cwd, 'patches');
-    const result = spawnSync('bash', [rollout, image, `sha-${'c'.repeat(40)}`], {
+    writeFileSync(join(cwd, 'ssh'), '#!/bin/sh\nexit 17\n', { mode: 0o755 });
+    writeFileSync(join(cwd, 'curl'), '#!/bin/sh\ntouch "$PUBLIC_CHECK"\nprintf \'{"ok":true}\'\n', { mode: 0o755 });
+    const result = spawnSync('bash', [rollout, `ghcr.io/hepangda/avalon@sha256:${'a'.repeat(64)}`, `sha-${'c'.repeat(40)}`], {
       encoding: 'utf8',
-      env: { ...process.env, PATH: `${cwd}:${process.env.PATH}`, PREVIOUS: previous,
-        PATCH_LOG: log, K8S_NAMESPACE: 'avalon', K8S_DEPLOYMENT: 'avalon',
-        K8S_CONTAINER: 'avalon', PUBLIC_ORIGIN: 'https://example.invalid' },
+      env: { ...process.env, PATH: `${cwd}:${process.env.PATH}`, VM_HOST: 'example.invalid', VM_USER: 'deploy',
+        VM_SSH_KEY_FILE: '/unused/key', VM_SSH_KNOWN_HOSTS_FILE: '/unused/hosts',
+        PUBLIC_ORIGIN: 'https://example.invalid', PUBLIC_CHECK: join(cwd, 'public-check') },
     });
-    assert.equal(result.status, 1, result.stderr);
-    const patches = readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
-    assert.equal(patches.length, 1);
-    assert.equal(patches[0].spec.template.spec.containers[0].image, image);
-    assert.equal(patches[0].spec.template.spec.imagePullSecrets, undefined);
-    assert.match(result.stdout, /automatic rollback is disabled/);
+    assert.equal(result.status, 17, result.stderr);
+    assert.equal(existsSync(join(cwd, 'public-check')), false);
   } finally {
     rmSync(cwd, { recursive: true, force: true });
   }

@@ -1,97 +1,125 @@
-# Commit-based releases
+# Commit-based ARM VM releases
 
-The first recorded-randomness release requires a maintenance window and the
-offline [data cutover](../../docs/randomness-cutover.md) before the application
-rollout. The production image does not contain the legacy importer. Build the
-`migration-tool` Docker target or `npm run build:migration`, stop the old writer,
-review `--dry-run`, and run `--apply` against the selected database. Subsequent
-releases do not repeat this cutover or clear newly created rooms.
+Releases deploy one Rust application container on an ARM64 VM with Docker Compose.
+PostgreSQL, its volume, nginx and the WARP origin connection are managed separately.
+The old app stops before the new app starts; players reconnect once per release.
+Failures never automatically restore an old image or database.
 
-For the first cutover, prepare images and immutable CDN assets while the old
-service is still online:
+## Run a release
 
-```sh
-gh workflow run release.yml --ref main -f commit=main -f prepare_only=true -f include_migration=true
-```
-
-This runs the full checks and publishes the normal commit image plus
-`ghcr.io/hepangda/avalon:migration-sha-<full-commit>`, without touching Kubernetes.
-Use their verified immutable digests during the maintenance window. After stopping
-the old application, back up and migrate the database, then set the Rust image and
-restore the application replica count to one. The normal `rollout.sh` changes the
-image only; it does not restore a replica count set to zero for maintenance.
-
-Open Actions → Release (manual) → Run workflow on `main`. Enter a full or short
-commit SHA (at least seven characters), or leave `commit` as `main` to deploy its
-latest commit. No Git tag is required, and pushing tags no longer deploys.
+Use Actions → Release (manual) on `main`, or:
 
 ```sh
 gh workflow run release-manual.yml --ref main -f commit=main
-gh workflow run release-manual.yml --ref main -f commit=dede2cb -f restart=true
+gh workflow run release-manual.yml --ref main -f commit=<full-or-short-sha> -f restart=true
 ```
 
-The entry resolves the target to a full SHA, verifies it belongs to `main`, and
-starts `Release` using the target commit's subject as its title. The actual release
-validates the SHA again and uses it for all checks and the build, so a subsequent
-push cannot change the selected code. Entry success only means the release was
-requested; follow the separate `Release` run for deployment status.
+The entry resolves the immutable commit, verifies it belongs to `main`, and starts
+the separate Release workflow. Follow that run for the deployment result. An
+already-running healthy image is left alone unless `restart` is requested.
 
-[`release.yml`](../../.github/workflows/release.yml) then:
-
-1. Runs TypeScript checks, frontend tests, Rust tests, formatting and the frontend build on the selected commit.
-2. Builds and pushes `ghcr.io/hepangda/avalon:sha-<full-commit>` using the workflow's
-   `GITHUB_TOKEN` with `packages: write`. Re-runs reuse the image when its static
-   base matches. The GHCR package is public, so Kubernetes can also pull it anonymously.
-3. Extracts static assets from that exact image, uploads missing CDN objects and
-   verifies them; see [static publishing](../r2/README.md).
-4. Uses deployment tooling from the workflow commit to roll Kubernetes to
-   `ghcr.io/hepangda/avalon@sha256:<digest>`. Kubernetes pulls the public image
-   anonymously; no registry credentials or `imagePullSecrets` are needed.
-5. Requires the image label `avalon.runtime=rust`, then waits for rollout and `/api/health`. A failure keeps the Rust image and fails the release; it never restores the previous Node image.
-
-Releases run one at a time. `Recreate` updates reconnect players once per release.
-The migration is one-way: legacy Node commits cannot be released. Repair a failed
-release with a corrected Rust commit. An already-running image is left alone
-unless `restart` is selected. Direct dispatch of `release.yml` accepts
-`commit`, `restart` and optional `commit_title`.
-
-## Registry authentication
-
-Actions pushes to GHCR with its short-lived `GITHUB_TOKEN`; Kubernetes pulls the
-public image anonymously. No registry username/password secrets, image repository
-variable, local PAT file, or Kubernetes image pull Secret are required.
-
-## One-time setup
-
-Create a ServiceAccount that can only read, watch and patch the `avalon` Deployment:
+Build and publish assets without changing the VM:
 
 ```sh
-kubectl apply -f deploy/release/rbac.yaml
-kubectl -n avalon get secret avalon-release-token -o jsonpath='{.data.token}' | base64 -d
+gh workflow run release.yml --ref main -f commit=main -f prepare_only=true
 ```
 
-In Cloudflare Zero Trust, create a service token and add a **Service Auth** policy
-that includes it to the Access application in front of the Kubernetes API.
+## Release behavior
 
-Create a GitHub environment named `production` allowing deployments from the
-`main` branch, with:
+1. Run shared CI checks against the selected commit.
+2. Build natively on `ubuntu-24.04-arm` and publish
+   `ghcr.io/<owner>/<repo>:sha-<full-commit>-arm64`. Reuse requires matching
+   architecture, OS, Rust runtime, commit and static asset base.
+3. Extract resources from that exact image and publish/verify CDN objects.
+4. Connect with a restricted SSH key and pinned host key. The VM anonymously pulls
+   the public GHCR digest and verifies repository, Linux ARM64, Rust and commit.
+5. Require an already-healthy database, create a consistent PostgreSQL dump, stop
+   the app with a 30-second grace period, atomically update only `APP_IMAGE` in
+   `.env`, then recreate only `app` with `--no-deps --pull never`.
+6. Check the running image ID and local `/api/health`, then check the public HTTPS
+   endpoint. Save `release.json` and the pre-release dump for recovery.
 
-| Variable | Value |
+GitHub concurrency and a VM file lock prevent overlapping releases. Pull,
+validation and backup failures leave the old app running. After a new image
+starts, repair forward on failure. Database credentials, OIDC settings and volumes
+are not replaced. Dumps under `/var/backups/avalon/releases` are not automatically
+pruned; include them in the installation's backup retention policy.
+
+## VM setup
+
+Install Docker Engine/Compose and Python 3. The existing production Compose file
+at `/opt/avalon/compose.yaml` must have services `db` and `app`, with app port 3000
+bound to loopback and `${APP_IMAGE}` as its image. `.env` must contain exactly one
+`APP_IMAGE=...` entry. Do not deploy the root development Compose file, which builds
+the app. The workflow never creates or starts the database.
+
+Install the server scripts using an administrator account. Update them explicitly
+when server-side release logic changes:
+
+```sh
+sudo install -m 0755 vm-rollout.py /usr/local/sbin/avalon-vm-rollout
+sudo install -d -m 0755 /usr/local/libexec
+sudo install -m 0755 ssh-gateway.py /usr/local/libexec/avalon-release-gateway
+```
+
+Create root-owned `/etc/avalon-deploy.json`:
+
+```json
+{
+  "directory": "/opt/avalon",
+  "repository": "ghcr.io/<owner>/<repo>",
+  "backup_directory": "/var/backups/avalon/releases"
+}
+```
+
+Generate a dedicated ED25519 deployment key. Its public key goes in the chosen
+SSH user's `authorized_keys` with this prefix, all on one line:
+
+```text
+restrict,command="/usr/local/libexec/avalon-release-gateway" ssh-ed25519 <public-key> avalon-release
+```
+
+The SSH user needs passwordless sudo for `/usr/local/sbin/avalon-vm-rollout`.
+The root-owned gateway permits only `check` and
+`deploy <digest> sha-<full-commit> [--restart]`; the privileged script independently
+checks the configured repository. This key must not permit a shell, forwarding,
+SFTP/SCP, or uploads of replacement release scripts.
+
+Verify with the restricted key and trusted host-key file:
+
+```sh
+ssh -i <release-key> -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile=<known-hosts> <user>@<vm-host> check
+```
+
+This does not restart the app. A command such as `id` must be rejected. Verify
+host fingerprints through an already trusted connection; do not learn host keys
+dynamically in Actions.
+
+## GitHub production environment
+
+Keep branch restrictions to `main` and the existing CDN credentials.
+
+| Variable | Purpose |
 | --- | --- |
-| `STATIC_ASSET_BASE_URL` | CDN base ending in `/avalon/` |
-| `STATIC_R2_BUCKET` | Public assets bucket |
+| `VM_HOST`, `VM_USER` | VM SSH address and deployment user |
+| `VM_SSH_KNOWN_HOSTS` | Pinned OpenSSH host-key lines matching `VM_HOST` |
 | `PUBLIC_ORIGIN` | App HTTPS origin |
-| `CLOUDFLARE_ACCOUNT_ID` | Account that owns the bucket |
-| `K8S_ACCESS_HOSTNAME` | Access hostname of the Kubernetes API (`cloudflared access tcp`) |
-| `K8S_CA_DATA` | Base64 cluster CA, as in kubeconfig `certificate-authority-data` |
-| `K8S_TLS_SERVER_NAME` | API server certificate name; defaults to `kubernetes` |
-| `K8S_NAMESPACE`, `K8S_DEPLOYMENT`, `K8S_CONTAINER` | Optional; default to `avalon` |
+| `STATIC_ASSET_BASE_URL` | CDN base ending in `/avalon/` |
+| `STATIC_R2_BUCKET`, `CLOUDFLARE_ACCOUNT_ID` | Existing static publishing settings |
 
-| Secret | Value |
+| Secret | Purpose |
 | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | R2 object read/write on the bucket |
-| `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` | The Access service token |
-| `K8S_TOKEN` | The `avalon-release-token` ServiceAccount token |
+| `VM_SSH_PRIVATE_KEY` | Dedicated restricted deployment key |
+| `CLOUDFLARE_API_TOKEN` | Existing R2 publishing credentials |
 
-`rollout.sh` also works from a workstation with an open tunnel and the same
-`K8S_*` and `PUBLIC_ORIGIN` variables exported.
+Kubernetes and Cloudflare Access credentials are no longer used by Release. Keep
+old workflows disabled until these changes reach `main`, then enable
+`release.yml` and `release-manual.yml`. Do not re-enable the old Kubernetes
+workflow. GHCR pushes use the job's short-lived `GITHUB_TOKEN`; the package must
+remain public so the VM can pull anonymously.
+
+`include_migration=true` optionally publishes a separate ARM64
+`migration-sha-<full-commit>-arm64` image, which is never automatically executed.
+Legacy Node-to-Rust conversion is an offline operation described in the
+[data cutover guide](../../docs/randomness-cutover.md), not a routine release step.
