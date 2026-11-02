@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { staticPublishConfig } from "./static-config.mjs";
+import { verifyCacheHit } from "./static-cache.mjs";
 
 const base = staticPublishConfig(process.env);
 assert.ok(process.env.PUBLIC_ORIGIN, "Set PUBLIC_ORIGIN to the app's browser-facing origin");
@@ -70,7 +71,6 @@ for (const file of [
   manifest.files.find((file) => file.file.endsWith(".webp")),
 ]) {
   assert.ok(file);
-  const { response } = await download(file);
-  assert.equal(response.headers.get("cf-cache-status"), "HIT", file.key);
+  await verifyCacheHit(file, download);
   console.log(`Cloudflare HIT: ${file.key}`);
 }
