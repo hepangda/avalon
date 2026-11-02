@@ -26,6 +26,7 @@
     "build:web": "vite build",
     "build:server": "cargo build --release --locked --no-default-features --bin avalon-server --manifest-path backend/Cargo.toml",
     "test:rust": "cargo test --locked --manifest-path backend/Cargo.toml",
+    "test:rust:replay:full": "cargo test --locked --manifest-path backend/Cargo.toml --test engine_resolved all_resolved_rules_and_private_views_match_independent_oracle -- --ignored --exact",
     "check:rust": "cargo fmt --manifest-path backend/Cargo.toml --check && cargo clippy --locked --manifest-path backend/Cargo.toml --all-targets -- -D warnings",
     "test:rust:legacy": "cargo test --locked --features legacy-import --manifest-path backend/Cargo.toml",
     "build:migration": "cargo build --release --locked --features legacy-import --bin migrate-randomness --manifest-path backend/Cargo.toml"

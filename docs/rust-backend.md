@@ -93,11 +93,55 @@ not been accessed as part of implementation validation.
 
 ## Verification
 
+Daily CI and release checks exercise the production configuration. The
+`legacy-import` test suite, migration integration tests, and feature-enabled
+Clippy checks are retained for manual migration-tool validation rather than run
+on every release. To check that optional configuration, run
+`npm run test:rust:legacy`, the migration integration command below, and
+`cargo clippy --locked --manifest-path backend/Cargo.toml --all-targets --features legacy-import -- -D warnings`.
+
+Daily `npm run test:rust` runs ten fixed resolved-engine traces (1,306 events),
+not a random sample. Every step still checks the complete state, effects, all
+players' and the spectator's view hashes, and batch/single projection agreement.
+The daily selection checks its own coverage: all 22 event kinds in the full
+corpus, room sizes 5–10, flow versions 1–5, every role, both discussion directions,
+early-assassination approval/rejection, and the major win reasons. It also requires
+role-confirmation waiting, private Lady results, private assassination ballots,
+and a fourth mission with at least seven players to be exercised. Missing or
+renamed selected fixtures fail the suite instead of silently reducing coverage.
+
+| Fixture | Main purpose |
+| --- | --- |
+| `兼容🧙:1:6:2` | Flow 1, six players, rejection-limit defeat |
+| `兼容🧙:2:8:1` | Flow 2, eight players, Oberon, early assassination |
+| `兼容🧙:3:9:2` | Flow 3, nine players, no Morgana, rejection limit |
+| `兼容🧙:4:5:1` | Flow 4, five players, explicit role assignment |
+| `兼容🧙:5:5:0` | Current flow, rerolls, Lady, rewind, assassin miss |
+| `兼容🧙:5:7:0` | Mordred visibility, seven-player fourth mission |
+| `兼容🧙:5:10:0` | Maximum room size and all-player private views |
+| `兼容🧙:5:7:1` | Current flow, Oberon visibility, early assassination |
+| `bots-cross-language:5:0` | Recorded autonomous five-player game |
+| `bots-cross-language:10:3` | Recorded ten-player game, evil mission victory |
+
+The exhaustive 102-trace / 11,959-event oracle is retained as an ignored test.
+Run it explicitly with `npm run test:rust:replay:full` when changing engine rules,
+projection/privacy logic, or historical compatibility. This command selects only
+that oracle, not the database tests or the legacy-import suite. The daily subset
+covers representative paths, not every combination from the full corpus.
+Other fast Rust tests (including invalid events, unresolved randomness and role
+privacy checks) and CI's database/socket integration tests remain enabled.
+
+Both oracle suites run independent games in parallel and preserve event order
+within each game. Set `RAYON_NUM_THREADS=1` for a serial run, or `=2` for comparable
+local timings. CI caches Cargo dependencies and build artifacts under
+`backend/target` between runs.
+
 ```sh
 npm run typecheck
 npm run lint
 npm test
 npm run test:slow
+npm run test:rust:replay:full
 npm run check:rust
 cargo test --release --locked --manifest-path backend/Cargo.toml
 cargo test --release --locked --features legacy-import --manifest-path backend/Cargo.toml
