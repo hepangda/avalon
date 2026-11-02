@@ -163,6 +163,16 @@ jobs:
           docker rm "$container"
           echo "ref=$image" >> "$GITHUB_OUTPUT"
 
+      # Use deployment tooling from this workflow, even when deploying old commits.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: .release-tools
+          sparse-checkout: |
+            deploy/release
+            scripts
+          persist-credentials: false
+
       - name: Publish static assets
         env:
           STATIC_BUILD_DIR: ${{ runner.temp }}/static
@@ -170,16 +180,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           npm install --global wrangler@4.149.0
-          node scripts/publish-static.mjs --upload
-          node scripts/verify-static.mjs
-
-      # Use deployment tooling from this workflow, even when deploying old commits.
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.workflow_sha }}
-          path: .release-tools
-          sparse-checkout: deploy/release
-          persist-credentials: false
+          node .release-tools/scripts/publish-static.mjs --upload
+          node .release-tools/scripts/verify-static.mjs
 
       - name: Deploy to the ARM VM
         if: ${{ !inputs.prepare_only }}
