@@ -1,5 +1,43 @@
 # Architecture and crash recovery
 
+## Target storage model — decision on 2026-10-30
+
+Application memory is the authority while the process is running. PostgreSQL is
+an asynchronous persistence destination. Do not introduce a hot database, a second
+cold database, or a two-tier database consistency protocol. Dedicated cold-standby
+infrastructure and automatic failover are outside the current design.
+
+- A room actor serializes commands, validates a change, installs it in memory, and
+  acknowledges and publishes it without waiting for a database commit. Reads and
+  state-integrity heartbeats use the current in-memory state.
+- Background persistence saves accepted state to the existing database. Writes
+  must preserve ordering per entity and reject stale versions. Retry failures
+  without rolling back accepted in-memory state or disconnecting a live game.
+  Keep pending work bounded; superseded snapshots may be coalesced, but completed
+  game archives, account effects, and deletion markers must not be silently lost.
+- State changes that belong together, including card consumption and game rewards,
+  must be validated and applied consistently in memory before acknowledgement.
+  Persist their effects idempotently; simply moving existing SQL calls into
+  detached tasks does not provide this model.
+- Active state must remain owned in memory. Do not evict a room and reload an
+  older database copy during the same process lifetime. Public-room listings and
+  other reads of live state must also observe memory rather than backup lag.
+- On restart, restore the latest successfully persisted state before accepting
+  commands. Updates acknowledged since that backup may be lost after a crash;
+  this design does not promise zero-loss recovery. Graceful shutdown attempts to
+  flush pending writes within a bounded drain period.
+- Keep a single application owner. The existing database advisory-lock and
+  shutdown behavior must be revisited during implementation: a backup database
+  outage must not itself invalidate authoritative in-memory games, and this does
+  not imply support for multiple concurrent writers.
+
+This is the target decision, not the current runtime behavior. Implementation must
+replace the SQL commit boundary, database-backed live reads, idle eviction, and
+database-dependent ownership lifecycle together. The sections below document the
+existing implementation until that migration is complete.
+
+## Current implementation — pending migration
+
 
 `backend/src/main.rs` is the Rust entry point. `backend/src/room/` keeps one
 state-owning Tokio task per room code. `backend/src/engine/` contains deterministic
