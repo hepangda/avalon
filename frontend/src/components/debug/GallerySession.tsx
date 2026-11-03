@@ -2,8 +2,8 @@ import { PreferencesButton } from "@/components/settings/PreferencesButton";
 import { EarlyAssassinationProposal } from "@/components/game/EarlyAssassinationPact";
 import { GameView } from "@/components/game/GameView";
 import { Link } from 'react-router-dom';
+import { applyEvent, clockFor, projectStateForViewer } from "@/lib/debug/rustEngine";
 import {
-applyEvent,
 buildScenario,
 completeAssassinationVotes,
 completeMission,
@@ -11,12 +11,7 @@ completeVotes,
 propose,
 type ScenarioId
 } from "@/lib/debug/scenarios";
-import {
-canStartAssassination,
-projectStateForViewer,
-type GameEvent,
-type GameState,
-} from "@/lib/engine";
+import type { GameEvent, GameState } from "@/lib/engine";
 import { publishEmote } from "@/lib/game/emotes";
 import { useRoleText } from "@/lib/game/useRoleText";
 import type { gameActions } from "@/lib/socket/client";
@@ -173,7 +168,7 @@ export function GallerySession({
     const projected = projectStateForViewer(state, viewerId);
     return {
       ...projected,
-      serverTime: 1_800_000_000_000 + state.logSeq * 1000,
+      serverTime: clockFor(state),
       players: projected.players.map((p) => ({
         ...p,
         claimed: p.id !== openSeat,
@@ -183,6 +178,10 @@ export function GallerySession({
     };
   }, [state, viewerId, openSeat, latency]);
   const assassinationBallot = state.earlyAssassination;
+  const assassinationOpen = useMemo(
+    () => !!state.assassinId && projectStateForViewer(state, state.assassinId).canStartAssassination,
+    [state],
+  );
   const nextAssassinationVoter = assassinationBallot?.voterIds.find(
     (id) => assassinationBallot.votes[id] === undefined,
   );
@@ -243,7 +242,7 @@ export function GallerySession({
           {t("debug.viewAssassin")}
         </button>
       )}
-      {canStartAssassination(state) && !assassinationBallot && (
+      {assassinationOpen && (
         <>
           <button
             disabled={!connected}

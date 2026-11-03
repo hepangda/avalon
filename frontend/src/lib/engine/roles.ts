@@ -23,10 +23,6 @@ export function isEvil(role: Role): boolean {
   return ROLE_TEAM[role] === 'evil';
 }
 
-export function isGood(role: Role): boolean {
-  return ROLE_TEAM[role] === 'good';
-}
-
 /**
  * Build the multiset of roles in play from player count + host options.
  *
@@ -59,28 +55,4 @@ export function buildRoleSet(playerCount: number, options: GameOptions): Role[] 
   }
 
   return [...goodRoles, ...evilRoles];
-}
-
-/** Validate that an explicit role multiset is legal for a player count. */
-export function validateRoleSet(playerCount: number, roles: Role[]): true | string {
-  if (!isValidPlayerCount(playerCount)) return `Invalid player count ${playerCount}`;
-  if (roles.length !== playerCount) {
-    return `Role count ${roles.length} != player count ${playerCount}`;
-  }
-  const { good, evil } = PLAYER_COMPOSITION[playerCount]!;
-  const goodCount = roles.filter(isGood).length;
-  const evilCount = roles.length - goodCount;
-  if (goodCount !== good || evilCount !== evil) {
-    return `Role split ${goodCount}/${evilCount} != required ${good}/${evil}`;
-  }
-  const count = (r: Role) => roles.filter((x) => x === r).length;
-  if (count('Merlin') !== 1) return 'Exactly one Merlin required';
-  if (count('Assassin') !== 1) return 'Exactly one Assassin required';
-  if (count('Percival') > 1) return 'At most one Percival';
-  if (count('Morgana') > 1) return 'At most one Morgana';
-  if (count('Mordred') > 1) return 'At most one Mordred';
-  if (count('Oberon') > 1) return 'At most one Oberon';
-  // Percival without Morgana is allowed but pointless; Morgana without Percival
-  // is fine. No hard constraint binds them.
-  return true;
 }

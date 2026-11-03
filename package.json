@@ -23,7 +23,7 @@
     "test:dev": "node --test scripts/dev-env.test.mjs",
     "test:rust": "cargo test --locked --manifest-path backend/Cargo.toml",
     "test:rust:replay:full": "cargo test --locked --manifest-path backend/Cargo.toml --test engine_resolved all_resolved_rules_and_private_views_match_independent_oracle -- --ignored --exact",
-    "check:rust": "cargo fmt --manifest-path backend/Cargo.toml --check && cargo clippy --locked --manifest-path backend/Cargo.toml --all-targets -- -D warnings",
+    "check:rust": "cargo fmt --all --manifest-path backend/Cargo.toml --check && cargo clippy --locked --manifest-path backend/Cargo.toml --workspace --all-targets -- -D warnings",
     "voices:generate": "node frontend/scripts/generate-voices.mjs",
     "static:check": "node frontend/scripts/static/publish-static.mjs",
     "static:upload": "node frontend/scripts/static/publish-static.mjs --upload",

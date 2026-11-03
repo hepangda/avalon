@@ -9,7 +9,8 @@ certificates.
 | `backend/src/main.rs` | Entry point, startup checks and shutdown |
 | `backend/src/http.rs`, `static_files.rs` | HTTP API and frontend resources |
 | `backend/src/room.rs`, `room/` | One state-owning task per room: command queue, COMMIT boundary, membership, referee tools, heartbeats |
-| `backend/src/engine.rs`, `engine/` | Deterministic rules, recorded randomness and per-viewer projections |
+| `backend/engine/` | `avalon-engine` crate: deterministic rules, recorded randomness and per-viewer projections (re-exported as `avalon_server::engine`) |
+| `backend/engine-wasm/` | Development-only WebAssembly bridge to the engine for the debug gallery and frontend tests |
 | `backend/src/bots.rs`, `bots/` | Companion bot policy ([bot decisions](bots.md)) |
 | `backend/src/storage.rs`, `journal.rs` | PostgreSQL transactions, ownership, journal and verified recovery |
 | `backend/src/replay.rs`, `history.rs`, `ratings.rs` | Archives, history and ratings ([history and ratings](history.md)) |
@@ -28,6 +29,20 @@ variants to the existing protocol names. Bots consume an authorized client view.
 Game state carries `randomnessVersion: "resolved-v1"`. Stochastic events record
 their outcomes (role assignments, leaders, seat order, cosmetic variants) before
 commit, so replay and recovery never draw randomness.
+
+## Rules engine crate
+
+The rules live in their own crate with no Tokio, SQLx or OS randomness, so the
+same code compiles natively for the server and to `wasm32-unknown-unknown`.
+`avalon-engine-wasm` exports `alloc`, `dealloc` and a JSON `call` taking
+`createGame`, `apply` (resolve randomness as a room does, seeded by
+`<seed>:<logSeq>:outcome`, then apply) and `project`; it needs no generated
+bindings. `frontend/scripts/engine-wasm.ts` builds it with the `wasm` Cargo
+profile, the Vite dev server serves it at `/debug/engine.wasm`, and Vitest loads
+it before every test file. The server binary, the Docker image and the production
+bundle never include it. There is no TypeScript copy of the rules: the frontend
+keeps only types, setup tables and the speaking-order preview, which a test checks
+against the engine.
 
 ## Room execution and persistence
 

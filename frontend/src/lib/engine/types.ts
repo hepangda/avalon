@@ -1,10 +1,7 @@
 /**
- * Avalon game engine — core types.
- *
- * These serializable types are independent of the browser and server runtimes.
- * The engine is a synchronous, deterministic reducer over plain serializable
- * state. Randomness and time are injected via EngineContext so that replays
- * are reproducible.
+ * Avalon game types, mirroring the JSON the Rust engine (`backend/engine`)
+ * sends. `GameState` and `GameEvent` are the engine's full wire shapes, used
+ * by the debug gallery and tests that run the engine as WebAssembly.
  */
 
 // ---------------------------------------------------------------------------
@@ -253,11 +250,26 @@ export interface VisibilityInfo {
 // ---------------------------------------------------------------------------
 
 export type GameEvent =
-  | { type: 'START_GAME'; by: PlayerId; flowVersion?: 1 | 2 | 3 | 4 | 5; assignedRoles?: Role[]; awaitRoleAcks?: boolean }
+  | {
+      type: 'START_GAME';
+      by: PlayerId;
+      flowVersion?: 1 | 2 | 3 | 4 | 5;
+      assignedRoles?: Role[];
+      awaitRoleAcks?: boolean;
+      leaderIndex?: number;
+      roleVariants?: Record<PlayerId, number>;
+      seatOrder?: PlayerId[];
+    }
   | { type: 'ACK_ROLE'; by: PlayerId; roleRevision?: number }
-  | { type: 'REROLL_LEADER'; actor: string }
-  | { type: 'REROLL_ROLES'; actor: string; assignedRoles?: Role[] }
-  | { type: 'USE_REROLL_CARD'; by: PlayerId; roleRevision: number; assignedRoles?: Role[] }
+  | { type: 'REROLL_LEADER'; actor: string; leaderIndex?: number }
+  | { type: 'REROLL_ROLES'; actor: string; assignedRoles?: Role[]; roleVariants?: Record<PlayerId, number> }
+  | {
+      type: 'USE_REROLL_CARD';
+      by: PlayerId;
+      roleRevision: number;
+      assignedRoles?: Role[];
+      roleVariants?: Record<PlayerId, number>;
+    }
   | { type: 'PROPOSE_TEAM'; by: PlayerId; team: PlayerId[]; admin?: boolean }
   | { type: 'START_DISCUSSION'; by: PlayerId; direction?: 'clockwise' | 'counterclockwise' }
   | { type: 'END_SPEECH'; by: PlayerId }
@@ -281,60 +293,11 @@ export type GameEvent =
   | { type: 'ASSASSINATE'; by: PlayerId; target: PlayerId }
   | { type: 'SET_CONNECTED'; by: PlayerId; connected: boolean };
 
-// ---------------------------------------------------------------------------
-// Effects (declarative; interpreted by the Socket layer, never by the engine)
-// ---------------------------------------------------------------------------
-
-export type CheckpointKind =
-  'game_started' | 'vote' | 'mission_result' | 'lady' | 'game_over';
-
-export type Effect = { kind: 'PERSIST_CHECKPOINT'; checkpoint: CheckpointKind };
-
-// ---------------------------------------------------------------------------
-// Engine context & results
-// ---------------------------------------------------------------------------
-
+/** Seeded random stream, used to hash stable avatar choices. */
 export interface RNG {
   next(): number; // [0,1)
   shuffle<T>(xs: readonly T[]): T[];
 }
-
-export interface EngineContext {
-  now: number;
-  rng: RNG;
-}
-
-export type EngineErrorCode =
-  | 'WRONG_PHASE'
-  | 'ROLES_PENDING'
-  | 'NOT_HOST'
-  | 'NOT_LEADER'
-  | 'NOT_SPEAKER'
-  | 'NOT_ASSASSIN'
-  | 'NOT_LADY_HOLDER'
-  | 'UNKNOWN_PLAYER'
-  | 'INVALID_PLAYER_COUNT'
-  | 'INVALID_ROLE_SET'
-  | 'WRONG_TEAM_SIZE'
-  | 'INVALID_DIRECTION'
-  | 'INVALID_TEAM_MEMBER'
-  | 'DUPLICATE_TEAM_MEMBER'
-  | 'ALREADY_VOTED'
-  | 'ALREADY_PLAYED_CARD'
-  | 'NOT_ON_TEAM'
-  | 'GOOD_CANNOT_FAIL'
-  | 'LADY_TARGET_SELF'
-  | 'LADY_TARGET_INSPECTED'
-  | 'ASSASSIN_TARGET_INVALID';
-
-export interface EngineError {
-  code: EngineErrorCode;
-  message: string;
-}
-
-export type EngineResult =
-  | { ok: true; state: GameState; effects: Effect[] }
-  | { ok: false; error: EngineError };
 
 // ---------------------------------------------------------------------------
 // Client-facing projection

@@ -3,7 +3,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { buildScenario } from '@/lib/debug/scenarios';
-import { projectStateForViewer, type ClientGameState } from '@/lib/engine';
+import { type ClientGameState } from '@/lib/engine';
+import { projectStateForViewer } from '@/lib/debug/rustEngine';
 import { useLadyResult } from './useLadyResult';
 
 let root: Root;

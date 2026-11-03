@@ -2,8 +2,9 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { projectStateForViewer, reduce, createRng, type ClientGameState } from '@/lib/engine';
-import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
+import type { ClientGameState } from '@/lib/engine';
+import { applyEvent, projectStateForViewer } from '@/lib/debug/rustEngine';
+import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/debug/testkit';
 import { completeMission, completeVotes } from '@/lib/debug/scenarios';
 import { useGameVoice } from './useGameVoice';
 import { playVoiceSequence, stopVoice } from './engine';
@@ -45,12 +46,10 @@ describe('voice reveal timing', () => {
     render(projectStateForViewer(voting, 'p0'));
     const mission = completeMission(completeVotes(voting, 'approve'), 0);
     render(projectStateForViewer(mission, 'p0'), false);
-    const assassination = reduce(mission, { type: 'START_ASSASSINATION', by: 'p4' }, { now: 2, rng: createRng('voice') });
-    if (!assassination.ok) throw new Error('Expected assassination');
-    render(projectStateForViewer(assassination.state, 'p0'), false);
-    const end = reduce(assassination.state, { type: 'ASSASSINATE', by: 'p4', target: 'p0' }, { now: 3, rng: createRng('voice') });
-    if (!end.ok) throw new Error('Expected game over');
-    const final = projectStateForViewer(end.state, 'p0');
+    const assassination = applyEvent(mission, { type: 'START_ASSASSINATION', by: 'p4' }, 2);
+    render(projectStateForViewer(assassination, 'p0'), false);
+    const end = applyEvent(assassination, { type: 'ASSASSINATE', by: 'p4', target: 'p0' }, 3);
+    const final = projectStateForViewer(end, 'p0');
     render(final, false);
     expect(playVoiceSequence).not.toHaveBeenCalled();
     render(final);

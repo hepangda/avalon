@@ -11,7 +11,8 @@ currently integrates with Pangda Auth rather than arbitrary OIDC providers.
 ## Local development
 
 Requires Node.js 22+, npm, Docker Compose and Rust via `rustup` (the toolchain in
-`rust-toolchain.toml` is selected automatically).
+`rust-toolchain.toml`, including its `wasm32-unknown-unknown` target, is installed
+automatically).
 
 ```sh
 npm ci
@@ -32,7 +33,10 @@ npm run db:down     # stop the database, keeping its volume
 
 Development-only tools: `/debug/gallery` runs local game scenarios without
 sign-in, and `/debug/addRandomCard` grants a reroll card to the signed-in account.
-Neither exists in production builds.
+Neither exists in production builds. The gallery plays on the Rust rules engine
+compiled to WebAssembly: Vite builds it with Cargo on each page load, so it needs
+only `npm run dev -w frontend` and picks up rule changes on reload. Frontend tests
+that build game states load the same module, so `npm test` compiles it first.
 
 ## Authentication
 
@@ -79,7 +83,7 @@ Database and socket integration tests are described in [backend](docs/backend.md
 | Path | Contents |
 | --- | --- |
 | `frontend/` | Web app (npm workspace): `src/`, `messages/` (zh/en text), `public/` (art and audio), `scripts/` (static publishing, voice generation) |
-| `backend/` | Rust server, migrations, integration tests and frozen fixtures |
+| `backend/` | Rust workspace: server, rules engine (`engine/`) and its development WebAssembly bridge (`engine-wasm/`), migrations, integration tests and frozen fixtures |
 | `scripts/` | Development launcher and release tests |
 | `deploy/` | R2 publishing and VM release tooling |
 | `docs/` | Design and operations notes |

@@ -1,7 +1,7 @@
 pub mod auth;
 pub mod bots;
 pub mod cpu;
-pub mod engine;
+pub use avalon_engine as engine;
 pub mod history;
 pub mod http;
 pub mod journal;

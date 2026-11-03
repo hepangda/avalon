@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { projectStateForViewer, type ClientGameState, type GameState } from '@/lib/engine';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
-import { applyEvent, completeMission, completeVotes, propose } from '@/lib/debug/scenarios';
+import { type ClientGameState, type GameState } from '@/lib/engine';
+import { applyEvent, projectStateForViewer } from '@/lib/debug/rustEngine';
+import { buildStartedGame, FIVE_P } from '@/lib/debug/testkit';
+import { completeMission, completeVotes, propose } from '@/lib/debug/scenarios';
 import { beatSnapshot, phaseBeats } from './phaseBeats';
 
 const view = (s: GameState): ClientGameState => ({ ...projectStateForViewer(s, 'p1'), gameId: 'g1' });

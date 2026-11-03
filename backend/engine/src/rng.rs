@@ -1,5 +1,5 @@
-use rand::{RngCore, SeedableRng};
 use rand_chacha::ChaCha12Rng;
+use rand_chacha::rand_core::{RngCore, SeedableRng};
 use sha2::{Digest, Sha256};
 
 /// Native random stream. Seeds are UTF-8 SHA-256, with 53 unbiased output bits

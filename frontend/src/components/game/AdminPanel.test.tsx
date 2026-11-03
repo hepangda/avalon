@@ -5,8 +5,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { AdminPanel } from './AdminPanel';
 import { adminActions } from '@/lib/socket/client';
 import { useRoomStore } from '@/lib/store/room';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
-import { projectStateForViewer } from '@/lib/engine';
+import { buildStartedGame, FIVE_P } from '@/lib/debug/testkit';
+import { projectStateForViewer } from '@/lib/debug/rustEngine';
 
 // Animation rendering is outside this interaction test; retain real buttons and refs.
 vi.mock('framer-motion', () => {

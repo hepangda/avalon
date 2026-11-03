@@ -4,8 +4,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { IntlProvider } from 'use-intl';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import zh from '../../../messages/zh.json';
-import { projectStateForViewer, reduce, createRng } from '@/lib/engine';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
+import { applyEvent, projectStateForViewer } from '@/lib/debug/rustEngine';
+import { buildStartedGame, FIVE_P } from '@/lib/debug/testkit';
 import { EarlyAssassinationVote } from './EarlyAssassinationVote';
 
 let root: Root;
@@ -20,9 +20,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount()); container.remove(); vi.unstubAllGlobals();
 });
-const pending = reduce(buildStartedGame(FIVE_P), { type: 'REQUEST_ASSASSINATION', by: 'p3' }, { now: 1, rng: createRng('vote') });
-if (!pending.ok) throw new Error('Expected a pending ballot');
-const state = pending.state;
+const state = applyEvent(buildStartedGame(FIVE_P), { type: 'REQUEST_ASSASSINATION', by: 'p3' }, 1);
 async function render(connected = true, by = 'p4') {
   const game = projectStateForViewer(state, by);
   await act(async () => root.render(<IntlProvider locale="zh" messages={zh}>

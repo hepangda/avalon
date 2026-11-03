@@ -1,15 +1,12 @@
 import {
-  createGame,
-  createRng,
-  reduce,
   recommendedOptions,
   missionSize,
   requiredFails,
   teamOf,
   type GameState,
-  type GameEvent,
   type VoteValue,
 } from "@/lib/engine";
+import { applyEvent, createGame } from "./rustEngine";
 
 export const SCENARIOS = [
   { id: "role", group: "identity" },
@@ -54,15 +51,6 @@ export interface Scenario {
   /** Apply after mounting so the real presentation queue sees the transition. */
   nextState?: GameState;
   openSeatId?: string;
-}
-
-export function applyEvent(state: GameState, event: GameEvent): GameState {
-  const result = reduce(state, event, {
-    now: 1_800_000_000_000 + state.logSeq * 1000,
-    rng: createRng(state.seed),
-  });
-  if (!result.ok) throw new Error(result.error.message);
-  return result.state;
 }
 
 export function propose(state: GameState, discuss = true): GameState {
@@ -197,8 +185,7 @@ export function buildScenario(id: ScenarioId, playerCount: number): Scenario {
     })),
     options: { ...recommendedOptions(playerCount), ladyOfTheLake: true },
   });
-  if (!created.ok) throw new Error(created.error.message);
-  let state = applyEvent(created.state, { type: "START_GAME", by: "p0", awaitRoleAcks: true });
+  let state = applyEvent(created, { type: "START_GAME", by: "p0", awaitRoleAcks: true });
   const leader = () => state.players[state.leaderIndex]!.id;
   if (id === "role") return { state, viewerId: leader() };
   for (const p of state.players)

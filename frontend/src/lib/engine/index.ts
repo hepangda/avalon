@@ -22,25 +22,10 @@ export {
   ROLE_TEAM,
   teamOf,
   isEvil,
-  isGood,
   buildRoleSet,
-  validateRoleSet,
 } from './roles';
 export { createRng } from './rng';
 export { computeKnownPlayers } from './visibility';
-export {
-  goodWins,
-  evilWins,
-  assassinInPlay,
-  canStartAssassination,
-  canRerollOpening,
-  leaderId,
-  currentMissionSize,
-  currentRequiredFails,
-} from './fsm';
-export { createGame, reduce } from './reducer';
-export type { CreateGameInput } from './reducer';
-export { projectStateForViewer } from './projection';
 export {
   RECOMMENDED_OPTIONS,
   recommendedOptions,
@@ -48,4 +33,4 @@ export {
   evilSpecialsCount,
   maxEvil,
 } from './presets';
-export { speakingOrder } from './events/proposal';
+export { speakingOrder } from './speakingOrder';

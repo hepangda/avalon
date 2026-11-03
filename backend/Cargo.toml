@@ -6,11 +6,15 @@ rust-version = "1.99"
 publish = false
 default-run = "avalon-server"
 
+[workspace]
+members = ["engine", "engine-wasm"]
+
 [[bin]]
 name = "avalon-server"
 path = "src/main.rs"
 
 [dependencies]
+avalon-engine = { path = "engine" }
 anyhow = "1"
 axum = { version = "0.8", features = ["ws", "macros"] }
 tokio = { version = "1", features = ["full"] }
@@ -50,3 +54,9 @@ proptest = "1"
 lto = "thin"
 codegen-units = 1
 debug = 1
+
+# Development WebAssembly build of the rules engine (gallery and frontend tests).
+[profile.wasm]
+inherits = "release"
+debug = 0
+strip = true

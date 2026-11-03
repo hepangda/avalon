@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
-import { projectStateForViewer } from '@/lib/engine';
+import { buildStartedGame, FIVE_P } from '@/lib/debug/testkit';
+import { projectStateForViewer } from '@/lib/debug/rustEngine';
 import { ViewSynchronizer } from './viewSync';
 import { sha256, viewContent, type RoomView, type ViewSnapshot } from '../stateIntegrity';
 

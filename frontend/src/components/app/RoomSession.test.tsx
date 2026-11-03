@@ -7,8 +7,8 @@ import { RoomSession } from './RoomSession';
 import { useRoomStore } from '@/lib/store/room';
 import { useSceneGate } from '@/lib/store/sceneGate';
 import { sha256, viewContent, type RoomView } from '@/lib/socket/stateIntegrity';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
-import { projectStateForViewer } from '@/lib/engine';
+import { buildStartedGame, FIVE_P } from '@/lib/debug/testkit';
+import { projectStateForViewer } from '@/lib/debug/rustEngine';
 import type { RoomHandlers } from '@/lib/socket/client/socket';
 
 const socket = vi.hoisted(() => ({

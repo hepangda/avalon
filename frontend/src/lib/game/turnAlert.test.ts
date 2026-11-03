@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { projectStateForViewer, type GameState } from '@/lib/engine';
-import { applyEvent, buildScenario, type ScenarioId } from '@/lib/debug/scenarios';
+import { type GameState } from '@/lib/engine';
+import { applyEvent, projectStateForViewer } from '@/lib/debug/rustEngine';
+import { buildScenario, type ScenarioId } from '@/lib/debug/scenarios';
 import { myTurn, turnAlertKey } from './turnAlert';
 
 function view(state: GameState, viewerId: string) {

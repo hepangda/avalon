@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { useRoomStore } from './room';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
-import { projectStateForViewer } from '@/lib/engine';
+import { buildStartedGame, FIVE_P } from '@/lib/debug/testkit';
+import { projectStateForViewer } from '@/lib/debug/rustEngine';
 import type { RoomView } from '@/lib/socket/stateIntegrity';
 
 function view(viewer = 'p0'): RoomView {

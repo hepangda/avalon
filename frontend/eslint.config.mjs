@@ -18,18 +18,6 @@ const eslintConfig = tseslint.config(
     },
   },
   { files: ['src/components/**/*.{ts,tsx}', 'src/pages/**/*.tsx', 'src/lib/**/use*.ts', 'src/i18n/*.tsx'], rules: { 'react-hooks/rules-of-hooks': 'error' } },
-  {
-    // The pure engine must never use Math.random — randomness is injected via
-    // the seeded RNG so games are deterministic & replayable.
-    files: ['src/lib/engine/**/*.ts'],
-    ignores: ['src/lib/engine/**/*.test.ts', 'src/lib/engine/testkit.ts'],
-    rules: {
-      'no-restricted-properties': [
-        'error',
-        { object: 'Math', property: 'random', message: 'Engine must use the injected seeded RNG.' },
-      ],
-    },
-  },
 );
 
 export default eslintConfig;

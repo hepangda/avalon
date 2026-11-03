@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { requiredFails, teamOf } from "@/lib/engine";
+import { applyEvent, projectStateForViewer as project } from "./rustEngine";
 import {
-  projectStateForViewer,
-  requiredFails,
-  teamOf,
-  validateRoleSet,
-} from "@/lib/engine";
-import {
-  applyEvent,
   buildScenario,
   completeAssassinationVotes,
   completeMission,
@@ -61,17 +56,14 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
       expect(scenario).toEqual(buildScenario(scene.id, count));
       expect(state.phase).toBe(expectedPhases[scene.id]);
       expect(state.players).toHaveLength(count);
-      expect(
-        validateRoleSet(
-          count,
-          state.players.map((p) => p.role),
-        ),
-      ).toBe(true);
+      expect(state.players.map((p) => p.role).sort()).toEqual(
+        [...state.config.roles].sort(),
+      );
       expect(
         viewerId === "spectator" ||
           state.players.some((p) => p.id === viewerId),
       ).toBe(true);
-      const view = projectStateForViewer(state, viewerId);
+      const view = project(state, viewerId);
       expect(view.isSpectator).toBe(viewerId === "spectator");
       for (const result of state.missionResults) {
         expect(result.team).toHaveLength(result.teamSize);
@@ -92,21 +84,21 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
     const { nextState: state, viewerId } = buildScenario("ladyEvil", count);
     if (!state) throw new Error("Expected an inspection");
     expect(
-      projectStateForViewer(state, viewerId).privateLadyResult?.loyalty,
+      project(state, viewerId).privateLadyResult?.loyalty,
     ).toBe("evil");
     expect(
-      projectStateForViewer(state, "spectator").privateLadyResult,
+      project(state, "spectator").privateLadyResult,
     ).toBeUndefined();
     expect(
-      projectStateForViewer(state, "spectator").players.every((p) => !p.role),
+      project(state, "spectator").players.every((p) => !p.role),
     ).toBe(true);
   });
 
   it("passes the Lady's token with the result for the holder alone", () => {
     const scene = buildScenario("ladyGood", count);
     const events = (viewerId: string) => newTablePresentations(
-      projectStateForViewer(scene.state, viewerId),
-      projectStateForViewer(scene.nextState!, viewerId),
+      project(scene.state, viewerId),
+      project(scene.nextState!, viewerId),
     );
     const targetId = scene.nextState!.ladyHolderId!;
     const watcher = scene.state.players.find((p) => p.id !== scene.viewerId && p.id !== targetId)!.id;
@@ -123,7 +115,7 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
   it("provides the correct mission perspective and rejects a good fail card", () => {
     const good = buildScenario("missionGood", count);
     expect(
-      projectStateForViewer(good.state, good.viewerId).selfRole,
+      project(good.state, good.viewerId).selfRole,
     ).not.toBeNull();
     expect(
       teamOf(good.state.players.find((p) => p.id === good.viewerId)!.role),
@@ -150,8 +142,8 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
     ] as const) {
       const scene = buildScenario(id, count);
       const events = newTablePresentations(
-        projectStateForViewer(scene.state, scene.viewerId),
-        projectStateForViewer(scene.nextState!, scene.viewerId),
+        project(scene.state, scene.viewerId),
+        project(scene.nextState!, scene.viewerId),
       );
       expect(events).toHaveLength(1);
       expect(events[0]!.kind).toBe(
@@ -173,7 +165,7 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
 
   it("lets the proposal scene enter assassination through private unanimous consent", () => {
     const { state, viewerId } = buildScenario("earlyAssassinationProposal", count);
-    expect(projectStateForViewer(state, viewerId).canStartAssassination).toBe(true);
+    expect(project(state, viewerId).canStartAssassination).toBe(true);
     expect(state.roleAcks).toHaveLength(count);
     const pending = applyEvent(state, { type: "REQUEST_ASSASSINATION", by: viewerId });
     expect(pending.phase).toBe("TeamBuilding");
@@ -181,10 +173,10 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
     const voterIds = pending.earlyAssassination!.voterIds;
     expect(voterIds.length).toBeGreaterThan(1);
     for (const player of state.players) {
-      const view = projectStateForViewer(pending, player.id);
+      const view = project(pending, player.id);
       expect(!!view.earlyAssassination).toBe(voterIds.includes(player.id));
     }
-    expect(projectStateForViewer(pending, "spectator").earlyAssassination).toBeUndefined();
+    expect(project(pending, "spectator").earlyAssassination).toBeUndefined();
     const approved = completeAssassinationVotes(pending, "approve");
     expect(approved.phase).toBe("Assassination");
     expect(approved.earlyAssassination).toBeNull();
@@ -199,15 +191,15 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
     expect(rejected.phase).toBe(state.phase);
     expect(rejected.proposedTeam).toEqual(state.proposedTeam);
     expect(rejected.missionCards).toEqual(state.missionCards);
-    expect(projectStateForViewer(rejected, state.assassinId!).canStartAssassination).toBe(true);
+    expect(project(rejected, state.assassinId!).canStartAssassination).toBe(true);
   });
 
   it("previews confirmed assassination hits and misses", () => {
     for (const id of ["assassinHit", "assassinMiss"] as const) {
       const scene = buildScenario(id, count);
       const events = newTablePresentations(
-        projectStateForViewer(scene.state, scene.viewerId),
-        projectStateForViewer(scene.nextState!, scene.viewerId),
+        project(scene.state, scene.viewerId),
+        project(scene.nextState!, scene.viewerId),
       );
       expect(events.map((e) => e.kind)).toEqual(["assassination", "gameOver"]);
       expect(events[0]).toMatchObject({ kind: "assassination", hitMerlin: id === "assassinHit" });
@@ -218,8 +210,8 @@ describe.each([5, 6, 7, 8, 9, 10])("gallery with %i players", (count) => {
     for (const [id, first] of [["threeFails", "mission"], ["fiveRejections", "vote"]] as const) {
       const scene = buildScenario(id, count);
       const events = newTablePresentations(
-        projectStateForViewer(scene.state, scene.viewerId),
-        projectStateForViewer(scene.nextState!, scene.viewerId),
+        project(scene.state, scene.viewerId),
+        project(scene.nextState!, scene.viewerId),
       );
       expect(events.map((e) => e.kind)).toEqual([first, "gameOver"]);
     }

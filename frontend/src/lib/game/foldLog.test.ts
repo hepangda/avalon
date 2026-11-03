@@ -1,21 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { buildScenario } from '@/lib/debug/scenarios';
-import { createGame, createRng, projectStateForViewer, reduce, type ClientGameState, type GameEvent, type GameState } from '@/lib/engine';
-import { DEFAULT_OPTIONS, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
+import type { ClientGameState, GameEvent, GameState } from '@/lib/engine';
+import { applyEvent, createGame, projectStateForViewer } from '@/lib/debug/rustEngine';
+import { DEFAULT_OPTIONS, FIVE_P, proposeForVote } from '@/lib/debug/testkit';
 import { byQuest, chronicle, type ProposalChapter } from './foldLog';
 
-const step = (s: GameState, event: GameEvent) => {
-  const result = reduce(s, event, { now: 1, rng: createRng('fold') });
-  if (!result.ok) throw new Error(result.error.message);
-  return result.state;
-};
-const started = () => {
-  const created = createGame({
-    hostId: 'p0', players: FIVE_P.map((_, i) => ({ id: `p${i}`, name: `P${i}` })), options: DEFAULT_OPTIONS, seed: 'fold',
-  });
-  if (!created.ok) throw new Error(created.error.message);
-  return step(created.state, { type: 'START_GAME', by: 'p0' });
-};
+const step = (s: GameState, event: GameEvent) => applyEvent(s, event, 1);
+const started = () => step(createGame({
+  hostId: 'p0', players: FIVE_P.map((_, i) => ({ id: `p${i}`, name: `P${i}` })), options: { ...DEFAULT_OPTIONS, percival: true, morgana: true }, seed: 'fold',
+}), { type: 'START_GAME', by: 'p0', assignedRoles: FIVE_P });
 const leaderOf = (s: GameState) => s.players[s.leaderIndex]!.id;
 const vote = (s: GameState, value: 'approve' | 'reject') =>
   s.players.reduce((next, p) => step(next, { type: 'CAST_VOTE', by: p.id, value }), s);
@@ -79,11 +72,11 @@ describe('the chronicle', () => {
 
   it('keeps a rewound quest on its own card and heads the next quest once', () => {
     let s = started();
-    s = quest(vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p0', 'p1'] }), 'approve'));
+    s = quest(vote(proposeForVote(s, { type: 'PROPOSE_TEAM', by: leaderOf(s), team: ['p0', 'p3'] }), 'approve'));
     s = back(s);
     expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'card 1-1', 'admin.phaseReturned']);
     expect(cards(s)[0]!.mission).toBeUndefined();
-    s = quest(s, 'p1');
+    s = quest(s, 'p3');
     expect(shape(s)).toEqual(['gameStarted', 'lineup', 'round 1', 'card 1-1', 'admin.phaseReturned', 'round 2', 'card 2-1']);
     expect(cards(s)[0]!.mission?.success).toBe(false);
   });

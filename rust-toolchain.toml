@@ -2,3 +2,5 @@
 channel = "1.99.1"
 profile = "minimal"
 components = ["rustfmt", "clippy"]
+# The development gallery and frontend tests run the rules engine as WebAssembly.
+targets = ["wasm32-unknown-unknown"]

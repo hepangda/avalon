@@ -1,15 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { projectStateForViewer, reduce, createRng, type GameState, type GameEvent } from '@/lib/engine';
-import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
+import type { GameState, GameEvent } from '@/lib/engine';
+import { applyEvent, projectStateForViewer } from '@/lib/debug/rustEngine';
+import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/debug/testkit';
 import { completeMission, completeVotes } from '@/lib/debug/scenarios';
 import { voiceCues } from './voiceCues';
 
 const project = (state: GameState) => projectStateForViewer(state, 'p0');
-function apply(state: GameState, event: GameEvent) {
-  const result = reduce(state, event, { now: 1, rng: createRng('voices') });
-  if (!result.ok) throw new Error(result.error.message);
-  return result.state;
-}
+const apply = (state: GameState, event: GameEvent) => applyEvent(state, event, 1);
 
 describe('public game narration', () => {
   it('does not replay on arrival, repeated snapshots, new games or rollbacks', () => {

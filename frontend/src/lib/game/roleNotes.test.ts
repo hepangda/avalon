@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { avatarFactions, changeRoleNote, displayedRoleNotes, knownRoleNotes, readRoleNotes, readRoleNotesEnabled, roleNoteOptions, roleNoteTone, roleNotesKey } from './roleNotes';
-import { buildStartedGame, FIVE_P } from '@/lib/engine/testkit';
-import { projectStateForViewer, type Role } from '@/lib/engine';
+import { buildStartedGame, FIVE_P } from '@/lib/debug/testkit';
+import { PLAYER_COMPOSITION, teamOf, type Role } from '@/lib/engine';
+import { projectStateForViewer } from '@/lib/debug/rustEngine';
+
+/** Seats a lineup at the smallest legal table for its red roles, filling blue seats with servants. */
+function seated(roles: Role[]): Role[] {
+  const evil = roles.filter((r) => teamOf(r) === 'evil').length;
+  const count = [5, 6, 7, 8, 9, 10].find((n) => n >= roles.length && PLAYER_COMPOSITION[n]!.evil === evil)!;
+  return [...roles, ...Array<Role>(count - roles.length).fill('LoyalServant')];
+}
 
 describe('private identity notes', () => {
   it('defaults to showing knowledge and restores an explicit unchecked preference', () => {
@@ -14,8 +22,8 @@ describe('private identity notes', () => {
   it('allows Merlin to refine known enemies to red roles without offering a generic team or blue role', () => {
     const game = projectStateForViewer(buildStartedGame(FIVE_P), 'p0');
     expect(knownRoleNotes(game, 'p0')).toEqual({ p0: 'Merlin', p1: 'good', p2: 'good', p3: 'evil', p4: 'evil' });
-    expect(roleNoteOptions(game, 'p0', 'p3')).toEqual(['Morgana', 'Assassin']);
-    expect(roleNoteOptions(game, 'p0', 'p4')).toEqual(['Morgana', 'Assassin']);
+    expect(roleNoteOptions(game, 'p0', 'p3')).toEqual(['Assassin', 'Morgana']);
+    expect(roleNoteOptions(game, 'p0', 'p4')).toEqual(['Assassin', 'Morgana']);
     expect(roleNoteOptions(game, 'p0', 'p2')).toContain('Percival');
     expect(displayedRoleNotes(game, 'p0', { p3: 'Morgana', p4: 'Assassin', p2: 'good' }, true))
       .toEqual({ p0: 'Merlin', p1: 'good', p3: 'Morgana', p4: 'Assassin', p2: 'good' });
@@ -30,9 +38,9 @@ describe('private identity notes', () => {
     { mordred: true, oberon: false },
     { mordred: true, oberon: true },
   ])('limits Merlin’s guesses using visibility with Mordred=$mordred, Oberon=$oberon', ({ mordred, oberon }) => {
-    const roles: Role[] = [...FIVE_P, ...(oberon ? ['Oberon' as const] : []), ...(mordred ? ['Mordred' as const] : [])];
+    const roles = seated([...FIVE_P, ...(oberon ? ['Oberon' as const] : []), ...(mordred ? ['Mordred' as const] : [])]);
     const game = projectStateForViewer(buildStartedGame(roles), 'p0');
-    const visibleEvil = ['Morgana', 'Assassin', ...(oberon ? ['Oberon'] : [])];
+    const visibleEvil = ['Assassin', 'Morgana', ...(oberon ? ['Oberon'] : [])];
     const unseen = [...(mordred ? ['good'] : []), 'Percival', 'LoyalServant', ...(mordred ? ['Mordred'] : [])];
     for (const known of game.knownPlayers) {
       expect(roleNoteOptions(game, 'p0', known.playerId)).toEqual(visibleEvil);
@@ -85,7 +93,7 @@ describe('private identity notes', () => {
   it.each(['Mordred', 'Oberon', 'Minion'] as const)(
     'keeps a generic red note for Percival when Assassin and %s both remain possible',
     (extraRole) => {
-      const game = projectStateForViewer(buildStartedGame([...FIVE_P, extraRole]), 'p1');
+      const game = projectStateForViewer(buildStartedGame(seated([...FIVE_P, extraRole])), 'p1');
       expect(roleNoteOptions(game, 'p1', 'p2')).toEqual(['LoyalServant', 'percival-claim', 'evil', 'Assassin', extraRole]);
       expect(roleNoteOptions(game, 'p1', 'p0')).toEqual(['Merlin', 'Morgana']);
       expect(roleNoteOptions(game, 'p1', 'p3')).toEqual(['Merlin', 'Morgana']);
@@ -112,7 +120,7 @@ describe('private identity notes', () => {
   });
 
   it('marks exact red teammate roles without exposing Oberon or giving Oberon teammates', () => {
-    const state = buildStartedGame(['Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Assassin', 'Mordred', 'Oberon']);
+    const state = buildStartedGame(seated(['Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Assassin', 'Mordred', 'Oberon']));
     const game = projectStateForViewer(state, 'p3');
     expect(knownRoleNotes(game, 'p3')).toEqual({ p3: 'Morgana', p4: 'Assassin', p5: 'Mordred' });
     expect(roleNoteOptions(game, 'p3', 'p4')).toEqual([]);
@@ -124,7 +132,10 @@ describe('private identity notes', () => {
   it.each(['Morgana', 'Assassin', 'Mordred', 'Minion'] as const)(
     '%s can only mark unknown players as blue roles or an unseen Oberon',
     (role) => {
-      const state = buildStartedGame(['Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Assassin', 'Mordred', 'Minion', 'Oberon']);
+      // Four red seats at most: a Minion takes Mordred's place.
+      const state = buildStartedGame(seated([
+        'Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Assassin', role === 'Minion' ? 'Minion' : 'Mordred', 'Oberon',
+      ]));
       const viewer = state.players.find((p) => p.role === role)!;
       const game = projectStateForViewer(state, viewer.id);
       expect(roleNoteOptions(game, viewer.id, 'p0')).toEqual([
@@ -138,17 +149,19 @@ describe('private identity notes', () => {
   );
 
   it('lets Oberon mark both teams and all other roles without automatically revealing teammates', () => {
-    const roles: Role[] = ['Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Assassin', 'Mordred', 'Minion', 'Oberon'];
-    const game = projectStateForViewer(buildStartedGame(roles), 'p7');
+    const roles = seated(['Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Assassin', 'Mordred', 'Oberon']);
+    const game = projectStateForViewer(buildStartedGame(roles), 'p6');
     expect(game.knownPlayers).toEqual([]);
-    expect(knownRoleNotes(game, 'p7')).toEqual({ p7: 'Oberon' });
-    for (const player of game.players.filter((p) => p.id !== 'p7')) {
-      expect(roleNoteOptions(game, 'p7', player.id)).toEqual(['good', 'evil', ...roles.slice(0, -1)]);
+    expect(knownRoleNotes(game, 'p6')).toEqual({ p6: 'Oberon' });
+    for (const player of game.players.filter((p) => p.id !== 'p6')) {
+      expect(roleNoteOptions(game, 'p6', player.id)).toEqual([
+        'good', 'evil', 'Merlin', 'Percival', 'LoyalServant', 'Assassin', 'Morgana', 'Mordred',
+      ]);
     }
-    expect(roleNoteOptions(game, 'p7', 'p7')).toEqual([]);
+    expect(roleNoteOptions(game, 'p6', 'p6')).toEqual([]);
     const manual = { p0: 'Morgana', p1: 'good', p2: 'evil', p3: 'Assassin', p4: 'Merlin' } as const;
-    expect(displayedRoleNotes(game, 'p7', manual, true)).toEqual({ ...manual, p7: 'Oberon' });
-    expect(displayedRoleNotes(game, 'p7', manual, false)).toEqual({});
+    expect(displayedRoleNotes(game, 'p6', manual, true)).toEqual({ ...manual, p6: 'Oberon' });
+    expect(displayedRoleNotes(game, 'p6', manual, false)).toEqual({});
   });
 
   it('does not offer an absent Oberon or reuse old red-team guesses under the new restrictions', () => {
@@ -161,21 +174,27 @@ describe('private identity notes', () => {
   it.each(['Morgana', 'Assassin', 'Mordred', 'Minion'] as const)(
     'automatically marks all teams for %s only when Oberon is absent',
     (role) => {
-      const roles: Role[] = ['Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Assassin', 'Mordred', 'Minion'];
+      const roles = seated(['Merlin', 'Percival', 'LoyalServant', 'Morgana', 'Assassin', 'Mordred', 'Minion']);
       const state = buildStartedGame(roles);
       const viewer = state.players.find((p) => p.role === role)!;
       const game = projectStateForViewer(state, viewer.id);
       const automatic = knownRoleNotes(game, viewer.id);
-      expect(automatic).toEqual({ p0: 'good', p1: 'good', p2: 'good', p3: 'Morgana', p4: 'Assassin', p5: 'Mordred', p6: 'Minion' });
+      expect(automatic).toEqual({
+        p0: 'good', p1: 'good', p2: 'good', p3: 'Morgana', p4: 'Assassin', p5: 'Mordred', p6: 'Minion',
+        p7: 'good', p8: 'good', p9: 'good',
+      });
       expect(roleNoteOptions(game, viewer.id, 'p0')).toEqual(['Merlin', 'Percival', 'LoyalServant']);
       const manual = { p0: 'Percival' } as const;
       expect(displayedRoleNotes(game, viewer.id, manual, true).p0).toBe('Percival');
       expect(displayedRoleNotes(game, viewer.id, changeRoleNote(manual, 'p0', null), true)).toEqual(automatic);
       expect(displayedRoleNotes(game, viewer.id, manual, false)).toEqual({});
       expect(manual).toEqual({ p0: 'Percival' });
-      const withOberon = projectStateForViewer(buildStartedGame([...roles, 'Oberon']), viewer.id);
+      // Oberon takes a red seat other than the viewer's.
+      const replaced = role === 'Minion' ? 'Mordred' : 'Minion';
+      const lineup = roles.map((r) => (r === replaced ? 'Oberon' : r));
+      const withOberon = projectStateForViewer(buildStartedGame(lineup), viewer.id);
       expect(knownRoleNotes(withOberon, viewer.id).p0).toBeUndefined();
-      expect(knownRoleNotes(withOberon, viewer.id).p7).toBeUndefined();
+      expect(knownRoleNotes(withOberon, viewer.id)[`p${lineup.indexOf('Oberon')}`]).toBeUndefined();
     },
   );
 

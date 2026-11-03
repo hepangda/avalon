@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import {
-  reduce,
-  projectStateForViewer,
-  createRng,
-  type GameEvent,
-  type GameState,
-} from '@/lib/engine';
-import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/engine/testkit';
+import type { GameEvent, GameState } from '@/lib/engine';
+import { applyEvent, projectStateForViewer } from '@/lib/debug/rustEngine';
+import { buildStartedGame, FIVE_P, proposeForVote } from '@/lib/debug/testkit';
 import {
   anonymousMissionCards,
   arrangeSeats,
@@ -22,11 +17,7 @@ import {
 import { actionAvailability } from './actionAvailability';
 import { completeMission, completeVotes, propose } from '@/lib/debug/scenarios';
 
-const apply = (s: GameState, event: GameEvent) => {
-  const result = reduce(s, event, { now: 1, rng: createRng('table') });
-  if (!result.ok) throw new Error(result.error.message);
-  return result.state;
-};
+const apply = (s: GameState, event: GameEvent) => applyEvent(s, event, 1);
 const project = (s: GameState) => projectStateForViewer(s, 'p0');
 function voting() {
   return proposeForVote(buildStartedGame(FIVE_P), {

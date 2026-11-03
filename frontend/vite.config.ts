@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import autoprefixer from "autoprefixer";
 import tailwindcss from "tailwindcss";
 import { fileURLToPath, URL } from "node:url";
+import { engineWasm } from "./scripts/engine-wasm";
 import { staticAssets } from "./scripts/static/static-assets";
 import { staticBase } from "./scripts/static/static-config.mjs";
 
@@ -17,6 +18,7 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react(),
       staticAssets(fileURLToPath(new URL("./public", import.meta.url)), base),
+      engineWasm(),
     ],
     css: { postcss: { plugins: [tailwindcss(), autoprefixer()] } },
     // The Rust server and the Docker image serve the repository-level dist/client.
@@ -29,6 +31,8 @@ export default defineConfig(({ command, mode }) => {
     test: {
       environment: "node",
       include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
+      globalSetup: ["scripts/engine-wasm.global.ts"],
+      setupFiles: ["scripts/engine-wasm.setup.ts"],
     },
     server: {
       proxy: {
