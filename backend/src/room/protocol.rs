@@ -1,8 +1,6 @@
 //! JSON is decoded once at the transport boundary into exhaustive room commands.
 use super::model::{NotesDocument, RoleNote, Visibility};
-use crate::engine::typed::{
-    Direction, EngineError, ErrorCode as EngineCode, MissionCard, PlayerId, Vote,
-};
+use crate::engine::{Direction, EngineError, ErrorCode as EngineCode, MissionCard, PlayerId, Vote};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 

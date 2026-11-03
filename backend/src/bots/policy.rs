@@ -1,9 +1,6 @@
 use crate::engine::{
-    Rng,
-    typed::{
-        ActionKind, ClientGameState, Direction, GameEvent, LogChannel, LogParam, MissionCard,
-        Phase, PlayerId, Role, ShownAs, Team, Vote,
-    },
+    ActionKind, ClientGameState, Direction, GameEvent, LogChannel, LogParam, MissionCard, Phase,
+    PlayerId, Rng, Role, ShownAs, Team, Vote,
 };
 use serde::Serialize;
 use std::collections::HashMap;
@@ -772,21 +769,21 @@ pub fn merlin_suspicions(view: &ClientGameState) -> Vec<Suspect> {
     suspects
 }
 
-pub fn decide_typed(
+pub fn decide(
     view: &ClientGameState,
     by: &PlayerId,
     action: ActionKind,
     seed: &str,
 ) -> Result<GameEvent, BotError> {
-    Ok(decide_with_capture(view, by, action, seed, Rng::new, Capture::ActionOnly)?.event)
+    Ok(decide_with_capture(view, by, action, seed, Capture::ActionOnly)?.event)
 }
-pub fn decide_detailed_typed(
+pub fn decide_detailed(
     view: &ClientGameState,
     by: &PlayerId,
     action: ActionKind,
     seed: &str,
 ) -> Result<Decision, BotError> {
-    decide_with_rng(view, by, action, seed, Rng::new)
+    decide_with_capture(view, by, action, seed, Capture::Diagnostics)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -794,21 +791,11 @@ enum Capture {
     ActionOnly,
     Diagnostics,
 }
-pub(crate) fn decide_with_rng(
-    view: &ClientGameState,
-    by: &PlayerId,
-    action: ActionKind,
-    seed: &str,
-    make_rng: fn(&str) -> Rng,
-) -> Result<Decision, BotError> {
-    decide_with_capture(view, by, action, seed, make_rng, Capture::Diagnostics)
-}
 fn decide_with_capture(
     view: &ClientGameState,
     by: &PlayerId,
     action: ActionKind,
     seed: &str,
-    make_rng: fn(&str) -> Rng,
     capture: Capture,
 ) -> Result<Decision, BotError> {
     if !(5..=10).contains(&view.players.len())
@@ -826,7 +813,7 @@ fn decide_with_capture(
     if view.self_role.is_none() {
         return Err(BotError::NotSeated);
     }
-    let mut rng = make_rng(seed);
+    let mut rng = Rng::new(seed);
     let evil = view.self_role.is_some_and(evil);
     let round = view.round_index;
     let required = view.config.required_fails.get(round).copied().unwrap_or(1);
@@ -847,7 +834,7 @@ fn decide_with_capture(
     if evil {
         allies.push(by.clone());
     }
-    let mut personality = make_rng(&format!(
+    let mut personality = Rng::new(&format!(
         "personality:{}:{}:{}",
         view.role_revision,
         by,
@@ -1054,7 +1041,7 @@ fn decide_with_capture(
                 .map(|id| public.risk(std::slice::from_ref(id), 1))
                 .fold(f64::NEG_INFINITY, f64::max);
             team.sort();
-            let mut shared = make_rng(&format!(
+            let mut shared = Rng::new(&format!(
                 "sabotage:{}:{}:{}:{}:{}",
                 view.role_revision,
                 round,

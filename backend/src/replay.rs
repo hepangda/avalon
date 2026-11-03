@@ -1,6 +1,6 @@
 //! Rebuild public replay data from typed, validated domain events.
 mod model;
-use crate::engine::typed::{
+use crate::engine::{
     self, CheckpointKind, ClientLogEntry, CreateGame, Effect, GameEvent, GameOptions, GameState,
     InitialPlayer, LogChannel, Phase, PlayerId, Role,
 };
@@ -122,7 +122,7 @@ impl Builder {
         started: Option<i64>,
         ended: Option<i64>,
     ) -> Result<ReplayData> {
-        let variants = typed::role_variants(state);
+        let variants = engine::role_variants(state);
         let role_assignments = state
             .players
             .iter()
@@ -182,13 +182,6 @@ impl Builder {
         })
     }
 }
-#[derive(Clone, Copy)]
-enum ReplayMode {
-    Resolved,
-    #[cfg(feature = "legacy-import")]
-    Legacy,
-}
-
 /// Live room path: no JSON construction or decoding occurs during rule replay.
 pub fn build(
     game_id: &str,
@@ -197,23 +190,14 @@ pub fn build(
     players: &[ReplayPlayer],
     events: &[RecordedEvent],
 ) -> Result<ReplayData> {
-    Ok(rebuild_typed(
-        game_id,
-        seed,
-        options,
-        players,
-        events,
-        ReplayMode::Resolved,
-    )?
-    .0)
+    Ok(rebuild(game_id, seed, options, players, events)?.0)
 }
-fn rebuild_typed(
+fn rebuild(
     game_id: &str,
     seed: &str,
     options: &GameOptions,
     players: &[ReplayPlayer],
     events: &[RecordedEvent],
-    mode: ReplayMode,
 ) -> Result<(ReplayData, GameState)> {
     ensure!(!game_id.is_empty(), "Replay game id is missing");
     let input = CreateGame {
@@ -232,11 +216,7 @@ fn rebuild_typed(
         options: options.clone(),
         seed: seed.into(),
     };
-    let mut state = match mode {
-        ReplayMode::Resolved => typed::create_game(&input)?,
-        #[cfg(feature = "legacy-import")]
-        ReplayMode::Legacy => typed::create_legacy_game(&input)?,
-    };
+    let mut state = engine::create_game(&input)?;
     let mut builder = Builder::default();
     let mut history = Vec::new();
     let mut started = None;
@@ -246,26 +226,6 @@ fn rebuild_typed(
             "Replay sequence has a gap or duplicate at {}",
             entry.seq
         );
-        #[cfg(feature = "legacy-import")]
-        let patched = if matches!(mode, ReplayMode::Legacy)
-            && matches!(
-                &entry.event,
-                GameEvent::StartGame {
-                    flow_version: None,
-                    ..
-                }
-            ) {
-            let mut event = entry.event.clone();
-            if let GameEvent::StartGame { flow_version, .. } = &mut event {
-                *flow_version = Some(1);
-            }
-            Some(event)
-        } else {
-            None
-        };
-        #[cfg(feature = "legacy-import")]
-        let event = patched.as_ref().unwrap_or(&entry.event);
-        #[cfg(not(feature = "legacy-import"))]
         let event = &entry.event;
         let previous_phase = state.phase;
         let previous_leader = state
@@ -273,17 +233,8 @@ fn rebuild_typed(
             .iter()
             .find(|p| p.seat == state.leader_index)
             .map(|p| p.id.clone());
-        let result = match mode {
-            ReplayMode::Resolved => typed::apply_owned(state, event, entry.created_at),
-            #[cfg(feature = "legacy-import")]
-            ReplayMode::Legacy => typed::apply_legacy_owned(
-                state,
-                event,
-                entry.created_at,
-                &format!("{seed}:{}", entry.seq),
-            ),
-        }
-        .map_err(|(error, _)| anyhow::anyhow!("Replay event {}: {error}", entry.seq))?;
+        let result = engine::apply_owned(state, event, entry.created_at)
+            .map_err(|(error, _)| anyhow::anyhow!("Replay event {}: {error}", entry.seq))?;
         if matches!(event, GameEvent::PreviousPhase { .. }) {
             builder = history.pop().context("Replay rewind without checkpoint")?;
         } else if previous_phase != Phase::Lobby && result.state.phase != previous_phase {
@@ -310,53 +261,6 @@ fn rebuild_typed(
         events.last().map(|e| e.created_at),
     )?;
     Ok((replay, state))
-}
-
-/// JSON codec retained for stored migration artifacts and external test fixtures.
-pub mod codec {
-    use super::*;
-    pub fn build(
-        game_id: &str,
-        seed: &str,
-        options: &Value,
-        players: &Value,
-        events: &[Value],
-    ) -> Result<Value> {
-        Ok(rebuild(
-            game_id,
-            seed,
-            options,
-            players,
-            events,
-            ReplayMode::Resolved,
-        )?
-        .0)
-    }
-}
-fn rebuild(
-    game_id: &str,
-    seed: &str,
-    options: &Value,
-    players: &Value,
-    events: &[Value],
-    mode: ReplayMode,
-) -> Result<(Value, Value)> {
-    let options: GameOptions =
-        serde_json::from_value(options.clone()).context("Invalid replay options")?;
-    let players: Vec<ReplayPlayer> =
-        serde_json::from_value(players.clone()).context("Invalid replay roster")?;
-    let events: Vec<RecordedEvent> = events
-        .iter()
-        .cloned()
-        .map(serde_json::from_value)
-        .collect::<std::result::Result<_, _>>()
-        .context("Invalid recorded event")?;
-    let (replay, state) = rebuild_typed(game_id, seed, &options, &players, &events, mode)?;
-    Ok((serde_json::to_value(replay)?, serde_json::to_value(state)?))
-}
-#[cfg(feature = "legacy-import")]
-fn array(value: &Value) -> &[Value] {
-    value.as_array().map(Vec::as_slice).unwrap_or_default()
 }
 
 /// Forward-mark an already materialized public archive without rerunning any game
@@ -410,127 +314,4 @@ pub fn migrate_archive(payload: &Value) -> Result<Value> {
     let mut migrated = payload.clone();
     migrated["formatVersion"] = json!(2);
     Ok(migrated)
-}
-
-#[cfg(feature = "legacy-import")]
-pub fn build_legacy(
-    game_id: &str,
-    seed: &str,
-    options: &Value,
-    players: &Value,
-    events: &[Value],
-) -> Result<Value> {
-    Ok(rebuild(game_id, seed, options, players, events, ReplayMode::Legacy)?.0)
-}
-
-/// Recover only genuinely completed legacy rooms before they are cleared at the
-/// one-way cutover. The importer refuses discrepancies with the persisted result.
-#[cfg(feature = "legacy-import")]
-pub fn migrate_finished_room(document: &Value) -> Result<Option<Value>> {
-    let game = &document["game"];
-    if game["phase"] != "GameOver" || !game["outcome"].is_object() {
-        return Ok(None);
-    }
-    if let Some(archive) = document.get("archive").and_then(|a| a.get("replay"))
-        && !archive.is_null()
-        && archive["gameId"] == document["meta"]["gameId"]
-    {
-        ensure!(
-            archive["outcome"] == game["outcome"],
-            "Completed room archive disagrees with persisted outcome"
-        );
-        return Ok(Some(migrate_archive(archive)?));
-    }
-    let game_id = document["meta"]["gameId"]
-        .as_str()
-        .context("Completed room game id missing")?;
-    let seed = document["meta"]["seed"]
-        .as_str()
-        .or(game["seed"].as_str())
-        .context("Completed room seed missing")?;
-    let game_players = game["players"]
-        .as_array()
-        .context("Completed room players missing")?;
-    let profiles = array(&document["members"]);
-    let seated = Value::Array(
-        game_players
-            .iter()
-            .map(|p| {
-                let mut player = json!({"id":p["id"],"name":p["name"]});
-                if let Some(profile) = profiles.iter().find(|m| m["id"] == p["id"]) {
-                    for key in ["avatarUrl", "isBot"] {
-                        if let Some(v) = profile.get(key) {
-                            player[key] = v.clone();
-                        }
-                    }
-                }
-                player
-            })
-            .collect(),
-    );
-    let events = document["events"]
-        .as_array()
-        .context("Completed room event log missing")?;
-    let mode = match game.get("randomnessVersion") {
-        None => ReplayMode::Legacy,
-        Some(Value::String(version)) if version == "resolved-v1" => ReplayMode::Resolved,
-        _ => bail!("Unsupported completed room randomness version"),
-    };
-    let (mut replay, reconstructed) = rebuild(
-        game_id,
-        seed,
-        &game["config"]["options"],
-        &seated,
-        events,
-        mode,
-    )?;
-    for key in ["outcome", "voteHistory", "missionResults"] {
-        ensure!(
-            reconstructed[key] == game[key],
-            "Legacy replay {key} disagrees with persisted completed state"
-        );
-    }
-    for player in game_players {
-        ensure!(
-            array(&reconstructed["players"])
-                .iter()
-                .any(|p| p["id"] == player["id"] && p["role"] == player["role"]),
-            "Legacy replay roles disagree with persisted completed state"
-        );
-    }
-    // A legacy state never persisted cosmetic art choices. Their absence is
-    // unknown data, even if an old RNG implementation could generate a choice.
-    for assignment in replay["roleAssignments"].as_array_mut().unwrap() {
-        let id = assignment["playerId"].as_str().unwrap_or("").to_owned();
-        let explicit = game["roleVariants"].get(&id).or_else(|| {
-            game_players
-                .iter()
-                .find(|p| p["id"] == id)
-                .and_then(|p| p.get("roleVariant"))
-        });
-        if let Some(variant) = explicit {
-            assignment["roleVariant"] = variant.clone();
-        } else {
-            assignment.as_object_mut().unwrap().remove("roleVariant");
-        }
-    }
-    // The room can append public administrative logs outside the reducer. Preserve
-    // the persisted log rather than silently dropping those additional entries.
-    if let Some(logs) = game["logs"].as_array() {
-        ensure!(
-            logs.iter().all(Value::is_object),
-            "Invalid persisted game log"
-        );
-        replay["log"] = Value::Array(
-            logs.iter()
-                .filter(|l| l["channel"] == "public")
-                .map(|l| {
-                    let mut l = l.clone();
-                    l.as_object_mut().unwrap().remove("audience");
-                    l
-                })
-                .collect(),
-        );
-    }
-    Ok(Some(migrate_archive(&replay)?))
 }

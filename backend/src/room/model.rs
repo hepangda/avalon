@@ -1,6 +1,6 @@
 //! Room domain types. Text is retained for user content and opaque identifiers;
 //! closed sets are enums and JSON is confined to boundary adapters.
-use crate::engine::typed::{GameOptions, GameState, PlayerId, Role};
+use crate::engine::{GameOptions, GameState, PlayerId, Role};
 use crate::replay::{RecordedEvent, ReplayData};
 use serde::{Deserialize, Serialize};
 use std::{borrow::Borrow, collections::BTreeMap, fmt, ops::Deref};
@@ -68,7 +68,7 @@ pub enum Visibility {
     #[default]
     Private,
 }
-pub use crate::engine::typed::RandomnessVersion;
+pub use crate::engine::RandomnessVersion;
 fn schema_version() -> u8 {
     1
 }

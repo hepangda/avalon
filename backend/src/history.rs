@@ -1,6 +1,6 @@
 //! Typed history read model. JSON is decoded once when the archive cache rebuilds.
 use crate::{
-    engine::typed::{Role, Team, WinReason},
+    engine::{Role, Team, WinReason},
     ratings::{self, ArchivedRole, Exclusion, Fit, PublicRating, Record},
     storage::Database,
 };

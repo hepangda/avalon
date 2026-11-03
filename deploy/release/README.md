@@ -113,13 +113,5 @@ Keep branch restrictions to `main` and the existing CDN credentials.
 | `VM_SSH_PRIVATE_KEY` | Dedicated restricted deployment key |
 | `CLOUDFLARE_API_TOKEN` | Existing R2 publishing credentials |
 
-Kubernetes and Cloudflare Access credentials are no longer used by Release. Keep
-old workflows disabled until these changes reach `main`, then enable
-`release.yml` and `release-manual.yml`. Do not re-enable the old Kubernetes
-workflow. GHCR pushes use the job's short-lived `GITHUB_TOKEN`; the package must
+GHCR pushes use the job's short-lived `GITHUB_TOKEN`; the package must
 remain public so the VM can pull anonymously.
-
-`include_migration=true` optionally publishes a separate ARM64
-`migration-sha-<full-commit>-arm64` image, which is never automatically executed.
-Legacy Node-to-Rust conversion is an offline operation described in the
-[data cutover guide](../../docs/randomness-cutover.md), not a routine release step.

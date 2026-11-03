@@ -1,8 +1,6 @@
 # Companion bot decisions
 
-
-The Rust room runtime calls `backend/src/bots.rs` on its bounded CPU pool.
-`server/bots.ts` remains the TypeScript behavioral reference. Decisions use
+The Rust room runtime calls `backend/src/bots/` on its bounded CPU pool. Decisions use
 only the authorized player projection: the bot cannot read the deal seed, another seat's
 private knowledge, sealed votes, or individual mission cards. Decisions are
 reproducible from the same projection and action seed; no external model service
@@ -36,7 +34,7 @@ or extra runtime dependency is required.
   facts are not special Merlin evidence; Mordred's invisibility, possible Percival
   knowledge and earlier Lady access reduce misleading signals.
 
-`decideBot` exposes reasons, hypothesis counts and candidate scores for local
+`bots::decide_detailed` exposes reasons, hypothesis counts and candidate scores for local
 diagnostics. These contain private deductions and must never be added to room
 broadcasts or public logs. Beliefs are reconstructed from the projection each
 decision, so restart/replay needs no separate bot memory. The policy currently
@@ -45,17 +43,7 @@ or generating human conversation. Its likelihoods are design assumptions, not a
 model calibrated on recorded human games.
 
 ```bash
-npx vitest run server/bots.test.ts server/bot-beliefs.test.ts server/bot-assassin.test.ts server/bots-simulation
-npm run benchmark:bots -- 50
+cargo test --locked --manifest-path backend/Cargo.toml --test bots
 ```
 
-The benchmark runs the old reasoning and new reasoning against themselves and
-against each other on both sides, with identical seeded deals. Both policies use
-the mandated role-based sabotage priority. Each matchup covers 5–10 players, and
-larger games alternate Mordred/Oberon with Lady enabled. It reports actual game
-wins (including assassination), assassination hits, proposals per mission,
-rejection losses, and measured decision latency. The regression suite additionally
-covers every rejection limit, mixed policies, special-role combinations, privacy,
-strict fail quotas and deterministic replay. Self-play measures regressions and
-differences between policies; human playtesting is still needed to assess how
-natural the decisions feel.
+Human playtesting is still needed to assess how natural the decisions feel.

@@ -2,7 +2,7 @@ use super::{
     model::*,
     protocol::{ConfigInput, Init},
 };
-use crate::engine::typed::GameOptions;
+use crate::engine::GameOptions;
 use rand::Rng;
 use std::collections::BTreeMap;
 

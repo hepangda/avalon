@@ -3,24 +3,15 @@ dist/
 build/
 backend/target/
 coverage/
-.next/
-.pnpm-store/
 *.tsbuildinfo
 
-# Local agent state and private operations archives
-.omo/
+# Private operations archives
 .private/
-
-# Legacy local state / optional R2 publishing
-.wrangler/
-worker-configuration.d.ts
 
 # Env
 .env
 .env.*
 !.env.example
-.dev.vars
-.dev.vars.*
 
 # Logs & OS
 *.log
@@ -31,7 +22,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Private database migration rollback snapshots
+# Private database rollback snapshots
 .backups/
 
 # Database exports and private keys

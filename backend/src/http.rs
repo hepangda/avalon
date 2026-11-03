@@ -280,7 +280,7 @@ async fn replay(State(s): State<AppState>, h: HeaderMap, Path(id): Path<String>)
         s.db.load_replay(&id)
             .await
             .map_err(internal)?
-            .filter(|r| ratings::codec::visible(r, s.environment == "development"))
+            .filter(|r| ratings::visible(r, s.environment == "development"))
             .ok_or_else(|| error(StatusCode::NOT_FOUND, "NOT_FOUND", "Game not found"))?;
     Ok(Json(
         json!({"replay":replay,"viewerId":s.db.find_seat(&id,&account).await.map_err(internal)?}),

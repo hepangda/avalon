@@ -1,11 +1,12 @@
 //! The default server consumes explicit outcomes. The golden transitions below
 //! were produced by the independent TypeScript rules, then only the random
 //! results were materialized; JavaScript is not used by these tests at runtime.
-use avalon_server::{bots::codec as bots, engine::codec as engine};
+mod support;
 use rayon::prelude::*;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
+use support::{bots, engine};
 fn input(n: usize) -> Value {
     json!({"hostId":"p0","players":(0..n).map(|i|json!({"id":format!("p{i}"),"name":format!("P{i}")})).collect::<Vec<_>>(),"options":{"percival":true,"morgana":true,"mordred":n>=7,"oberon":false,"ladyOfTheLake":true},"seed":"metadata-only-🧙"})
 }
@@ -57,7 +58,7 @@ fn canonical(v: &Value) -> String {
 fn hash(v: &Value) -> String {
     format!("{:x}", Sha256::digest(canonical(v).as_bytes()))
 }
-// Fixed scenarios, not random sampling. See docs/rust-backend.md for the matrix.
+// Fixed scenarios, not random sampling; the representative test asserts their coverage.
 const DAILY_TRACES: [&str; 10] = [
     "兼容🧙:1:6:2",             // Old flow, rejection limit, six players.
     "兼容🧙:2:8:1",             // Flow 2, Oberon, approved early assassination.
@@ -188,13 +189,8 @@ fn check_resolved_trace(trace: &Value) -> BTreeSet<String> {
             coverage.insert(format!("direction:{direction}"));
         }
         let now = step["now"].as_i64().unwrap();
-        let result = engine::reduce_owned(
-            state,
-            &step["event"],
-            now,
-            "seed deliberately unrelated to original JS RNG",
-        )
-        .unwrap_or_else(|(e, _)| panic!("{name} {i}: {e}"));
+        let result = engine::reduce_owned(state, &step["event"], now)
+            .unwrap_or_else(|(e, _)| panic!("{name} {i}: {e}"));
         assert_eq!(hash(&result.state), step["state"], "{name} {i}: state");
         assert_eq!(
             json!(result.effects),
@@ -262,10 +258,7 @@ fn resolved_commands_replay_independently_of_rng_seed() {
             engine::resolve_randomness(&state, &resolved, "another seed").unwrap(),
             "already-resolved commands are stable"
         );
-        let a = engine::reduce(&state, &resolved, 1234, "seed A").unwrap();
-        let b = engine::reduce(&state, &resolved, 1234, "seed B🧙").unwrap();
-        assert_eq!(a.state, b.state);
-        assert_eq!(a.effects, b.effects);
+        let a = engine::reduce(&state, &resolved, 1234).unwrap();
         if command["type"] != "REROLL_LEADER" {
             assert_eq!(a.state["roleVariants"], resolved["roleVariants"]);
         }
@@ -276,7 +269,7 @@ fn resolved_commands_replay_independently_of_rng_seed() {
     assert_eq!(engine::role_variants(&state), variants);
 }
 fn rejected_unchanged(state: &Value, event: &Value) {
-    let (error, returned) = engine::reduce_owned(state.clone(), event, 99, "ignored").unwrap_err();
+    let (error, returned) = engine::reduce_owned(state.clone(), event, 99).unwrap_err();
     assert_eq!(error.code, "INVALID_RANDOMNESS");
     assert_eq!(returned, *state);
 }
@@ -316,7 +309,7 @@ fn missing_and_corrupt_resolved_results_fail_before_mutation() {
         event["roleVariants"][id] = value;
         rejected_unchanged(&state, &event);
     }
-    let mut started = engine::reduce(&state, &valid, 1, "ignored").unwrap().state;
+    let mut started = engine::reduce(&state, &valid, 1).unwrap().state;
     let by = "p2";
     let unchanged = json!({"type":"USE_REROLL_CARD","by":by,"roleRevision":0,"assignedRoles":started["players"].as_array().unwrap().iter().map(|p|p["role"].clone()).collect::<Vec<_>>(),"roleVariants":started["roleVariants"]});
     rejected_unchanged(&started, &unchanged);
@@ -335,7 +328,6 @@ fn unsupported_versions_never_downgrade_to_legacy() {
                 .is_err()
         );
     }
-    #[cfg(not(feature = "legacy-import"))]
     {
         let mut state = lobby();
         state.as_object_mut().unwrap().remove("randomnessVersion");
@@ -345,16 +337,16 @@ fn unsupported_versions_never_downgrade_to_legacy() {
 #[test]
 fn native_rng_and_weighted_deals_are_deterministic_and_bounded() {
     for seed in ["", "中文🧙", "seed", "same prefix 1", "same prefix 2"] {
-        let mut a = engine::Rng::new(seed);
-        let mut b = engine::Rng::new(seed);
+        let mut a = avalon_server::engine::Rng::new(seed);
+        let mut b = avalon_server::engine::Rng::new(seed);
         for _ in 0..1000 {
             let x = a.next();
             assert_eq!(x, b.next());
             assert!((0.0..1.0).contains(&x));
         }
     }
-    let mut a = engine::Rng::new("different-a");
-    let mut b = engine::Rng::new("different-b");
+    let mut a = avalon_server::engine::Rng::new("different-a");
+    let mut b = avalon_server::engine::Rng::new("different-b");
     assert_ne!(a.next(), b.next());
     let s = lobby();
     for i in 0..50 {
@@ -385,14 +377,14 @@ fn native_rng_and_weighted_deals_are_deterministic_and_bounded() {
             &seed,
         )
         .unwrap();
-        assert!(engine::reduce(&s, &resolved, 1, "ignored").is_ok());
+        assert!(engine::reduce(&s, &resolved, 1).is_ok());
     }
 }
 #[test]
 fn resolved_role_art_remains_private_and_only_comes_from_saved_results() {
     let state = lobby();
     let event = start(&state);
-    let state = engine::reduce(&state, &event, 1, "ignored").unwrap().state;
+    let state = engine::reduce(&state, &event, 1).unwrap().state;
     let observer = engine::project(&state, "observer");
     assert!(observer.get("seed").is_none());
     assert!(observer.get("roleVariants").is_none());
@@ -427,9 +419,7 @@ fn native_bots_finish_games_with_legal_actions() {
                 &seed,
             )
             .unwrap();
-            state = engine::reduce_owned(state, &event, 1, "ignored")
-                .unwrap()
-                .state;
+            state = engine::reduce_owned(state, &event, 1).unwrap().state;
             for step in 0..900 {
                 if state["phase"] == "GameOver" {
                     break;
@@ -444,7 +434,7 @@ fn native_bots_finish_games_with_legal_actions() {
                     &format!("{seed}:{step}"),
                 )
                 .unwrap();
-                state = engine::reduce_owned(state, &event, 2 + step, "ignored")
+                state = engine::reduce_owned(state, &event, 2 + step)
                     .unwrap_or_else(|(e, _)| panic!("{seed} {step}: {e}"))
                     .state;
             }

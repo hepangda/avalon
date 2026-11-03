@@ -1,0 +1,32 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import { App } from './App';
+import './styles/globals.css';
+import './styles/table-layout.css';
+import './styles/role-notes.css';
+import './styles/table-elements.css';
+import './styles/role-cards.css';
+import './styles/identity.css';
+import './styles/role-deal.css';
+import './styles/scene-gate.css';
+import './styles/assassination.css';
+import './styles/assassination-pact.css';
+import './styles/table-reveals.css';
+import './styles/lady.css';
+import './styles/war-log.css';
+import './styles/timing.css';
+import './styles/reconnect.css';
+import './styles/preferences.css';
+import './styles/table-life.css';
+import './styles/seat-menu.css';
+import './styles/functions-sheet.css';
+import './styles/popconfirm.css';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </StrictMode>,
+);

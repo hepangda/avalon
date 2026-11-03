@@ -46,7 +46,7 @@ try {
     console.log(`[dev] Local PostgreSQL: 127.0.0.1:${env.AVALON_DEV_DB_PORT}/avalon_development`);
     if (mode !== '--db-only') {
       const commands = [{ name: 'api', command: 'cargo run --manifest-path backend/Cargo.toml', env }];
-      if (mode !== '--server-only') commands.push({ name: 'web', command: 'vite --host localhost --port 5173 --strictPort', env });
+      if (mode !== '--server-only') commands.push({ name: 'web', command: 'npm run dev', cwd: join(root, 'frontend'), env });
       await concurrently(commands, { cwd: root, prefix: 'name', killOthersOn: ['failure', 'success'], killSignal: 'SIGTERM' }).result;
     }
   }

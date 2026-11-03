@@ -6,19 +6,9 @@ rust-version = "1.99"
 publish = false
 default-run = "avalon-server"
 
-[features]
-default = []
-# Only the offline importer and its compatibility tests compile the old stream.
-legacy-import = []
-
 [[bin]]
 name = "avalon-server"
 path = "src/main.rs"
-
-[[bin]]
-name = "migrate-randomness"
-path = "src/bin/migrate_randomness.rs"
-required-features = ["legacy-import"]
 
 [dependencies]
 anyhow = "1"

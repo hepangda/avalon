@@ -21,10 +21,6 @@ on:
         description: Build and publish assets without changing the running deployment
         type: boolean
         default: false
-      include_migration:
-        description: Also publish the isolated one-shot legacy migration image
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -134,20 +130,6 @@ jobs:
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,scope=arm64,mode=max
 
-      - name: Build and push the migration tool
-        if: inputs.include_migration
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          target: migration-tool
-          push: true
-          platforms: linux/arm64
-          tags: ${{ env.IMAGE_REPOSITORY }}:migration-${{ env.VERSION }}-arm64
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ env.COMMIT }}
-          cache-from: type=gha,scope=arm64
-
       # Static assets come from the pushed image itself, so the CDN and the application
       # serve the same build.
       - name: Extract static assets from the image
@@ -170,7 +152,7 @@ jobs:
           path: .release-tools
           sparse-checkout: |
             deploy/release
-            scripts
+            frontend/scripts/static
           persist-credentials: false
 
       - name: Publish static assets
@@ -180,8 +162,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           npm install --global wrangler@4.149.0
-          node .release-tools/scripts/publish-static.mjs --upload
-          node .release-tools/scripts/verify-static.mjs
+          node .release-tools/frontend/scripts/static/publish-static.mjs --upload
+          node .release-tools/frontend/scripts/static/verify-static.mjs
 
       - name: Deploy to the ARM VM
         if: ${{ !inputs.prepare_only }}

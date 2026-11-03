@@ -1,11 +1,9 @@
 //! Bradley–Terry MAP ratings. This is the existing calibrated model, including its
 //! joint Laplace covariance; it must only run on the bounded CPU executor.
-use crate::engine::typed::{GameOptions, PlayerId, Role, Team, WinReason};
+use crate::engine::{GameOptions, PlayerId, Role, Team, WinReason};
 use anyhow::{Result, bail};
 use serde_json::json;
 use std::collections::{BTreeMap, BTreeSet};
-
-pub mod codec;
 
 pub const VERSION: &str = "bt-map-v1-deviation-v2";
 pub const INITIAL_SCORE: f64 = 50.;
@@ -443,4 +441,15 @@ pub fn public_rating(player: Option<&Player>, now: i64) -> PublicRating {
         title,
         confidence,
     }
+}
+/// Hide archives with bot seats unless bots are included (development only).
+pub fn visible(replay: &serde_json::Value, include_bots: bool) -> bool {
+    #[derive(serde::Deserialize)]
+    struct Visibility {
+        #[serde(default)]
+        players: Vec<ArchivedPlayer>,
+    }
+    include_bots
+        || <Visibility as serde::Deserialize>::deserialize(replay)
+            .is_ok_and(|r| !r.players.iter().any(|p| p.is_bot == Some(true)))
 }

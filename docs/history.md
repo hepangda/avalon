@@ -15,8 +15,7 @@ Lady results remain hidden in that viewpoint.
 
 ## Rating model
 
-`backend/src/ratings.rs` implements `bt-map-v1-deviation-v2` (with
-`server/ratings.ts` retained as the differential reference), an average-team
+`backend/src/ratings.rs` implements `bt-map-v1-deviation-v2`, an average-team
 Bradley–Terry model:
 
 ```text
@@ -68,10 +67,11 @@ If exact evidence is unavailable, it links only a lone human seat with a lone
 settlement account and leaves the game unrated. Automatic recovery never guesses
 from nicknames. Exact backfills require matching game ID, revision and full replay.
 
-`server/history-name-recovery.ts` supports explicitly authorized operator repairs.
-It uses verified historical names (including approved aliases), complete settlement
+Explicitly authorized operator repairs used an inference helper (removed with the
+TypeScript server; see `server/history-name-recovery.ts` at release `84841fa`).
+It used verified historical names (including approved aliases), complete settlement
 rosters and one-to-one constraints to produce unique links. Conflicts or ambiguity
-require review. Back up records, verify the replay revision and contents, and retain
+required review. Back up records, verify the replay revision and contents, and retain
 before/after data and evidence before applying repairs. Confirmed historical
 `Bot N` seats may be marked `isBot`; production filtering then applies without
 deleting archives.

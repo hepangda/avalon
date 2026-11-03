@@ -1,7 +1,7 @@
 //! Authoritative room operations over typed state. No JSON tree manipulation.
 pub use super::model::Binding;
 use super::{helpers::*, model::*, protocol::*};
-use crate::engine::typed::{
+use crate::engine::{
     self, CheckpointKind, CreateGame, Effect, GameEvent, InitialPlayer, LogChannel, LogEntry,
     LogParams, LogStyle, Phase, PlayerId, RoleWeights, Vote,
 };
@@ -142,7 +142,7 @@ impl Draft {
                         .map(|w| (p.id.clone(), w.clone()))
                 })
                 .collect();
-            if let Some(roles) = typed::weighted_roles(
+            if let Some(roles) = engine::weighted_roles(
                 &game.players,
                 &game.config.roles,
                 &weights,
@@ -159,12 +159,12 @@ impl Draft {
                 }
             }
         }
-        event = match typed::resolve_randomness(game, &event, &format!("{seed}:{seq}:outcome")) {
+        event = match engine::resolve_randomness(game, &event, &format!("{seed}:{seq}:outcome")) {
             Ok(event) => event,
             Err(e) => return Ack::engine(e),
         };
         let game = self.dm().game.take().expect("game checked");
-        let transition = match typed::apply_owned(game, &event, self.now) {
+        let transition = match engine::apply_owned(game, &event, self.now) {
             Ok(t) => t,
             Err((error, original)) => {
                 self.dm().game = Some(original);
@@ -969,7 +969,7 @@ impl Draft {
             m.seat = i;
         }
         let by = seated[0].id.clone();
-        let game = match typed::create_game(CreateGame {
+        let game = match engine::create_game(CreateGame {
             host_id: by.clone(),
             players: seated
                 .iter()
@@ -1295,7 +1295,7 @@ impl Draft {
                 self.d().event_seq + 1,
                 timer.player_id
             );
-            let view = typed::project(game, &timer.player_id);
+            let view = engine::project(game, &timer.player_id);
             match crate::bots::decide(&view, &timer.player_id, timer.action, &seed) {
                 Ok(event) => {
                     self.apply(event);

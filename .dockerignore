@@ -3,19 +3,12 @@ dist
 .git
 .env
 .env.*
-.ghcr.read.io
-.dev.vars*
-.wrangler
-.next
-.pnpm-store
 *.log
 
-# Private database migration rollback snapshots
+# Private database rollback snapshots
 .backups/
 .private/
-.omo/
 .claude/
-.husky/
 .vscode/
 .idea/
 docs/
@@ -23,7 +16,6 @@ deploy/
 coverage/
 build/
 *.tsbuildinfo
-worker-configuration.d.ts
 *.dump
 *.sql.gz
 *.pem

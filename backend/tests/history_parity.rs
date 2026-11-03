@@ -1,5 +1,7 @@
-use avalon_server::{history::RecordBook, ratings::codec as ratings, replay};
+mod support;
+use avalon_server::{history::RecordBook, replay};
 use serde_json::{Value, json};
+use support::ratings;
 fn fixture() -> Value {
     serde_json::from_str(include_str!("fixtures/history.json")).unwrap()
 }
@@ -111,7 +113,7 @@ fn profile_privacy_prefix_deltas_and_pagination_match_typescript() {
 #[test]
 fn completed_replay_matches_typescript() {
     let v: Value = serde_json::from_str(include_str!("fixtures/replay.json")).unwrap();
-    let actual = replay::codec::build(
+    let actual = support::replay::build(
         v["gameId"].as_str().unwrap(),
         v["seed"].as_str().unwrap(),
         &v["options"],
@@ -125,7 +127,7 @@ fn completed_replay_matches_typescript() {
 #[test]
 fn referee_rewind_replay_matches_typescript() {
     let v: Value = serde_json::from_str(include_str!("fixtures/replay-rewind.json")).unwrap();
-    let actual = replay::codec::build(
+    let actual = support::replay::build(
         v["gameId"].as_str().unwrap(),
         v["seed"].as_str().unwrap(),
         &v["options"],
@@ -210,7 +212,7 @@ fn converted_archives_preserve_ratings_profiles_and_pagination() {
 fn production_replay_rejects_unresolved_randomness() {
     let v: Value = serde_json::from_str(include_str!("fixtures/replay.json")).unwrap();
     assert!(
-        replay::codec::build(
+        support::replay::build(
             v["gameId"].as_str().unwrap(),
             v["seed"].as_str().unwrap(),
             &v["options"],
@@ -221,7 +223,7 @@ fn production_replay_rejects_unresolved_randomness() {
     );
     let events = v["resolvedEvents"].as_array().unwrap();
     assert!(
-        replay::codec::build(
+        support::replay::build(
             v["gameId"].as_str().unwrap(),
             v["seed"].as_str().unwrap(),
             &v["options"],
@@ -231,68 +233,4 @@ fn production_replay_rejects_unresolved_randomness() {
         .is_err(),
         "unfinished game fabricated an archive"
     );
-}
-
-#[cfg(feature = "legacy-import")]
-#[test]
-fn legacy_event_import_is_exact_and_refuses_conflicting_or_unfinished_rooms() {
-    for input in [
-        include_str!("fixtures/replay.json"),
-        include_str!("fixtures/replay-rewind.json"),
-    ] {
-        let v: Value = serde_json::from_str(input).unwrap();
-        let expected = replay::migrate_archive(&v["expected"]).unwrap();
-        let legacy = replay::build_legacy(
-            v["gameId"].as_str().unwrap(),
-            v["seed"].as_str().unwrap(),
-            &v["options"],
-            &v["players"],
-            v["events"].as_array().unwrap(),
-        )
-        .unwrap();
-        assert_eq!(legacy, expected);
-        let mut room = json!({"meta":{"gameId":v["gameId"],"seed":v["seed"]},"game":v["finalState"],"members":v["players"],"events":v["events"],"archive":null});
-        let mut backfilled = expected.clone();
-        for assignment in backfilled["roleAssignments"].as_array_mut().unwrap() {
-            assignment.as_object_mut().unwrap().remove("roleVariant");
-        }
-        assert_eq!(
-            replay::migrate_finished_room(&room).unwrap(),
-            Some(backfilled.clone())
-        );
-        room["game"]["roleVariants"] = json!({"p0":42});
-        let explicitly_known = replay::migrate_finished_room(&room).unwrap().unwrap();
-        assert_eq!(
-            explicitly_known["roleAssignments"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .find(|a| a["playerId"] == "p0")
-                .unwrap()["roleVariant"],
-            42
-        );
-        room["game"].as_object_mut().unwrap().remove("roleVariants");
-        room["archive"] = json!({"replay":expected.clone()});
-        room["archive"]["replay"]["gameId"] = json!("previous-game");
-        assert_eq!(
-            replay::migrate_finished_room(&room).unwrap(),
-            Some(backfilled)
-        );
-        room["archive"] = Value::Null;
-        room["game"]["players"][0]["role"] = json!("ImpossibleRole");
-        assert!(replay::migrate_finished_room(&room).is_err());
-        room["game"] = v["finalState"].clone();
-        room["game"]["outcome"]["winner"] = json!("impossible");
-        assert!(replay::migrate_finished_room(&room).is_err());
-        room["game"]["phase"] = json!("TeamBuilding");
-        room["game"]["outcome"] = Value::Null;
-        assert_eq!(replay::migrate_finished_room(&room).unwrap(), None);
-        room["game"] = v["finalState"].clone();
-        room["archive"] = json!({"replay":v["expected"]});
-        room["events"] = Value::Null;
-        assert_eq!(
-            replay::migrate_finished_room(&room).unwrap(),
-            Some(expected)
-        );
-    }
 }

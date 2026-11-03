@@ -1,4 +1,4 @@
-use crate::engine::typed::{
+use crate::engine::{
     ClientLogEntry, GameEvent, GameOptions, GameOutcome, MissionCard, PlayerId, Role, Team, Vote,
 };
 use serde::{Deserialize, Serialize};

@@ -58,13 +58,6 @@ fn normalize_weights(v: &Value) -> Value {
 }
 impl Database {
     pub async fn connect(url: &str, max: u32) -> Result<Self> {
-        Self::connect_impl(url, max, false).await
-    }
-    #[cfg(feature = "legacy-import")]
-    pub async fn connect_maintenance(url: &str, max: u32) -> Result<Self> {
-        Self::connect_impl(url, max, true).await
-    }
-    async fn connect_impl(url: &str, max: u32, maintenance: bool) -> Result<Self> {
         ensure!(max >= 2, "PG_POOL_MAX must be at least 2");
         let cpu_threads = match std::env::var("CPU_WORKERS") {
             Ok(raw) => raw
@@ -90,9 +83,7 @@ impl Database {
             locked,
             "Another Avalon server owns this database; stop it first"
         );
-        if !maintenance {
-            crate::migration::preflight_runtime(&mut owner).await?;
-        }
+        crate::migration::preflight_runtime(&mut owner).await?;
         sqlx::raw_sql(include_str!("../migrations/0001_schema.sql"))
             .execute(&mut *owner)
             .await?;
@@ -126,9 +117,7 @@ impl Database {
                 }
             }
         });
-        if !maintenance {
-            crate::migration::ensure_ready(&db).await?;
-        }
+        crate::migration::ensure_ready(&db).await?;
         Ok(db)
     }
     /// Share the same bounded CPU admission between room transitions and persistence work.
