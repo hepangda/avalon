@@ -7,21 +7,24 @@ Failures never automatically restore an old image or database.
 
 ## Run a release
 
-Use Actions → Release (manual) on `main`, or:
+Use Actions → Trigger Release on `main`, or:
 
 ```sh
-gh workflow run release-manual.yml --ref main -f commit=main
-gh workflow run release-manual.yml --ref main -f commit=<full-or-short-sha> -f restart=true
+gh workflow run release-trigger.yml --ref main -f commit=main
+gh workflow run release-trigger.yml --ref main -f commit=<full-or-short-sha> -f restart=true
 ```
 
-The entry resolves the immutable commit, verifies it belongs to `main`, and starts
-the separate Release workflow. Follow that run for the deployment result. An
-already-running healthy image is left alone unless `restart` is requested.
+Trigger Release is the only manual entry point: it resolves the immutable commit,
+verifies it belongs to `main`, and runs Release as a single workflow run. The
+Release workflow has no manual trigger, so it cannot be started directly from the
+Actions tab or the API. Follow the run that Trigger Release created for the
+deployment result. An already-running healthy image is left alone unless `restart`
+is requested.
 
 Build and publish assets without changing the VM:
 
 ```sh
-gh workflow run release.yml --ref main -f commit=main -f prepare_only=true
+gh workflow run release-trigger.yml --ref main -f commit=main -f prepare_only=true
 ```
 
 ## Release behavior

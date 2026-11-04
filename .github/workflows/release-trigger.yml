@@ -1,0 +1,43 @@
+name: Trigger Release
+run-name: ${{ inputs.prepare_only && 'Prepare assets' || 'Release' }} ${{ inputs.commit }}
+
+# Only manual entry point for releases. The Release workflow is callable only, so
+# every release starts here.
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Commit SHA on main, or main for its latest commit
+        required: true
+        default: main
+        type: string
+      restart:
+        description: Restart the application even if this version is already running
+        type: boolean
+        default: false
+      prepare_only:
+        description: Build and publish assets without changing the running deployment
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    uses: ./.github/workflows/release.yml
+    # Publishing the image needs packages: write; the called workflow cannot widen this.
+    permissions:
+      contents: read
+      packages: write
+    # The production secrets stay environment scoped: they are passed by name here and
+    # take their values from the environment the called workflow's job declares.
+    secrets: inherit
+    with:
+      commit: ${{ inputs.commit }}
+      restart: ${{ inputs.restart }}
+      prepare_only: ${{ inputs.prepare_only }}

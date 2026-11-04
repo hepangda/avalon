@@ -1,9 +1,10 @@
 name: Release
-run-name: ${{ inputs.commit_title || format('Release {0}', inputs.commit) }}
 
-# Releases are explicitly requested by commit; pushing a tag does not deploy.
+# Callable only: releases are explicitly requested by commit through the Trigger
+# Release workflow, and pushing a tag does not deploy. Never add workflow_dispatch
+# here, so the deployment cannot be started by hand.
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       commit:
         description: Commit SHA on main, or main for its latest commit
@@ -13,21 +14,20 @@ on:
         description: Restart the application even if this version is already running
         type: boolean
         default: false
-      commit_title:
-        description: Commit title supplied automatically by Release (manual)
-        type: string
-        required: false
       prepare_only:
         description: Build and publish assets without changing the running deployment
         type: boolean
         default: false
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        description: R2 publishing credentials
+        required: false
+      VM_SSH_PRIVATE_KEY:
+        description: Restricted deployment key
+        required: false
 
 permissions:
   contents: read
-
-concurrency:
-  group: production-release
-  cancel-in-progress: false
 
 jobs:
   resolve:
@@ -90,7 +90,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
 
       - uses: docker/setup-buildx-action@v4
 
