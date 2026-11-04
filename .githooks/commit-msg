@@ -1,0 +1,38 @@
+#!/bin/sh
+# Reject commit messages that break the repository commit rules.
+# Rules: AGENTS.md and .agents/skills/git-arrange-commits/SKILL.md.
+# Installed by `npm run hooks:install` (also run from `npm install`).
+set -eu
+
+message_file=${1:?commit message file is required}
+
+# Drop the comment lines git leaves behind from the editor template and blank lines.
+message=$(sed -e 's/^[[:space:]]*#.*$//' "$message_file" | sed -e 's/[[:space:]]*$//' | awk 'NF')
+
+fail() {
+  printf 'commit-msg: %s\n' "$1" >&2
+  printf 'commit-msg: rules live in AGENTS.md and .agents/skills/git-arrange-commits/SKILL.md\n' >&2
+  printf 'commit-msg: run `npm run commit` to have the arrange-commits skill rewrite the message.\n' >&2
+  exit 1
+}
+
+[ -n "$message" ] || fail 'the commit message is empty.'
+
+# Attribution of any kind is forbidden, including Co-authored-by and Signed-off-by.
+if printf '%s\n' "$message" | grep -Eiq '^[[:space:]]*[a-z-]+-by:'; then
+  fail 'attribution trailers are not allowed (for example Co-authored-by or Signed-off-by).'
+fi
+if printf '%s\n' "$message" | grep -Eiq 'generated with|generated-by|assisted-by|claude code|copilot'; then
+  fail 'generated/assisted attribution is not allowed.'
+fi
+
+# The subject must be the only message line; git-generated trailers stay allowed.
+rest=$(printf '%s\n' "$message" | sed -n '2,$p')
+if [ -n "$rest" ]; then
+  allowed='^(This reverts commit [0-9a-f]{7,40}\.|This is a combination of [0-9]+ commits\.|\(cherry picked from commit [0-9a-f]{7,40}\))$'
+  if printf '%s\n' "$rest" | grep -Evq "$allowed"; then
+    fail 'the commit message must be exactly one line, with no body.'
+  fi
+fi
+
+exit 0

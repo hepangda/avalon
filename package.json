@@ -29,7 +29,9 @@
     "voices:generate": "node frontend/scripts/generate-voices.mjs",
     "static:check": "node frontend/scripts/static/publish-static.mjs",
     "static:upload": "node frontend/scripts/static/publish-static.mjs --upload",
-    "static:verify": "node frontend/scripts/static/verify-static.mjs"
+    "static:verify": "node frontend/scripts/static/verify-static.mjs",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",
