@@ -1,0 +1,4 @@
+interface:
+  display_name: "Arrange Git commits"
+  short_description: "Group working-tree changes by purpose and dependency, verify them, and write one-line commit messages"
+  default_prompt: "Use $git-arrange-commits to arrange the current changes into sensible local commits, with one line per commit message."
